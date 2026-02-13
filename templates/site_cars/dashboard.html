@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold">لوحة التحكم</h1>
+            <p class="text-gray-500 mt-1">مرحباً {{ user.get_short_name|default:user.username }}، إليك ملخص موقعك</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'admin:site_cars_sitecar_add' %}" class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                إضافة سيارة
+            </a>
+            <a href="{% url 'admin:index' %}" class="inline-flex items-center gap-2 border border-gray-200 text-gray-600 text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-gray-50 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                الإدارة
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-gray-900">{{ total_site_cars }}</div>
+            <div class="text-xs text-gray-500 mt-1">سياراتنا</div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-gray-900">{{ available_site_cars }}</div>
+            <div class="text-xs text-gray-500 mt-1">متاحة</div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-gray-900">{{ total_orders }}</div>
+            <div class="text-xs text-gray-500 mt-1">إجمالي الطلبات</div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-gray-900">{{ pending_orders }}</div>
+            <div class="text-xs text-gray-500 mt-1">بانتظار المراجعة</div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-gray-900">{{ total_sold }}</div>
+            <div class="text-xs text-gray-500 mt-1">تم بيعها</div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                </div>
+            </div>
+            <div class="text-2xl font-extrabold text-gray-900">{{ avg_rating }}<span class="text-sm text-gray-400">/5</span></div>
+            <div class="text-xs text-gray-500 mt-1">{{ total_ratings }} تقييم</div>
+        </div>
+    </div>
+
+    <!-- Revenue + Monthly Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-gradient-to-br from-brand to-brand/80 rounded-2xl shadow-sm p-6 text-white">
+            <div class="text-sm opacity-80 mb-1">إجمالي الإيرادات</div>
+            <div class="text-3xl font-extrabold">{{ total_revenue|floatformat:0 }} <span class="text-lg opacity-80">₩</span></div>
+            <div class="text-xs opacity-60 mt-2">من {{ total_sold }} سيارة مباعة</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+            <div class="text-sm text-gray-500 mb-1">طلبات آخر 30 يوم</div>
+            <div class="text-3xl font-extrabold text-gray-900">{{ monthly_orders }}</div>
+            <div class="text-xs text-gray-400 mt-2">طلب جديد</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+            <div class="text-sm text-gray-500 mb-1">مبيعات آخر 30 يوم</div>
+            <div class="text-3xl font-extrabold text-gray-900">{{ monthly_sold }}</div>
+            <div class="text-xs text-gray-400 mt-2">سيارة مباعة</div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+        <h2 class="text-lg font-bold mb-4">إجراءات سريعة</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            <a href="{% url 'admin:site_cars_sitecar_add' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition text-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="text-xs font-medium text-blue-700">إضافة سيارة</span>
+            </a>
+            <a href="{% url 'admin:site_cars_sitecar_changelist' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 transition text-center">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                <span class="text-xs font-medium text-indigo-700">إدارة السيارات</span>
+            </a>
+            <a href="{% url 'admin:site_cars_siteorder_changelist' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition text-center">
+                <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span class="text-xs font-medium text-amber-700">إدارة الطلبات</span>
+            </a>
+            <a href="{% url 'admin:site_cars_sitesoldcar_changelist' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition text-center">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span class="text-xs font-medium text-red-700">المبيعات</span>
+            </a>
+            <a href="{% url 'admin:site_cars_siterating_changelist' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-yellow-50 hover:bg-yellow-100 transition text-center">
+                <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                <span class="text-xs font-medium text-yellow-700">التقييمات</span>
+            </a>
+            <a href="{% url 'upload_auction_json' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 transition text-center">
+                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <span class="text-xs font-medium text-emerald-700">استيراد مزاد</span>
+            </a>
+            <a href="{% url 'send_email' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-cyan-50 hover:bg-cyan-100 transition text-center">
+                <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span class="text-xs font-medium text-cyan-700">إرسال بريد</span>
+            </a>
+            <a href="{% url 'admin:site_cars_sitequestion_changelist' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition text-center">
+                <div class="relative">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {% if unanswered_questions > 0 %}
+                    <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{{ unanswered_questions }}</span>
+                    {% endif %}
+                </div>
+                <span class="text-xs font-medium text-purple-700">الأسئلة</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Orders -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between p-6 pb-4">
+                <h2 class="text-lg font-bold">آخر الطلبات</h2>
+                <a href="{% url 'admin:site_cars_siteorder_changelist' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            </div>
+            {% if recent_orders %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-gray-500 text-xs">
+                        <tr>
+                            <th class="text-right px-6 py-3 font-medium">#</th>
+                            <th class="text-right px-4 py-3 font-medium">العميل</th>
+                            <th class="text-right px-4 py-3 font-medium">السيارة</th>
+                            <th class="text-right px-4 py-3 font-medium">السعر</th>
+                            <th class="text-right px-4 py-3 font-medium">الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for order in recent_orders %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-3 font-medium">{{ order.pk }}</td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-xs">{{ order.user.username|first|upper }}</div>
+                                    <span>{{ order.user.username }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 truncate max-w-[150px]">{{ order.car.title }}</td>
+                            <td class="px-4 py-3 font-medium">{{ order.offer_price|floatformat:0 }} ₩</td>
+                            <td class="px-4 py-3">
+                                {% if order.status == 'pending' %}
+                                <span class="inline-block bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">قيد المراجعة</span>
+                                {% elif order.status == 'accepted' %}
+                                <span class="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">مقبول</span>
+                                {% elif order.status == 'completed' %}
+                                <span class="inline-block bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">مكتمل</span>
+                                {% elif order.status == 'rejected' %}
+                                <span class="inline-block bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full">مرفوض</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="px-6 pb-6 text-center text-gray-400 text-sm py-8">لا توجد طلبات بعد</div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Sold Cars -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between p-6 pb-4">
+                <h2 class="text-lg font-bold">آخر المبيعات</h2>
+                <a href="{% url 'sold_cars' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            </div>
+            {% if recent_sold %}
+            <div class="divide-y divide-gray-100">
+                {% for sold in recent_sold %}
+                <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition">
+                    <div class="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                        {% if sold.car.image %}
+                        <img src="{{ sold.car.image }}" alt="" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-gray-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm truncate">{{ sold.car.title }}</div>
+                        <div class="text-xs text-gray-500">{{ sold.sold_at|date:"Y/m/d" }}{% if sold.buyer %} &bull; {{ sold.buyer.username }}{% endif %}</div>
+                    </div>
+                    <div class="text-left flex-shrink-0">
+                        <div class="font-bold text-sm text-green-600">{{ sold.sale_price|floatformat:0 }} ₩</div>
+                        {% if sold.original_price %}
+                        <div class="text-xs text-gray-400 line-through">{{ sold.original_price|floatformat:0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="px-6 pb-6 text-center text-gray-400 text-sm py-8">لا توجد مبيعات بعد</div>
+            {% endif %}
+        </div>
+
+        <!-- Unanswered Questions -->
+        {% if recent_questions %}
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between p-6 pb-4">
+                <h2 class="text-lg font-bold">أسئلة بانتظار الإجابة</h2>
+                <a href="{% url 'admin:site_cars_sitequestion_changelist' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            </div>
+            <div class="divide-y divide-gray-100">
+                {% for q in recent_questions %}
+                <div class="px-6 py-4 hover:bg-gray-50 transition">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-xs">{{ q.user.username|first|upper }}</div>
+                        <span class="text-sm font-medium">{{ q.user.username }}</span>
+                        <span class="text-xs text-gray-400">{{ q.created_at|date:"Y/m/d" }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mr-8">{{ q.question|truncatewords:20 }}</p>
+                    {% if q.car %}
+                    <div class="text-xs text-gray-400 mr-8 mt-1">{{ q.car.title }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Ratings -->
+        {% if recent_ratings %}
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between p-6 pb-4">
+                <h2 class="text-lg font-bold">آخر التقييمات</h2>
+                <a href="{% url 'admin:site_cars_siterating_changelist' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            </div>
+            <div class="divide-y divide-gray-100">
+                {% for r in recent_ratings %}
+                <div class="px-6 py-4 hover:bg-gray-50 transition">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold text-xs">{{ r.user.username|first|upper }}</div>
+                            <span class="text-sm font-medium">{{ r.user.username }}</span>
+                        </div>
+                        <div class="flex items-center gap-0.5">
+                            {% for i in "12345" %}
+                            {% if forloop.counter <= r.rating %}
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            {% else %}
+                            <svg class="w-4 h-4 text-gray-200" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if r.comment %}
+                    <p class="text-sm text-gray-500 mr-8 truncate">{{ r.comment }}</p>
+                    {% endif %}
+                    <div class="text-xs text-gray-400 mr-8 mt-1">{{ r.car.title }} &bull; {{ r.created_at|date:"Y/m/d" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Site Cars Table -->
+    {% if site_cars_list %}
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden mt-8">
+        <div class="flex items-center justify-between p-6 pb-4">
+            <h2 class="text-lg font-bold">سياراتنا</h2>
+            <a href="{% url 'admin:site_cars_sitecar_changelist' %}" class="text-brand text-sm font-medium">إدارة الكل</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-gray-500 text-xs">
+                    <tr>
+                        <th class="text-right px-6 py-3 font-medium">السيارة</th>
+                        <th class="text-right px-4 py-3 font-medium">السنة</th>
+                        <th class="text-right px-4 py-3 font-medium">السعر</th>
+                        <th class="text-right px-4 py-3 font-medium">الحالة</th>
+                        <th class="text-right px-4 py-3 font-medium">مميزة</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for car in site_cars_list %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-9 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                    {% if car.image %}
+                                    <img src="{{ car.image.url }}" alt="" class="w-full h-full object-cover">
+                                    {% elif car.gallery.first %}
+                                    <img src="{{ car.gallery.first.image.url }}" alt="" class="w-full h-full object-cover">
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="font-medium truncate max-w-[200px]">{{ car.title }}</div>
+                                    <div class="text-xs text-gray-400">{{ car.manufacturer }} {{ car.model }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">{{ car.year }}</td>
+                        <td class="px-4 py-3 font-medium">{{ car.price|floatformat:0 }} ₩</td>
+                        <td class="px-4 py-3">
+                            {% if car.status == 'available' %}
+                            <span class="inline-block bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full">متاح</span>
+                            {% elif car.status == 'sold' %}
+                            <span class="inline-block bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full">تم البيع</span>
+                            {% elif car.status == 'pending' %}
+                            <span class="inline-block bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">قيد الانتظار</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if car.is_featured %}
+                            <span class="inline-block bg-yellow-100 text-yellow-700 text-xs font-bold px-2.5 py-1 rounded-full">مميزة</span>
+                            {% else %}
+                            <span class="text-gray-300">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

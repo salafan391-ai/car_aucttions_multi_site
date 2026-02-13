@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}إرسال بريد إلكتروني - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">إرسال بريد إلكتروني</h1>
+            <p class="text-gray-500 text-sm mt-1">أرسل بريد لمستخدم أو لجميع المستخدمين</p>
+        </div>
+        <a href="{% url 'site_dashboard' %}" class="text-brand text-sm font-medium">&rarr; العودة للوحة التحكم</a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Send Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Send Type Toggle -->
+                    <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6">
+                        <button type="button" onclick="toggleSendType('single')" id="btn-single" class="flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition bg-white shadow-sm text-gray-900">
+                            لمستخدم واحد
+                        </button>
+                        <button type="button" onclick="toggleSendType('broadcast')" id="btn-broadcast" class="flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition text-gray-500 hover:text-gray-700">
+                            لجميع المستخدمين
+                        </button>
+                    </div>
+
+                    <input type="hidden" name="send_type" id="send_type" value="single">
+
+                    <div id="single-fields" class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+                        <input type="email" name="recipient_email" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand outline-none" placeholder="example@email.com">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">الموضوع</label>
+                        <input type="text" name="subject" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand outline-none" placeholder="موضوع البريد...">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">المحتوى</label>
+                        <textarea name="body" rows="8" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none" placeholder="اكتب محتوى البريد هنا... (يدعم HTML)"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3">
+                        <a href="{% url 'site_dashboard' %}" class="px-5 py-2.5 border border-gray-200 text-gray-500 font-medium rounded-xl text-sm hover:bg-gray-50 transition">إلغاء</a>
+                        <button type="submit" class="bg-brand bg-brand-hover text-white text-sm font-bold px-6 py-2.5 rounded-xl transition">
+                            إرسال البريد
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Logs -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+                <h2 class="text-lg font-bold mb-4">آخر الرسائل المرسلة</h2>
+                {% if recent_logs %}
+                <div class="space-y-3">
+                    {% for log in recent_logs %}
+                    <div class="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-medium
+                                {% if log.status == 'sent' %}text-green-600
+                                {% elif log.status == 'failed' %}text-red-600
+                                {% else %}text-amber-600{% endif %}">
+                                {% if log.status == 'sent' %}تم الإرسال
+                                {% elif log.status == 'failed' %}فشل
+                                {% else %}قيد الإرسال{% endif %}
+                            </span>
+                            <span class="text-xs text-gray-400">{{ log.created_at|date:"m/d H:i" }}</span>
+                        </div>
+                        <div class="text-sm font-medium truncate">{{ log.subject }}</div>
+                        <div class="text-xs text-gray-400 truncate">{{ log.recipient_email }}</div>
+                        {% if log.error_message %}
+                        <div class="text-xs text-red-500 mt-1 truncate">{{ log.error_message }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 text-center py-4">لا توجد رسائل مرسلة بعد</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function toggleSendType(type) {
+    document.getElementById('send_type').value = type;
+    const singleFields = document.getElementById('single-fields');
+    const btnSingle = document.getElementById('btn-single');
+    const btnBroadcast = document.getElementById('btn-broadcast');
+    if (type === 'broadcast') {
+        singleFields.classList.add('hidden');
+        btnBroadcast.className = 'flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition bg-white shadow-sm text-gray-900';
+        btnSingle.className = 'flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition text-gray-500 hover:text-gray-700';
+    } else {
+        singleFields.classList.remove('hidden');
+        btnSingle.className = 'flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition bg-white shadow-sm text-gray-900';
+        btnBroadcast.className = 'flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition text-gray-500 hover:text-gray-700';
+    }
+}
+</script>
+{% endblock %}

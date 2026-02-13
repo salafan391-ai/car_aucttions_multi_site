@@ -1,0 +1,575 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_name|default:"سيارات" }}{% endblock %}</title>
+    {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% tailwind_css %}
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'tajawal': ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: { 800: '#1a1a2e', 900: '#0f0f23' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --color-primary: {{ primary_color|default:'#2563eb' }};
+            --color-secondary: {{ secondary_color|default:'#1e3a8a' }};
+            --color-accent: {{ accent_color|default:'#3b82f6' }};
+        }
+        body { font-family: 'Tajawal', sans-serif; }
+        html[lang="en"] body, html[lang="ko"] body { font-family: 'Inter', 'Tajawal', sans-serif; }
+        .car-card:hover { transform: translateY(-4px); }
+        .car-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .hero-gradient { background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 50%, #0f0f23 100%); }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .bg-brand { background-color: var(--color-primary); }
+        .bg-brand-hover:hover { background-color: var(--color-secondary); }
+        .text-brand { color: var(--color-primary); }
+        .text-brand-hover:hover { color: var(--color-primary); }
+        .border-brand { border-color: var(--color-primary); }
+        .ring-brand:focus { --tw-ring-color: var(--color-accent); }
+        .bg-brand-light { background-color: color-mix(in srgb, var(--color-primary) 10%, white); }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .text-brand-on-light { color: var(--color-primary); }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 font-tajawal text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{% url 'home' %}" class="flex items-center gap-2">
+                    {% if site_logo %}
+                    <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-10 w-auto">
+                    {% else %}
+                    <div class="w-10 h-10 bg-brand rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h-4m4 0h4a1 1 0 001-1v-5a1 1 0 00-.3-.7l-4-4A1 1 0 0016 5h-3"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    <span class="text-xl font-bold text-gray-900">{{ site_name|default:"سيارات" }}</span>
+                </a>
+
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="{% url 'home' %}" class="text-gray-600 text-brand-hover font-medium transition">الرئيسية</a>
+                    <a href="{% url 'car_list' %}" class="text-gray-600 text-brand-hover font-medium transition">السيارات</a>
+                    <a href="{% url 'site_car_list' %}" class="text-gray-600 text-brand-hover font-medium transition">سياراتنا</a>
+                    <a href="{% url 'sold_cars' %}" class="text-gray-600 text-brand-hover font-medium transition">المباعة</a>
+                    <a href="{% url 'car_request' %}" class="text-gray-600 text-brand-hover font-medium transition">طلب سيارة</a>
+                    <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition">تواصل معنا</a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition">طلباتي</a>
+                    <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition">الرسائل</a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'site_dashboard' %}" class="inline-flex items-center gap-1.5 bg-brand/10 text-brand text-sm font-bold px-4 py-2 rounded-xl hover:bg-brand/20 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                        لوحة التحكم
+                    </a>
+                    {% endif %}
+                    <div class="flex items-center gap-3 border-r border-gray-200 pr-6">
+                        <div class="w-8 h-8 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ user.username|first|upper }}</div>
+                        <span class="text-sm font-medium text-gray-700">{{ user.get_short_name|default:user.username }}</span>
+                        <a href="{% url 'logout' %}" class="text-sm text-red-500 hover:text-red-600 font-medium transition">خروج</a>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center gap-3 border-r border-gray-200 pr-6">
+                        <a href="{% url 'login' %}" class="text-gray-600 text-brand-hover font-medium transition">دخول</a>
+                        <a href="{% url 'register' %}" class="bg-brand bg-brand-hover text-white text-sm font-medium px-4 py-2 rounded-xl transition">حساب جديد</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Lang & Currency Switcher -->
+                <div class="hidden md:flex items-center gap-2 border-r border-gray-200 pr-4 mr-2">
+                    <div class="relative" id="lang-dropdown">
+                        <button type="button" onclick="document.getElementById('lang-menu').classList.toggle('hidden')" class="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
+                            <span id="lang-flag">🇸🇦</span>
+                            <span id="lang-label">العربية</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="lang-menu" class="hidden absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[120px] z-50">
+                            <button onclick="setLang('ar')" class="w-full text-right px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2">🇸🇦 العربية</button>
+                            <button onclick="setLang('en')" class="w-full text-right px-3 py-2 text-xs hover:bg-gray-50 flex items-center gap-2">🇬🇧 English</button>
+                        </div>
+                    </div>
+                    <div class="relative" id="currency-dropdown">
+                        <button type="button" onclick="document.getElementById('currency-menu').classList.toggle('hidden')" class="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
+                            <span id="currency-label">₩ KRW</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="currency-menu" class="hidden absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[120px] z-50">
+                            <button onclick="setCurrency('KRW')" class="w-full text-right px-3 py-2 text-xs hover:bg-gray-50">₩ KRW</button>
+                            <button onclick="setCurrency('USD')" class="w-full text-right px-3 py-2 text-xs hover:bg-gray-50">$ USD</button>
+                            <button onclick="setCurrency('SAR')" class="w-full text-right px-3 py-2 text-xs hover:bg-gray-50">﷼ SAR</button>
+                            <button onclick="setCurrency('AED')" class="w-full text-right px-3 py-2 text-xs hover:bg-gray-50">د.إ AED</button>
+                            <button onclick="setCurrency('EUR')" class="w-full text-right px-3 py-2 text-xs hover:bg-gray-50">€ EUR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+            <div class="px-4 py-3 space-y-2">
+                <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرئيسية</a>
+                <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات</a>
+                <a href="{% url 'site_car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">سياراتنا</a>
+                <a href="{% url 'sold_cars' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات المباعة</a>
+                <a href="{% url 'car_request' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلب سيارة</a>
+                <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تواصل معنا</a>
+                <!-- Mobile Lang/Currency -->
+                <div class="flex items-center gap-2 py-2 px-3 border-t border-gray-100 mt-2">
+                    <button onclick="cycleLang()" id="mobile-lang-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium">
+                        <span id="mobile-lang-flag">🇸🇦</span> <span id="mobile-lang-label">العربية</span>
+                    </button>
+                    <button onclick="cycleCurrency()" id="mobile-currency-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium">
+                        <span id="mobile-currency-label">₩ KRW</span>
+                    </button>
+                </div>
+                <div class="border-t border-gray-100 pt-2 mt-2">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلباتي</a>
+                    <a href="{% url 'inbox' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرسائل</a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'site_dashboard' %}" class="block py-2 px-3 rounded-lg hover:bg-brand/10 text-brand font-medium">لوحة التحكم</a>
+                    {% endif %}
+                    <div class="flex items-center gap-2 py-2 px-3">
+                        <div class="w-8 h-8 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ user.username|first|upper }}</div>
+                        <span class="text-sm font-medium">{{ user.get_short_name|default:user.username }}</span>
+                    </div>
+                    <a href="{% url 'logout' %}" class="block py-2 px-3 rounded-lg hover:bg-red-50 text-red-500 font-medium">تسجيل الخروج</a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تسجيل الدخول</a>
+                    <a href="{% url 'register' %}" class="block py-2 px-3 rounded-lg bg-brand text-white font-medium text-center mt-1">إنشاء حساب</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg mb-2 {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Content -->
+    {% block content %}{% endblock %}
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-10 sm:py-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- About -->
+                <div class="sm:col-span-2 lg:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        {% if site_logo %}
+                        <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-8 w-auto">
+                        {% endif %}
+                        <h3 class="text-white text-lg font-bold">{{ site_name|default:"سيارات" }}</h3>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed bilingual" data-lang-ar="{{ site_about|default:footer_text|default:'منصة متخصصة في عرض وبيع السيارات المستوردة بأفضل الأسعار وأعلى جودة.' }}" data-lang-en="{{ site_about_en|default:footer_text_en|default:'A platform specialized in displaying and selling imported cars at the best prices and highest quality.' }}">{{ site_about|default:footer_text|default:"منصة متخصصة في عرض وبيع السيارات المستوردة بأفضل الأسعار وأعلى جودة." }}</p>
+                    <!-- Social Media -->
+                    {% if site_instagram or site_twitter or site_facebook or site_tiktok or site_snapchat or site_youtube %}
+                    <div class="flex items-center gap-3 mt-5">
+                        {% if site_instagram %}
+                        <a href="{{ site_instagram }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition" title="انستقرام">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if site_twitter %}
+                        <a href="{{ site_twitter }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-sky-500 rounded-lg flex items-center justify-center transition" title="تويتر">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if site_facebook %}
+                        <a href="{{ site_facebook }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition" title="فيسبوك">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if site_tiktok %}
+                        <a href="{{ site_tiktok }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-gray-700 rounded-lg flex items-center justify-center transition" title="تيك توك">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if site_snapchat %}
+                        <a href="{{ site_snapchat }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-yellow-400 rounded-lg flex items-center justify-center transition" title="سناب شات">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 01.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12.017 24c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641 0 12.017 0z"/></svg>
+                        </a>
+                        {% endif %}
+                        {% if site_youtube %}
+                        <a href="{{ site_youtube }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-red-600 rounded-lg flex items-center justify-center transition" title="يوتيوب">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="text-white text-lg font-bold mb-4">روابط سريعة</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{% url 'home' %}" class="hover:text-white transition">الرئيسية</a></li>
+                        <li><a href="{% url 'car_list' %}" class="hover:text-white transition">السيارات</a></li>
+                        <li><a href="{% url 'car_request' %}" class="hover:text-white transition">طلب سيارة</a></li>
+                        <li><a href="{% url 'contact' %}" class="hover:text-white transition">تواصل معنا</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div>
+                    <h3 class="text-white text-lg font-bold mb-4">تواصل معنا</h3>
+                    <ul class="space-y-3 text-sm">
+                        {% if site_phone %}
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            <a href="tel:{{ site_phone }}" class="hover:text-white transition" dir="ltr">{{ site_phone }}</a>
+                        </li>
+                        {% endif %}
+                        {% if site_phone2 %}
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            <a href="tel:{{ site_phone2 }}" class="hover:text-white transition" dir="ltr">{{ site_phone2 }}</a>
+                        </li>
+                        {% endif %}
+                        {% if site_whatsapp %}
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-green-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            <a href="https://wa.me/{{ site_whatsapp }}" target="_blank" class="hover:text-white transition" dir="ltr">{{ site_whatsapp }}</a>
+                        </li>
+                        {% endif %}
+                        {% if site_email %}
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <a href="mailto:{{ site_email }}" class="hover:text-white transition">{{ site_email }}</a>
+                        </li>
+                        {% endif %}
+                        {% if site_address %}
+                        <li class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-gray-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            {% if site_map_url %}<a href="{{ site_map_url }}" target="_blank" class="hover:text-white transition bilingual" data-lang-ar="{{ site_address }}{% if site_city %} - {{ site_city }}{% endif %}" data-lang-en="{{ site_address_en|default:site_address }}{% if site_city_en or site_city %} - {{ site_city_en|default:site_city }}{% endif %}">{{ site_address }}{% if site_city %} - {{ site_city }}{% endif %}</a>{% else %}<span class="bilingual" data-lang-ar="{{ site_address }}{% if site_city %} - {{ site_city }}{% endif %}" data-lang-en="{{ site_address_en|default:site_address }}{% if site_city_en or site_city %} - {{ site_city_en|default:site_city }}{% endif %}">{{ site_address }}{% if site_city %} - {{ site_city }}{% endif %}</span>{% endif %}
+                        </li>
+                        {% endif %}
+                        {% if site_working_hours %}
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span class="bilingual" data-lang-ar="{{ site_working_hours }}" data-lang-en="{{ site_working_hours_en|default:site_working_hours }}">{{ site_working_hours }}</span>
+                        </li>
+                        {% endif %}
+                        {% if not site_phone and not site_whatsapp and not site_email and not site_address %}
+                        <li class="text-gray-400">للاستفسارات والطلبات</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- WhatsApp CTA -->
+                {% if site_whatsapp %}
+                <div>
+                    <h3 class="text-white text-lg font-bold mb-4">تواصل سريع</h3>
+                    <a href="https://wa.me/{{ site_whatsapp }}" target="_blank" class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-3 rounded-xl transition text-sm">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        راسلنا واتساب
+                    </a>
+                    {% if site_working_hours %}
+                    <p class="text-gray-500 text-xs mt-2 bilingual" data-lang-ar="{{ site_working_hours }}" data-lang-en="{{ site_working_hours_en|default:site_working_hours }}">{{ site_working_hours }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
+                &copy; {% now "Y" %} {{ site_name|default:"سيارات" }}. جميع الحقوق محفوظة.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('lang-dropdown')?.contains(e.target)) {
+                document.getElementById('lang-menu')?.classList.add('hidden');
+            }
+            if (!document.getElementById('currency-dropdown')?.contains(e.target)) {
+                document.getElementById('currency-menu')?.classList.add('hidden');
+            }
+        });
+
+        // ═══════════ LANGUAGE SYSTEM ═══════════
+        const LANGS = {
+            ar: { flag: '🇸🇦', label: 'العربية', dir: 'rtl', font: "'Tajawal', sans-serif" },
+            en: { flag: '🇬🇧', label: 'English', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+        };
+        const LANG_ORDER = ['ar', 'en'];
+
+        const TRANSLATIONS = {
+            // Navbar
+            'الرئيسية':        'Home',
+            'السيارات':        'Cars',
+            'سياراتنا':        'Our Cars',
+            'المباعة':         'Sold',
+            'طلب سيارة':       'Request Car',
+            'تواصل معنا':      'Contact Us',
+            'طلباتي':          'My Orders',
+            'الرسائل':         'Messages',
+            'لوحة التحكم':     'Dashboard',
+            'خروج':            'Logout',
+            'دخول':            'Login',
+            'حساب جديد':       'Register',
+            'تسجيل الدخول':    'Login',
+            'إنشاء حساب':      'Create Account',
+            'تسجيل الخروج':    'Logout',
+            'السيارات المباعة': 'Sold Cars',
+            // Home
+            'اعثر على سيارة أحلامك': 'Find Your Dream Car',
+            'تصفح آلاف السيارات المستوردة بأفضل الأسعار والجودة': 'Browse thousands of imported cars at the best prices and quality',
+            'بحث':             'Search',
+            'الشركة المصنعة':  'Manufacturer',
+            'سنة الصنع':       'Year',
+            'سيارة متاحة':     'Available Cars',
+            'شركة مصنعة':      'Manufacturers',
+            'موديل':           'Models',
+            'دعم متواصل':      '24/7 Support',
+            'أحدث السيارات':   'Latest Cars',
+            'عرض الكل':        'View All',
+            'الشركات المصنعة': 'Manufacturers',
+            'لم تجد سيارتك المطلوبة؟': "Didn't find your car?",
+            'أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر': 'Send us your request and we will find the right car at the best price',
+            'اطلب سيارة الآن': 'Request a Car Now',
+            // Car list
+            'الكل':            'All',
+            'سيارات':          'Cars',
+            'مزادات':          'Auctions',
+            'نتيجة':           'results',
+            'فلاتر متقدمة':    'Advanced Filters',
+            'ترتيب:':          'Sort:',
+            'الأحدث':          'Newest',
+            'الأرخص':          'Cheapest',
+            'الأغلى':          'Most Expensive',
+            'الأحدث صنعاً':    'Newest Make',
+            'أقل مسافة':       'Lowest Mileage',
+            'أكثر مسافة':      'Highest Mileage',
+            'تم البيع':        'Sold',
+            'كم':              'km',
+            'لا توجد نتائج':   'No Results',
+            'جرّب تغيير الفلاتر أو البحث بكلمات مختلفة': 'Try changing filters or search with different keywords',
+            'عرض جميع السيارات': 'Show All Cars',
+            'مسح الكل':        'Clear All',
+            'مسح جميع الفلاتر': 'Clear All Filters',
+            'تطبيق الفلاتر':   'Apply Filters',
+            'متاح':            'Available',
+            'قيد الانتظار':    'Pending',
+            'منتهي':           'Expired',
+            // Car detail
+            'المواصفات':       'Specifications',
+            'الموديل':         'Model',
+            'المسافة المقطوعة': 'Mileage',
+            'المسافة':         'Mileage',
+            'ناقل الحركة':     'Transmission',
+            'الوقود':          'Fuel',
+            'اللون':           'Color',
+            'لون المقاعد':     'Seat Color',
+            'نوع الهيكل':      'Body Type',
+            'القوة':           'Power',
+            'نظام الدفع':      'Drive',
+            'المحرك':          'Engine',
+            'رقم الهيكل':      'VIN',
+            'الموقع':          'Location',
+            'السعر':           'Price',
+            'اطلب هذه السيارة': 'Order This Car',
+            'استفسار':         'Inquiry',
+            'رقم القطعة:':     'Lot #:',
+            'تقرير الفحص':     'Inspection Report',
+            'الوصف':           'Description',
+            'المميزات':        'Features',
+            'التقييمات':       'Reviews',
+            // Footer
+            'روابط سريعة':     'Quick Links',
+            'تواصل سريع':      'Quick Contact',
+            'راسلنا واتساب':   'WhatsApp Us',
+            'جميع الحقوق محفوظة.': 'All rights reserved.',
+            // Filters
+            'جميع الشركات':    'All Manufacturers',
+            'جميع الموديلات':  'All Models',
+            'جميع السنوات':    'All Years',
+            'جميع الألوان':    'All Colors',
+            'السعر من':        'Price From',
+            'السعر إلى':       'Price To',
+            'المسافة من':      'Mileage From',
+            'المسافة إلى':     'Mileage To',
+            'لا توجد سيارات حالياً': 'No cars available',
+            'مميزة':           'Featured',
+            // Expired auctions
+            'مزادات منتهية':   'Expired Auctions',
+            'المزادات النشطة': 'Active Auctions',
+            // Forms
+            'الاسم الكامل':    'Full Name',
+            'رقم الجوال':      'Phone Number',
+            'البريد الإلكتروني': 'Email',
+            'الرسالة':         'Message',
+            'إرسال':           'Send',
+            'للاستفسارات والطلبات': 'For inquiries and orders',
+        };
+
+        function t(text) {
+            return TRANSLATIONS[text] || text;
+        }
+
+        function setLang(lang) {
+            localStorage.setItem('site_lang', lang);
+            applyLang(lang);
+            document.getElementById('lang-menu')?.classList.add('hidden');
+        }
+
+        function cycleLang() {
+            const cur = localStorage.getItem('site_lang') || 'ar';
+            const idx = (LANG_ORDER.indexOf(cur) + 1) % LANG_ORDER.length;
+            setLang(LANG_ORDER[idx]);
+        }
+
+        function applyLang(lang) {
+            const cfg = LANGS[lang];
+            const root = document.getElementById('html-root');
+            root.setAttribute('lang', lang);
+            root.setAttribute('dir', cfg.dir);
+            document.body.style.fontFamily = cfg.font;
+
+            // Update switcher labels
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl('lang-flag', cfg.flag);
+            setEl('lang-label', cfg.label);
+            setEl('mobile-lang-flag', cfg.flag);
+            setEl('mobile-lang-label', cfg.label);
+
+            // Handle bilingual elements (data-lang-ar / data-lang-en)
+            document.querySelectorAll('.bilingual').forEach(el => {
+                const val = el.getAttribute('data-lang-' + lang);
+                if (val) el.textContent = val;
+            });
+
+            // Translate all text nodes via dictionary
+            if (lang === 'en') {
+                document.querySelectorAll('a, span, button, h1, h2, h3, p, div, label, li, option, td, th').forEach(el => {
+                    if (el.classList.contains('bilingual')) return;
+                    el.childNodes.forEach(node => {
+                        if (node.nodeType === 3) {
+                            const orig = node._origText || node.textContent.trim();
+                            if (!node._origText && orig) node._origText = orig;
+                            if (orig) {
+                                const translated = t(orig);
+                                if (translated !== orig) node.textContent = node.textContent.replace(orig, translated);
+                            }
+                        }
+                    });
+                });
+            } else {
+                // Restore Arabic originals
+                document.querySelectorAll('.bilingual').forEach(el => {
+                    const val = el.getAttribute('data-lang-ar');
+                    if (val) el.textContent = val;
+                });
+                document.querySelectorAll('a, span, button, h1, h2, h3, p, div, label, li, option, td, th').forEach(el => {
+                    if (el.classList.contains('bilingual')) return;
+                    el.childNodes.forEach(node => {
+                        if (node.nodeType === 3 && node._origText) {
+                            node.textContent = node.textContent.replace(node.textContent.trim(), node._origText);
+                        }
+                    });
+                });
+            }
+        }
+
+        // ═══════════ CURRENCY SYSTEM ═══════════
+        const CURRENCIES = {
+            KRW: { symbol: '₩', label: '₩ KRW', rate: 1 },
+            USD: { symbol: '$', label: '$ USD', rate: 0.00074 },
+            SAR: { symbol: '﷼', label: '﷼ SAR', rate: 0.00278 },
+            AED: { symbol: 'د.إ', label: 'د.إ AED', rate: 0.00272 },
+            EUR: { symbol: '€', label: '€ EUR', rate: 0.00069 },
+        };
+        const CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
+
+        function setCurrency(code) {
+            localStorage.setItem('site_currency', code);
+            applyCurrency(code);
+            document.getElementById('currency-menu')?.classList.add('hidden');
+        }
+
+        function cycleCurrency() {
+            const cur = localStorage.getItem('site_currency') || 'KRW';
+            const idx = (CURRENCY_ORDER.indexOf(cur) + 1) % CURRENCY_ORDER.length;
+            setCurrency(CURRENCY_ORDER[idx]);
+        }
+
+        function applyCurrency(code) {
+            const cfg = CURRENCIES[code];
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl('currency-label', cfg.label);
+            setEl('mobile-currency-label', cfg.label);
+
+            // Convert all prices: find elements with data-price-krw or price patterns
+            document.querySelectorAll('[data-price-krw]').forEach(el => {
+                const krw = parseFloat(el.getAttribute('data-price-krw'));
+                if (isNaN(krw)) return;
+                const converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate);
+                el.innerHTML = converted.toLocaleString() + ' <span class="text-[9px] sm:text-xs font-medium">' + cfg.symbol + '</span>';
+            });
+        }
+
+        // ═══════════ INIT ON LOAD ═══════════
+        document.addEventListener('DOMContentLoaded', function() {
+            const lang = localStorage.getItem('site_lang') || 'ar';
+            const currency = localStorage.getItem('site_currency') || 'KRW';
+            if (lang !== 'ar') applyLang(lang);
+            else {
+                const cfg = LANGS[lang];
+                const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                setEl('lang-flag', cfg.flag);
+                setEl('lang-label', cfg.label);
+                setEl('mobile-lang-flag', cfg.flag);
+                setEl('mobile-lang-label', cfg.label);
+            }
+            if (currency !== 'KRW') applyCurrency(currency);
+            else {
+                const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                setEl('currency-label', CURRENCIES.KRW.label);
+                setEl('mobile-currency-label', CURRENCIES.KRW.label);
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

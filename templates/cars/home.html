@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}الرئيسية - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-12 sm:py-20 md:py-32">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h1 class="text-2xl sm:text-4xl md:text-6xl font-extrabold mb-4 sm:mb-6 leading-tight">اعثر على سيارة أحلامك</h1>
+        <p class="text-sm sm:text-lg md:text-xl text-blue-100 mb-6 sm:mb-10 max-w-2xl mx-auto">تصفح آلاف السيارات المستوردة بأفضل الأسعار والجودة</p>
+
+        <!-- Search Bar -->
+        <form action="{% url 'car_list' %}" method="get" class="max-w-4xl mx-auto">
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 glass rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                <select name="manufacturer" id="hero-manufacturer" class="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
+                    <option value="">الشركة المصنعة</option>
+                    {% for m in manufacturers %}
+                    <option value="{{ m.id }}" data-name-ar="{{ m.name_ar|default:m.name }}" data-name-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</option>
+                    {% endfor %}
+                </select>
+                <select name="model" id="hero-model" class="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none" disabled>
+                    <option value="">الموديل</option>
+                </select>
+                <select name="year" class="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
+                    <option value="">سنة الصنع</option>
+                    {% for y in years %}
+                    <option value="{{ y }}">{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="px-6 sm:px-8 py-2.5 sm:py-3 bg-brand bg-brand-hover text-white font-bold rounded-lg sm:rounded-xl transition text-sm">
+                    بحث
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Car Type Navigation -->
+<section class="max-w-7xl mx-auto px-3 sm:px-4 -mt-8 sm:-mt-10 relative z-10">
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 max-w-lg mx-auto">
+        <a href="{% url 'car_list' %}?car_type=cars" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
+            {% if cars_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
+            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-blue-50 group-hover:bg-brand-light rounded-xl sm:rounded-2xl flex items-center justify-center transition">
+                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-blue-500 group-hover:text-brand transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17h.01M16 17h.01M3 11l1.5-5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 11M3 11v6a1 1 0 001 1h1a2 2 0 004 0h6a2 2 0 004 0h1a1 1 0 001-1v-6M3 11h18"/></svg>
+            </div>
+            {% if cars_count %}
+            <div class="text-2xl sm:text-3xl font-extrabold text-brand">{{ cars_count }}</div>
+            <div class="text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1">سيارات</div>
+            {% else %}
+            <div class="text-sm sm:text-base font-extrabold text-red-500">قريباً</div>
+            <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">سيارات</div>
+            {% endif %}
+        </a>
+        <a href="{% url 'car_list' %}?car_type=auction" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
+            {% if auction_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500"></span></span>{% endif %}
+            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-purple-50 group-hover:bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
+                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-purple-500 group-hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            {% if auction_count %}
+            <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">{{ auction_count }}</div>
+            <div class="text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1">مزادات</div>
+            {% else %}
+            <div class="text-sm sm:text-base font-extrabold text-red-500">قريباً</div>
+            <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">مزادات</div>
+            {% endif %}
+        </a>
+    </div>
+</section>
+
+<!-- Manufacturers (scrollable) -->
+{% if manufacturers %}
+<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
+    <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-5">الشركات المصنعة</h2>
+    <div class="flex overflow-x-auto gap-2 sm:gap-3 pb-2 scrollbar-hide scroll-smooth" id="mfg-scroll">
+        {% for m in manufacturers %}
+        <a href="{% url 'car_list' %}?manufacturer={{ m.id }}" class="flex-shrink-0 w-16 sm:w-20 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md p-2 sm:p-3 text-center transition group">
+            {% if m.logo %}
+            <img src="{{ m.logo }}" alt="{{ m.name }}" class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain">
+            {% else %}
+            <div class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-xs sm:text-sm">
+                {{ m.name|first }}
+            </div>
+            {% endif %}
+            <span class="text-[8px] sm:text-[10px] font-medium text-gray-600 group-hover:text-brand transition truncate block bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Latest Cars (scrollable) -->
+{% if latest_cars %}
+<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
+    <div class="flex justify-between items-center mb-3 sm:mb-5">
+        <h2 class="text-lg sm:text-xl md:text-2xl font-bold">سيارات</h2>
+        <a href="{% url 'car_list' %}?car_type=cars" class="text-brand text-brand-hover font-medium text-xs sm:text-sm">عرض الكل &larr;</a>
+    </div>
+    <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="cars-scroll">
+        {% for car in latest_cars %}
+        <a href="{% url 'car_detail' car.id %}" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                {% if car.image %}
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                <div class="absolute bottom-2 sm:bottom-3 right-2 sm:right-3">
+                    <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
+                </div>
+            </div>
+            <div class="p-2.5 sm:p-4">
+                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}</h3>
+                <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                    {% if car.mileage %}
+                    <span>&bull;</span>
+                    <span>{{ car.mileage|floatformat:0 }} كم</span>
+                    {% endif %}
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
+                    {% if car.transmission %}
+                    <span class="text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline">{{ car.transmission }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Latest Auctions (scrollable) -->
+{% if latest_auctions %}
+<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
+    <div class="flex justify-between items-center mb-3 sm:mb-5">
+        <h2 class="text-lg sm:text-xl md:text-2xl font-bold">مزادات</h2>
+        <a href="{% url 'car_list' %}?car_type=auction" class="text-brand text-brand-hover font-medium text-xs sm:text-sm">عرض الكل &larr;</a>
+    </div>
+    <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="auctions-scroll">
+        {% for car in latest_auctions %}
+        <a href="{% url 'car_detail' car.id %}" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                {% if car.image %}
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                {% if car.auction_name %}
+                <div class="absolute top-2 sm:top-3 left-2 sm:left-3">
+                    <span class="bg-purple-600/90 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">{{ car.auction_name }}</span>
+                </div>
+                {% endif %}
+                <div class="absolute bottom-2 sm:bottom-3 right-2 sm:right-3">
+                    <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
+                </div>
+            </div>
+            <div class="p-2.5 sm:p-4">
+                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}</h3>
+                <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                    {% if car.mileage %}
+                    <span>&bull;</span>
+                    <span>{{ car.mileage|floatformat:0 }} كم</span>
+                    {% endif %}
+                </div>
+                {% if car.auction_date %}
+                <div class="flex items-center gap-1 text-[10px] sm:text-xs text-purple-500 font-medium mb-2">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {{ car.auction_date|date:"Y/m/d H:i" }}
+                </div>
+                {% endif %}
+                <div class="flex justify-between items-center">
+                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
+                    {% if car.transmission %}
+                    <span class="text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline">{{ car.transmission }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Our Cars (Site-specific) -->
+{% if site_cars %}
+<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
+    <div class="flex justify-between items-center mb-3 sm:mb-5">
+        <div>
+            <h2 class="text-lg sm:text-xl md:text-2xl font-bold">سياراتنا</h2>
+            <p class="text-gray-500 text-xs sm:text-sm mt-1">سيارات مختارة ومعروضة من {{ site_name|default:"موقعنا" }}</p>
+        </div>
+        <a href="{% url 'site_car_list' %}" class="text-brand text-brand-hover font-medium text-xs sm:text-sm">عرض الكل &larr;</a>
+    </div>
+
+    <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="site-cars-scroll">
+        {% for car in site_cars %}
+        <a href="{% url 'site_car_detail' car.id %}" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block border-2 border-transparent hover:border-brand/20">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                {% if car.image %}
+                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                {% elif car.gallery.first %}
+                <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                {% if car.is_featured %}
+                <div class="absolute top-2 sm:top-3 right-2 sm:right-3 bg-yellow-400 text-yellow-900 text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">مميزة</div>
+                {% endif %}
+                {% if car.status == 'sold' %}
+                <div class="absolute top-2 sm:top-3 left-2 sm:left-3 bg-red-500 text-white text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">تم البيع</div>
+                {% endif %}
+            </div>
+            <div class="p-2.5 sm:p-4">
+                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base">{{ car.manufacturer }} {{ car.model }}</h3>
+                <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
+                    <span>{{ car.year }}</span>
+                    <span>&bull;</span>
+                    <span>{{ car.manufacturer }}</span>
+                    {% if car.mileage %}
+                    <span class="hidden sm:inline">&bull;</span>
+                    <span class="hidden sm:inline">{{ car.mileage|floatformat:0 }} كم</span>
+                    {% endif %}
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
+                    {% if car.transmission %}
+                    <span class="text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline">{{ car.transmission }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA -->
+<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-10 sm:mt-16 mb-8 sm:mb-0">
+    <div class="bg-brand rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-12 text-white text-center">
+        <h2 class="text-lg sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">لم تجد سيارتك المطلوبة؟</h2>
+        <p class="text-white/80 mb-4 sm:mb-6 max-w-xl mx-auto text-sm sm:text-base">أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر</p>
+        <a href="{% url 'car_request' %}" class="inline-block bg-white text-brand font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-gray-100 transition text-sm sm:text-base">
+            اطلب سيارة الآن
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const mfgSelect = document.getElementById('hero-manufacturer');
+    const modelSelect = document.getElementById('hero-model');
+    if (!mfgSelect || !modelSelect) return;
+
+    const defaultLabel = { ar: 'الموديل', en: 'Model' };
+    const loadingLabel = { ar: 'جاري التحميل...', en: 'Loading...' };
+
+    function getLang() {
+        return localStorage.getItem('site_lang') || 'ar';
+    }
+
+    mfgSelect.addEventListener('change', function() {
+        const mfgId = this.value;
+        modelSelect.innerHTML = '<option value="">' + defaultLabel[getLang()] + '</option>';
+
+        if (!mfgId) {
+            modelSelect.disabled = true;
+            return;
+        }
+
+        modelSelect.disabled = true;
+        modelSelect.innerHTML = '<option value="">' + loadingLabel[getLang()] + '</option>';
+
+        fetch('{% url "api_models_by_manufacturer" %}?manufacturer_id=' + mfgId)
+            .then(r => r.json())
+            .then(models => {
+                modelSelect.innerHTML = '<option value="">' + defaultLabel[getLang()] + '</option>';
+                models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name;
+                    modelSelect.appendChild(opt);
+                });
+                modelSelect.disabled = false;
+            })
+            .catch(() => {
+                modelSelect.innerHTML = '<option value="">' + defaultLabel[getLang()] + '</option>';
+                modelSelect.disabled = true;
+            });
+    });
+})();
+</script>
+{% endblock %}

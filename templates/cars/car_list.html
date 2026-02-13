@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{% if request.GET.car_type == 'auction' %}المزادات{% else %}السيارات{% endif %} - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-8 sm:pb-12">
+
+    <!-- ═══════════════ STICKY SEARCH BAR ═══════════════ -->
+    <div class="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 pt-2 pb-3 sm:pb-4 bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50/0">
+        <form method="get" id="main-form" class="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-gray-200/60 border border-gray-100 p-2 sm:p-3 flex gap-2 sm:gap-3">
+            <!-- Hidden fields to preserve filters -->
+            {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+            {% if request.GET.manufacturer %}<input type="hidden" name="manufacturer" value="{{ request.GET.manufacturer }}">{% endif %}
+            {% if request.GET.model %}<input type="hidden" name="model" value="{{ request.GET.model }}">{% endif %}
+            {% if request.GET.year %}<input type="hidden" name="year" value="{{ request.GET.year }}">{% endif %}
+            {% if request.GET.color %}<input type="hidden" name="color" value="{{ request.GET.color }}">{% endif %}
+            {% if request.GET.body_type %}<input type="hidden" name="body_type" value="{{ request.GET.body_type }}">{% endif %}
+            {% if request.GET.fuel %}<input type="hidden" name="fuel" value="{{ request.GET.fuel }}">{% endif %}
+            {% if request.GET.transmission %}<input type="hidden" name="transmission" value="{{ request.GET.transmission }}">{% endif %}
+            {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+            {% if request.GET.price_min %}<input type="hidden" name="price_min" value="{{ request.GET.price_min }}">{% endif %}
+            {% if request.GET.price_max %}<input type="hidden" name="price_max" value="{{ request.GET.price_max }}">{% endif %}
+            {% if request.GET.mileage_min %}<input type="hidden" name="mileage_min" value="{{ request.GET.mileage_min }}">{% endif %}
+            {% if request.GET.mileage_max %}<input type="hidden" name="mileage_max" value="{{ request.GET.mileage_max }}">{% endif %}
+            {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+
+            <div class="flex-1 relative">
+                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث..." class="w-full pr-9 sm:pr-10 pl-3 sm:pl-4 py-2.5 sm:py-3 bg-gray-50 border-0 rounded-lg sm:rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" autocomplete="off">
+            </div>
+            <button type="submit" class="px-5 sm:px-8 py-2.5 sm:py-3 bg-brand bg-brand-hover text-white font-bold rounded-lg sm:rounded-xl transition text-sm whitespace-nowrap">
+                بحث
+            </button>
+        </form>
+    </div>
+
+    <!-- ═══════════════ TYPE TABS + RESULT COUNT ═══════════════ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-5 mt-2">
+        <div class="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100 w-full sm:w-auto overflow-x-auto scrollbar-hide">
+            <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if not request.GET.car_type %}bg-brand text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
+                الكل
+                <span class="{% if not request.GET.car_type %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_all|intcomma }}</span>
+            </a>
+            <a href="?car_type=cars{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if request.GET.car_type == 'cars' %}bg-brand text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                سيارات
+                <span class="{% if request.GET.car_type == 'cars' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_cars|intcomma }}</span>
+            </a>
+            <a href="?car_type=auction{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if request.GET.car_type == 'auction' %}bg-purple-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                مزادات
+                <span class="{% if request.GET.car_type == 'auction' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_auction|intcomma }}</span>
+            </a>
+        </div>
+        <div class="text-xs sm:text-sm text-gray-500">
+            <span class="font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span> نتيجة
+        </div>
+    </div>
+
+    <!-- ═══════════════ POPULAR BRANDS (quick pick) ═══════════════ -->
+    {% if popular_manufacturers and not request.GET.manufacturer %}
+    <div class="mb-6">
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {% for m in popular_manufacturers %}
+            <a href="?manufacturer={{ m.id }}{% if request.GET.car_type %}&car_type={{ request.GET.car_type }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+               class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-brand hover:text-brand hover:shadow-sm transition whitespace-nowrap">
+                {% if m.logo %}<img src="{{ m.logo }}" class="w-5 h-5 object-contain" alt="">{% endif %}
+                {{ m.name }}
+                <span class="text-xs text-gray-400">{{ m.car_count|intcomma }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
+    {% if request.GET.manufacturer or request.GET.model or request.GET.year or request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.status or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+    <div class="flex flex-wrap items-center gap-2 mb-5" id="active-chips">
+        <span class="text-xs text-gray-400 font-medium">الفلاتر النشطة:</span>
+
+        {% for m in manufacturers %}
+            {% if request.GET.manufacturer == m.id|stringformat:"d" %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-full hover:bg-blue-100 transition group">
+                الشركة: {{ m.name }}
+                <svg class="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </a>
+            {% endif %}
+        {% endfor %}
+
+        {% for m in models %}
+            {% if request.GET.model == m.id|stringformat:"d" %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full hover:bg-indigo-100 transition group">
+                الموديل: {{ m.name }}
+                <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if request.GET.year %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'year' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-full hover:bg-green-100 transition group">
+            السنة: {{ request.GET.year }}
+            <svg class="w-3.5 h-3.5 text-green-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        {% if request.GET.fuel %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'fuel' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 text-xs font-medium rounded-full hover:bg-amber-100 transition group">
+            الوقود: {{ request.GET.fuel }}
+            <svg class="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        {% if request.GET.transmission %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'transmission' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full hover:bg-teal-100 transition group">
+            ناقل: {{ request.GET.transmission }}
+            <svg class="w-3.5 h-3.5 text-teal-400 group-hover:text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        {% for c in colors %}
+            {% if request.GET.color == c.id|stringformat:"d" %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'color' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 text-xs font-medium rounded-full hover:bg-pink-100 transition group">
+                اللون: {{ c.name }}
+                <svg class="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if request.GET.price_min or request.GET.price_max %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'price_min' and k != 'price_max' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-full hover:bg-orange-100 transition group">
+            السعر: {% if request.GET.price_min %}{{ request.GET.price_min }}{% else %}0{% endif %} - {% if request.GET.price_max %}{{ request.GET.price_max }}{% else %}&infin;{% endif %} ₩
+            <svg class="w-3.5 h-3.5 text-orange-400 group-hover:text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        {% if request.GET.mileage_min or request.GET.mileage_max %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'mileage_min' and k != 'mileage_max' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-cyan-50 text-cyan-700 text-xs font-medium rounded-full hover:bg-cyan-100 transition group">
+            المسافة: {% if request.GET.mileage_min %}{{ request.GET.mileage_min }}{% else %}0{% endif %} - {% if request.GET.mileage_max %}{{ request.GET.mileage_max }}{% else %}&infin;{% endif %} كم
+            <svg class="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        {% if request.GET.status %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'status' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-full hover:bg-red-100 transition group">
+            الحالة: {% if request.GET.status == 'available' %}متاح{% elif request.GET.status == 'sold' %}مباع{% else %}قيد الانتظار{% endif %}
+            <svg class="w-3.5 h-3.5 text-red-400 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full hover:bg-gray-200 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            مسح الكل
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════ FILTER PANEL (slide-down) ═══════════════ -->
+    <div class="mb-4 sm:mb-6">
+        <button type="button" id="toggle-filters" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            فلاتر متقدمة
+            <svg id="filter-arrow" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+    </div>
+
+    <form method="get" id="filter-form" class="hidden mb-6 sm:mb-8 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300" style="animation: slideDown 0.3s ease-out;">
+        {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+        {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+
+        <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <!-- Row 1: Core filters -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الشركة المصنعة</label>
+                    <select name="manufacturer" id="manufacturer-select" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">جميع الشركات</option>
+                        {% for m in manufacturers %}
+                        <option value="{{ m.id }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الموديل</label>
+                    <select name="model" id="model-select" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">جميع الموديلات</option>
+                        {% for m in models %}
+                        <option value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">سنة الصنع</label>
+                    <select name="year" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">جميع السنوات</option>
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if request.GET.year == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الحالة</label>
+                    <select name="status" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>متاح</option>
+                        <option value="sold" {% if request.GET.status == 'sold' %}selected{% endif %}>تم البيع</option>
+                        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: Secondary filters -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اللون</label>
+                    <select name="color" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">جميع الألوان</option>
+                        {% for c in colors %}
+                        <option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">نوع الهيكل</label>
+                    <select name="body_type" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">جميع الأنواع</option>
+                        {% for b in body_types %}
+                        <option value="{{ b.id }}" {% if request.GET.body_type == b.id|stringformat:"d" %}selected{% endif %}>{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الوقود</label>
+                    <select name="fuel" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">جميع أنواع الوقود</option>
+                        {% for f in fuels %}
+                        <option value="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">ناقل الحركة</label>
+                    <select name="transmission" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for t in transmissions %}
+                        <option value="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 3: Range filters -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">السعر من (₩)</label>
+                    <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">السعر إلى (₩)</label>
+                    <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="بلا حدود" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">المسافة من (كم)</label>
+                    <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">المسافة إلى (كم)</label>
+                    <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="بلا حدود" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter actions -->
+        <div class="bg-gray-50 px-4 sm:px-6 py-3 flex items-center justify-between border-t border-gray-100">
+            <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="text-sm text-gray-500 hover:text-gray-700 font-medium transition">مسح جميع الفلاتر</a>
+            <button type="submit" class="px-6 py-2 bg-brand bg-brand-hover text-white font-bold rounded-xl transition text-sm">
+                تطبيق الفلاتر
+            </button>
+        </div>
+    </form>
+
+    <!-- ═══════════════ SORT BAR ═══════════════ -->
+    <div class="flex items-center justify-between mb-4 sm:mb-6">
+        <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <span class="text-[10px] sm:text-xs text-gray-400 font-medium whitespace-nowrap">ترتيب:</span>
+            {% with current_sort=request.GET.sort|default:"-created_at" %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sort=-created_at" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-created_at' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث</a>
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sort=price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'price' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأرخص</a>
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sort=-price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-price' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأغلى</a>
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sort=-year" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-year' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث صنعاً</a>
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sort=mileage" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'mileage' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">أقل مسافة</a>
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}sort=-mileage" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-mileage' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">أكثر مسافة</a>
+            {% endwith %}
+        </div>
+    </div>
+
+    <!-- ═══════════════ CAR GRID ═══════════════ -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+        {% for car in page_obj %}
+        <a href="{% url 'car_detail' car.id %}" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden block transition-all duration-300 border border-gray-100 hover:border-gray-200">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                {% if car.image %}
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                <!-- Badges -->
+                <div class="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1">
+                    {% if car.status == 'sold' %}
+                    <span class="bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">تم البيع</span>
+                    {% endif %}
+                </div>
+                {% if car.auction_name %}
+                <div class="absolute top-2 sm:top-3 left-2 sm:left-3">
+                    <span class="bg-purple-600/90 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">{{ car.auction_name }}</span>
+                </div>
+                {% endif %}
+                <!-- Year pill -->
+                <div class="absolute bottom-2 sm:bottom-3 right-2 sm:right-3">
+                    <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
+                </div>
+            </div>
+            <div class="p-2.5 sm:p-4">
+                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px]"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}</h3>
+                <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-400 mb-2 sm:mb-3 truncate">
+                    <span>{{ car.badge.name }}</span>
+                    {% if car.mileage %}
+                    <span>&bull;</span>
+                    <span>{{ car.mileage|intcomma }} كم</span>
+                    {% endif %}
+                    {% if car.fuel %}
+                    <span class="hidden sm:inline">&bull;</span>
+                    <span class="hidden sm:inline">{{ car.fuel }}</span>
+                    {% endif %}
+                </div>
+                {% if car.auction_date %}
+                <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-purple-500 font-medium mb-2 sm:mb-3">
+                    <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    {{ car.auction_date|date:"Y/m/d" }}
+                </div>
+                {% endif %}
+                <div class="flex justify-between items-center pt-2 sm:pt-3 border-t border-gray-100">
+                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} <span class="text-[9px] sm:text-xs font-medium">₩</span></span>
+                    {% if car.transmission %}
+                    <span class="text-[9px] sm:text-[10px] bg-gray-100 text-gray-500 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium hidden sm:inline">{{ car.transmission }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-full text-center py-20">
+            <div class="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-700 mb-2">لا توجد نتائج</h3>
+            <p class="text-gray-400 text-sm mb-4">جرّب تغيير الفلاتر أو البحث بكلمات مختلفة</p>
+            <a href="{% url 'car_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand bg-brand-hover text-white text-sm font-medium rounded-xl transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                عرض جميع السيارات
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ═══════════════ PAGINATION ═══════════════ -->
+    {% if page_obj.has_other_pages %}
+    <nav class="flex justify-center mt-12">
+        <div class="flex items-center gap-1.5">
+            {% if page_obj.has_previous %}
+            <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+            {% endif %}
+
+            {% if page_obj.number > 3 %}
+            <a href="?{{ query_string }}&page=1" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition">1</a>
+            {% if page_obj.number > 4 %}
+            <span class="w-10 h-10 flex items-center justify-center text-gray-400 text-sm">...</span>
+            {% endif %}
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                    {% if page_obj.number == num %}
+                    <span class="w-10 h-10 flex items-center justify-center bg-brand text-white rounded-xl text-sm font-bold shadow-sm">{{ num }}</span>
+                    {% else %}
+                    <a href="?{{ query_string }}&page={{ num }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition font-medium">{{ num }}</a>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.number < page_obj.paginator.num_pages|add:"-2" %}
+            {% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
+            <span class="w-10 h-10 flex items-center justify-center text-gray-400 text-sm">...</span>
+            {% endif %}
+            <a href="?{{ query_string }}&page={{ page_obj.paginator.num_pages }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition">{{ page_obj.paginator.num_pages }}</a>
+            {% endif %}
+
+            {% if page_obj.has_next %}
+            <a href="?{{ query_string }}&page={{ page_obj.next_page_number }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="text-center mt-3 text-xs text-gray-400">
+        صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages|intcomma }}
+    </div>
+    {% endif %}
+</section>
+
+<!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+<script>
+// Toggle filter panel
+const toggleBtn = document.getElementById('toggle-filters');
+const filterForm = document.getElementById('filter-form');
+const filterArrow = document.getElementById('filter-arrow');
+
+toggleBtn.addEventListener('click', function() {
+    filterForm.classList.toggle('hidden');
+    filterArrow.classList.toggle('rotate-180');
+});
+
+// Auto-open if filters are active
+{% if request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.status or request.GET.manufacturer or request.GET.model or request.GET.year %}
+filterForm.classList.remove('hidden');
+filterArrow.classList.add('rotate-180');
+{% endif %}
+
+// Dynamic model loading when manufacturer changes
+const manuSelect = document.getElementById('manufacturer-select');
+const modelSelect = document.getElementById('model-select');
+
+if (manuSelect && modelSelect) {
+    manuSelect.addEventListener('change', function() {
+        const manuId = this.value;
+        modelSelect.innerHTML = '<option value="">جميع الموديلات</option>';
+        if (!manuId) return;
+
+        fetch(`{% url 'api_models_by_manufacturer' %}?manufacturer_id=${manuId}`)
+            .then(r => r.json())
+            .then(models => {
+                models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name;
+                    modelSelect.appendChild(opt);
+                });
+            });
+    });
+}
+</script>
+
+<style>
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

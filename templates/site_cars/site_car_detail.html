@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}{{ car.title }} - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{% url 'home' %}" class="text-brand-hover transition">الرئيسية</a>
+        <span>/</span>
+        <a href="{% url 'site_car_list' %}" class="text-brand-hover transition">سياراتنا</a>
+        <span>/</span>
+        <span class="text-gray-800">{{ car.title }}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Images -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+                <div class="aspect-[16/10] bg-gray-100">
+                    {% if car.image %}
+                    <img id="main-image" src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                    {% elif car.gallery.first %}
+                    <img id="main-image" src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-300">
+                        <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if car.gallery.all %}
+            <div class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                {% for img in car.gallery.all %}
+                <button onclick="document.getElementById('main-image').src='{{ img.image.url }}'" class="aspect-square bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-400 transition">
+                    <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="w-full h-full object-cover" loading="lazy">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Specs -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4">المواصفات</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">الشركة المصنعة</div>
+                        <div class="font-bold text-sm">{{ car.manufacturer }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">الموديل</div>
+                        <div class="font-bold text-sm">{{ car.model }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">سنة الصنع</div>
+                        <div class="font-bold text-sm">{{ car.year }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">المسافة المقطوعة</div>
+                        <div class="font-bold text-sm">{{ car.mileage|floatformat:0 }} كم</div>
+                    </div>
+                    {% if car.transmission %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">ناقل الحركة</div>
+                        <div class="font-bold text-sm">{{ car.transmission }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.fuel %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">الوقود</div>
+                        <div class="font-bold text-sm">{{ car.fuel }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.color %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">اللون</div>
+                        <div class="font-bold text-sm">{{ car.color }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.body_type %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">نوع الهيكل</div>
+                        <div class="font-bold text-sm">{{ car.body_type }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.engine %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">المحرك</div>
+                        <div class="font-bold text-sm">{{ car.engine }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.drive_wheel %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">نظام الدفع</div>
+                        <div class="font-bold text-sm">{{ car.drive_wheel }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if car.description %}
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4">الوصف</h2>
+                <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ car.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
+                <h1 class="text-xl font-bold text-gray-900 mb-2">{{ car.title }}</h1>
+
+                {% if car.is_featured %}
+                <span class="inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-2">مميزة</span>
+                {% endif %}
+
+                {% if car.status == 'sold' %}
+                <span class="inline-block bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full mb-4">تم البيع</span>
+                {% elif car.status == 'pending' %}
+                <span class="inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-4">قيد الانتظار</span>
+                {% else %}
+                <span class="inline-block bg-brand-light text-brand text-sm font-bold px-3 py-1 rounded-full mb-4">متاح</span>
+                {% endif %}
+
+                <div class="border-t border-gray-100 pt-4 mb-4">
+                    <div class="text-sm text-gray-500 mb-1">السعر</div>
+                    <div class="text-3xl font-extrabold text-brand">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
+                </div>
+
+                <div class="space-y-3 text-sm border-t border-gray-100 pt-4 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">سنة الصنع</span>
+                        <span class="font-medium">{{ car.year }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">المسافة</span>
+                        <span class="font-medium">{{ car.mileage|floatformat:0 }} كم</span>
+                    </div>
+                    {% if car.transmission %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">ناقل الحركة</span>
+                        <span class="font-medium">{{ car.transmission }}</span>
+                    </div>
+                    {% endif %}
+                    {% if car.fuel %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">الوقود</span>
+                        <span class="font-medium">{{ car.fuel }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'contact' %}" class="block w-full text-center bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition mb-3">
+                    تواصل معنا
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

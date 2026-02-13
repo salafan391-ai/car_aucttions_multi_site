@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}الرسائل - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">الرسائل</h1>
+            {% if unread_count > 0 %}
+            <p class="text-sm text-gray-500 mt-1">{{ unread_count }} رسالة غير مقروءة</p>
+            {% endif %}
+        </div>
+        <a href="{% url 'compose_message' %}" class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            رسالة جديدة
+        </a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6">
+        <a href="?tab=received" class="flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition {% if tab == 'received' %}bg-white shadow-sm text-gray-900{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+            الواردة
+            {% if unread_count > 0 %}<span class="inline-block bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full mr-1">{{ unread_count }}</span>{% endif %}
+        </a>
+        <a href="?tab=sent" class="flex-1 text-center py-2.5 rounded-lg text-sm font-medium transition {% if tab == 'sent' %}bg-white shadow-sm text-gray-900{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+            المرسلة
+        </a>
+    </div>
+
+    <!-- Messages List -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {% if tab == 'received' %}
+            {% for m in received %}
+            <a href="{% url 'message_detail' m.pk %}" class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition border-b border-gray-100 last:border-0 {% if not m.is_read %}bg-brand/5{% endif %}">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 {% if not m.is_read %}bg-brand text-white{% else %}bg-gray-100 text-gray-500{% endif %}">
+                    {{ m.sender.username|first|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm {% if not m.is_read %}text-gray-900{% else %}text-gray-600{% endif %}">{{ m.sender.username }}</span>
+                        <span class="text-xs text-gray-400">{{ m.created_at|date:"Y/m/d H:i" }}</span>
+                    </div>
+                    <div class="text-sm {% if not m.is_read %}font-bold text-gray-900{% else %}text-gray-700{% endif %} truncate">{{ m.subject }}</div>
+                    <div class="text-xs text-gray-400 truncate">{{ m.body|truncatewords:15 }}</div>
+                </div>
+                {% if not m.is_read %}
+                <div class="w-2.5 h-2.5 bg-brand rounded-full flex-shrink-0"></div>
+                {% endif %}
+            </a>
+            {% empty %}
+            <div class="text-center py-16 text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <p>لا توجد رسائل واردة</p>
+            </div>
+            {% endfor %}
+        {% else %}
+            {% for m in sent %}
+            <a href="{% url 'message_detail' m.pk %}" class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition border-b border-gray-100 last:border-0">
+                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-bold text-sm flex-shrink-0">
+                    {{ m.recipient.username|first|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm text-gray-600">إلى: {{ m.recipient.username }}</span>
+                        <span class="text-xs text-gray-400">{{ m.created_at|date:"Y/m/d H:i" }}</span>
+                    </div>
+                    <div class="text-sm text-gray-700 truncate">{{ m.subject }}</div>
+                    <div class="text-xs text-gray-400 truncate">{{ m.body|truncatewords:15 }}</div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="text-center py-16 text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <p>لا توجد رسائل مرسلة</p>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

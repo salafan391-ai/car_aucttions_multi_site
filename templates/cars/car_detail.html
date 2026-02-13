@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}{{ car.title }} - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{% url 'home' %}" class="text-brand-hover transition">الرئيسية</a>
+        <span>/</span>
+        <a href="{% url 'car_list' %}" class="text-brand-hover transition">السيارات</a>
+        <span>/</span>
+        <span class="text-gray-800"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Images -->
+        <div class="lg:col-span-2">
+            <!-- Main Image -->
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
+                <div class="aspect-[16/10] bg-gray-100">
+                    {% if car.image %}
+                    <img id="main-image" src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-300">
+                        <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Thumbnail Gallery -->
+            {% if car.images %}
+            <div class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                {% for img in car.images %}
+                <button onclick="document.getElementById('main-image').src='{{ img }}'" class="aspect-square bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-400 transition">
+                    <img src="{{ img }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Inspection Image (Auction) -->
+            {% if car.inspection_image %}
+            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    تقرير الفحص
+                </h2>
+                <div class="rounded-xl overflow-hidden border border-gray-100">
+                {{ car.inspection_image|safe }} 
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Details Table -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4">المواصفات</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">الشركة المصنعة</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">الموديل</div>
+                        <div class="font-bold text-sm">{{ car.model.name }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">سنة الصنع</div>
+                        <div class="font-bold text-sm">{{ car.year }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">المسافة المقطوعة</div>
+                        <div class="font-bold text-sm">{{ car.mileage|floatformat:0 }} كم</div>
+                    </div>
+                    {% if car.transmission %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">ناقل الحركة</div>
+                        <div class="font-bold text-sm">{{ car.transmission }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.fuel %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">الوقود</div>
+                        <div class="font-bold text-sm">{{ car.fuel }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">اللون</div>
+                        <div class="font-bold text-sm">{{ car.color.name }}</div>
+                    </div>
+                    {% if car.seat_color %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">لون المقاعد</div>
+                        <div class="font-bold text-sm">{{ car.seat_color.name }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.body %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">نوع الهيكل</div>
+                        <div class="font-bold text-sm">{{ car.body.name }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.power %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">القوة</div>
+                        <div class="font-bold text-sm">{{ car.power }} cc</div>
+                    </div>
+                    {% endif %}
+                    {% if car.drive_wheel %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">نظام الدفع</div>
+                        <div class="font-bold text-sm">{{ car.drive_wheel }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.engine %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">المحرك</div>
+                        <div class="font-bold text-sm">{{ car.engine }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.vin %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">رقم الهيكل</div>
+                        <div class="font-bold text-sm">{{ car.vin }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.address %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">الموقع</div>
+                        <div class="font-bold text-sm">{{ car.address }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Description -->
+            {% if car.description %}
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4">الوصف</h2>
+                <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ car.description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Options -->
+            {% if car.options %}
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4">المميزات</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for opt in car.options %}
+                    <span class="bg-brand-light text-brand text-sm px-3 py-1.5 rounded-full">{{ opt }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Ratings Section -->
+            {% if ratings is not None %}
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold">التقييمات</h2>
+                        {% if ratings %}
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="flex items-center">
+                                {% for i in "12345" %}
+                                {% if forloop.counter <= avg_rating %}
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                {% else %}
+                                <svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="text-sm text-gray-500">({{ ratings|length }} تقييم)</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Rating Form -->
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'rate_car' car.pk %}" class="mb-6 bg-gray-50 rounded-xl p-4">
+                    {% csrf_token %}
+                    <div class="text-sm font-medium text-gray-700 mb-2">
+                        {% if user_rating %}تعديل تقييمك{% else %}أضف تقييمك{% endif %}
+                    </div>
+                    <div class="flex items-center gap-1 mb-3" id="star-rating">
+                        {% for i in "12345" %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="rating" value="{{ forloop.counter }}" class="hidden peer" {% if user_rating and user_rating.rating == forloop.counter %}checked{% endif %}>
+                            <svg class="w-8 h-8 text-gray-300 peer-checked:text-yellow-400 hover:text-yellow-400 transition" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <textarea name="comment" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none mb-3" placeholder="اكتب تعليقك (اختياري)...">{% if user_rating %}{{ user_rating.comment }}{% endif %}</textarea>
+                    <button type="submit" class="bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2 rounded-lg transition">
+                        {% if user_rating %}تحديث التقييم{% else %}إرسال التقييم{% endif %}
+                    </button>
+                </form>
+                {% else %}
+                <div class="mb-6 bg-gray-50 rounded-xl p-4 text-center text-sm text-gray-500">
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="text-brand font-medium">سجل دخولك</a> لإضافة تقييم
+                </div>
+                {% endif %}
+
+                <!-- Ratings List -->
+                {% for r in ratings %}
+                <div class="{% if not forloop.first %}border-t border-gray-100 pt-4 mt-4{% endif %}">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ r.user.username|first|upper }}</div>
+                            <span class="font-medium text-sm">{{ r.user.get_short_name|default:r.user.username }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            {% for i in "12345" %}
+                            {% if forloop.counter <= r.rating %}
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            {% else %}
+                            <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if r.comment %}
+                    <p class="text-sm text-gray-600 mr-10">{{ r.comment }}</p>
+                    {% endif %}
+                    <div class="text-xs text-gray-400 mr-10 mt-1">{{ r.created_at|date:"Y/m/d" }}</div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-400 text-center py-4">لا توجد تقييمات بعد. كن أول من يقيّم!</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
+                <h1 class="text-xl font-bold text-gray-900 mb-2"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}</h1>
+
+                {% if car.status == 'sold' %}
+                <span class="inline-block bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full mb-4">تم البيع</span>
+                {% elif car.status == 'pending' %}
+                <span class="inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-4">قيد الانتظار</span>
+                {% else %}
+                <span class="inline-block bg-brand-light text-brand text-sm font-bold px-3 py-1 rounded-full mb-4">متاح</span>
+                {% endif %}
+
+                <div class="border-t border-gray-100 pt-4 mb-4">
+                    <div class="text-sm text-gray-500 mb-1">السعر</div>
+                    <div class="text-brand font-extrabold text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
+                </div>
+
+                <div class="space-y-3 text-sm border-t border-gray-100 pt-4 mb-6">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">سنة الصنع</span>
+                        <span class="font-medium">{{ car.year }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">المسافة</span>
+                        <span class="font-medium">{{ car.mileage|floatformat:0 }} كم</span>
+                    </div>
+                    {% if car.transmission %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">ناقل الحركة</span>
+                        <span class="font-medium">{{ car.transmission }}</span>
+                    </div>
+                    {% endif %}
+                    {% if car.fuel %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">الوقود</span>
+                        <span class="font-medium">{{ car.fuel }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if car.status == 'available' %}
+                <a href="{% url 'place_order' car.pk %}" class="block w-full text-center bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition mb-3">
+                    اطلب هذه السيارة
+                </a>
+                {% endif %}
+                <a href="{% url 'contact' %}" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition">
+                    استفسار
+                </a>
+
+                {% if contact_person_name or contact_person_photo %}
+                <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                    {% if contact_person_photo %}
+                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center text-brand font-bold text-lg">{{ contact_person_name|first }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="font-bold text-sm text-gray-900">{{ contact_person_name }}</div>
+                        <div class="text-xs text-gray-500">مسؤول المبيعات</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if site_whatsapp or site_phone %}
+                <div class="flex gap-2 mt-3">
+                    {% if site_whatsapp %}
+                    <a href="https://wa.me/{{ site_whatsapp }}?text=استفسار عن السيارة: {{ car.manufacturer.name }} {{ car.model.name }} {{ car.year }}" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-xl transition">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                        واتساب
+                    </a>
+                    {% endif %}
+                    {% if site_phone %}
+                    <a href="tel:{{ site_phone }}" class="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        اتصال
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="text-xs text-gray-400 mt-4 text-center">
+                    رقم القطعة: {{ car.lot_number }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('star-rating');
+    if (!container) return;
+    const labels = container.querySelectorAll('label');
+    labels.forEach((label, idx) => {
+        label.addEventListener('mouseenter', () => {
+            labels.forEach((l, i) => {
+                l.querySelector('svg').classList.toggle('text-yellow-400', i <= idx);
+                l.querySelector('svg').classList.toggle('text-gray-300', i > idx);
+            });
+        });
+        label.addEventListener('click', () => {
+            label.querySelector('input').checked = true;
+            labels.forEach((l, i) => {
+                l.querySelector('svg').classList.toggle('text-yellow-400', i <= idx);
+                l.querySelector('svg').classList.toggle('text-gray-300', i > idx);
+            });
+        });
+    });
+    container.addEventListener('mouseleave', () => {
+        const checked = container.querySelector('input:checked');
+        const checkedIdx = checked ? parseInt(checked.value) - 1 : -1;
+        labels.forEach((l, i) => {
+            l.querySelector('svg').classList.toggle('text-yellow-400', i <= checkedIdx);
+            l.querySelector('svg').classList.toggle('text-gray-300', i > checkedIdx);
+        });
+    });
+});
+</script>
+{% endblock %}

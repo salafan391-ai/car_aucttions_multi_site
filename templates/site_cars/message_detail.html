@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{{ msg.subject }} - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-8">
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{% url 'inbox' %}" class="text-brand-hover transition">الرسائل</a>
+        <span>/</span>
+        <span class="text-gray-800">{{ msg.subject }}</span>
+    </nav>
+
+    <!-- Original Message -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-4">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ msg.sender.username|first|upper }}</div>
+                <div>
+                    <div class="font-medium text-sm">{{ msg.sender.username }}</div>
+                    <div class="text-xs text-gray-400">إلى {{ msg.recipient.username }} &bull; {{ msg.created_at|date:"Y/m/d H:i" }}</div>
+                </div>
+            </div>
+            {% if not msg.is_read and msg.recipient == user %}
+            <span class="bg-brand/10 text-brand text-xs font-bold px-2.5 py-1 rounded-full">جديدة</span>
+            {% endif %}
+        </div>
+        <h2 class="text-lg font-bold mb-3">{{ msg.subject }}</h2>
+        <div class="text-gray-700 leading-relaxed whitespace-pre-line">{{ msg.body }}</div>
+    </div>
+
+    <!-- Replies -->
+    {% for reply in replies %}
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-4 mr-6">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="w-8 h-8 {% if reply.sender == user %}bg-green-100 text-green-600{% else %}bg-brand-light text-brand{% endif %} rounded-full flex items-center justify-center font-bold text-xs">{{ reply.sender.username|first|upper }}</div>
+            <div>
+                <span class="font-medium text-sm">{{ reply.sender.username }}</span>
+                <span class="text-xs text-gray-400 mr-2">{{ reply.created_at|date:"Y/m/d H:i" }}</span>
+            </div>
+        </div>
+        <div class="text-gray-700 text-sm leading-relaxed whitespace-pre-line mr-11">{{ reply.body }}</div>
+    </div>
+    {% endfor %}
+
+    <!-- Reply Form -->
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h3 class="text-sm font-bold text-gray-700 mb-3">إرسال رد</h3>
+        <form method="post">
+            {% csrf_token %}
+            <textarea name="body" rows="4" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none mb-3" placeholder="اكتب ردك هنا..."></textarea>
+            <div class="flex justify-end">
+                <button type="submit" class="bg-brand bg-brand-hover text-white text-sm font-bold px-6 py-2.5 rounded-xl transition">
+                    إرسال الرد
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

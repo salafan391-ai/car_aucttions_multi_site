@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}طلب سيارة - {{ car.title }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-8">
+    <nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{% url 'home' %}" class="text-brand-hover transition">الرئيسية</a>
+        <span>/</span>
+        <a href="{% url 'car_list' %}" class="text-brand-hover transition">السيارات</a>
+        <span>/</span>
+        <a href="{% url 'car_detail' car.pk %}" class="text-brand-hover transition">{{ car.title }}</a>
+        <span>/</span>
+        <span class="text-gray-800">تقديم طلب</span>
+    </nav>
+
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <!-- Car Summary -->
+        <div class="flex items-center gap-4 p-6 border-b border-gray-100">
+            {% if car.image %}
+            <img src="{{ car.image }}" alt="{{ car.title }}" class="w-24 h-20 object-cover rounded-xl">
+            {% else %}
+            <div class="w-24 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-gray-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            {% endif %}
+            <div>
+                <h2 class="font-bold text-lg text-gray-900">{{ car.title }}</h2>
+                <div class="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                    <span>{{ car.year }}</span>
+                    <span>&bull;</span>
+                    <span>{{ car.manufacturer.name }}</span>
+                    <span>&bull;</span>
+                    <span>{{ car.mileage|floatformat:0 }} كم</span>
+                </div>
+                <div class="text-brand font-extrabold text-lg mt-1">{{ car.price|floatformat:0 }} ₩</div>
+            </div>
+        </div>
+
+        <!-- Order Form -->
+        <form method="post" class="p-6 space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label for="offer_price" class="block text-sm font-medium text-gray-700 mb-2">السعر المعروض (₩) <span class="text-red-500">*</span></label>
+                <input type="number" name="offer_price" id="offer_price" value="{{ car.price }}"
+                       class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition"
+                       placeholder="أدخل السعر المعروض" required>
+                <p class="text-xs text-gray-400 mt-1">السعر المعلن: {{ car.price|floatformat:0 }} ₩</p>
+            </div>
+
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">ملاحظات (اختياري)</label>
+                <textarea name="notes" id="notes" rows="4"
+                          class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none"
+                          placeholder="أي ملاحظات أو طلبات خاصة..."></textarea>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-4 text-sm text-gray-600">
+                <div class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-brand mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p>بعد تقديم الطلب، سيتم مراجعته من قبل الإدارة والتواصل معك لتأكيد التفاصيل.</p>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition text-center">
+                    تأكيد الطلب
+                </button>
+                <a href="{% url 'car_detail' car.pk %}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition text-center">
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

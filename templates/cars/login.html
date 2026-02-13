@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل الدخول - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="min-h-[70vh] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold">تسجيل الدخول</h1>
+            <p class="text-gray-500 text-sm mt-1">أدخل بياناتك للوصول إلى حسابك</p>
+        </div>
+
+        <form method="post" class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="bg-red-50 text-red-700 p-4 rounded-xl mb-5 text-sm">
+                <p>اسم المستخدم أو كلمة المرور غير صحيحة</p>
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">اسم المستخدم <span class="text-red-500">*</span></label>
+                    <input type="text" name="username" required autofocus class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="اسم المستخدم">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">كلمة المرور <span class="text-red-500">*</span></label>
+                    <input type="password" name="password" required class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="كلمة المرور">
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-2">
+                <a href="{% url 'password_reset' %}" class="text-sm text-brand font-medium">نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" class="mt-4 w-full bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition text-sm">
+                تسجيل الدخول
+            </button>
+
+            <p class="text-center text-sm text-gray-500 mt-4">
+                ليس لديك حساب؟
+                <a href="{% url 'register' %}" class="text-brand font-medium">إنشاء حساب</a>
+            </p>
+        </form>
+    </div>
+</section>
+{% endblock %}

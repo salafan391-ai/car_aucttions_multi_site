@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}إنشاء حساب - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="min-h-[70vh] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-brand rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold">إنشاء حساب جديد</h1>
+            <p class="text-gray-500 text-sm mt-1">أنشئ حسابك للاستفادة من جميع الخدمات</p>
+        </div>
+
+        <form method="post" class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="bg-red-50 text-red-700 p-4 rounded-xl mb-5 text-sm">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">اسم المستخدم <span class="text-red-500">*</span></label>
+                    <input type="text" name="username" value="{{ form.username.value|default:'' }}" required class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="اسم المستخدم">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الاسم الأول</label>
+                    <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="الاسم الأول">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الاسم الأخير</label>
+                    <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="الاسم الأخير">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+                    <input type="email" name="email" value="{{ form.email.value|default:'' }}" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="example@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">كلمة المرور <span class="text-red-500">*</span></label>
+                    <input type="password" name="password1" required class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="كلمة المرور">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">تأكيد كلمة المرور <span class="text-red-500">*</span></label>
+                    <input type="password" name="password2" required class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none" placeholder="أعد كتابة كلمة المرور">
+                </div>
+            </div>
+
+            <button type="submit" class="mt-6 w-full bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition text-sm">
+                إنشاء الحساب
+            </button>
+
+            <p class="text-center text-sm text-gray-500 mt-4">
+                لديك حساب بالفعل؟
+                <a href="{% url 'login' %}" class="text-brand font-medium">تسجيل الدخول</a>
+            </p>
+        </form>
+    </div>
+</section>
+{% endblock %}
