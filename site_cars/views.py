@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+from django.db import connection
 from django.db.models import Avg, Sum, Count, Q
+from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 
@@ -9,8 +11,14 @@ from cars.models import ApiCar
 from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
 
 
+def _is_public_schema():
+    return connection.schema_name == 'public'
+
+
 @staff_member_required
 def dashboard(request):
+    if _is_public_schema():
+        return redirect('home')
     now = timezone.now()
     thirty_days_ago = now - timezone.timedelta(days=30)
 
@@ -58,6 +66,8 @@ def dashboard(request):
 
 
 def site_car_list(request):
+    if _is_public_schema():
+        return redirect('home')
     qs = SiteCar.objects.all()
 
     q = request.GET.get('q', '').strip()
@@ -74,17 +84,23 @@ def site_car_list(request):
 
 
 def site_car_detail(request, pk):
+    if _is_public_schema():
+        return redirect('home')
     car = get_object_or_404(SiteCar, pk=pk)
     return render(request, 'site_cars/site_car_detail.html', {'car': car})
 
 
 def sold_cars(request):
+    if _is_public_schema():
+        return redirect('home')
     sold = SiteSoldCar.objects.select_related('car__manufacturer', 'car__model', 'car__color', 'buyer').all()
     return render(request, 'site_cars/sold_cars.html', {'sold_cars': sold})
 
 
 @login_required
 def place_order(request, pk):
+    if _is_public_schema():
+        return redirect('home')
     car = get_object_or_404(ApiCar, pk=pk)
 
     if request.method == 'POST':
@@ -117,12 +133,16 @@ def place_order(request, pk):
 
 @login_required
 def my_orders(request):
+    if _is_public_schema():
+        return redirect('home')
     orders = SiteOrder.objects.filter(user=request.user).select_related('car')
     return render(request, 'site_cars/my_orders.html', {'orders': orders})
 
 
 @login_required
 def order_detail(request, pk):
+    if _is_public_schema():
+        return redirect('home')
     order = get_object_or_404(
         SiteOrder.objects.select_related('car'),
         pk=pk,
@@ -133,6 +153,8 @@ def order_detail(request, pk):
 
 @login_required
 def rate_car(request, pk):
+    if _is_public_schema():
+        return redirect('home')
     car = get_object_or_404(ApiCar, pk=pk)
 
     if request.method == 'POST':
@@ -160,6 +182,8 @@ def rate_car(request, pk):
 
 @login_required
 def inbox(request):
+    if _is_public_schema():
+        return redirect('home')
     received = SiteMessage.objects.filter(recipient=request.user).select_related('sender')
     sent = SiteMessage.objects.filter(sender=request.user).select_related('recipient')
     unread_count = received.filter(is_read=False).count()
@@ -175,6 +199,8 @@ def inbox(request):
 
 @login_required
 def message_detail(request, pk):
+    if _is_public_schema():
+        return redirect('home')
     msg = get_object_or_404(SiteMessage, pk=pk)
     if msg.recipient != request.user and msg.sender != request.user:
         return redirect('inbox')
@@ -200,6 +226,8 @@ def message_detail(request, pk):
 
 @login_required
 def compose_message(request):
+    if _is_public_schema():
+        return redirect('home')
     from django.contrib.auth.models import User as AuthUser
     if request.method == 'POST':
         recipient_id = request.POST.get('recipient')
@@ -229,6 +257,8 @@ def compose_message(request):
 
 @staff_member_required
 def send_email_view(request):
+    if _is_public_schema():
+        return redirect('home')
     from django.contrib.auth.models import User as AuthUser
     from .email_utils import send_tenant_email, send_broadcast_email
 
@@ -264,6 +294,8 @@ def send_email_view(request):
 
 @staff_member_required
 def upload_auction_json(request):
+    if _is_public_schema():
+        return redirect('home')
     import json
     from datetime import datetime
     from django.core.exceptions import MultipleObjectsReturned
