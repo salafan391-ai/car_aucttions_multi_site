@@ -48,7 +48,7 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 ont-tajawal text-gray-800">
+<body class="bg-gray-50 font-tajawal text-gray-800 min-h-screen flex flex-col">
 
     <!-- Navbar -->
     <nav class="bg-white shadow-sm sticky top-0 z-50">
@@ -284,7 +284,9 @@
     </div>
 
     <!-- Content -->
-    {% block content %}{% endblock %}
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
 
     <!-- Footer -->
     <footer class="bg-gray-900 text-gray-300 mt-16">
