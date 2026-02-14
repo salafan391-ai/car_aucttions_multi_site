@@ -304,7 +304,7 @@ def car_detail(request, pk):
         avg_rating = avg_obj['avg'] or 0
         if request.user.is_authenticated:
             user_rating = ratings.filter(user=request.user).first()
-
+    
     context = {
         'car': car,
         'ratings': ratings,
