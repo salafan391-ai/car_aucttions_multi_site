@@ -2,7 +2,7 @@ from django.contrib import admin
 from django_tenants.admin import TenantAdminMixin
 from .models import Tenant, Domain
 
-from cars.models import ApiCar,CarImage,Manufacturer
+from cars.models import ApiCar,CarImage,Manufacturer,BodyType
 
 @admin.register(ApiCar)
 class ApiCarAdmin(admin.ModelAdmin):
@@ -10,6 +10,7 @@ class ApiCarAdmin(admin.ModelAdmin):
 
 admin.site.register(CarImage)
 admin.site.register(Manufacturer)
+admin.site.register(BodyType)
 
 @admin.register(Tenant)
 class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):

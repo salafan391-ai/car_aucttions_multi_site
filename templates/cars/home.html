@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% load humanize %}
 
 {% block title %}الرئيسية - {{ site_name|default:"سيارات" }}{% endblock %}
 
@@ -10,45 +13,150 @@
         <p class="text-sm sm:text-lg md:text-xl text-blue-100 mb-6 sm:mb-10 max-w-2xl mx-auto">تصفح آلاف السيارات المستوردة بأفضل الأسعار والجودة</p>
 
         <!-- Search Bar -->
-        <form action="{% url 'car_list' %}" method="get" class="max-w-4xl mx-auto">
-            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 glass rounded-xl sm:rounded-2xl p-3 sm:p-4">
-                <select name="manufacturer" id="hero-manufacturer" class="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
-                    <option value="">الشركة المصنعة</option>
-                    {% for m in manufacturers %}
-                    <option value="{{ m.id }}" data-name-ar="{{ m.name_ar|default:m.name }}" data-name-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</option>
-                    {% endfor %}
-                </select>
-                <select name="model" id="hero-model" class="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none" disabled>
-                    <option value="">الموديل</option>
-                </select>
-                <select name="year" class="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
-                    <option value="">سنة الصنع</option>
-                    {% for y in years %}
-                    <option value="{{ y }}">{{ y }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="px-6 sm:px-8 py-2.5 sm:py-3 bg-brand bg-brand-hover text-white font-bold rounded-lg sm:rounded-xl transition text-sm">
-                    بحث
-                </button>
+        <div class="max-w-4xl mx-auto">
+            <!-- Search Input -->
+            <div id="hero-search-input-container" class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="hero-search-input"
+                        placeholder="ما هي السيارة التي تبحث عنها؟"
+                        class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-white text-gray-800 placeholder-gray-400 text-sm sm:text-base focus:ring-2 focus:ring-primary-400 outline-none pr-12"
+                    >
+                    <button 
+                        type="button"
+                        id="toggle-search-filters"
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-brand transition"
+                    >
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-        </form>
+            
+            <!-- Hidden Filters -->
+            <div id="hero-search-filters" class="hidden glass rounded-xl sm:rounded-2xl p-3 sm:p-4 relative">
+                <button 
+                    type="button"
+                    id="close-search-filters"
+                    class="absolute top-2 left-2 p-1 text-gray-400 hover:text-gray-600 transition"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+                
+                <form action="{% url 'car_list' %}" method="get" class="space-y-3 sm:space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                        <select name="manufacturer" id="hero-manufacturer" class="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
+                            <option value="">الشركة المصنعة</option>
+                            {% for m in manufacturers %}
+                            <option value="{{ m.id }}" data-name-ar="{{ m.name_ar|default:m.name }}" data-name-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="model" id="hero-model" class="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none" disabled>
+                            <option value="">الموديل</option>
+                        </select>
+                        <select name="year" class="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
+                            <option value="">سنة الصنع</option>
+                            {% for y in years %}
+                            <option value="{{ y }}">{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="flex justify-center">
+                        <button type="submit" class="px-8 sm:px-10 py-2.5 sm:py-3 bg-brand bg-brand-hover text-white font-bold rounded-lg sm:rounded-xl transition text-sm sm:text-base">
+                            بحث
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+                            
+                <!-- Body Types -->
+                {% if body_types %}
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="text-xs text-gray-500 font-medium mb-3 text-center">نوع الهيكل</div>
+                    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {% for bt in body_types %}
+                        <a href="{% url 'car_list' %}?body_type={{ bt.name }}" class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-brand hover:text-brand hover:shadow-sm transition whitespace-nowrap">
+                            {% if bt.name == 'SUV' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="سيارات دفع رباعي" data-lang-en="SUV">سيارات دفع رباعي</span>
+                            {% elif bt.name == 'Sedan' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="سيدان" data-lang-en="Sedan">سيدان</span>
+                            {% elif bt.name == 'Hatchback' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="هاتشباك" data-lang-en="Hatchback">هاتشباك</span>
+                            {% elif bt.name == 'Coupe' or bt.name == 'Roadster' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="كوبيه/روادستر" data-lang-en="Coupe/Roadster">كوبيه/روادستر</span>
+                            {% elif bt.name == 'Pickup Truck' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="شاحنة صغيرة" data-lang-en="Pickup Truck">شاحنة صغيرة</span>
+                            {% elif bt.name == 'Minivan' or bt.name == 'Microbus' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="ميني فان/ميكروباص" data-lang-en="{{ bt.name }}">ميني فان/ميكروباص</span>
+                            {% elif bt.name == 'RV' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="مركبة ترفيهية" data-lang-en="RV">مركبة ترفيهية</span>
+                            {% elif bt.name == 'Sedan/Hatchback' %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="سيدان/هاتشباك" data-lang-en="Sedan/Hatchback">سيدان/هاتشباك</span>
+                            {% else %}
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+                                </svg>
+                                <span class="bilingual" data-lang-ar="{{ bt.name_ar|default:bt.name }}" data-lang-en="{{ bt.name }}">{{ bt.name_ar|default:bt.name }}</span>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+        </div>
     </div>
 </section>
 
 <!-- Car Type Navigation -->
 <section class="max-w-7xl mx-auto px-3 sm:px-4 -mt-8 sm:-mt-10 relative z-10">
-    <div class="grid grid-cols-2 gap-3 sm:gap-4 max-w-lg mx-auto">
+    <div class="grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto">
         <a href="{% url 'car_list' %}?car_type=cars" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
             {% if cars_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
             <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-blue-50 group-hover:bg-brand-light rounded-xl sm:rounded-2xl flex items-center justify-center transition">
                 <svg class="w-5 h-5 sm:w-7 sm:h-7 text-blue-500 group-hover:text-brand transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17h.01M16 17h.01M3 11l1.5-5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 11M3 11v6a1 1 0 001 1h1a2 2 0 004 0h6a2 2 0 004 0h1a1 1 0 001-1v-6M3 11h18"/></svg>
             </div>
             {% if cars_count %}
-            <div class="text-2xl sm:text-3xl font-extrabold text-brand">{{ cars_count }}</div>
-            <div class="text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1">سيارات</div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-brand">{{ cars_count|intcomma }}</div>
+            <div class="text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1">المعارض الكورية</div>
             {% else %}
             <div class="text-sm sm:text-base font-extrabold text-red-500">قريباً</div>
-            <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">سيارات</div>
+            <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">المعارض الكورية</div>
             {% endif %}
         </a>
         <a href="{% url 'car_list' %}?car_type=auction" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
@@ -57,11 +165,24 @@
                 <svg class="w-5 h-5 sm:w-7 sm:h-7 text-purple-500 group-hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             {% if auction_count %}
-            <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">{{ auction_count }}</div>
+            <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">{{ auction_count|intcomma }}</div>
             <div class="text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1">مزادات</div>
             {% else %}
             <div class="text-sm sm:text-base font-extrabold text-red-500">قريباً</div>
-            <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">مزادات</div>
+            <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">مزادات كوريا تتجدد بشكل يومي</div>
+            {% endif %}
+        </a>
+           <a href="{% url 'site_car_list' %}?car_type=auction" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
+            {% if auction_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500"></span></span>{% endif %}
+            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-purple-50 group-hover:bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
+                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-purple-500 group-hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            {% if auction_count %}
+            <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">{{ auction_count|intcomma }}</div>
+            <div class="text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1">سياراتنا</div>
+            {% else %}
+            <div class="text-sm sm:text-base font-extrabold text-red-500">قريباً</div>
+            <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">سياراتنا</div>
             {% endif %}
         </a>
     </div>
@@ -97,7 +218,7 @@
     </div>
     <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="cars-scroll">
         {% for car in latest_cars %}
-        <a href="{% url 'car_detail' car.id %}" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
+        <div class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
@@ -111,9 +232,19 @@
                 <div class="absolute bottom-2 sm:bottom-3 right-2 sm:right-3">
                     <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
                 </div>
+                <!-- Wishlist Button -->
+                <button onclick="toggleWishlist({{ car.id }}); event.stopPropagation();" 
+                        class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors"
+                        data-car-id="{{ car.id }}">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
             </div>
             <div class="p-2.5 sm:p-4">
-                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}</h3>
+                <a href="{% url 'car_detail' car.id %}" class="block font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base hover:text-brand transition-colors">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}
+                </a>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     {% if car.mileage %}
@@ -127,8 +258,11 @@
                     <span class="text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline">{{ car.transmission }}</span>
                     {% endif %}
                 </div>
+                <a href="{% url 'car_detail' car.id %}" class="block w-full bg-brand text-white text-center px-3 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-brand-hover transition-colors mt-2">
+                    <span class="bilingual" data-lang-ar="التفاصيل" data-lang-en="Details">التفاصيل</span>
+                </a>
             </div>
-        </a>
+        </div>
         {% endfor %}
     </div>
 </section>
@@ -143,7 +277,7 @@
     </div>
     <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="auctions-scroll">
         {% for car in latest_auctions %}
-        <a href="{% url 'car_detail' car.id %}" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
+        <div class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
@@ -162,9 +296,19 @@
                 <div class="absolute bottom-2 sm:bottom-3 right-2 sm:right-3">
                     <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
                 </div>
+                <!-- Wishlist Button -->
+                <button onclick="toggleWishlist({{ car.id }}); event.stopPropagation();" 
+                        class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors"
+                        data-car-id="{{ car.id }}">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
             </div>
             <div class="p-2.5 sm:p-4">
-                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}</h3>
+                <a href="{% url 'car_detail' car.id %}" class="block font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base hover:text-brand transition-colors">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}
+                </a>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     {% if car.mileage %}
@@ -184,8 +328,11 @@
                     <span class="text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline">{{ car.transmission }}</span>
                     {% endif %}
                 </div>
+                <a href="{% url 'car_detail' car.id %}" class="block w-full bg-purple-600 text-white text-center px-3 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-700 transition-colors mt-2">
+                    <span class="bilingual" data-lang-ar="التفاصيل" data-lang-en="Details">التفاصيل</span>
+                </a>
             </div>
-        </a>
+        </div>
         {% endfor %}
     </div>
 </section>
@@ -263,6 +410,35 @@
 {% block extra_js %}
 <script>
 (function() {
+    // Toggle search filters
+    const toggleBtn = document.getElementById('toggle-search-filters');
+    const closeBtn = document.getElementById('close-search-filters');
+    const filtersPanel = document.getElementById('hero-search-filters');
+    const searchInput = document.getElementById('hero-search-input');
+    const inputContainer = document.getElementById('hero-search-input-container');
+    
+    if (toggleBtn && filtersPanel && inputContainer) {
+        toggleBtn.addEventListener('click', function() {
+            inputContainer.classList.add('hidden');
+            filtersPanel.classList.remove('hidden');
+        });
+    }
+    
+    if (closeBtn && filtersPanel && inputContainer) {
+        closeBtn.addEventListener('click', function() {
+            filtersPanel.classList.add('hidden');
+            inputContainer.classList.remove('hidden');
+        });
+    }
+    
+    // Also show filters when clicking on the search input
+    if (searchInput && filtersPanel && inputContainer) {
+        searchInput.addEventListener('focus', function() {
+            inputContainer.classList.add('hidden');
+            filtersPanel.classList.remove('hidden');
+        });
+    }
+
     const mfgSelect = document.getElementById('hero-manufacturer');
     const modelSelect = document.getElementById('hero-model');
     if (!mfgSelect || !modelSelect) return;
@@ -304,5 +480,59 @@
             });
     });
 })();
+
+// Wishlist functionality
+function toggleWishlist(carId) {
+    const btn = document.querySelector(`[data-car-id="${carId}"]`);
+    if (!btn) return;
+    
+    fetch(`/wishlist/toggle/${carId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            // User not authenticated, redirect to login
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                window.location.href = '/login/?next=' + encodeURIComponent(window.location.pathname);
+            }
+        } else if (data.in_wishlist) {
+            // Item added to wishlist
+            btn.querySelector('svg').classList.remove('text-gray-400');
+            btn.querySelector('svg').classList.add('text-red-500', 'fill-current');
+        } else {
+            // Item removed from wishlist
+            btn.querySelector('svg').classList.remove('text-red-500', 'fill-current');
+            btn.querySelector('svg').classList.add('text-gray-400');
+        }
+        
+        // Update wishlist count
+        if (window.updateWishlistCount) {
+            window.updateWishlistCount();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 </script>
 {% endblock %}

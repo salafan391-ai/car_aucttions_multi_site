@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 
@@ -52,8 +53,20 @@ class CarSeatColor(models.Model):
 
 class BodyType(models.Model):
     name = models.CharField(max_length=100,blank=True,null=True)
+    name_ar = models.CharField(max_length=100,blank=True,null=True)
     def __str__(self):
         return self.name
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    car = models.ForeignKey('ApiCar', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['user', 'car']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.car.title}"
 
 class ApiCar(models.Model):
     STATUS_CHOICES = [

@@ -3,13 +3,14 @@ from datetime import datetime, date
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 
 from django.http import JsonResponse
 
-from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category
+from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist
 
 
 def _exclude_expired_auctions(qs):
@@ -26,8 +27,18 @@ def home(request):
     )
     latest_cars = _base_qs.exclude(category__name='auction').order_by('-created_at')[:12]
     latest_auctions = _base_qs.filter(category__name='auction').order_by('-created_at')[:12]
-
-    manufacturers = Manufacturer.objects.all().order_by('name')
+    
+    # Only show manufacturers that have non-expired cars
+    base_qs = _exclude_expired_auctions(ApiCar.objects.all())
+    manufacturers = Manufacturer.objects.filter(
+        apicar__in=base_qs
+    ).distinct().order_by('name')
+    
+    # Only show body types that have non-expired cars
+    body_types = BodyType.objects.filter(
+        apicar__in=base_qs
+    ).distinct().order_by('name')
+    
     years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')
 
     site_cars = []
@@ -42,6 +53,7 @@ def home(request):
         'latest_auctions': latest_auctions,
         'site_cars': site_cars,
         'manufacturers': manufacturers,
+        'body_types': body_types,
         'years': years,
         'total_cars': _exclude_expired_auctions(ApiCar.objects.filter(status='available')).count(),
         'auction_count': _exclude_expired_auctions(ApiCar.objects.filter(category__name='auction')).count(),
@@ -76,6 +88,10 @@ def car_list(request):
     if model:
         qs = qs.filter(model_id=model)
 
+    badge = request.GET.get('badge')
+    if badge:
+        qs = qs.filter(badge_id=badge)
+
     year = request.GET.get('year')
     if year:
         qs = qs.filter(year=year)
@@ -86,7 +102,7 @@ def car_list(request):
 
     body_type = request.GET.get('body_type')
     if body_type:
-        qs = qs.filter(body_id=body_type)
+        qs = qs.filter(body__name=body_type)
 
     fuel = request.GET.get('fuel')
     if fuel:
@@ -148,15 +164,37 @@ def car_list(request):
     query_params.pop('page', None)
     query_string = query_params.urlencode()
 
-    manufacturers = Manufacturer.objects.all().order_by('name')
-    models_qs = CarModel.objects.all().order_by('name')
+    # Filter manufacturers and models based on car type
+    car_type = request.GET.get('car_type')
+    if car_type == 'auction':
+        # For auctions, only show manufacturers/models for non-expired auction cars
+        base_auction_qs = _exclude_expired_auctions(ApiCar.objects.filter(category__name='auction'))
+        manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
+        models_qs = CarModel.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
+    else:
+        manufacturers = Manufacturer.objects.all().order_by('name')
+        models_qs = CarModel.objects.all().order_by('name')
+    
     if manufacturer:
-        models_qs = models_qs.filter(manufacturer_id=manufacturer)
+        if car_type == 'auction':
+            models_qs = models_qs.filter(manufacturer_id=manufacturer, apicar__in=base_auction_qs).distinct()
+        else:
+            models_qs = models_qs.filter(manufacturer_id=manufacturer)
     years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')
     colors = CarColor.objects.all().order_by('name')
-    body_types = BodyType.objects.all().order_by('name')
+    
+    # Filter body types based on car type
+    if car_type == 'auction':
+        body_types = BodyType.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
+    else:
+        base_regular_qs = _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction'))
+        body_types = BodyType.objects.filter(
+            apicar__in=base_regular_qs
+        ).distinct().order_by('name')
+    
     fuels = ApiCar.objects.values_list('fuel', flat=True).exclude(fuel__isnull=True).exclude(fuel='').distinct().order_by('fuel')
     transmissions = ApiCar.objects.values_list('transmission', flat=True).exclude(transmission__isnull=True).exclude(transmission='').distinct().order_by('transmission')
+    badges = CarBadge.objects.all().order_by('name')
 
     # Counts for tabs
     base_qs = _exclude_expired_auctions(ApiCar.objects.all())
@@ -166,15 +204,21 @@ def car_list(request):
 
     # Popular manufacturers (top 20 by car count)
     from django.db.models import Count
-    popular_manufacturers = Manufacturer.objects.annotate(
-        car_count=Count('apicar')
-    ).order_by('-car_count')[:20]
+    if car_type == 'auction':
+        popular_manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).annotate(
+            car_count=Count('apicar', filter=Q(apicar__in=base_auction_qs))
+        ).order_by('-car_count')[:20]
+    else:
+        popular_manufacturers = Manufacturer.objects.annotate(
+            car_count=Count('apicar')
+        ).order_by('-car_count')[:20]
 
     context = {
         'page_obj': page_obj,
         'manufacturers': manufacturers,
         'popular_manufacturers': popular_manufacturers,
         'models': models_qs,
+        'badges': badges,
         'years': years,
         'colors': colors,
         'body_types': body_types,
@@ -228,6 +272,16 @@ def api_models_by_manufacturer(request):
     )
     return JsonResponse(models, safe=False)
 
+def api_badges_by_model(request):
+    model_id = request.GET.get('model_id')
+    if not model_id:
+        return JsonResponse([], safe=False)
+    badges = list(
+        CarBadge.objects.filter(model_id=model_id)
+        .order_by('name')
+        .values('id', 'name')
+    )
+    return JsonResponse(badges, safe=False)
 
 def car_detail(request, pk):
     car = get_object_or_404(
@@ -330,3 +384,83 @@ def contact(request):
         messages.success(request, 'تم إرسال رسالتك بنجاح! شكراً لتواصلك معنا.')
         return redirect('contact')
     return render(request, 'cars/contact.html')
+
+
+def toggle_wishlist(request, car_id):
+    """Toggle car in user's wishlist"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'يجب تسجيل الدخول أولاً', 'redirect': '/login/?next=' + request.META.get('HTTP_REFERER', '/')}, status=401)
+    
+    try:
+        car = get_object_or_404(ApiCar, pk=car_id)
+        
+        # Debug info
+        print(f"User ID: {request.user.id}, Username: {request.user.username}")
+        print(f"Car ID: {car_id}, Car Title: {car.title}")
+        
+        wishlist_item, created = Wishlist.objects.get_or_create(
+            user=request.user, 
+            car=car
+        )
+        print(f"Wishlist item created: {created}")
+        
+    except Exception as e:
+        print(f"Error in toggle_wishlist: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': f'حدث خطأ: {str(e)}'}, status=500)
+    
+    if not created:
+        # Item exists, so remove it
+        wishlist_item.delete()
+        return JsonResponse({'in_wishlist': False})
+    else:
+        # Item was created
+        return JsonResponse({'in_wishlist': True})
+
+
+@login_required
+def wishlist(request):
+    """Show user's wishlist"""
+    wishlist_items = Wishlist.objects.filter(
+        user=request.user
+    ).select_related('car', 'car__manufacturer', 'car__model').order_by('-created_at')
+    
+    # Filter out expired auctions
+    valid_items = []
+    for item in wishlist_items:
+        if _exclude_expired_auctions(ApiCar.objects.filter(pk=item.car.pk)).exists():
+            valid_items.append(item)
+        else:
+            # Remove expired items from wishlist
+            item.delete()
+    
+    paginator = Paginator(valid_items, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'wishlist_items': page_obj,
+        'wishlist_count': len(valid_items),
+    }
+    return render(request, 'cars/wishlist.html', context)
+
+
+def wishlist_count(request):
+    """Get user's wishlist count"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'count': 0})
+    
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        try:
+            user_in_tenant = User.objects.get(id=request.user.id)
+            count = Wishlist.objects.filter(user=user_in_tenant).count()
+            return JsonResponse({'count': count})
+        except User.DoesNotExist:
+            return JsonResponse({'count': 0})
+    except Exception as e:
+        return JsonResponse({'count': 0})

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}قائمة الأمنيات | {% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <!-- Header -->
+    <div class="mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            <span class="bilingual" data-lang-ar="قائمة الأمنيات" data-lang-en="My Wishlist">قائمة الأمنيات</span>
+        </h1>
+        <p class="text-gray-600">
+            <span class="bilingual" data-lang-ar="السيارات التي حفظتها لوقت لاحق" data-lang-en="Cars you've saved for later">السيارات التي حفظتها لوقت لاحق</span>
+        </p>
+    </div>
+
+    {% if wishlist_items %}
+        <!-- Cars Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {% for item in wishlist_items %}
+            <div class="group bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                <!-- Image Container -->
+                <div class="relative aspect-[4/3] overflow-hidden bg-gray-50">
+                    {% if item.car.image %}
+                        <img src="{{ item.car.image }}" alt="{{ item.car.title }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17h.01M16 17h.01M3 11l1.5-5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 11M3 11v6a1 1 0 001 1h1a2 2 0 004 0h6a2 2 0 004 0h1a1 1 0 001-1v-6M3 11h18"/>
+                            </svg>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Status Badge -->
+                    {% if item.car.category.name == 'auction' %}
+                        <div class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                            <span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction">مزاد</span>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Wishlist Button -->
+                    <button onclick="toggleWishlist({{ item.car.pk }})" 
+                            class="wishlist-btn absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors"
+                            data-car-id="{{ item.car.pk }}">
+                        <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-4 sm:p-5">
+                    <!-- Title -->
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-brand transition-colors">
+                        <a href="{% url 'car_detail' item.car.pk %}" class="hover:text-brand">
+                            {{ item.car.title }}
+                        </a>
+                    </h3>
+
+                    <!-- Manufacturer & Model -->
+                    <div class="text-sm text-gray-600 mb-3">
+                        <span class="bilingual" data-lang-ar="{{ item.car.manufacturer.name_ar|default:item.car.manufacturer.name }}" data-lang-en="{{ item.car.manufacturer.name }}">
+                            {{ item.car.manufacturer.name_ar|default:item.car.manufacturer.name }}
+                        </span>
+                        <span class="mx-1">•</span>
+                        <span class="bilingual" data-lang-ar="{{ item.car.model.name_ar|default:item.car.model.name }}" data-lang-en="{{ item.car.model.name }}">
+                            {{ item.car.model.name_ar|default:item.car.model.name }}
+                        </span>
+                    </div>
+
+                    <!-- Year & Badge -->
+                    <div class="flex items-center justify-between text-sm mb-3">
+                        <span class="text-gray-600">{{ item.car.year }}</span>
+                        {% if item.car.badge.name %}
+                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                                {{ item.car.badge.name }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Price -->
+                    {% if item.car.price %}
+                        <div class="text-lg font-bold text-brand mb-3">
+                            {{ item.car.price|intcomma }} ₩
+                        </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-2">
+                        <a href="{% url 'car_detail' item.car.pk %}" 
+                           class="flex-1 bg-brand text-white px-3 py-2 rounded-lg text-center text-sm font-medium hover:bg-brand-hover transition-colors">
+                            <span class="bilingual" data-lang-ar="عرض التفاصيل" data-lang-en="View Details">عرض التفاصيل</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex justify-center">
+            <nav class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" 
+                       class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        <span class="bilingual" data-lang-ar="السابق" data-lang-en="Previous">السابق</span>
+                    </a>
+                {% endif %}
+
+                <span class="px-4 py-2 text-sm text-gray-600">
+                    <span class="bilingual" data-lang-ar="صفحة" data-lang-en="Page">صفحة</span> {{ page_obj.number }} 
+                    <span class="bilingual" data-lang-ar="من" data-lang-en="of">من</span> {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" 
+                       class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        <span class="bilingual" data-lang-ar="التالي" data-lang-en="Next">التالي</span>
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12 sm:py-16">
+            <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                <span class="bilingual" data-lang-ar="قائمة الأمنيات فارغة" data-lang-en="Your wishlist is empty">قائمة الأمنيات فارغة</span>
+            </h3>
+            <p class="text-gray-600 mb-6">
+                <span class="bilingual" data-lang-ar="ابدأ بإضافة السيارات التي تعجبك إلى قائمة الأمنيات" data-lang-en="Start adding cars you like to your wishlist">ابدأ بإضافة السيارات التي تعجبك إلى قائمة الأمنيات</span>
+            </p>
+            <a href="{% url 'car_list' %}" 
+               class="inline-flex items-center px-6 py-3 bg-brand text-white font-medium rounded-lg hover:bg-brand-hover transition-colors">
+                <span class="bilingual" data-lang-ar="استعرض السيارات" data-lang-en="Browse Cars">استعرض السيارات</span>
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleWishlist(carId) {
+    const btn = document.querySelector(`[data-car-id="${carId}"]`);
+    if (!btn) return;
+    
+    fetch(`/wishlist/toggle/${carId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            // User not authenticated, redirect to login
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                window.location.href = '/login/?next=' + encodeURIComponent(window.location.pathname);
+            }
+        } else if (data.in_wishlist === false) {
+            // Item removed from wishlist
+            if (window.updateWishlistCount) {
+                window.updateWishlistCount();
+            }
+            // Refresh page to update the list
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
