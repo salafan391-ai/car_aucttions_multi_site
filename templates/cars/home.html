@@ -74,7 +74,22 @@
                 <!-- Body Types -->
                 {% if body_types %}
                 <div class="mt-4 pt-4">
-                    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <div class="relative group">
+                        <!-- Left Arrow -->
+                        <button onclick="scrollElement('body-types-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-4">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        
+                        <!-- Right Arrow -->
+                        <button onclick="scrollElement('body-types-scroll', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-4">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        
+                        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="body-types-scroll">
                         {% for bt in body_types %}
                         <a href="{% url 'car_list' %}?body_type={{ bt.name }}" class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-brand hover:text-brand hover:shadow-sm transition whitespace-nowrap">
                             {% if bt.name == 'SUV' %}
@@ -132,6 +147,8 @@
                             {% endif %}
                         </a>
                         {% endfor %}
+                        </div>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -188,7 +205,22 @@
 {% if manufacturers %}
 <section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
     <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-5">الشركات المصنعة</h2>
-    <div class="flex overflow-x-auto gap-2 sm:gap-3 pb-2 scrollbar-hide scroll-smooth" id="mfg-scroll">
+    <div class="relative group">
+        <!-- Left Arrow -->
+        <button onclick="scrollElement('mfg-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        
+        <!-- Right Arrow -->
+        <button onclick="scrollElement('mfg-scroll', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+        
+        <div class="flex overflow-x-auto gap-2 sm:gap-3 pb-2 scrollbar-hide scroll-smooth" id="mfg-scroll">
         {% for m in manufacturers %}
         <a href="{% url 'car_list' %}?manufacturer={{ m.id }}" class="flex-shrink-0 w-16 sm:w-20 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md p-2 sm:p-3 text-center transition group">
             {% if m.logo %}
@@ -202,6 +234,7 @@
         </a>
         {% endfor %}
     </div>
+    </div>
 </section>
 {% endif %}
 
@@ -212,7 +245,22 @@
         <h2 class="text-lg sm:text-xl md:text-2xl font-bold">سيارات</h2>
         <a href="{% url 'car_list' %}?car_type=cars" class="text-brand text-brand-hover font-medium text-xs sm:text-sm">عرض الكل &larr;</a>
     </div>
-    <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="cars-scroll">
+    <div class="relative group">
+        <!-- Left Arrow -->
+        <button onclick="scrollElement('cars-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        
+        <!-- Right Arrow -->
+        <button onclick="scrollElement('cars-scroll', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+        
+        <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="cars-scroll">
         {% for car in latest_cars %}
         <div class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
@@ -261,6 +309,7 @@
         </div>
         {% endfor %}
     </div>
+    </div>
 </section>
 {% endif %}
 
@@ -271,7 +320,22 @@
         <h2 class="text-lg sm:text-xl md:text-2xl font-bold">مزادات</h2>
         <a href="{% url 'car_list' %}?car_type=auction" class="text-brand text-brand-hover font-medium text-xs sm:text-sm">عرض الكل &larr;</a>
     </div>
-    <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="auctions-scroll">
+    <div class="relative group">
+        <!-- Left Arrow -->
+        <button onclick="scrollElement('auctions-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        
+        <!-- Right Arrow -->
+        <button onclick="scrollElement('auctions-scroll', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+        
+        <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="auctions-scroll">
         {% for car in latest_auctions %}
         <div class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
@@ -331,6 +395,7 @@
         </div>
         {% endfor %}
     </div>
+    </div>
 </section>
 {% endif %}
 
@@ -345,7 +410,22 @@
         <a href="{% url 'site_car_list' %}" class="text-brand text-brand-hover font-medium text-xs sm:text-sm">عرض الكل &larr;</a>
     </div>
 
-    <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="site-cars-scroll">
+    <div class="relative group">
+        <!-- Left Arrow -->
+        <button onclick="scrollElement('site-cars-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        
+        <!-- Right Arrow -->
+        <button onclick="scrollElement('site-cars-scroll', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+        
+        <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="site-cars-scroll">
         {% for car in site_cars %}
         <a href="{% url 'site_car_detail' car.id %}" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block border-2 border-transparent hover:border-brand/20">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
@@ -388,6 +468,7 @@
         </a>
         {% endfor %}
     </div>
+    </div>
 </section>
 {% endif %}
 
@@ -405,6 +486,19 @@
 
 {% block extra_js %}
 <script>
+// Scroll element function for arrow buttons
+function scrollElement(elementId, direction) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const scrollAmount = 300; // Adjust scroll amount as needed
+    if (direction === 'left') {
+        element.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+        element.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+}
+
 (function() {
     // Toggle search filters
     const toggleBtn = document.getElementById('toggle-search-filters');
