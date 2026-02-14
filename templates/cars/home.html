@@ -8,9 +8,6 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-gradient text-white py-12 sm:py-20 md:py-32">
-    <div class="max-w-7xl mx-auto px-4 text-center">
-        <h1 class="text-2xl sm:text-4xl md:text-6xl font-extrabold mb-4 sm:mb-6 leading-tight">اعثر على سيارة أحلامك</h1>
-        <p class="text-sm sm:text-lg md:text-xl text-blue-100 mb-6 sm:mb-10 max-w-2xl mx-auto">تصفح آلاف السيارات المستوردة بأفضل الأسعار والجودة</p>
 
         <!-- Search Bar -->
         <div class="max-w-4xl mx-auto">
@@ -76,8 +73,7 @@
                             
                 <!-- Body Types -->
                 {% if body_types %}
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <div class="text-xs text-gray-500 font-medium mb-3 text-center">نوع الهيكل</div>
+                <div class="mt-4 pt-4">
                     <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                         {% for bt in body_types %}
                         <a href="{% url 'car_list' %}?body_type={{ bt.name }}" class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-brand hover:text-brand hover:shadow-sm transition whitespace-nowrap">

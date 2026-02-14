@@ -48,7 +48,7 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 font-tajawal text-gray-800">
+<body class="bg-gray-50 ont-tajawal text-gray-800">
 
     <!-- Navbar -->
     <nav class="bg-white shadow-sm sticky top-0 z-50">
@@ -139,9 +139,6 @@
             <div class="px-4 py-3 space-y-2">
                 <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرئيسية</a>
                 <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات</a>
-                <a href="{% url 'site_car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">سياراتنا</a>
-                <a href="{% url 'sold_cars' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات المباعة</a>
-                <a href="{% url 'car_request' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلب سيارة</a>
                 <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تواصل معنا</a>
                 <!-- Mobile Lang/Currency -->
                 <div class="flex items-center gap-2 py-2 px-3 border-t border-gray-100 mt-2">
@@ -841,6 +838,7 @@
                     </div>
                     
                     <div class="space-y-2">
+                                                
                         <a href="{% url 'wishlist' %}" class="block w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg text-right hover:bg-gray-200 transition">
                             <div class="flex items-center justify-between">
                                 <span>قائمة الأمنيات</span>
