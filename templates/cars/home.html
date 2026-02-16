@@ -7,12 +7,29 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-gradient text-white py-12 sm:py-20 md:py-32" {% if site_hero_image %}style="background-image: url('{{ site_hero_image }}');"{% else %}style="background-image: url('https://s-koreatrading.com/static/core/images/hero1.3aa96b9fd706.jpeg');"{% endif %}>
-
+<section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" {% if site_hero_image %}style="background-image: url('{{ site_hero_image }}');"{% else %}style="background-image: url('https://s-koreatrading.com/static/core/images/hero1.3aa96b9fd706.jpeg');"{% endif %}>
+    <!-- Hero Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8 sm:mb-12">
+            <div class="flex items-center justify-center gap-2 mb-4">
+            {% if site_logo %}
+            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 w-auto">
+            {% endif %}
+            <div class="group">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-brand-light to-white bg-clip-text text-transparent drop-shadow-2xl group-hover:from-brand group-hover:via-white group-hover:to-brand transition-all duration-500 transform group-hover:scale-105" style="text-shadow: 0 0 30px rgba(var(--color-primary-rgb), 0.5), 0 4px 8px rgba(0,0,0,0.3);">
+                    {{ site_name|default:"سيارات" }}
+                </h1>
+            </div>
+            </div>
+            <p class="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto drop-shadow-lg bg-gradient-to-r from-white/80 via-brand-light/60 to-white/80 bg-clip-text text-transparent" style="text-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.3), 0 2px 4px rgba(0,0,0,0.2);">
+                {% if site_tagline %}{{ site_tagline }}{% else %}منصة متخصصة في عرض وبيع السيارات المستوردة بأفضل الأسعار{% endif %}
+            </p>
+        </div>
+        
         <!-- Search Bar -->
         <div class="max-w-4xl mx-auto">
             <!-- Search Input -->
-            <div id="hero-search-input-container" class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4">
+            <div id="hero-search-input-container" class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-md bg-white/10 border border-white/20">
                 <div class="relative">
                     <input 
                         type="text" 
@@ -165,8 +182,9 @@
 </section>
 
 <!-- Car Type Navigation -->
-<section class="max-w-7xl mx-auto px-3 sm:px-4 -mt-8 sm:-mt-10 relative z-10">
-    <div class="grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto">
+<section class="relative z-10 -mt-8 sm:-mt-12">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4">
+        <div class="grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto">
         <a href="{% url 'car_list' %}?car_type=cars" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
             {% if cars_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
             <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-blue-50 group-hover:bg-brand-light rounded-xl sm:rounded-2xl flex items-center justify-center transition">
@@ -206,13 +224,18 @@
             <div class="text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1">سياراتنا</div>
             {% endif %}
         </a>
+        </div>
     </div>
 </section>
 
 <!-- Manufacturers (scrollable) -->
 {% if manufacturers %}
-<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
-    <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-5">الشركات المصنعة</h2>
+<section class="bg-gray-50 py-8 sm:py-12">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4">
+        <div class="text-center mb-6 sm:mb-8">
+            <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">الشركات المصنعة</h2>
+            <p class="text-gray-600 text-sm sm:text-base">اختر من أشهر الشركات المصنعة للسيارات</p>
+        </div>
     <div class="relative group">
         <!-- Left Arrow -->
         <button onclick="scrollElement('mfg-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">
@@ -243,16 +266,26 @@
         {% endfor %}
     </div>
     </div>
+    </div>
 </section>
 {% endif %}
 
 <!-- Latest Cars (scrollable) -->
 {% if latest_cars %}
-<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
-    <div class="flex justify-between items-center mb-3 sm:mb-5">
-        <h2 class="text-lg sm:text-xl md:text-2xl font-bold">سيارات</h2>
-        <a href="{% url 'car_list' %}?car_type=cars" class="text-brand text-brand-hover font-medium text-xs sm:text-sm">عرض الكل &larr;</a>
-    </div>
+<section class="bg-white py-8 sm:py-12">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4">
+        <div class="flex justify-between items-center mb-6 sm:mb-8">
+            <div>
+                <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">سيارات</h2>
+                <p class="text-gray-600 text-sm">أحدث السيارات المتاحة في المعارض الكورية</p>
+            </div>
+            <a href="{% url 'car_list' %}?car_type=cars" class="text-brand hover:text-brand/80 font-medium text-sm sm:text-base flex items-center gap-1 transition">
+                عرض الكل
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+        </div>
     <div class="relative group">
         <!-- Left Arrow -->
         <button onclick="scrollElement('cars-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">

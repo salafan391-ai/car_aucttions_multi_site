@@ -65,7 +65,9 @@
                         </svg>
                     </div>
                     {% endif %}
-                    <span class="text-xl font-bold text-gray-900">{{ site_name|default:"سيارات" }}</span>
+                    <div class="group">
+                    <span class="text-xl font-bold text-gray-900 group-hover:text-brand">{{ site_name|default:"سيارات" }}</span>
+                    </div>
                 </a>
 
                 <div class="hidden md:flex items-center gap-8">
