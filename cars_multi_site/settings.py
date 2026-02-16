@@ -160,6 +160,26 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# File Upload Settings - Optimized for Heroku
+# Maximum size for in-memory files (2.5MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440
+
+# Maximum size for POST data (100MB total)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
+
+# Maximum number of files that can be uploaded at once
+DATA_UPLOAD_MAX_NUMBER_FILES = 25
+
+# Use temporary file storage for larger uploads
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+# Timeout settings (important for Heroku)
+# Note: Heroku has a 30-second request timeout limit
+# For large uploads, consider using background tasks or chunked uploads
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

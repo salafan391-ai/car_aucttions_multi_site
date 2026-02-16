@@ -4,56 +4,143 @@
 
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 py-8">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">سياراتنا</h1>
             <p class="text-gray-500 mt-1">سيارات مختارة ومعروضة من {{ site_name|default:"موقعنا" }}</p>
         </div>
+        {% if user.is_staff %}
+        <a href="{% url 'site_car_add' %}" class="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-bold px-5 py-3 rounded-xl transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            إضافة سيارة
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="flex gap-2 mb-6 border-b border-gray-200">
+        <a href="?status=active" class="px-4 py-2 font-medium transition border-b-2 {% if current_status == 'active' or not current_status %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+            السيارات المتاحة
+            <span class="ml-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ active_count }}</span>
+        </a>
+        <a href="?status=sold" class="px-4 py-2 font-medium transition border-b-2 {% if current_status == 'sold' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+            السيارات المباعة
+            <span class="ml-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ sold_count }}</span>
+        </a>
+        <a href="?status=all" class="px-4 py-2 font-medium transition border-b-2 {% if current_status == 'all' %}border-gray-500 text-gray-700{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
+            الكل
+        </a>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {% for car in site_cars %}
-        <a href="{% url 'site_car_detail' car.id %}" class="car-card bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
-            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
-                {% if car.image %}
-                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
-                {% elif car.gallery.first %}
-                <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+        <div class="car-card bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden relative group">
+            <a href="{% url 'site_car_detail' car.id %}" class="block">
+                <div class="aspect-4/3 bg-gray-100 overflow-hidden relative">
+                    {% if car.image %}
+                    <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                    {% elif car.gallery.first %}
+                    <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-300">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    {% if car.is_featured %}
+                    <div class="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">مميزة</div>
+                    {% endif %}
+                    {% if car.status == 'sold' %}
+                    <div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">تم البيع</div>
+                    {% elif car.status == 'pending' %}
+                    <div class="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full">قيد الانتظار</div>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <h3 class="font-bold text-gray-900 mb-1 truncate">{{ car.title }}</h3>
+                    <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                        <span>{{ car.year }}</span>
+                        <span>&bull;</span>
+                        <span>{{ car.manufacturer }}</span>
+                        {% if car.mileage %}
+                        <span>&bull;</span>
+                        <span>{{ car.mileage|floatformat:0 }} كم</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-brand font-extrabold text-lg">{{ car.price|floatformat:0 }} ₩</span>
+                        <div class="flex gap-1">
+                            {% if car.transmission %}
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ car.transmission }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </a>
+            
+            {% if user.is_staff %}
+            <!-- Admin Actions -->
+            <div class="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-10">
+                <a href="{% url 'site_car_edit' car.id %}" 
+                   class="w-8 h-8 bg-white/90 hover:bg-blue-500 hover:text-white rounded-lg flex items-center justify-center text-gray-600 shadow-sm transition"
+                   title="تعديل">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </a>
+                {% if car.status != 'sold' %}
+                <a href="{% url 'site_car_delete' car.id %}" 
+                   class="w-8 h-8 bg-white/90 hover:bg-red-500 hover:text-white rounded-lg flex items-center justify-center text-gray-600 shadow-sm transition"
+                   title="حذف">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </a>
                 {% else %}
-                <div class="w-full h-full flex items-center justify-center text-gray-300">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 cursor-not-allowed shadow-sm"
+                     title="لا يمكن حذف السيارات المباعة">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                 </div>
                 {% endif %}
-                {% if car.is_featured %}
-                <div class="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">مميزة</div>
-                {% endif %}
-                {% if car.status == 'sold' %}
-                <div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">تم البيع</div>
-                {% endif %}
             </div>
-            <div class="p-4">
-                <h3 class="font-bold text-gray-900 mb-1 truncate">{{ car.title }}</h3>
-                <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
-                    <span>{{ car.year }}</span>
-                    <span>&bull;</span>
-                    <span>{{ car.manufacturer }}</span>
-                    {% if car.mileage %}
-                    <span>&bull;</span>
-                    <span>{{ car.mileage|floatformat:0 }} كم</span>
-                    {% endif %}
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-brand font-extrabold text-lg">{{ car.price|floatformat:0 }} ₩</span>
-                    <div class="flex gap-1">
-                        {% if car.transmission %}
-                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ car.transmission }}</span>
-                        {% endif %}
+            
+            <!-- Status Change Dropdown -->
+            <div class="absolute bottom-16 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <div class="relative" x-data="{ open: false }">
+                    <button onclick="toggleStatusMenu(this)" 
+                            class="px-2 py-1 bg-white/90 hover:bg-gray-100 rounded-lg text-xs font-medium text-gray-600 shadow-sm flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full {% if car.status == 'available' %}bg-green-500{% elif car.status == 'pending' %}bg-yellow-500{% else %}bg-red-500{% endif %}"></span>
+                        {{ car.get_status_display }}
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="status-menu hidden absolute bottom-full right-0 mb-1 bg-white rounded-lg shadow-lg border border-gray-100 py-1 min-w-[120px]">
+                        <form action="{% url 'site_car_change_status' car.id %}" method="post" class="status-form">
+                            {% csrf_token %}
+                            <button type="submit" name="status" value="available" class="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2 {% if car.status == 'available' %}text-green-600 font-medium{% else %}text-gray-700{% endif %}">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                متاح
+                            </button>
+                            <button type="submit" name="status" value="pending" class="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2 {% if car.status == 'pending' %}text-yellow-600 font-medium{% else %}text-gray-700{% endif %}">
+                                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                قيد الانتظار
+                            </button>
+                            <button type="submit" name="status" value="sold" class="w-full px-3 py-2 text-right text-sm hover:bg-gray-50 flex items-center gap-2 {% if car.status == 'sold' %}text-red-600 font-medium{% else %}text-gray-700{% endif %}">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                تم البيع
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
-        </a>
+            {% endif %}
+        </div>
         {% empty %}
         <div class="col-span-full text-center py-16 text-gray-400">
             <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,4 +151,33 @@
         {% endfor %}
     </div>
 </section>
+
+{% if user.is_staff %}
+<script>
+function toggleStatusMenu(btn) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Close all other menus
+    document.querySelectorAll('.status-menu').forEach(menu => {
+        if (menu !== btn.nextElementSibling) {
+            menu.classList.add('hidden');
+        }
+    });
+    
+    // Toggle current menu
+    const menu = btn.nextElementSibling;
+    menu.classList.toggle('hidden');
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.status-menu') && !e.target.closest('[onclick="toggleStatusMenu(this)"]')) {
+        document.querySelectorAll('.status-menu').forEach(menu => {
+            menu.classList.add('hidden');
+        });
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'add' %}إضافة سيارة{% else %}تعديل سيارة{% endif %} - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+        <a href="{% url 'site_car_list' %}" class="inline-flex items-center gap-2 text-gray-600 hover:text-brand transition mb-4">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            العودة إلى القائمة
+        </a>
+        <h1 class="text-3xl font-bold">{% if action == 'add' %}إضافة سيارة جديدة{% else %}تعديل السيارة{% endif %}</h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+        {% csrf_token %}
+        
+        <!-- Basic Info -->
+        <div class="border-b border-gray-100 pb-6">
+            <h2 class="text-lg font-bold mb-4">المعلومات الأساسية</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">العنوان *</label>
+                    <input type="text" name="title" value="{{ car.title|default:'' }}" required
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الشركة المصنعة *</label>
+                    <input type="text" name="manufacturer" id="manufacturer-input" value="{{ car.manufacturer|default:'' }}" required list="manufacturers-list"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                    <datalist id="manufacturers-list">
+                        {% for m in manufacturers %}
+                        <option value="{{ m.name }}">{{ m.name_ar|default:m.name }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الموديل *</label>
+                    <input type="text" name="model" id="model-input" value="{{ car.model|default:'' }}" required list="models-list"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                    <datalist id="models-list">
+                        {% for m in car_models %}
+                        <option value="{{ m.name }}" data-manufacturer="{{ m.manufacturer.name }}">{{ m.name }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">سنة الصنع *</label>
+                    <input type="number" name="year" value="{{ car.year|default:2024 }}" min="1900" max="2030" required
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">اللون</label>
+                    <input type="text" name="color" value="{{ car.color|default:'' }}"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+            </div>
+        </div>
+
+        <!-- Specs -->
+        <div class="border-b border-gray-100 pb-6">
+            <h2 class="text-lg font-bold mb-4">المواصفات</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">المسافة المقطوعة (كم)</label>
+                    <input type="number" name="mileage" value="{{ car.mileage|default:0 }}" min="0"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ناقل الحركة</label>
+                    <select name="transmission" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                        <option value="">اختر...</option>
+                        <option value="أوتوماتيك" {% if car.transmission == 'أوتوماتيك' %}selected{% endif %}>أوتوماتيك</option>
+                        <option value="مانيوال" {% if car.transmission == 'مانيوال' %}selected{% endif %}>مانيوال</option>
+                        <option value="CVT" {% if car.transmission == 'CVT' %}selected{% endif %}>CVT</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الوقود</label>
+                    <select name="fuel" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                        <option value="">اختر...</option>
+                        <option value="بنزين" {% if car.fuel == 'بنزين' %}selected{% endif %}>بنزين</option>
+                        <option value="ديزل" {% if car.fuel == 'ديزل' %}selected{% endif %}>ديزل</option>
+                        <option value="هايبرد" {% if car.fuel == 'هايبرد' %}selected{% endif %}>هايبرد</option>
+                        <option value="كهربائي" {% if car.fuel == 'كهربائي' %}selected{% endif %}>كهربائي</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">نوع الهيكل</label>
+                    <select name="body_type" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                        <option value="">اختر...</option>
+                        <option value="سيدان" {% if car.body_type == 'سيدان' %}selected{% endif %}>سيدان</option>
+                        <option value="SUV" {% if car.body_type == 'SUV' %}selected{% endif %}>SUV</option>
+                        <option value="هاتشباك" {% if car.body_type == 'هاتشباك' %}selected{% endif %}>هاتشباك</option>
+                        <option value="كوبيه" {% if car.body_type == 'كوبيه' %}selected{% endif %}>كوبيه</option>
+                        <option value="فان" {% if car.body_type == 'فان' %}selected{% endif %}>فان</option>
+                        <option value="بيك أب" {% if car.body_type == 'بيك أب' %}selected{% endif %}>بيك أب</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">المحرك</label>
+                    <input type="text" name="engine" value="{{ car.engine|default:'' }}" placeholder="مثال: 2.0L"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">نظام الدفع</label>
+                    <select name="drive_wheel" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                        <option value="">اختر...</option>
+                        <option value="أمامي" {% if car.drive_wheel == 'أمامي' %}selected{% endif %}>دفع أمامي</option>
+                        <option value="خلفي" {% if car.drive_wheel == 'خلفي' %}selected{% endif %}>دفع خلفي</option>
+                        <option value="رباعي" {% if car.drive_wheel == 'رباعي' %}selected{% endif %}>دفع رباعي</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price & Status -->
+        <div class="border-b border-gray-100 pb-6">
+            <h2 class="text-lg font-bold mb-4">السعر والحالة</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">السعر (₩) *</label>
+                    <input type="number" name="price" value="{{ car.price|default:0 }}" min="0" required
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الحالة</label>
+                    <select name="status" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                        <option value="available" {% if car.status == 'available' %}selected{% endif %}>متاح</option>
+                        <option value="pending" {% if car.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                        <option value="sold" {% if car.status == 'sold' %}selected{% endif %}>تم البيع</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="is_featured" {% if car.is_featured %}checked{% endif %}
+                            class="w-5 h-5 text-brand border-gray-300 rounded focus:ring-brand">
+                        <span class="text-sm font-medium text-gray-700">سيارة مميزة</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="border-b border-gray-100 pb-6">
+            <h2 class="text-lg font-bold mb-4">الوصف</h2>
+            <textarea name="description" rows="4" placeholder="أدخل وصف السيارة..."
+                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none resize-none">{{ car.description|default:'' }}</textarea>
+        </div>
+
+        <!-- Images -->
+        <div>
+            <h2 class="text-lg font-bold mb-4">الصور</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الصورة الرئيسية</label>
+                    {% if car.image %}
+                    <div class="mb-2">
+                        <img src="{{ car.image.url }}" alt="Current image" class="w-32 h-24 object-cover rounded-lg">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="image" accept="image/*"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">صور إضافية (معرض الصور)</label>
+                    {% if car.gallery.all %}
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        {% for img in car.gallery.all %}
+                        <div class="relative group">
+                            <img src="{{ img.image.url }}" alt="Gallery image" class="w-24 h-20 object-cover rounded-lg">
+                            <a href="{% url 'site_car_delete_image' car.pk img.pk %}" 
+                               onclick="return confirm('هل أنت متأكد من حذف هذه الصورة؟')"
+                               class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="gallery" accept="image/*" multiple id="gallery-input"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                    <p class="text-xs text-gray-500 mt-1">يمكنك اختيار عدة صور في نفس الوقت (الحد الأقصى: 20 صورة)</p>
+                    
+                    <!-- Image Preview -->
+                    <div id="image-preview" class="flex flex-wrap gap-2 mt-3 hidden"></div>
+                    
+                    <!-- Upload Progress -->
+                    <div id="upload-progress" class="hidden mt-3">
+                        <div class="bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <div id="progress-bar" class="bg-brand h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2 text-center">
+                            <span id="progress-text">جاري الرفع...</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex gap-4 pt-4">
+            <button type="submit" id="submit-btn" class="flex-1 bg-brand hover:bg-brand-hover text-white font-bold py-3 px-6 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+                {% if action == 'add' %}إضافة السيارة{% else %}حفظ التغييرات{% endif %}
+            </button>
+            <a href="{% url 'site_car_list' %}" class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition">
+                إلغاء
+            </a>
+        </div>
+    </form>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const galleryInput = document.getElementById('gallery-input');
+    const imagePreview = document.getElementById('image-preview');
+    const form = document.querySelector('form');
+    const submitBtn = document.getElementById('submit-btn');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    const MAX_IMAGES = 20;
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per image
+    
+    // Preview selected images
+    if (galleryInput) {
+        galleryInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            
+            // Validate number of images
+            if (files.length > MAX_IMAGES) {
+                alert(`يمكنك رفع ${MAX_IMAGES} صورة كحد أقصى في المرة الواحدة`);
+                e.target.value = '';
+                return;
+            }
+            
+            // Validate file sizes
+            const oversizedFiles = files.filter(f => f.size > MAX_FILE_SIZE);
+            if (oversizedFiles.length > 0) {
+                alert('بعض الصور تتجاوز الحد الأقصى للحجم (10 ميجابايت). سيتم تجاهلها.');
+            }
+            
+            imagePreview.innerHTML = '';
+            
+            if (files.length > 0) {
+                imagePreview.classList.remove('hidden');
+                
+                files.forEach((file, index) => {
+                    if (file.size <= MAX_FILE_SIZE) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const div = document.createElement('div');
+                            div.className = 'relative';
+                            div.innerHTML = `
+                                <img src="${e.target.result}" class="w-24 h-20 object-cover rounded-lg border-2 border-gray-200">
+                                <span class="absolute top-0 right-0 bg-brand text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">${index + 1}</span>
+                            `;
+                            imagePreview.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                
+                progressText.textContent = `تم اختيار ${files.filter(f => f.size <= MAX_FILE_SIZE).length} صورة`;
+            } else {
+                imagePreview.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Handle form submission with progress
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const files = galleryInput ? galleryInput.files : [];
+            
+            if (files.length > 0) {
+                // Show progress bar
+                uploadProgress.classList.remove('hidden');
+                submitBtn.disabled = true;
+                
+                // Simulate progress (since we can't get real upload progress without AJAX)
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    if (progress >= 90) {
+                        clearInterval(interval);
+                    }
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = `جاري الرفع... ${progress}%`;
+                }, 100);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

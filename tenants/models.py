@@ -4,8 +4,9 @@ from django_tenants.models import TenantMixin, DomainMixin
 
 class Tenant(TenantMixin):
     name = models.CharField(max_length=100)
-    logo = models.URLField(max_length=500, blank=True, null=True)
-    favicon = models.URLField(max_length=500, blank=True, null=True)
+    logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True, verbose_name="الشعار")
+    favicon = models.ImageField(upload_to='tenant_favicons/', blank=True, null=True, verbose_name="أيقونة الموقع")
+    hero_image = models.ImageField(upload_to='tenant_hero/', blank=True, null=True, verbose_name="صورة الخلفية الرئيسية", help_text="صورة خلفية الصفحة الرئيسية")
     primary_color = models.CharField(max_length=7, default="#2563eb", help_text="Hex color e.g. #2563eb")
     secondary_color = models.CharField(max_length=7, default="#1e3a8a", help_text="Hex color e.g. #1e3a8a")
     accent_color = models.CharField(max_length=7, default="#3b82f6", help_text="Hex color e.g. #3b82f6")
@@ -57,3 +58,40 @@ class Tenant(TenantMixin):
 
 class Domain(DomainMixin):
     pass
+
+
+class TenantPhoneNumber(models.Model):
+    """
+    Multiple phone numbers for a tenant with different types
+    """
+    PHONE_TYPES = [
+        ('general', 'عام'),
+        ('sales', 'مبيعات'),
+        ('support', 'دعم فني'),
+        ('whatsapp', 'واتساب'),
+        ('manager', 'مدير'),
+        ('other', 'أخرى'),
+    ]
+    
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='phone_numbers', verbose_name="الموقع")
+    phone_number = models.CharField(max_length=20, verbose_name="رقم الهاتف")
+    phone_type = models.CharField(max_length=20, choices=PHONE_TYPES, default='general', verbose_name="نوع الرقم")
+    label = models.CharField(max_length=50, blank=True, help_text="مثل: قسم المبيعات، الفرع الرئيسي", verbose_name="تسمية إضافية")
+    is_primary = models.BooleanField(default=False, verbose_name="رقم رئيسي")
+    is_active = models.BooleanField(default=True, verbose_name="نشط")
+    order = models.IntegerField(default=0, verbose_name="الترتيب")
+    
+    class Meta:
+        ordering = ['order', '-is_primary', 'phone_type']
+        verbose_name = "رقم هاتف"
+        verbose_name_plural = "أرقام الهواتف"
+    
+    def __str__(self):
+        type_display = dict(self.PHONE_TYPES).get(self.phone_type, self.phone_type)
+        return f"{self.phone_number} ({type_display})"
+    
+    def save(self, *args, **kwargs):
+        # If this is set as primary, unset other primary numbers
+        if self.is_primary:
+            TenantPhoneNumber.objects.filter(tenant=self.tenant, is_primary=True).update(is_primary=False)
+        super().save(*args, **kwargs)

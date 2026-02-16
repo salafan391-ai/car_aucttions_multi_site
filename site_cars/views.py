@@ -7,8 +7,9 @@ from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 
-from cars.models import ApiCar
+from cars.models import ApiCar, Manufacturer, CarModel
 from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
+from .image_utils import optimize_image, batch_optimize_images
 
 
 def _is_public_schema():
@@ -30,7 +31,8 @@ def dashboard(request):
     completed_orders = SiteOrder.objects.filter(status='completed').count()
     total_sold = SiteSoldCar.objects.count()
     total_ratings = SiteRating.objects.count()
-    avg_rating = SiteRating.objects.aggregate(avg=Avg('rating'))['avg'] or 0
+    pending_ratings = SiteRating.objects.filter(is_approved=False).count()
+    avg_rating = SiteRating.objects.filter(is_approved=True).aggregate(avg=Avg('rating'))['avg'] or 0
     unanswered_questions = SiteQuestion.objects.filter(is_answered=False).count()
     total_revenue = SiteSoldCar.objects.aggregate(total=Sum('sale_price'))['total'] or 0
     monthly_orders = SiteOrder.objects.filter(created_at__gte=thirty_days_ago).count()
@@ -38,7 +40,7 @@ def dashboard(request):
 
     # Recent data
     recent_orders = SiteOrder.objects.select_related('car', 'user').all()[:10]
-    recent_ratings = SiteRating.objects.select_related('car', 'user').all()[:5]
+    recent_ratings = SiteRating.objects.select_related('car', 'user').filter(is_approved=False)[:5]
     recent_questions = SiteQuestion.objects.select_related('car', 'user').filter(is_answered=False)[:5]
     recent_sold = SiteSoldCar.objects.select_related('car', 'buyer').all()[:5]
     site_cars_list = SiteCar.objects.all()[:10]
@@ -51,6 +53,7 @@ def dashboard(request):
         'completed_orders': completed_orders,
         'total_sold': total_sold,
         'total_ratings': total_ratings,
+        'pending_ratings': pending_ratings,
         'avg_rating': round(avg_rating, 1),
         'unanswered_questions': unanswered_questions,
         'total_revenue': total_revenue,
@@ -68,7 +71,15 @@ def dashboard(request):
 def site_car_list(request):
     if _is_public_schema():
         return redirect('home')
-    qs = SiteCar.objects.all()
+    
+    # By default, exclude sold cars
+    status = request.GET.get('status', 'active')
+    if status == 'sold':
+        qs = SiteCar.objects.filter(status='sold')
+    elif status == 'all':
+        qs = SiteCar.objects.all()
+    else:
+        qs = SiteCar.objects.exclude(status='sold')
 
     q = request.GET.get('q', '').strip()
     if q:
@@ -79,8 +90,170 @@ def site_car_list(request):
     if sort in allowed_sorts:
         qs = qs.order_by(sort)
 
-    context = {'site_cars': qs}
+    sold_count = SiteCar.objects.filter(status='sold').count()
+    active_count = SiteCar.objects.exclude(status='sold').count()
+
+    context = {
+        'site_cars': qs,
+        'sold_count': sold_count,
+        'active_count': active_count,
+        'current_status': status,
+    }
     return render(request, 'site_cars/site_car_list.html', context)
+
+
+@staff_member_required
+def site_car_add(request):
+    """Add a new site car"""
+    if _is_public_schema():
+        return redirect('home')
+    
+    if request.method == 'POST':
+        car = SiteCar.objects.create(
+            title=request.POST.get('title', ''),
+            description=request.POST.get('description', ''),
+            manufacturer=request.POST.get('manufacturer', ''),
+            model=request.POST.get('model', ''),
+            year=int(request.POST.get('year', 2024)),
+            color=request.POST.get('color', ''),
+            mileage=int(request.POST.get('mileage', 0) or 0),
+            price=int(request.POST.get('price', 0) or 0),
+            transmission=request.POST.get('transmission', ''),
+            fuel=request.POST.get('fuel', ''),
+            body_type=request.POST.get('body_type', ''),
+            engine=request.POST.get('engine', ''),
+            drive_wheel=request.POST.get('drive_wheel', ''),
+            status=request.POST.get('status', 'available'),
+            is_featured=request.POST.get('is_featured') == 'on',
+        )
+        
+        # Handle main image with optimization
+        if 'image' in request.FILES:
+            car.image = optimize_image(request.FILES['image'])
+            car.save()
+        
+        # Handle gallery images with batch optimization
+        gallery_images = request.FILES.getlist('gallery')
+        if gallery_images:
+            # Optimize images in batches to prevent memory issues
+            optimized_images = batch_optimize_images(gallery_images, max_workers=2)
+            for idx, img in enumerate(optimized_images):
+                SiteCarImage.objects.create(car=car, image=img, order=idx)
+        
+        messages.success(request, 'تم إضافة السيارة بنجاح')
+        return redirect('site_car_list')
+    
+    manufacturers = Manufacturer.objects.all().order_by('name')
+    models = CarModel.objects.all().order_by('name')
+    return render(request, 'site_cars/site_car_form.html', {
+        'action': 'add',
+        'manufacturers': manufacturers,
+        'car_models': models,
+    })
+
+
+@staff_member_required
+def site_car_edit(request, pk):
+    """Edit an existing site car"""
+    if _is_public_schema():
+        return redirect('home')
+    
+    car = get_object_or_404(SiteCar, pk=pk)
+    
+    if request.method == 'POST':
+        car.title = request.POST.get('title', car.title)
+        car.description = request.POST.get('description', car.description)
+        car.manufacturer = request.POST.get('manufacturer', car.manufacturer)
+        car.model = request.POST.get('model', car.model)
+        car.year = int(request.POST.get('year', car.year))
+        car.color = request.POST.get('color', car.color)
+        car.mileage = int(request.POST.get('mileage', car.mileage) or 0)
+        car.price = int(request.POST.get('price', car.price) or 0)
+        car.transmission = request.POST.get('transmission', car.transmission)
+        car.fuel = request.POST.get('fuel', car.fuel)
+        car.body_type = request.POST.get('body_type', car.body_type)
+        car.engine = request.POST.get('engine', car.engine)
+        car.drive_wheel = request.POST.get('drive_wheel', car.drive_wheel)
+        car.status = request.POST.get('status', car.status)
+        car.is_featured = request.POST.get('is_featured') == 'on'
+        
+        # Handle main image with optimization
+        if 'image' in request.FILES:
+            car.image = optimize_image(request.FILES['image'])
+        
+        car.save()
+        
+        # Handle gallery images with batch optimization
+        gallery_images = request.FILES.getlist('gallery')
+        if gallery_images:
+            last_order = car.gallery.count()
+            # Optimize images in batches to prevent memory issues
+            optimized_images = batch_optimize_images(gallery_images, max_workers=2)
+            for idx, img in enumerate(optimized_images):
+                SiteCarImage.objects.create(car=car, image=img, order=last_order + idx)
+        
+        messages.success(request, 'تم تحديث السيارة بنجاح')
+        return redirect('site_car_list')
+    
+    manufacturers = Manufacturer.objects.all().order_by('name')
+    models = CarModel.objects.all().order_by('name')
+    return render(request, 'site_cars/site_car_form.html', {
+        'action': 'edit',
+        'car': car,
+        'manufacturers': manufacturers,
+        'car_models': models,
+    })
+
+
+@staff_member_required
+def site_car_delete(request, pk):
+    """Delete a site car"""
+    if _is_public_schema():
+        return redirect('home')
+    
+    car = get_object_or_404(SiteCar, pk=pk)
+    
+    # Prevent deletion of sold cars
+    if car.status == 'sold':
+        messages.error(request, 'لا يمكن حذف السيارات المباعة. يرجى الانتقال إلى صفحة السيارات المباعة.')
+        return redirect('sold_cars')
+    
+    if request.method == 'POST':
+        car.delete()
+        messages.success(request, 'تم حذف السيارة بنجاح')
+        return redirect('site_car_list')
+    
+    return render(request, 'site_cars/site_car_delete.html', {'car': car})
+
+
+@staff_member_required
+def site_car_change_status(request, pk):
+    """Change the status of a site car"""
+    if _is_public_schema():
+        return redirect('home')
+    
+    car = get_object_or_404(SiteCar, pk=pk)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in dict(SiteCar.STATUS_CHOICES):
+            car.status = new_status
+            car.save()
+            messages.success(request, f'تم تغيير حالة السيارة إلى {car.get_status_display()}')
+    
+    return redirect(request.META.get('HTTP_REFERER', 'site_car_list'))
+
+
+@staff_member_required
+def site_car_delete_image(request, pk, image_id):
+    """Delete a gallery image from a site car"""
+    if _is_public_schema():
+        return redirect('home')
+    
+    image = get_object_or_404(SiteCarImage, pk=image_id, car_id=pk)
+    image.delete()
+    messages.success(request, 'تم حذف الصورة بنجاح')
+    return redirect('site_car_edit', pk=pk)
 
 
 def site_car_detail(request, pk):
@@ -171,11 +344,43 @@ def rate_car(request, pk):
             defaults={
                 'rating': int(rating_val),
                 'comment': comment,
+                'is_approved': False,  # Ratings need admin approval
             },
         )
-        messages.success(request, 'تم حفظ تقييمك بنجاح!')
+        messages.success(request, 'تم حفظ تقييمك بنجاح! سيتم عرضه بعد مراجعة المشرف.')
 
     return redirect('car_detail', pk=pk)
+
+
+@staff_member_required
+def approve_rating(request, pk):
+    """Approve a rating"""
+    if _is_public_schema():
+        return redirect('home')
+    
+    rating = get_object_or_404(SiteRating, pk=pk)
+    rating.is_approved = True
+    rating.save()
+    messages.success(request, f'تم الموافقة على تقييم {rating.user.username}')
+    
+    # Redirect back to the car detail page or referrer
+    return redirect(request.META.get('HTTP_REFERER', 'car_detail'), pk=rating.car.id)
+
+
+@staff_member_required
+def reject_rating(request, pk):
+    """Reject and delete a rating"""
+    if _is_public_schema():
+        return redirect('home')
+    
+    rating = get_object_or_404(SiteRating, pk=pk)
+    car_id = rating.car.id
+    username = rating.user.username
+    rating.delete()
+    messages.success(request, f'تم رفض وحذف تقييم {username}')
+    
+    # Redirect back to the car detail page or referrer
+    return redirect(request.META.get('HTTP_REFERER', 'car_detail'), pk=car_id)
 
 
 # ── Inbox / Messaging ──

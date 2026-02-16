@@ -7,10 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from django.http import JsonResponse
 
-from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist
+from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor
 
 
 def _exclude_expired_auctions(qs):
@@ -19,6 +20,7 @@ def _exclude_expired_auctions(qs):
     return qs.exclude(category__name='auction', auction_date__lt=now)
 
 
+@ensure_csrf_cookie
 def home(request):
     _base_qs = _exclude_expired_auctions(
         ApiCar.objects.select_related(
@@ -65,6 +67,7 @@ def home(request):
     return render(request, 'cars/home.html', context)
 
 
+@ensure_csrf_cookie
 def car_list(request):
     qs = _exclude_expired_auctions(
         ApiCar.objects.select_related(
@@ -92,9 +95,19 @@ def car_list(request):
     if badge:
         qs = qs.filter(badge_id=badge)
 
-    year = request.GET.get('year')
-    if year:
-        qs = qs.filter(year=year)
+    year_from = request.GET.get('year_from')
+    if year_from:
+        try:
+            qs = qs.filter(year__gte=int(year_from))
+        except ValueError:
+            pass
+
+    year_to = request.GET.get('year_to')
+    if year_to:
+        try:
+            qs = qs.filter(year__lte=int(year_to))
+        except ValueError:
+            pass
 
     color = request.GET.get('color')
     if color:
@@ -111,6 +124,14 @@ def car_list(request):
     transmission = request.GET.get('transmission')
     if transmission:
         qs = qs.filter(transmission__iexact=transmission)
+
+    seat_count = request.GET.get('seat_count')
+    if seat_count:
+        qs = qs.filter(seat_count=seat_count)
+
+    seat_color = request.GET.get('seat_color')
+    if seat_color:
+        qs = qs.filter(seat_color_id=seat_color)
 
     car_type = request.GET.get('car_type')
     if car_type == 'auction':
@@ -194,6 +215,8 @@ def car_list(request):
     
     fuels = ApiCar.objects.values_list('fuel', flat=True).exclude(fuel__isnull=True).exclude(fuel='').distinct().order_by('fuel')
     transmissions = ApiCar.objects.values_list('transmission', flat=True).exclude(transmission__isnull=True).exclude(transmission='').distinct().order_by('transmission')
+    seat_counts = ApiCar.objects.values_list('seat_count', flat=True).exclude(seat_count__isnull=True).exclude(seat_count='').distinct().order_by('seat_count')
+    seat_colors = CarSeatColor.objects.all().order_by('name')
     badges = CarBadge.objects.all().order_by('name')
 
     # Counts for tabs
@@ -224,10 +247,14 @@ def car_list(request):
         'body_types': body_types,
         'fuels': fuels,
         'transmissions': transmissions,
+        'seat_counts': seat_counts,
+        'seat_colors': seat_colors,
         'query_string': query_string,
         'count_all': count_all,
         'count_cars': count_cars,
         'count_auction': count_auction,
+        'selected_year_from': request.GET.get('year_from', ''),
+        'selected_year_to': request.GET.get('year_to', ''),
     }
     return render(request, 'cars/car_list.html', context)
 
@@ -294,22 +321,36 @@ def car_detail(request, pk):
     ratings = []
     user_rating = None
     avg_rating = 0
+    pending_ratings = []
     from django.db import connection
     tenant = getattr(connection, 'tenant', None)
     if tenant and tenant.schema_name != 'public':
         from site_cars.models import SiteRating
         from django.db.models import Avg
-        ratings = SiteRating.objects.filter(car=car).select_related('user')
-        avg_obj = ratings.aggregate(avg=Avg('rating'))
+        
+        # Show only approved ratings to regular users
+        if request.user.is_staff:
+            # Staff can see all ratings
+            ratings = SiteRating.objects.filter(car=car).select_related('user')
+            # Get pending ratings for staff to review
+            pending_ratings = ratings.filter(is_approved=False)
+        else:
+            # Regular users only see approved ratings
+            ratings = SiteRating.objects.filter(car=car, is_approved=True).select_related('user')
+        
+        # Calculate average only from approved ratings
+        avg_obj = SiteRating.objects.filter(car=car, is_approved=True).aggregate(avg=Avg('rating'))
         avg_rating = avg_obj['avg'] or 0
+        
         if request.user.is_authenticated:
-            user_rating = ratings.filter(user=request.user).first()
+            user_rating = SiteRating.objects.filter(car=car, user=request.user).first()
     
     context = {
         'car': car,
         'ratings': ratings,
         'avg_rating': avg_rating,
         'user_rating': user_rating,
+        'pending_ratings': pending_ratings,
     }
     return render(request, 'cars/car_detail.html', context)
 
@@ -420,6 +461,7 @@ def toggle_wishlist(request, car_id):
 
 
 @login_required
+@ensure_csrf_cookie
 def wishlist(request):
     """Show user's wishlist"""
     wishlist_items = Wishlist.objects.filter(

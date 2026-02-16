@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إعدادات الموقع{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-gray-900">إعدادات الموقع</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Basic Info Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">المعلومات الأساسية</h2>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اسم الموقع</label>
+                        <input type="text" name="name" value="{{ tenant.name }}" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Branding Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">العلامة التجارية</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Logo -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الشعار (Logo)</label>
+                        {% if tenant.logo %}
+                        <div class="mb-3">
+                            <img src="{{ tenant.logo.url }}" alt="Current Logo" class="h-20 object-contain border rounded p-2">
+                            <p class="text-xs text-gray-500 mt-1">الشعار الحالي</p>
+                        </div>
+                        {% endif %}
+                        <input type="file" name="logo" accept="image/*"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">يُفضل صورة PNG بخلفية شفافة</p>
+                    </div>
+                    
+                    <!-- Favicon -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">أيقونة الموقع (Favicon)</label>
+                        {% if tenant.favicon %}
+                        <div class="mb-3">
+                            <img src="{{ tenant.favicon.url }}" alt="Current Favicon" class="h-10 object-contain border rounded p-2">
+                            <p class="text-xs text-gray-500 mt-1">الأيقونة الحالية</p>
+                        </div>
+                        {% endif %}
+                        <input type="file" name="favicon" accept="image/x-icon,image/png"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">يُفضل صورة 32x32 أو 64x64 بصيغة ICO أو PNG</p>
+                    </div>
+                </div>
+                
+                <!-- Hero Image -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">صورة خلفية الصفحة الرئيسية (Hero Image)</label>
+                    {% if tenant.hero_image %}
+                    <div class="mb-3">
+                        <img src="{{ tenant.hero_image.url }}" alt="Current Hero Image" class="w-full h-48 object-cover rounded-lg border">
+                        <p class="text-xs text-gray-500 mt-1">الصورة الحالية</p>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="hero_image" accept="image/*"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">يُفضل صورة بمقاس 1920x1080 أو أكبر للحصول على أفضل جودة</p>
+                </div>
+                
+                <!-- Colors -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اللون الأساسي</label>
+                        <input type="color" name="primary_color" value="{{ tenant.primary_color|default:'#3B82F6' }}"
+                               class="w-full h-10 px-2 py-1 border border-gray-300 rounded-lg cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اللون الثانوي</label>
+                        <input type="color" name="secondary_color" value="{{ tenant.secondary_color|default:'#1E40AF' }}"
+                               class="w-full h-10 px-2 py-1 border border-gray-300 rounded-lg cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اللون المميز</label>
+                        <input type="color" name="accent_color" value="{{ tenant.accent_color|default:'#10B981' }}"
+                               class="w-full h-10 px-2 py-1 border border-gray-300 rounded-lg cursor-pointer">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Info Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">معلومات التواصل</h2>
+                
+                <!-- Multiple Phone Numbers Section -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="block text-sm font-medium text-gray-700">أرقام الهواتف</label>
+                        <button type="button" onclick="addPhoneNumber()" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">
+                            + إضافة رقم
+                        </button>
+                    </div>
+                    
+                    <div id="phone-numbers-container" class="space-y-3">
+                        {% if phone_numbers %}
+                            {% for phone in phone_numbers %}
+                            <div class="phone-number-row flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                                <input type="hidden" name="phone_id[]" value="{{ phone.id }}">
+                                <div class="flex-1">
+                                    <input type="text" name="phone_number[]" value="{{ phone.phone_number }}" placeholder="رقم الهاتف"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                                <div class="w-32">
+                                    <select name="phone_type[]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        {% for type_value, type_label in phone_types %}
+                                        <option value="{{ type_value }}" {% if phone.phone_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <input type="text" name="phone_label[]" value="{{ phone.label|default:'' }}" placeholder="تسمية إضافية (اختياري)"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" name="phone_primary[]" value="{{ forloop.counter0 }}" {% if phone.is_primary %}checked{% endif %}
+                                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <label class="text-xs text-gray-600">رئيسي</label>
+                                </div>
+                                <button type="button" onclick="removePhoneNumber(this)" class="text-red-600 hover:text-red-800 p-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="phone-number-row flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                                <input type="hidden" name="phone_id[]" value="">
+                                <div class="flex-1">
+                                    <input type="text" name="phone_number[]" value="" placeholder="رقم الهاتف"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                                <div class="w-32">
+                                    <select name="phone_type[]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        {% for type_value, type_label in phone_types %}
+                                        <option value="{{ type_value }}">{{ type_label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <input type="text" name="phone_label[]" value="" placeholder="تسمية إضافية (اختياري)"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" name="phone_primary[]" value="0" checked
+                                           class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <label class="text-xs text-gray-600">رئيسي</label>
+                                </div>
+                                <button type="button" onclick="removePhoneNumber(this)" class="text-red-600 hover:text-red-800 p-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">يمكنك إضافة أكثر من رقم هاتف مع تحديد نوع كل رقم (مبيعات، دعم، عام، إلخ)</p>
+                </div>
+                
+                <!-- Legacy Fields (kept for backwards compatibility) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف (قديم)</label>
+                        <input type="text" name="phone" value="{{ tenant.phone|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <p class="text-xs text-gray-400 mt-1">استخدم قسم "أرقام الهواتف" أعلاه بدلاً من ذلك</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">رقم هاتف ثاني (قديم)</label>
+                        <input type="text" name="phone2" value="{{ tenant.phone2|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <p class="text-xs text-gray-400 mt-1">استخدم قسم "أرقام الهواتف" أعلاه بدلاً من ذلك</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">واتساب</label>
+                        <input type="text" name="whatsapp" value="{{ tenant.whatsapp|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني</label>
+                        <input type="email" name="email" value="{{ tenant.email|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">الموقع وساعات العمل</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">العنوان (عربي)</label>
+                        <input type="text" name="address" value="{{ tenant.address|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">العنوان (English)</label>
+                        <input type="text" name="address_en" value="{{ tenant.address_en|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">المدينة (عربي)</label>
+                        <input type="text" name="city" value="{{ tenant.city|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">المدينة (English)</label>
+                        <input type="text" name="city_en" value="{{ tenant.city_en|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ساعات العمل (عربي)</label>
+                        <input type="text" name="working_hours" value="{{ tenant.working_hours|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ساعات العمل (English)</label>
+                        <input type="text" name="working_hours_en" value="{{ tenant.working_hours_en|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">رابط الخريطة (Google Maps)</label>
+                        <input type="url" name="map_url" value="{{ tenant.map_url|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- About Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">عن الشركة</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">عن الشركة (عربي)</label>
+                        <textarea name="about" rows="4"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ tenant.about|default:'' }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">عن الشركة (English)</label>
+                        <textarea name="about_en" rows="4"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ tenant.about_en|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Person Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">شخص الاتصال</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الاسم</label>
+                        <input type="text" name="contact_person_name" value="{{ tenant.contact_person_name|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الصورة</label>
+                        {% if tenant.contact_person_photo %}
+                        <div class="mb-3">
+                            <img src="{{ tenant.contact_person_photo.url }}" alt="Contact Person" class="h-20 w-20 rounded-full object-cover border">
+                        </div>
+                        {% endif %}
+                        <input type="file" name="contact_person_photo" accept="image/*"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Social Media Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">وسائل التواصل الاجتماعي</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
+                        <input type="url" name="instagram" value="{{ tenant.instagram|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Twitter</label>
+                        <input type="url" name="twitter" value="{{ tenant.twitter|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
+                        <input type="url" name="facebook" value="{{ tenant.facebook|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">TikTok</label>
+                        <input type="url" name="tiktok" value="{{ tenant.tiktok|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Snapchat</label>
+                        <input type="url" name="snapchat" value="{{ tenant.snapchat|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">YouTube</label>
+                        <input type="url" name="youtube" value="{{ tenant.youtube|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">تذييل الموقع</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">نص التذييل (عربي)</label>
+                        <textarea name="footer_text" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ tenant.footer_text|default:'' }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">نص التذييل (English)</label>
+                        <textarea name="footer_text_en" rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ tenant.footer_text_en|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Email Settings Section -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900">إعدادات البريد الإلكتروني</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">خادم البريد (SMTP Host)</label>
+                        <input type="text" name="email_host" value="{{ tenant.email_host|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">المنفذ (Port)</label>
+                        <input type="number" name="email_port" value="{{ tenant.email_port|default:587 }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                        <input type="text" name="email_username" value="{{ tenant.email_username|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                        <input type="password" name="email_password" placeholder="اتركه فارغًا لعدم التغيير"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اسم المرسل</label>
+                        <input type="text" name="email_from_name" value="{{ tenant.email_from_name|default:'' }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="flex items-center pt-6">
+                        <input type="checkbox" name="email_use_tls" id="email_use_tls" {% if tenant.email_use_tls %}checked{% endif %}
+                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label for="email_use_tls" class="mr-2 text-sm font-medium text-gray-700">استخدام TLS</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex justify-end gap-4">
+                <a href="{% url 'site_dashboard' %}" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                    إلغاء
+                </a>
+                <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    حفظ التغييرات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let phoneNumberIndex = {{ phone_numbers|length|default:1 }};
+
+function addPhoneNumber() {
+    const container = document.getElementById('phone-numbers-container');
+    const phoneTypes = [
+        {% for type_value, type_label in phone_types %}
+        {value: '{{ type_value }}', label: '{{ type_label }}'},
+        {% endfor %}
+    ];
+    
+    const newRow = document.createElement('div');
+    newRow.className = 'phone-number-row flex gap-2 items-start p-3 bg-gray-50 rounded-lg';
+    newRow.innerHTML = `
+        <input type="hidden" name="phone_id[]" value="">
+        <div class="flex-1">
+            <input type="text" name="phone_number[]" value="" placeholder="رقم الهاتف"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+        <div class="w-32">
+            <select name="phone_type[]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                ${phoneTypes.map(type => `<option value="${type.value}">${type.label}</option>`).join('')}
+            </select>
+        </div>
+        <div class="flex-1">
+            <input type="text" name="phone_label[]" value="" placeholder="تسمية إضافية (اختياري)"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+        <div class="flex items-center gap-2">
+            <input type="checkbox" name="phone_primary[]" value="${phoneNumberIndex}"
+                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+            <label class="text-xs text-gray-600">رئيسي</label>
+        </div>
+        <button type="button" onclick="removePhoneNumber(this)" class="text-red-600 hover:text-red-800 p-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    `;
+    
+    container.appendChild(newRow);
+    phoneNumberIndex++;
+}
+
+function removePhoneNumber(button) {
+    const row = button.closest('.phone-number-row');
+    const container = document.getElementById('phone-numbers-container');
+    
+    // Don't remove if it's the last row
+    if (container.querySelectorAll('.phone-number-row').length > 1) {
+        row.remove();
+    } else {
+        alert('يجب أن يكون هناك رقم هاتف واحد على الأقل');
+    }
+}
+
+// Handle primary checkbox - only one should be checked
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'phone_primary[]' && e.target.checked) {
+        // Uncheck all other primary checkboxes
+        document.querySelectorAll('input[name="phone_primary[]"]').forEach(checkbox => {
+            if (checkbox !== e.target) {
+                checkbox.checked = false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

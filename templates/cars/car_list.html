@@ -13,11 +13,14 @@
             {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
             {% if request.GET.manufacturer %}<input type="hidden" name="manufacturer" value="{{ request.GET.manufacturer }}">{% endif %}
             {% if request.GET.model %}<input type="hidden" name="model" value="{{ request.GET.model }}">{% endif %}
-            {% if request.GET.year %}<input type="hidden" name="year" value="{{ request.GET.year }}">{% endif %}
+            {% if request.GET.year_from %}<input type="hidden" name="year_from" value="{{ request.GET.year_from }}">{% endif %}
+            {% if request.GET.year_to %}<input type="hidden" name="year_to" value="{{ request.GET.year_to }}">{% endif %}
             {% if request.GET.color %}<input type="hidden" name="color" value="{{ request.GET.color }}">{% endif %}
             {% if request.GET.body_type %}<input type="hidden" name="body_type" value="{{ request.GET.body_type }}">{% endif %}
             {% if request.GET.fuel %}<input type="hidden" name="fuel" value="{{ request.GET.fuel }}">{% endif %}
             {% if request.GET.transmission %}<input type="hidden" name="transmission" value="{{ request.GET.transmission }}">{% endif %}
+            {% if request.GET.seat_count %}<input type="hidden" name="seat_count" value="{{ request.GET.seat_count }}">{% endif %}
+            {% if request.GET.seat_color %}<input type="hidden" name="seat_color" value="{{ request.GET.seat_color }}">{% endif %}
             {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
             {% if request.GET.price_min %}<input type="hidden" name="price_min" value="{{ request.GET.price_min }}">{% endif %}
             {% if request.GET.price_max %}<input type="hidden" name="price_max" value="{{ request.GET.price_max }}">{% endif %}
@@ -75,7 +78,7 @@
     {% endif %}
 
     <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
-    {% if request.GET.manufacturer or request.GET.model or request.GET.badge or request.GET.year or request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.status or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+    {% if request.GET.manufacturer or request.GET.model or request.GET.badge or request.GET.year_from or request.GET.year_to or request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.seat_count or request.GET.seat_color or request.GET.status or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
     <div class="flex flex-wrap items-center gap-2 mb-5" id="active-chips">
         <span class="text-xs text-gray-400 font-medium">الفلاتر النشطة:</span>
 
@@ -106,9 +109,16 @@
             {% endif %}
         {% endfor %}
 
-        {% if request.GET.year %}
-        <a href="?{% for k,v in request.GET.items %}{% if k != 'year' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-full hover:bg-green-100 transition group">
-            السنة: {{ request.GET.year }}
+        {% if request.GET.year_from %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'year_from' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-full hover:bg-green-100 transition group">
+            من سنة: {{ request.GET.year_from }}
+            <svg class="w-3.5 h-3.5 text-green-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        {% if request.GET.year_to %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'year_to' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-full hover:bg-green-100 transition group">
+            إلى سنة: {{ request.GET.year_to }}
             <svg class="w-3.5 h-3.5 text-green-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
@@ -126,6 +136,22 @@
             <svg class="w-3.5 h-3.5 text-teal-400 group-hover:text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
+
+        {% if request.GET.seat_count %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'seat_count' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-50 text-violet-700 text-xs font-medium rounded-full hover:bg-violet-100 transition group">
+            المقاعد: {{ request.GET.seat_count }}
+            <svg class="w-3.5 h-3.5 text-violet-400 group-hover:text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
+
+        {% for sc in seat_colors %}
+            {% if request.GET.seat_color == sc.id|stringformat:"d" %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'seat_color' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 text-xs font-medium rounded-full hover:bg-rose-100 transition group">
+                لون المقاعد: {{ sc.name }}
+                <svg class="w-3.5 h-3.5 text-rose-400 group-hover:text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </a>
+            {% endif %}
+        {% endfor %}
 
         {% for c in colors %}
             {% if request.GET.color == c.id|stringformat:"d" %}
@@ -214,11 +240,20 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">سنة الصنع</label>
-                    <select name="year" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
-                        <option value="">جميع السنوات</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">من سنة</label>
+                    <select name="year_from" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">من سنة</option>
                         {% for y in years %}
-                        <option value="{{ y }}" {% if request.GET.year == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
+                        <option value="{{ y }}" {% if selected_year_from == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">إلى سنة</label>
+                    <select name="year_to" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">إلى سنة</option>
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if selected_year_to == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -234,7 +269,7 @@
             </div>
 
             <!-- Row 2: Secondary filters -->
-            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اللون</label>
                     <select name="color" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
@@ -268,6 +303,24 @@
                         <option value="">الكل</option>
                         {% for t in transmissions %}
                         <option value="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">عدد المقاعد</label>
+                    <select name="seat_count" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for s in seat_counts %}
+                        <option value="{{ s }}" {% if request.GET.seat_count == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">لون المقاعد</label>
+                    <select name="seat_color" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for sc in seat_colors %}
+                        <option value="{{ sc.id }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -465,7 +518,7 @@ toggleBtn.addEventListener('click', function() {
 });
 
 // Auto-open if filters are active
-{% if request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.status or request.GET.manufacturer or request.GET.model or request.GET.year %}
+{% if request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.seat_count or request.GET.seat_color or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.status or request.GET.manufacturer or request.GET.model or request.GET.year_from or request.GET.year_to %}
 filterForm.classList.remove('hidden');
 filterArrow.classList.add('rotate-180');
 {% endif %}

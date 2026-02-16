@@ -104,6 +104,7 @@ class SiteRating(models.Model):
     car = models.ForeignKey(ApiCar, on_delete=models.CASCADE, verbose_name="السيارة")
     rating = models.IntegerField(verbose_name="التقييم")
     comment = models.TextField(blank=True, verbose_name="التعليق")
+    is_approved = models.BooleanField(default=False, verbose_name="موافق عليه")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

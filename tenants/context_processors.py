@@ -5,10 +5,28 @@ def tenant_branding(request):
     tenant = getattr(connection, "tenant", None)
     if tenant is None:
         return {}
+    
+    # Get all phone numbers for the tenant
+    phone_numbers = []
+    if hasattr(tenant, 'phone_numbers'):
+        phone_numbers = tenant.phone_numbers.filter(is_active=True).order_by('order', '-is_primary')
+    
+    # Get primary phone number
+    primary_phone = None
+    if phone_numbers:
+        primary_phone = next((p for p in phone_numbers if p.is_primary), phone_numbers[0] if phone_numbers else None)
+    
+    # Get sales phone numbers
+    sales_phones = [p for p in phone_numbers if p.phone_type == 'sales']
+    
+    # Get WhatsApp phone numbers
+    whatsapp_phones = [p for p in phone_numbers if p.phone_type == 'whatsapp']
+    
     return {
         "site_name": tenant.name or "سيارات",
-        "site_logo": tenant.logo or "",
-        "site_favicon": tenant.favicon or "",
+        "site_logo": tenant.logo.url if tenant.logo else "",
+        "site_favicon": tenant.favicon.url if tenant.favicon else "",
+        "site_hero_image": tenant.hero_image.url if tenant.hero_image else "",
         "primary_color": tenant.primary_color or "#2563eb",
         "secondary_color": tenant.secondary_color or "#1e3a8a",
         "accent_color": tenant.accent_color or "#3b82f6",
@@ -38,4 +56,9 @@ def tenant_branding(request):
         "site_tiktok": tenant.tiktok or "",
         "site_snapchat": tenant.snapchat or "",
         "site_youtube": tenant.youtube or "",
+        # Multiple phone numbers
+        "phone_numbers": phone_numbers,
+        "primary_phone": primary_phone,
+        "sales_phones": sales_phones,
+        "whatsapp_phones": whatsapp_phones,
     }

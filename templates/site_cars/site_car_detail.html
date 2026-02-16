@@ -16,12 +16,50 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Images -->
         <div class="lg:col-span-2">
-            <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
-                <div class="aspect-[16/10] bg-gray-100">
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4 relative group">
+                <div class="aspect-[16/10] bg-gray-100 relative" id="image-slider">
+                    {% if car.image or car.gallery.all %}
+                    <!-- Collect all images -->
+                    {% with all_images=car.gallery.all %}
                     {% if car.image %}
-                    <img id="main-image" src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
-                    {% elif car.gallery.first %}
-                    <img id="main-image" src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                    <div class="slider-image active w-full h-full">
+                        <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% endif %}
+                    {% for img in all_images %}
+                    <div class="slider-image {% if not car.image and forloop.first %}active{% endif %} w-full h-full {% if car.image or not forloop.first %}hidden{% endif %}">
+                        <img src="{{ img.image.url }}" alt="{{ img.caption|default:car.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% endfor %}
+                    {% endwith %}
+                    
+                    <!-- Navigation Arrows -->
+                    {% if car.gallery.all %}
+                    <button onclick="changeSlide(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button onclick="changeSlide(1)" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Slide Indicators -->
+                    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                        {% if car.image %}
+                        <button onclick="goToSlide(0)" class="slide-indicator w-2 h-2 bg-white/60 hover:bg-white rounded-full transition"></button>
+                        {% endif %}
+                        {% for img in car.gallery.all %}
+                        {% if car.image %}
+                        <button onclick="goToSlide({{ forloop.counter }})" class="slide-indicator w-2 h-2 bg-white/60 hover:bg-white rounded-full transition"></button>
+                        {% else %}
+                        <button onclick="goToSlide({{ forloop.counter0 }})" class="slide-indicator w-2 h-2 bg-white/60 hover:bg-white rounded-full transition"></button>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     {% else %}
                     <div class="w-full h-full flex items-center justify-center text-gray-300">
                         <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,11 +71,22 @@
             </div>
 
             {% if car.gallery.all %}
-            <div class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+                {% if car.image %}
+                <button onclick="goToSlide(0)" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
+                    <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                </button>
+                {% endif %}
                 {% for img in car.gallery.all %}
-                <button onclick="document.getElementById('main-image').src='{{ img.image.url }}'" class="aspect-square bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-primary-400 transition">
+                {% if car.image %}
+                <button onclick="goToSlide({{ forloop.counter }})" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
                     <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="w-full h-full object-cover" loading="lazy">
                 </button>
+                {% else %}
+                <button onclick="goToSlide({{ forloop.counter0 }})" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
+                    <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="w-full h-full object-cover" loading="lazy">
+                </button>
+                {% endif %}
                 {% endfor %}
             </div>
             {% endif %}
@@ -161,4 +210,83 @@
         </div>
     </div>
 </section>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slider-image');
+const indicators = document.querySelectorAll('.slide-indicator');
+const thumbnails = document.querySelectorAll('.thumbnail-btn');
+
+function updateSlider() {
+    slides.forEach((slide, index) => {
+        if (index === currentSlide) {
+            slide.classList.remove('hidden');
+            slide.classList.add('active');
+        } else {
+            slide.classList.add('hidden');
+            slide.classList.remove('active');
+        }
+    });
+    
+    indicators.forEach((indicator, index) => {
+        if (index === currentSlide) {
+            indicator.classList.remove('bg-white/60');
+            indicator.classList.add('bg-white');
+        } else {
+            indicator.classList.remove('bg-white');
+            indicator.classList.add('bg-white/60');
+        }
+    });
+    
+    thumbnails.forEach((thumb, index) => {
+        if (index === currentSlide) {
+            thumb.classList.add('ring-2', 'ring-brand');
+        } else {
+            thumb.classList.remove('ring-2', 'ring-brand');
+        }
+    });
+}
+
+function changeSlide(direction) {
+    currentSlide += direction;
+    if (currentSlide < 0) currentSlide = slides.length - 1;
+    if (currentSlide >= slides.length) currentSlide = 0;
+    updateSlider();
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    updateSlider();
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') changeSlide(1);
+    if (e.key === 'ArrowRight') changeSlide(-1);
+});
+
+// Touch/swipe support
+let touchStartX = 0;
+let touchEndX = 0;
+
+const slider = document.getElementById('image-slider');
+if (slider) {
+    slider.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    slider.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+}
+
+function handleSwipe() {
+    if (touchEndX < touchStartX - 50) changeSlide(1);  // Swipe left
+    if (touchEndX > touchStartX + 50) changeSlide(-1); // Swipe right
+}
+
+// Initialize
+updateSlider();
+</script>
 {% endblock %}

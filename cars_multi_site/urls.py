@@ -19,9 +19,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from tenants.views import site_settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("settings/", site_settings, name="site_settings"),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
 ]
