@@ -92,11 +92,14 @@ def site_settings(request):
         # Handle multiple phone numbers
         # First, handle deletions
         existing_phone_ids = request.POST.getlist('phone_id[]')
-        if existing_phone_ids:
+        # Filter out empty strings and convert to integers
+        valid_phone_ids = [int(pid) for pid in existing_phone_ids if pid.strip() and pid.isdigit()]
+        
+        if valid_phone_ids:
             # Delete phone numbers not in the submitted list
-            tenant.phone_numbers.exclude(id__in=existing_phone_ids).delete()
+            tenant.phone_numbers.exclude(id__in=valid_phone_ids).delete()
         else:
-            # If no phone IDs, delete all
+            # If no valid phone IDs, delete all
             tenant.phone_numbers.all().delete()
         
         # Update or create phone numbers
@@ -112,7 +115,7 @@ def site_settings(request):
                 is_primary = str(i) in phone_primaries
                 
                 # Check if this is an existing phone (has ID)
-                if i < len(existing_phone_ids) and existing_phone_ids[i]:
+                if i < len(existing_phone_ids) and existing_phone_ids[i] and existing_phone_ids[i].isdigit():
                     # Update existing
                     try:
                         phone_obj = TenantPhoneNumber.objects.get(id=existing_phone_ids[i], tenant=tenant)
