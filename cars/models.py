@@ -185,3 +185,104 @@ class Contact(models.Model):
     def __str__(self):
         return self.name
 
+
+class Post(models.Model):
+    title = models.CharField(max_length=200, verbose_name="العنوان")
+    title_ar = models.CharField(max_length=200, null=True, blank=True, verbose_name="العنوان بالعربي")
+    content = models.TextField(verbose_name="المحتوى")
+    content_ar = models.TextField(null=True, blank=True, verbose_name="المحتوى بالعربي")
+    video_url = models.URLField(null=True, blank=True, verbose_name="رابط الفيديو", help_text="رابط فيديو من YouTube أو Vimeo أو غيرها")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="الكاتب")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
+    is_published = models.BooleanField(default=True, verbose_name="منشور")
+    views_count = models.IntegerField(default=0, verbose_name="عدد المشاهدات")
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "منشور"
+        verbose_name_plural = "المنشورات"
+    
+    def __str__(self):
+        return self.title_ar if self.title_ar else self.title
+    
+    def get_video_embed_url(self):
+        """Convert video URL to embeddable format"""
+        if not self.video_url:
+            return None
+        
+        url = self.video_url
+        
+        # YouTube
+        if 'youtube.com/watch?v=' in url:
+            video_id = url.split('watch?v=')[1].split('&')[0]
+            return f'https://www.youtube.com/embed/{video_id}?rel=0&modestbranding=1'
+        elif 'youtu.be/' in url:
+            video_id = url.split('youtu.be/')[1].split('?')[0]
+            return f'https://www.youtube.com/embed/{video_id}?rel=0&modestbranding=1'
+        
+        # Vimeo
+        elif 'vimeo.com/' in url:
+            video_id = url.split('vimeo.com/')[1].split('?')[0]
+            return f'https://player.vimeo.com/video/{video_id}'
+        
+        # Already an embed URL
+        elif 'youtube.com/embed/' in url or 'player.vimeo.com' in url:
+            return url
+        
+        return None
+    
+    @property
+    def likes_count(self):
+        return self.postlike_set.count()
+    
+    @property
+    def comments_count(self):
+        return self.postcomment_set.filter(is_approved=True).count()
+
+
+class PostImage(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='images', verbose_name="المنشور")
+    image = models.ImageField(upload_to='post_images/', verbose_name="الصورة")
+    caption = models.CharField(max_length=200, null=True, blank=True, verbose_name="التعليق")
+    order = models.IntegerField(default=0, verbose_name="الترتيب")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "صورة المنشور"
+        verbose_name_plural = "صور المنشورات"
+    
+    def __str__(self):
+        return f"{self.post.title} - Image {self.order}"
+
+
+class PostLike(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, verbose_name="المنشور")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="المستخدم")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['post', 'user']
+        verbose_name = "إعجاب المنشور"
+        verbose_name_plural = "إعجابات المنشورات"
+    
+    def __str__(self):
+        return f"{self.user.username} likes {self.post.title}"
+
+
+class PostComment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, verbose_name="المنشور")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="المستخدم")
+    comment = models.TextField(verbose_name="التعليق")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    is_approved = models.BooleanField(default=True, verbose_name="موافق عليه")
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "تعليق المنشور"
+        verbose_name_plural = "تعليقات المنشورات"
+    
+    def __str__(self):
+        return f"{self.user.username} on {self.post.title}"
+

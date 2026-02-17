@@ -33,4 +33,11 @@ urlpatterns = [
     path('wishlist/', views.wishlist, name='wishlist'),
     path('wishlist/toggle/<int:car_id>/', views.toggle_wishlist, name='toggle_wishlist'),
     path('wishlist/count/', views.wishlist_count, name='wishlist_count'),
+    
+    # Posts URLs
+    path('posts/', views.post_list, name='post_list'),
+    path('posts/<int:pk>/', views.post_detail, name='post_detail'),
+    path('posts/<int:pk>/like/', views.post_like_toggle, name='post_like_toggle'),
+    path('posts/<int:pk>/comment/', views.post_comment_add, name='post_comment_add'),
+    path('posts/comment/<int:pk>/delete/', views.post_comment_delete, name='post_comment_delete'),
 ]

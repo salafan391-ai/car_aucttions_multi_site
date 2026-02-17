@@ -12,7 +12,7 @@ from django.db.models import Count
 
 from django.http import JsonResponse
 
-from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor
+from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment
 
 
 def _exclude_expired_auctions(qs):
@@ -51,6 +51,11 @@ def home(request):
         from site_cars.models import SiteCar
         site_cars = SiteCar.objects.order_by('-created_at')[:8]
 
+    # Get posts count and latest post
+    from cars.models import Post
+    posts_count = Post.objects.filter(is_published=True).count()
+    latest_post = Post.objects.filter(is_published=True).order_by('-created_at').first()
+
     context = {
         'latest_cars': latest_cars,
         'latest_auctions': latest_auctions,
@@ -63,6 +68,8 @@ def home(request):
         'cars_count': _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction')).count(),
         'total_manufacturers': Manufacturer.objects.count(),
         'total_models': CarModel.objects.count(),
+        'posts_count': posts_count,
+        'latest_post': latest_post,
         'year': datetime.now().year,
     }
     return render(request, 'cars/home.html', context)
@@ -554,3 +561,119 @@ def wishlist_count(request):
             return JsonResponse({'count': 0})
     except Exception as e:
         return JsonResponse({'count': 0})
+
+
+# Posts Views
+@ensure_csrf_cookie
+def post_list(request):
+    posts = Post.objects.filter(is_published=True).prefetch_related('images')
+    
+    # Pagination
+    paginator = Paginator(posts, 9)  # 9 posts per page
+    page = request.GET.get('page')
+    posts = paginator.get_page(page)
+    
+    context = {
+        'posts': posts,
+    }
+    return render(request, 'cars/posts/post_list.html', context)
+
+
+@ensure_csrf_cookie
+def post_detail(request, pk):
+    post = get_object_or_404(
+        Post.objects.prefetch_related('images'),
+        pk=pk,
+        is_published=True
+    )
+    
+    # Increment view count
+    post.views_count += 1
+    post.save(update_fields=['views_count'])
+    
+    # Get comments
+    comments = PostComment.objects.filter(
+        post=post,
+        is_approved=True
+    ).select_related('user').order_by('-created_at')
+    
+    # Check if user has liked
+    user_has_liked = False
+    if request.user.is_authenticated:
+        user_has_liked = PostLike.objects.filter(post=post, user=request.user).exists()
+    
+    context = {
+        'post': post,
+        'comments': comments,
+        'user_has_liked': user_has_liked,
+    }
+    return render(request, 'cars/posts/post_detail.html', context)
+
+
+@login_required
+def post_like_toggle(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    post = get_object_or_404(Post, pk=pk)
+    
+    like, created = PostLike.objects.get_or_create(post=post, user=request.user)
+    
+    if not created:
+        # Unlike
+        like.delete()
+        return JsonResponse({
+            'liked': False,
+            'likes_count': post.likes_count
+        })
+    else:
+        # Like
+        return JsonResponse({
+            'liked': True,
+            'likes_count': post.likes_count
+        })
+
+
+@login_required
+def post_comment_add(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    post = get_object_or_404(Post, pk=pk)
+    comment_text = request.POST.get('comment', '').strip()
+    
+    if not comment_text:
+        return JsonResponse({'error': 'التعليق فارغ'}, status=400)
+    
+    comment = PostComment.objects.create(
+        post=post,
+        user=request.user,
+        comment=comment_text
+    )
+    
+    return JsonResponse({
+        'success': True,
+        'comment': {
+            'id': comment.id,
+            'user': comment.user.username,
+            'comment': comment.comment,
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M'),
+            'is_approved': comment.is_approved
+        }
+    })
+
+
+@login_required
+def post_comment_delete(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    comment = get_object_or_404(PostComment, pk=pk)
+    
+    # Only allow the comment owner to delete
+    if comment.user != request.user:
+        return JsonResponse({'error': 'غير مصرح'}, status=403)
+    
+    comment.delete()
+    
+    return JsonResponse({'success': True})

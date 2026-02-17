@@ -73,6 +73,7 @@
                 <div class="hidden md:flex items-center gap-8">
                     <a href="{% url 'home' %}" class="text-gray-600 text-brand-hover font-medium transition">الرئيسية</a>
                     <a href="{% url 'car_list' %}" class="text-gray-600 text-brand-hover font-medium transition">السيارات</a>
+                    <a href="{% url 'post_list' %}" class="text-gray-600 text-brand-hover font-medium transition">المنشورات</a>
                     <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition">تواصل معنا</a>
                     {% if user.is_authenticated %}
                     <a href="{% url 'wishlist' %}" class="text-gray-600 text-brand-hover font-medium transition relative">
@@ -141,6 +142,7 @@
             <div class="px-4 py-3 space-y-2">
                 <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرئيسية</a>
                 <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات</a>
+                <a href="{% url 'post_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">المنشورات</a>
                 <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تواصل معنا</a>
                 <!-- Mobile Lang/Currency -->
                 <div class="flex items-center gap-2 py-2 px-3 border-t border-gray-100 mt-2">

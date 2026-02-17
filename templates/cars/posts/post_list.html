@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}المنشورات - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <div class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">المنشورات</h1>
+                <p class="text-gray-600">آخر الأخبار والتحديثات</p>
+            </div>
+            {% if user.is_staff %}
+            <a href="{% url 'admin:cars_post_add' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                إضافة منشور جديد
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Posts Grid -->
+        {% if posts %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% for post in posts %}
+            <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group">
+                <a href="{% url 'post_detail' post.id %}" class="block">
+                    <!-- Post Image -->
+                    <div class="relative aspect-video bg-gray-200 overflow-hidden">
+                        {% if post.images.all %}
+                            <img src="{{ post.images.first.image.url }}" 
+                                 alt="{{ post.title }}" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand to-brand-light">
+                                <svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Video Badge -->
+                        {% if post.video_url %}
+                        <div class="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                            </svg>
+                            فيديو
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Views Badge -->
+                        <div class="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            <span>{{ post.views_count }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Post Content -->
+                    <div class="p-5">
+                        <h2 class="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-brand transition">
+                            {{ post.title_ar|default:post.title }}
+                        </h2>
+                        
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                            {{ post.content_ar|default:post.content|truncatewords:20 }}
+                        </p>
+                        
+                        <!-- Post Meta -->
+                        <div class="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
+                            <div class="flex items-center gap-4">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ post.likes_count }}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                                    </svg>
+                                    {{ post.comments_count }}
+                                </span>
+                            </div>
+                            <span class="text-xs">{{ post.created_at|naturaltime }}</span>
+                        </div>
+                    </div>
+                </a>
+                
+                <!-- Admin Actions -->
+                {% if user.is_staff %}
+                <div class="px-5 pb-4 flex gap-2 border-t border-gray-100">
+                    <a href="{% url 'admin:cars_post_change' post.id %}" 
+                       class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        تعديل
+                    </a>
+                    <button onclick="deletePost({{ post.id }})" 
+                            class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        حذف
+                    </button>
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if posts.has_other_pages %}
+        <div class="flex justify-center">
+            <nav class="flex items-center gap-2">
+                {% if posts.has_previous %}
+                <a href="?page={{ posts.previous_page_number }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    السابق
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 bg-brand text-white rounded-lg">
+                    {{ posts.number }} من {{ posts.paginator.num_pages }}
+                </span>
+                
+                {% if posts.has_next %}
+                <a href="?page={{ posts.next_page_number }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    التالي
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+            </svg>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">لا توجد منشورات حالياً</h3>
+            <p class="text-gray-600">تابعنا للحصول على آخر التحديثات</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Delete post function
+function deletePost(postId) {
+    if (!confirm('هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.')) {
+        return;
+    }
+    
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Send delete request
+    fetch(`/admin/cars/post/${postId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'post=yes'
+    })
+    .then(response => {
+        if (response.ok) {
+            // Reload page to show updated list
+            window.location.reload();
+        } else {
+            alert('حدث خطأ أثناء حذف المنشور');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء حذف المنشور');
+    });
+}
+</script>
+{% endblock %}
