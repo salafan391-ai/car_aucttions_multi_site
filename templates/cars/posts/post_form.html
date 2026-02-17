@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if action == 'create' %}
+        إنشاء منشور جديد
+    {% else %}
+        تعديل المنشور
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-4">
+                {% if action == 'create' %}
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                {% else %}
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                {% endif %}
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                {% if action == 'create' %}
+                    إنشاء منشور جديد
+                {% else %}
+                    تعديل المنشور
+                {% endif %}
+            </h1>
+            <p class="text-gray-600">املأ البيانات التالية بالعربية لإنشاء منشور رائع لعملائك</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+            <form method="post" enctype="multipart/form-data" id="postForm" class="p-8 space-y-8">
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-3 pb-4 border-b-2 border-blue-100">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">المعلومات الأساسية</h2>
+                    </div>
+
+                    <!-- Title -->
+                    <div>
+                        <label for="title_ar" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z"></path>
+                                </svg>
+                                العنوان
+                                <span class="text-red-500">*</span>
+                            </span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="title_ar" 
+                            name="title_ar" 
+                            required
+                            value="{% if post %}{{ post.title_ar|default:post.title }}{% endif %}"
+                            placeholder="أدخل عنوان المنشور بالعربية..."
+                            dir="rtl"
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-lg"
+                        >
+                        <p class="mt-1 text-sm text-gray-500 text-right" dir="rtl">اكتب عنواناً جذاباً ومختصراً</p>
+                    </div>
+
+                    <!-- Publish Toggle -->
+                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <label for="is_published" class="font-semibold text-gray-800 cursor-pointer">نشر المنشور</label>
+                                <p class="text-sm text-gray-600">اجعل المنشور مرئياً للعملاء</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                id="is_published" 
+                                name="is_published" 
+                                class="sr-only peer"
+                                {% if action == 'create' or post.is_published %}checked{% endif %}
+                            >
+                            <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Content Section -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-3 pb-4 border-b-2 border-purple-100">
+                        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">المحتوى</h2>
+                    </div>
+
+                    <!-- Content -->
+                    <div>
+                        <label for="content_ar" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
+                                </svg>
+                                المحتوى
+                                <span class="text-red-500">*</span>
+                            </span>
+                        </label>
+                        <textarea 
+                            id="content_ar" 
+                            name="content_ar" 
+                            rows="10" 
+                            required
+                            placeholder="اكتب محتوى المنشور بالعربية بالتفصيل..."
+                            dir="rtl"
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 text-base resize-none"
+                        >{% if post %}{{ post.content_ar|default:post.content }}{% endif %}</textarea>
+                        <div class="flex items-center justify-between mt-1">
+                            <p class="text-sm text-gray-500 text-right w-full" dir="rtl">اكتب محتوى تفصيلي وجذاب للعملاء</p>
+                            <span id="content_ar-count" class="text-sm font-medium text-gray-600">0 حرف</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media Section -->
+                <div class="space-y-6">
+                    <div class="flex items-center gap-3 pb-4 border-b-2 border-red-100">
+                        <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800">الوسائط</h2>
+                    </div>
+
+                    <!-- Video URL -->
+                    <div>
+                        <label for="video_url" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm12.553 1.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
+                                </svg>
+                                رابط الفيديو
+                            </span>
+                        </label>
+                        <input 
+                            type="url" 
+                            id="video_url" 
+                            name="video_url" 
+                            value="{% if post %}{{ post.video_url }}{% endif %}"
+                            placeholder="https://www.youtube.com/watch?v=... أو https://vimeo.com/..."
+                            dir="ltr"
+                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all duration-200"
+                        >
+                        <p class="mt-1 text-sm text-gray-500 text-right" dir="rtl">اختياري - أضف رابط فيديو من YouTube أو Vimeo</p>
+                    </div>
+
+                    <!-- Images Upload -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-3">
+                            <span class="inline-flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                                </svg>
+                                الصور
+                            </span>
+                        </label>
+                        
+                        <!-- File Input -->
+                        <div class="relative">
+                            <input 
+                                type="file" 
+                                id="images" 
+                                name="images" 
+                                multiple 
+                                accept="image/*"
+                                class="hidden"
+                                onchange="previewImages(event)"
+                            >
+                            <label 
+                                for="images" 
+                                class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gradient-to-br from-gray-50 to-blue-50 hover:from-blue-50 hover:to-blue-100 transition-all duration-200 group"
+                            >
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-12 h-12 mb-3 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <p class="mb-2 text-sm text-gray-600 font-semibold">
+                                        <span class="text-blue-600">انقر لتحميل</span> أو اسحب الصور هنا
+                                    </p>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF حتى 10MB</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div id="image-preview" class="mt-4 grid-cols-2 md:grid-cols-4 gap-4" style="display: none;"></div>
+
+                        {% if post and post.images.exists %}
+                        <!-- Existing Images -->
+                        <div class="mt-6">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-3">الصور الحالية</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {% for image in post.images.all %}
+                                <div class="relative group" data-image-id="{{ image.id }}">
+                                    <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="w-full h-32 object-cover rounded-lg shadow-md">
+                                    <button 
+                                        type="button" 
+                                        onclick="deleteImage({{ image.id }})"
+                                        class="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center hover:bg-red-600"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t-2 border-gray-100">
+                    <button 
+                        type="submit" 
+                        class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-blue-600 hover:to-blue-700 focus:ring-4 focus:ring-blue-300 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 group"
+                    >
+                        <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        {% if action == 'create' %}
+                            إنشاء المنشور
+                        {% else %}
+                            حفظ التعديلات
+                        {% endif %}
+                    </button>
+                    
+                    <a 
+                        href="{% if post %}{% url 'post_detail' post.pk %}{% else %}{% url 'post_list' %}{% endif %}" 
+                        class="flex-1 bg-gray-200 text-gray-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-300 focus:ring-4 focus:ring-gray-300 transition-all duration-200 flex items-center justify-center gap-3 group"
+                    >
+                        <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        إلغاء
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tips Card -->
+        <div class="mt-8 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-200">
+            <div class="flex items-start gap-4">
+                <div class="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">💡 نصائح لمنشور أفضل</h3>
+                    <ul class="space-y-2 text-sm text-gray-700" dir="rtl">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>اكتب عنواناً جذاباً ومختصراً بالعربية (5-10 كلمات)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>اكتب محتوى تفصيلي ومفيد للعملاء بالعربية</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>أضف صوراً عالية الجودة (3-5 صور مثالية)</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-500 mt-1">✓</span>
+                            <span>الفيديو يزيد التفاعل بنسبة 80%!</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Character counter for content
+document.getElementById('content_ar').addEventListener('input', function(e) {
+    document.getElementById('content_ar-count').textContent = e.target.value.length + ' حرف';
+});
+
+// Initialize counter
+window.addEventListener('DOMContentLoaded', function() {
+    const contentAr = document.getElementById('content_ar');
+    if (contentAr.value) {
+        document.getElementById('content_ar-count').textContent = contentAr.value.length + ' حرف';
+    }
+});
+
+// Image preview
+function previewImages(event) {
+    const files = event.target.files;
+    const preview = document.getElementById('image-preview');
+    
+    if (files.length === 0) {
+        preview.style.display = 'none';
+        return;
+    }
+    
+    preview.style.display = 'grid';
+    preview.innerHTML = '';
+    
+    Array.from(files).forEach((file, index) => {
+        // Only process image files
+        if (!file.type.startsWith('image/')) {
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'relative group';
+            div.innerHTML = `
+                <img src="${e.target.result}" alt="Preview ${index + 1}" class="w-full h-32 object-cover rounded-lg shadow-md">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs px-2 text-center break-words">${file.name}</span>
+                </div>
+            `;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// Delete existing image
+function deleteImage(imageId) {
+    if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
+        return;
+    }
+    
+    fetch(`/posts/image/${imageId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the image from DOM
+            document.querySelector(`[data-image-id="${imageId}"]`).remove();
+            
+            // Show success message
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-down';
+            toast.textContent = 'تم حذف الصورة بنجاح ✓';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    })
+    .catch(error => {
+        alert('حدث خطأ أثناء حذف الصورة');
+        console.error('Error:', error);
+    });
+}
+
+// Form validation
+document.getElementById('postForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title_ar').value.trim();
+    const content = document.getElementById('content_ar').value.trim();
+    
+    if (!title || !content) {
+        e.preventDefault();
+        alert('الرجاء ملء العنوان والمحتوى (مطلوب)');
+        return false;
+    }
+});
+</script>
+
+<style>
+@keyframes fade-in-down {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-down {
+    animation: fade-in-down 0.3s ease-out;
+}
+</style>
+{% endblock %}

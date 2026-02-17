@@ -5,14 +5,14 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Count
 
 from django.http import JsonResponse
 
-from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment
+from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment, PostImage
 
 
 def _exclude_expired_auctions(qs):
@@ -675,5 +675,107 @@ def post_comment_delete(request, pk):
         return JsonResponse({'error': 'غير مصرح'}, status=403)
     
     comment.delete()
+    
+    return JsonResponse({'success': True})
+
+
+@login_required
+def post_create(request):
+    """Create a new post (staff only)"""
+    if not request.user.is_staff:
+        messages.error(request, 'غير مصرح لك بإنشاء منشورات')
+        return redirect('post_list')
+    
+    if request.method == 'POST':
+        title_ar = request.POST.get('title_ar')
+        content_ar = request.POST.get('content_ar')
+        video_url = request.POST.get('video_url')
+        is_published = request.POST.get('is_published') == 'on'
+        
+        # Create post (use Arabic content for both fields)
+        post = Post.objects.create(
+            title=title_ar,  # Use Arabic title for English field too
+            title_ar=title_ar,
+            content=content_ar,  # Use Arabic content for English field too
+            content_ar=content_ar,
+            video_url=video_url if video_url else None,
+            author=request.user,
+            is_published=is_published
+        )
+        
+        # Handle images
+        images = request.FILES.getlist('images')
+        for idx, image in enumerate(images):
+            PostImage.objects.create(
+                post=post,
+                image=image,
+                order=idx
+            )
+        
+        messages.success(request, 'تم إنشاء المنشور بنجاح!')
+        return redirect('post_detail', pk=post.pk)
+    
+    return render(request, 'cars/posts/post_form.html', {
+        'action': 'create'
+    })
+
+
+@login_required
+def post_edit(request, pk):
+    """Edit an existing post (staff only)"""
+    post = get_object_or_404(Post, pk=pk)
+    
+    if not request.user.is_staff:
+        messages.error(request, 'غير مصرح لك بتعديل المنشورات')
+        return redirect('post_detail', pk=pk)
+    
+    if request.method == 'POST':
+        title_ar = request.POST.get('title_ar')
+        content_ar = request.POST.get('content_ar')
+        
+        # Update post (use Arabic content for both fields)
+        post.title = title_ar
+        post.title_ar = title_ar
+        post.content = content_ar
+        post.content_ar = content_ar
+        video_url = request.POST.get('video_url')
+        post.video_url = video_url if video_url else None
+        post.is_published = request.POST.get('is_published') == 'on'
+        post.save()
+        
+        # Handle new images
+        images = request.FILES.getlist('images')
+        if images:
+            # Get current max order
+            max_order = post.images.aggregate(Max('order'))['order__max'] or 0
+            for idx, image in enumerate(images):
+                PostImage.objects.create(
+                    post=post,
+                    image=image,
+                    order=max_order + idx + 1
+                )
+        
+        messages.success(request, 'تم تحديث المنشور بنجاح!')
+        return redirect('post_detail', pk=post.pk)
+    
+    return render(request, 'cars/posts/post_form.html', {
+        'post': post,
+        'action': 'edit'
+    })
+
+
+@login_required
+def post_image_delete(request, pk):
+    """Delete a post image (AJAX)"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    image = get_object_or_404(PostImage, pk=pk)
+    
+    # Only allow staff to delete
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'غير مصرح'}, status=403)
+    
+    image.delete()
     
     return JsonResponse({'success': True})

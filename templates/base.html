@@ -36,6 +36,11 @@
         .hero-gradient { background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 50%, #0f0f23 100%); }
         .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         .bg-brand { background-color: var(--color-primary); }
+        .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .bg-brand\/20 { background-color: color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        .bg-brand\/50 { background-color: color-mix(in srgb, var(--color-primary) 80%, transparent); }
+        .hover\:bg-brand\/10:hover { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .hover\:bg-brand\/20:hover { background-color: color-mix(in srgb, var(--color-primary) 20%, transparent); }
         .bg-brand-hover:hover { background-color: var(--color-secondary); }
         .text-brand { color: var(--color-primary); }
         .text-brand-hover:hover { color: var(--color-primary); }
