@@ -7,16 +7,16 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" {% if site_hero_image %}style="background-image: url('{{ site_hero_image }}');"{% else %}style="background-color: #0f0f23;"{% endif %}>
+<section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" {% if site_hero_image %}style="background-image: url('{{ site_hero_image }}');"{% else %}style="background-color brand;"{% endif %}>
     <!-- Hero Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-8 sm:mb-12">
-            <div class="flex items-center justify-center gap-2 mb-4">
+            <div class="max-w-2xl mx-auto flex items-center justify-center gap-4 mb-4">
             {% if site_logo %}
-            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 w-auto">
+            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 rounded-2xl w-auto">
             {% endif %}
             <div class="group">
-                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-brand-light to-white bg-clip-text text-transparent drop-shadow-2xl group-hover:from-brand group-hover:via-white group-hover:to-brand transition-all duration-500 transform group-hover:scale-105" style="text-shadow: 0 0 30px rgba(var(--color-primary-rgb), 0.5), 0 4px 8px rgba(0,0,0,0.3);">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand via-brand to-white text-shadow-2xl bg-clip-text text-transparent drop-shadow-2xl group-hover:from-brand group-hover:via-white group-hover:to-brand transition-all duration-500 transform group-hover:scale-105">
                     {{ site_name|default:"سيارات" }}
                 </h1>
             </div>
