@@ -5,6 +5,39 @@
 
 {% block title %}الرئيسية - {{ site_name|default:"سيارات" }}{% endblock %}
 
+{% block extra_head %}
+<style>
+    .scrollbar-hide {
+        -ms-overflow-style: none;  /* Internet Explorer 10+ */
+        scrollbar-width: none;  /* Firefox */
+    }
+    .scrollbar-hide::-webkit-scrollbar { 
+        display: none;  /* Safari and Chrome */
+    }
+    
+    .manufacturer-option:hover {
+        transform: translateY(-2px);
+    }
+    
+    .model-option:hover {
+        transform: translateY(-2px);
+    }
+    
+    .year-from-option:hover,
+    .year-to-option:hover {
+        transform: translateY(-1px);
+    }
+    
+    .manufacturer-option.border-brand,
+    .model-option.border-brand,
+    .year-from-option.border-brand,
+    .year-to-option.border-brand {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" {% if site_hero_image %}style="background-image: url('{{ site_hero_image }}'); background-size: cover; background-position: center;"{% else %}style="background-color brand;"{% endif %}>
@@ -50,47 +83,137 @@
             </div>
             
             <!-- Hidden Filters -->
-            <div id="hero-search-filters" class="hidden glass rounded-xl sm:rounded-2xl p-3 sm:p-4 relative">
+            <div id="hero-search-filters" class="hidden glass rounded-xl sm:rounded-2xl p-4 sm:p-6 relative backdrop-blur-md bg-white/20 border border-white/30">
                 <button 
                     type="button"
                     id="close-search-filters"
-                    class="absolute top-2 left-2 p-1 text-gray-400 hover:text-gray-600 transition"
+                    class="absolute top-3 left-3 p-2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition"
                 >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
                 
-                <form action="{% url 'car_list' %}" method="get" class="space-y-3 sm:space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <select name="manufacturer" id="hero-manufacturer" class="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
-                            <option value="">الشركة المصنعة</option>
+                <form action="{% url 'car_list' %}" method="get" id="hero-filter-form" class="space-y-6">
+                    <!-- Hidden inputs to store selections -->
+                    <input type="hidden" name="manufacturer" id="selected-manufacturer" value="">
+                    <input type="hidden" name="model" id="selected-model" value="">
+                    <input type="hidden" name="year_from" id="selected-year-from" value="">
+                    <input type="hidden" name="year_to" id="selected-year-to" value="">
+
+                    <!-- Manufacturer Grid -->
+                    <div id="manufacturer-selection" class="space-y-3">
+                        <label class="block text-lg font-bold text-white">اختر الشركة المصنعة</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-60 overflow-y-auto scrollbar-hide">
                             {% for m in manufacturers %}
-                            <option value="{{ m.id }}" data-name-ar="{{ m.name_ar|default:m.name }}" data-name-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</option>
+                            <div 
+                                class="manufacturer-option group cursor-pointer p-4 bg-white/90 backdrop-blur-sm rounded-xl border-2 border-transparent hover:border-white hover:bg-white hover:scale-105 transition-all duration-300 text-center"
+                                data-id="{{ m.id }}"
+                                data-name-ar="{{ m.name_ar|default:m.name }}"
+                                data-name-en="{{ m.name }}"
+                            >
+                                {% if m.logo %}
+                                <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                                    <img src="{{ m.logo }}" alt="{{ m.name_ar|default:m.name }}" class="w-full h-full object-contain">
+                                </div>
+                                {% else %}
+                                <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gradient-to-br from-brand to-brand-light flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
+                                    </svg>
+                                </div>
+                                {% endif %}
+                                <div class="text-sm font-bold text-gray-800 group-hover:text-brand transition">
+                                    <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">{{ m.car_count|default:0 }} سيارة</div>
+                            </div>
                             {% endfor %}
-                        </select>
-                        <select name="model" id="hero-model" class="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none" disabled>
-                            <option value="">الموديل</option>
-                        </select>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                        <select name="year_from" class="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
-                            <option value="">من سنة</option>
-                            {% for y in years %}
-                            <option value="{{ y }}">{{ y }}</option>
-                            {% endfor %}
-                        </select>
-                        <select name="year_to" class="px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-white text-gray-800 text-sm focus:ring-2 focus:ring-primary-400 outline-none">
-                            <option value="">إلى سنة</option>
-                            {% for y in years %}
-                            <option value="{{ y }}">{{ y }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <!-- Model Grid (Hidden initially) -->
+                    <div id="model-selection" class="space-y-3 hidden">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-lg font-bold text-white">اختر الموديل</label>
+                            <button type="button" id="back-to-manufacturer" class="flex items-center gap-2 px-3 py-1 text-sm text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                عودة
+                            </button>
+                        </div>
+                        <div id="selected-manufacturer-name" class="text-sm text-white/80 mb-2"></div>
+                        <div id="model-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-60 overflow-y-auto scrollbar-hide">
+                            <!-- Models will be populated dynamically -->
+                        </div>
                     </div>
-                    <div class="flex justify-center">
-                        <button type="submit" class="px-8 sm:px-10 py-2.5 sm:py-3 bg-brand bg-brand-hover text-white font-bold rounded-lg sm:rounded-xl transition text-sm sm:text-base">
-                            بحث
-                        </button>
+
+                    <!-- Year Selection -->
+                    <div id="year-selection" class="space-y-4 hidden">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-lg font-bold text-white">اختر السنة</label>
+                            <button type="button" id="back-to-model" class="flex items-center gap-2 px-3 py-1 text-sm text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                                عودة
+                            </button>
+                        </div>
+                        <div id="selected-model-name" class="text-sm text-white/80 mb-2"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-white/90">من سنة</label>
+                                <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto scrollbar-hide">
+                                    {% for y in years %}
+                                    <div class="year-from-option cursor-pointer p-2 bg-white/90 backdrop-blur-sm rounded-lg text-center text-sm font-bold text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200" data-year="{{ y }}">
+                                        {{ y }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-white/90">إلى سنة</label>
+                                <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto scrollbar-hide">
+                                    {% for y in years %}
+                                    <div class="year-to-option cursor-pointer p-2 bg-white/90 backdrop-blur-sm rounded-lg text-center text-sm font-bold text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200" data-year="{{ y }}">
+                                        {{ y }}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Always visible Selection Summary and Search Button -->
+                    <div class="space-y-4 mt-6 pt-4 border-t border-white/20">
+                        <!-- Selection Summary -->
+                        <div id="selection-summary" class="hidden p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+                            <div class="text-sm text-white/90 space-y-1">
+                                <div id="summary-manufacturer" class="hidden">الشركة: <span class="font-bold text-white"></span></div>
+                                <div id="summary-model" class="hidden">الموديل: <span class="font-bold text-white"></span></div>
+                                <div id="summary-years" class="hidden">السنة: <span class="font-bold text-white"></span></div>
+                            </div>
+                        </div>
+
+                        <!-- Search Button - Always Available -->
+                        <div class="flex justify-center">
+                            <button type="submit" id="hero-search-btn" class="group relative px-8 sm:px-12 py-3.5 sm:py-4 bg-white text-brand font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg shadow-black/10 hover:shadow-xl hover:shadow-black/20 hover:scale-105 active:scale-95 border-2 border-white/20 hover:border-white disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <span class="flex items-center gap-3">
+                                    <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                    </svg>
+                                    <span id="search-btn-text">بحث متقدم</span>
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- Skip to Search Option -->
+                        <div class="text-center">
+                            <button type="button" id="skip-to-search" class="text-sm text-white/70 hover:text-white underline transition">
+                                تخطي واستعراض جميع السيارات
+                            </button>
+                        </div>
                     </div>
                 </form>
 
@@ -570,46 +693,265 @@ function scrollElement(elementId, direction) {
         });
     }
 
-    const mfgSelect = document.getElementById('hero-manufacturer');
-    const modelSelect = document.getElementById('hero-model');
-    if (!mfgSelect || !modelSelect) return;
+    // Grid-based selection system with step-by-step navigation
+    let selectedData = {
+        manufacturer: null,
+        model: null,
+        yearFrom: null,
+        yearTo: null
+    };
 
-    const defaultLabel = { ar: 'الموديل', en: 'Model' };
-    const loadingLabel = { ar: 'جاري التحميل...', en: 'Loading...' };
+    // DOM elements
+    const manufacturerSelection = document.getElementById('manufacturer-selection');
+    const modelSelection = document.getElementById('model-selection');
+    const yearSelection = document.getElementById('year-selection');
+    
+    const backToMfgBtn = document.getElementById('back-to-manufacturer');
+    const backToModelBtn = document.getElementById('back-to-model');
+    const skipToSearchBtn = document.getElementById('skip-to-search');
+    const searchBtn = document.getElementById('hero-search-btn');
+    const searchBtnText = document.getElementById('search-btn-text');
+    
+    const selectedMfgName = document.getElementById('selected-manufacturer-name');
+    const selectedModelName = document.getElementById('selected-model-name');
+    const modelGrid = document.getElementById('model-grid');
+    
+    const hiddenInputs = {
+        manufacturer: document.getElementById('selected-manufacturer'),
+        model: document.getElementById('selected-model'),
+        yearFrom: document.getElementById('selected-year-from'),
+        yearTo: document.getElementById('selected-year-to')
+    };
 
-    function getLang() {
-        return localStorage.getItem('site_lang') || 'ar';
+    // Step navigation functions
+    function showStep(step) {
+        // Hide all steps
+        manufacturerSelection.classList.add('hidden');
+        modelSelection.classList.add('hidden');
+        yearSelection.classList.add('hidden');
+        
+        // Show requested step
+        step.classList.remove('hidden');
+        
+        // Update search button text based on current step
+        updateSearchButton();
     }
 
-    mfgSelect.addEventListener('change', function() {
-        const mfgId = this.value;
-        modelSelect.innerHTML = '<option value="">' + defaultLabel[getLang()] + '</option>';
-
-        if (!mfgId) {
-            modelSelect.disabled = true;
-            return;
-        }
-
-        modelSelect.disabled = true;
-        modelSelect.innerHTML = '<option value="">' + loadingLabel[getLang()] + '</option>';
-
-        fetch('{% url "api_models_by_manufacturer" %}?manufacturer_id=' + mfgId)
-            .then(r => r.json())
-            .then(models => {
-                modelSelect.innerHTML = '<option value="">' + defaultLabel[getLang()] + '</option>';
-                models.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.id;
-                    opt.textContent = m.name;
-                    modelSelect.appendChild(opt);
-                });
-                modelSelect.disabled = false;
-            })
-            .catch(() => {
-                modelSelect.innerHTML = '<option value="">' + defaultLabel[getLang()] + '</option>';
-                modelSelect.disabled = true;
-            });
+    // Manufacturer selection
+    const manufacturerOptions = document.querySelectorAll('.manufacturer-option');
+    manufacturerOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Store selection
+            selectedData.manufacturer = {
+                id: this.dataset.id,
+                nameAr: this.dataset.nameAr,
+                nameEn: this.dataset.nameEn
+            };
+            
+            // Update hidden input
+            hiddenInputs.manufacturer.value = selectedData.manufacturer.id;
+            
+            // Clear subsequent selections
+            selectedData.model = null;
+            selectedData.yearFrom = null;
+            selectedData.yearTo = null;
+            hiddenInputs.model.value = '';
+            hiddenInputs.yearFrom.value = '';
+            hiddenInputs.yearTo.value = '';
+            
+            // Load models and show model selection
+            loadModels(selectedData.manufacturer.id);
+            selectedMfgName.textContent = `الشركة المحددة: ${selectedData.manufacturer.nameAr}`;
+            showStep(modelSelection);
+        });
     });
+
+    // Back to manufacturer button
+    if (backToMfgBtn) {
+        backToMfgBtn.addEventListener('click', function() {
+            showStep(manufacturerSelection);
+        });
+    }
+
+    // Back to model button
+    if (backToModelBtn) {
+        backToModelBtn.addEventListener('click', function() {
+            showStep(modelSelection);
+        });
+    }
+
+    // Skip to search button
+    if (skipToSearchBtn) {
+        skipToSearchBtn.addEventListener('click', function() {
+            // Clear all selections and go to car list
+            window.location.href = '{% url "car_list" %}';
+        });
+    }
+
+    // Year selection
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('year-from-option')) {
+            document.querySelectorAll('.year-from-option').forEach(opt => 
+                opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
+            e.target.classList.add('border-brand', 'bg-white', 'scale-105');
+            selectedData.yearFrom = e.target.dataset.year;
+            hiddenInputs.yearFrom.value = selectedData.yearFrom;
+            updateSelectionSummary();
+            updateSearchButton();
+        }
+        
+        if (e.target.classList.contains('year-to-option')) {
+            document.querySelectorAll('.year-to-option').forEach(opt => 
+                opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
+            e.target.classList.add('border-brand', 'bg-white', 'scale-105');
+            selectedData.yearTo = e.target.dataset.year;
+            hiddenInputs.yearTo.value = selectedData.yearTo;
+            updateSelectionSummary();
+            updateSearchButton();
+        }
+    });
+
+    // Load models function
+    function loadModels(manufacturerId) {
+        modelGrid.innerHTML = '<div class="col-span-full text-center text-white/80 py-4">جاري التحميل...</div>';
+        
+        fetch('{% url "api_models_by_manufacturer" %}?manufacturer_id=' + manufacturerId)
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error(`HTTP error! status: ${r.status}`);
+                }
+                return r.json();
+            })
+            .then(models => {
+                modelGrid.innerHTML = '';
+                
+                if (models.length === 0) {
+                    modelGrid.innerHTML = '<div class="col-span-full text-center text-white/80 py-4">لا توجد موديلات متاحة</div>';
+                    return;
+                }
+                
+                models.forEach(model => {
+                    const modelOption = document.createElement('div');
+                    modelOption.className = 'model-option group cursor-pointer p-4 bg-white/90 backdrop-blur-sm rounded-xl border-2 border-transparent hover:border-white hover:bg-white hover:scale-105 transition-all duration-300 text-center';
+                    modelOption.dataset.id = model.id;
+                    modelOption.dataset.name = model.name;
+                    
+                    const hasLogo = model.manufacturer_logo && model.manufacturer_logo !== null && model.manufacturer_logo !== '';
+                    
+                    modelOption.innerHTML = `
+                        <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                            ${hasLogo ? 
+                                `<img src="${model.manufacturer_logo}" alt="${model.name}" class="w-full h-full object-contain">` :
+                                `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
+                                </svg>`
+                            }
+                        </div>
+                        <div class="text-sm font-bold text-gray-800 group-hover:text-brand transition">
+                            ${model.name}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">${model.car_count || 0} سيارة</div>
+                    `;
+                    
+                    // Add click handler for model selection
+                    modelOption.addEventListener('click', function() {
+                        // Store selection
+                        selectedData.model = {
+                            id: this.dataset.id,
+                            name: this.dataset.name
+                        };
+                        
+                        // Update hidden input
+                        hiddenInputs.model.value = selectedData.model.id;
+                        
+                        // Show year selection
+                        selectedModelName.textContent = `الموديل المحدد: ${selectedData.model.name}`;
+                        showStep(yearSelection);
+                        updateSelectionSummary();
+                    });
+                    
+                    modelGrid.appendChild(modelOption);
+                });
+            })
+            .catch(error => {
+                modelGrid.innerHTML = '<div class="col-span-full text-center text-red-300 py-4">خطأ في تحميل الموديلات</div>';
+            });
+    }
+
+    // Update search button state and text
+    function updateSearchButton() {
+        const hasSelection = selectedData.manufacturer || selectedData.model || selectedData.yearFrom || selectedData.yearTo;
+        
+        searchBtn.disabled = !hasSelection;
+        
+        if (hasSelection) {
+            searchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            searchBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        
+        // Update button text based on current step and selections
+        if (selectedData.manufacturer && selectedData.model && (selectedData.yearFrom || selectedData.yearTo)) {
+            searchBtnText.textContent = 'بحث الآن';
+        } else if (selectedData.manufacturer) {
+            searchBtnText.textContent = 'بحث في ' + selectedData.manufacturer.nameAr;
+        } else if (hasSelection) {
+            searchBtnText.textContent = 'بحث متقدم';
+        } else {
+            searchBtnText.textContent = 'اختر المعايير أولاً';
+        }
+    }
+
+    // Update selection summary
+    function updateSelectionSummary() {
+        const summaryMfg = document.getElementById('summary-manufacturer');
+        const summaryModel = document.getElementById('summary-model');
+        const summaryYears = document.getElementById('summary-years');
+        const selectionSummary = document.getElementById('selection-summary');
+        
+        let hasAnySelection = false;
+        
+        if (selectedData.manufacturer) {
+            summaryMfg.classList.remove('hidden');
+            summaryMfg.querySelector('span').textContent = selectedData.manufacturer.nameAr;
+            hasAnySelection = true;
+        } else {
+            summaryMfg.classList.add('hidden');
+        }
+        
+        if (selectedData.model) {
+            summaryModel.classList.remove('hidden');
+            summaryModel.querySelector('span').textContent = selectedData.model.name;
+            hasAnySelection = true;
+        } else {
+            summaryModel.classList.add('hidden');
+        }
+        
+        if (selectedData.yearFrom || selectedData.yearTo) {
+            summaryYears.classList.remove('hidden');
+            let yearText = '';
+            if (selectedData.yearFrom && selectedData.yearTo) {
+                yearText = `${selectedData.yearFrom} - ${selectedData.yearTo}`;
+            } else if (selectedData.yearFrom) {
+                yearText = `من ${selectedData.yearFrom}`;
+            } else if (selectedData.yearTo) {
+                yearText = `إلى ${selectedData.yearTo}`;
+            }
+            summaryYears.querySelector('span').textContent = yearText;
+            hasAnySelection = true;
+        } else {
+            summaryYears.classList.add('hidden');
+        }
+        
+        if (hasAnySelection) {
+            selectionSummary.classList.remove('hidden');
+        } else {
+            selectionSummary.classList.add('hidden');
+        }
+    }
+
+    // Initialize
+    updateSearchButton();
 })();
 
 // Wishlist functionality

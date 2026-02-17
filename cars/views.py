@@ -8,6 +8,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.db.models import Count
 
 from django.http import JsonResponse
 
@@ -34,7 +35,7 @@ def home(request):
     base_qs = _exclude_expired_auctions(ApiCar.objects.all())
     manufacturers = Manufacturer.objects.filter(
         apicar__in=base_qs
-    ).distinct().order_by('name')
+    ).annotate(car_count=Count('apicar')).distinct().order_by('-car_count')
     
     # Only show body types that have non-expired cars
     body_types = BodyType.objects.filter(
@@ -226,15 +227,15 @@ def car_list(request):
     count_auction = base_qs.filter(category__name='auction').count()
 
     # Popular manufacturers (top 20 by car count)
-    from django.db.models import Count
+
     if car_type == 'auction':
         popular_manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).annotate(
             car_count=Count('apicar', filter=Q(apicar__in=base_auction_qs))
-        ).order_by('-car_count')[:20]
+        ).order_by('-car_count')
     else:
         popular_manufacturers = Manufacturer.objects.annotate(
             car_count=Count('apicar')
-        ).order_by('-car_count')[:20]
+        ).order_by('-car_count')
 
     context = {
         'page_obj': page_obj,
@@ -292,12 +293,59 @@ def api_models_by_manufacturer(request):
     manufacturer_id = request.GET.get('manufacturer_id')
     if not manufacturer_id:
         return JsonResponse([], safe=False)
-    models = list(
-        CarModel.objects.filter(manufacturer_id=manufacturer_id)
-        .order_by('name')
-        .values('id', 'name')
-    )
-    return JsonResponse(models, safe=False)
+    
+    # Get manufacturer info for logo
+    manufacturer_logo = None
+    try:
+        manufacturer = Manufacturer.objects.get(id=manufacturer_id)
+        
+        if manufacturer.logo:
+            try:
+                logo_string = str(manufacturer.logo).strip()
+                
+                # Check if logo is a file field (has .url attribute) or a string path
+                if hasattr(manufacturer.logo, 'url'):
+                    # It's a file field
+                    manufacturer_logo = request.build_absolute_uri(manufacturer.logo.url)
+                else:
+                    # It's a string path - build URL manually
+                    if logo_string.startswith('/'):
+                        # Absolute path from root
+                        manufacturer_logo = request.build_absolute_uri(logo_string)
+                    elif logo_string.startswith('http'):
+                        # Already a full URL
+                        manufacturer_logo = logo_string
+                    else:
+                        # Relative path - assume it's in media
+                        from django.conf import settings
+                        if hasattr(settings, 'MEDIA_URL'):
+                            manufacturer_logo = request.build_absolute_uri(settings.MEDIA_URL + logo_string)
+                        else:
+                            manufacturer_logo = request.build_absolute_uri('/media/' + logo_string)
+                
+            except Exception as logo_error:
+                manufacturer_logo = None
+    except Manufacturer.DoesNotExist:
+        pass
+    except Exception as e:
+        pass
+    
+    try:
+        models = list(
+            CarModel.objects.filter(manufacturer_id=manufacturer_id)
+            .annotate(car_count=Count('apicar'))
+            .order_by('-car_count')
+            .values('id', 'name', 'car_count')
+        )
+        
+        # Add manufacturer logo to each model
+        for model in models:
+            model['manufacturer_logo'] = manufacturer_logo
+        
+        return JsonResponse(models, safe=False)
+    except Exception as e:
+        # Return empty list if there's any error
+        return JsonResponse([], safe=False)
 
 def api_badges_by_model(request):
     model_id = request.GET.get('model_id')
