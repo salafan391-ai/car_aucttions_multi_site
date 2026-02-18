@@ -13,7 +13,7 @@ from django.utils import timezone
 
 from django.http import JsonResponse, HttpResponse
 from django.core.cache import cache
-from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import cache_page, cache_control
 import hashlib
 from django.db import connection
 
@@ -105,6 +105,7 @@ def home(request):
 
 
 @ensure_csrf_cookie
+@cache_page(60 * 5)  # Cache for 5 minutes
 def car_list(request):
     qs = _exclude_expired_auctions(
         ApiCar.objects.select_related(

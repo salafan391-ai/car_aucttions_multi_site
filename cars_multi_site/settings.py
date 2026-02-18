@@ -107,16 +107,26 @@ DATABASES = {
         "HOST": "localhost",
         "PORT": "5432",
         "CONN_MAX_AGE": 600,  # Keep connections alive for 10 minutes
+        "CONN_HEALTH_CHECKS": True,  # Reuse healthy connections
         "OPTIONS": {
             "connect_timeout": 10,
+            "options": "-c statement_timeout=30000",  # 30 second query timeout
         }
     }
 }
 
 # Override with DATABASE_URL if set (Heroku)
 if os.environ.get("DATABASE_URL"):
-    db_from_env = dj_database_url.config(conn_max_age=600)
+    db_from_env = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True
+    )
     db_from_env["ENGINE"] = "django_tenants.postgresql_backend"
+    db_from_env["OPTIONS"] = {
+        "connect_timeout": 10,
+        "options": "-c statement_timeout=30000",
+    }
     DATABASES["default"] = db_from_env
 
 DATABASE_ROUTERS = (
