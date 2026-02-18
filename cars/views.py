@@ -34,32 +34,38 @@ def _exclude_expired_auctions(qs):
 
 @ensure_csrf_cookie
 def home(request):
+    # Use select_related for foreign keys to reduce queries
     _base_qs = _exclude_expired_auctions(
         ApiCar.objects.select_related(
-            'manufacturer', 'model', 'badge', 'color'
+            'manufacturer', 'model', 'badge', 'color', 'body', 'category'
         )
     )
+    
+    # Get cars excluding auctions - limit early for performance
     latest_cars = _base_qs.exclude(category__name='auction').order_by('-created_at')[:12]
+    
+    # Get auctions only - limit early for performance
     latest_auctions = _base_qs.filter(category__name='auction').order_by('-created_at')[:12]
     
     # Only show manufacturers that have non-expired cars
     base_qs = _exclude_expired_auctions(ApiCar.objects.all())
     manufacturers = Manufacturer.objects.filter(
         apicar__in=base_qs
-    ).annotate(car_count=Count('apicar')).distinct().order_by('-car_count')
+    ).annotate(car_count=Count('apicar')).distinct().order_by('-car_count')[:20]  # Limit to top 20
     
     # Only show body types that have non-expired cars
     body_types = BodyType.objects.filter(
         apicar__in=base_qs
-    ).distinct().order_by('name')
+    ).distinct().order_by('name')[:15]  # Limit to 15
     
-    years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')
+    # Get distinct years efficiently
+    years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')[:20]  # Last 20 years
 
     site_cars = []
     tenant = _get_current_tenant()
     if tenant and tenant.schema_name != 'public':
         from site_cars.models import SiteCar
-        site_cars = SiteCar.objects.order_by('-created_at')[:8]
+        site_cars = SiteCar.objects.only('id', 'title', 'image', 'manufacturer', 'model', 'year', 'price').order_by('-created_at')[:8]
 
     # Get posts count and latest post (filtered by tenant)
     posts_qs = Post.objects.filter(is_published=True)
@@ -67,8 +73,11 @@ def home(request):
         posts_qs = posts_qs.filter(tenant=tenant)
     
     posts_count = posts_qs.count()
-    latest_post = posts_qs.order_by('-created_at').first()
+    latest_post = posts_qs.select_related('author').prefetch_related('images').order_by('-created_at').first()
 
+    # Use exists() for faster boolean checks
+    available_cars_qs = _exclude_expired_auctions(ApiCar.objects.filter(status='available'))
+    
     context = {
         'latest_cars': latest_cars,
         'latest_auctions': latest_auctions,
@@ -76,10 +85,13 @@ def home(request):
         'manufacturers': manufacturers,
         'body_types': body_types,
         'years': years,
-        'total_cars': _exclude_expired_auctions(ApiCar.objects.filter(status='available')).count(),
+        'total_cars': available_cars_qs.count(),
         'auction_count': _exclude_expired_auctions(ApiCar.objects.filter(category__name='auction')).count(),
         'cars_count': _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction')).count(),
         'total_manufacturers': Manufacturer.objects.count(),
+        'total_models': CarModel.objects.count(),
+        'posts_count': posts_count,
+        'latest_post': latest_post,
         'total_models': CarModel.objects.count(),
         'posts_count': posts_count,
         'latest_post': latest_post,
@@ -211,31 +223,31 @@ def car_list(request):
     if car_type == 'auction':
         # For auctions, only show manufacturers/models for non-expired auction cars
         base_auction_qs = _exclude_expired_auctions(ApiCar.objects.filter(category__name='auction'))
-        manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
-        models_qs = CarModel.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
+        manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:50]  # Limit
+        models_qs = CarModel.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:100]  # Limit
     else:
-        manufacturers = Manufacturer.objects.all().order_by('name')
-        models_qs = CarModel.objects.all().order_by('name')
+        manufacturers = Manufacturer.objects.all().order_by('name')[:50]  # Limit
+        models_qs = CarModel.objects.all().order_by('name')[:100]  # Limit
     
     if manufacturer:
         if car_type == 'auction':
-            models_qs = models_qs.filter(manufacturer_id=manufacturer, apicar__in=base_auction_qs).distinct()
+            models_qs = models_qs.filter(manufacturer_id=manufacturer, apicar__in=base_auction_qs).distinct()[:100]
         else:
-            models_qs = models_qs.filter(manufacturer_id=manufacturer)
-    years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')
-    colors = CarColor.objects.all().order_by('name')
+            models_qs = models_qs.filter(manufacturer_id=manufacturer)[:100]
+    years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')[:30]  # Last 30 years
+    colors = CarColor.objects.all().order_by('name')[:30]  # Limit colors
     
     # Filter body types based on car type
     if car_type == 'auction':
-        body_types = BodyType.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
+        body_types = BodyType.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:20]
     else:
         base_regular_qs = _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction'))
         body_types = BodyType.objects.filter(
             apicar__in=base_regular_qs
-        ).distinct().order_by('name')
+        ).distinct().order_by('name')[:20]
     
-    fuels = ApiCar.objects.values_list('fuel', flat=True).exclude(fuel__isnull=True).exclude(fuel='').distinct().order_by('fuel')
-    transmissions = ApiCar.objects.values_list('transmission', flat=True).exclude(transmission__isnull=True).exclude(transmission='').distinct().order_by('transmission')
+    fuels = ApiCar.objects.values_list('fuel', flat=True).exclude(fuel__isnull=True).exclude(fuel='').distinct().order_by('fuel')[:15]
+    transmissions = ApiCar.objects.values_list('transmission', flat=True).exclude(transmission__isnull=True).exclude(transmission='').distinct().order_by('transmission')[:10]
     seat_counts = ApiCar.objects.values_list('seat_count', flat=True).exclude(seat_count__isnull=True).exclude(seat_count='').distinct().order_by('seat_count')
     seat_colors = CarSeatColor.objects.all().order_by('name')
     badges = CarBadge.objects.all().order_by('name')
@@ -379,9 +391,10 @@ def api_badges_by_model(request):
     return JsonResponse(badges, safe=False)
 
 def car_detail(request, pk):
+    # Use select_related to fetch all related objects in one query
     car = get_object_or_404(
         ApiCar.objects.select_related(
-            'manufacturer', 'model', 'badge', 'color', 'seat_color', 'body'
+            'manufacturer', 'model', 'badge', 'color', 'seat_color', 'body', 'category'
         ),
         pk=pk,
     )
@@ -390,8 +403,7 @@ def car_detail(request, pk):
     user_rating = None
     avg_rating = 0
     pending_ratings = []
-    from django.db import connection
-    tenant = getattr(connection, 'tenant', None)
+    tenant = _get_current_tenant()
     if tenant and tenant.schema_name != 'public':
         from site_cars.models import SiteRating
         from django.db.models import Avg
@@ -399,12 +411,12 @@ def car_detail(request, pk):
         # Show only approved ratings to regular users
         if request.user.is_staff:
             # Staff can see all ratings
-            ratings = SiteRating.objects.filter(car=car).select_related('user')
+            ratings = SiteRating.objects.filter(car=car).select_related('user').order_by('-created_at')[:50]
             # Get pending ratings for staff to review
-            pending_ratings = ratings.filter(is_approved=False)
+            pending_ratings = ratings.filter(is_approved=False)[:20]
         else:
             # Regular users only see approved ratings
-            ratings = SiteRating.objects.filter(car=car, is_approved=True).select_related('user')
+            ratings = SiteRating.objects.filter(car=car, is_approved=True).select_related('user').order_by('-created_at')[:50]
         
         # Calculate average only from approved ratings
         avg_obj = SiteRating.objects.filter(car=car, is_approved=True).aggregate(avg=Avg('rating'))

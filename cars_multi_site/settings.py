@@ -106,6 +106,10 @@ DATABASES = {
         "PASSWORD": "postgres",
         "HOST": "localhost",
         "PORT": "5432",
+        "CONN_MAX_AGE": 600,  # Keep connections alive for 10 minutes
+        "OPTIONS": {
+            "connect_timeout": 10,
+        }
     }
 }
 
@@ -118,6 +122,21 @@ if os.environ.get("DATABASE_URL"):
 DATABASE_ROUTERS = (
     "django_tenants.routers.TenantSyncRouter",
 )
+
+# Caching Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# Cache timeouts (in seconds)
+CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes
+CACHE_MIDDLEWARE_KEY_PREFIX = 'cars_multi_site'
 
 
 # Password validation
