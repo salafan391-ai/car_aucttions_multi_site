@@ -1,5 +1,4 @@
 from datetime import datetime, date
-from django.utils import timezone
 
 from django.core.paginator import Paginator
 from django.contrib import messages
@@ -12,13 +11,24 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Count
 
 from django.http import JsonResponse
+from django.db import connection
 
 from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment, PostImage
 
 
+def _is_public_schema():
+    """Check if current schema is public"""
+    return connection.schema_name == 'public'
+
+
+def _get_current_tenant():
+    """Get current tenant or None"""
+    return getattr(connection, 'tenant', None)
+
+
 def _exclude_expired_auctions(qs):
     """Exclude auction cars whose auction_date has passed."""
-    now = timezone.now()
+    now = datetime.now()
     return qs.exclude(category__name='auction', auction_date__lt=now)
 
 
@@ -46,23 +56,18 @@ def home(request):
     years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')
 
     site_cars = []
-    from django.db import connection
-    tenant = getattr(connection, 'tenant', None)
+    tenant = _get_current_tenant()
     if tenant and tenant.schema_name != 'public':
         from site_cars.models import SiteCar
         site_cars = SiteCar.objects.order_by('-created_at')[:8]
 
-    # Get posts count and latest post for current tenant
-    from cars.models import Post
-    from django.db import connection
-    current_tenant = getattr(connection, 'tenant', None)
+    # Get posts count and latest post (filtered by tenant)
+    posts_qs = Post.objects.filter(is_published=True)
+    if tenant and not _is_public_schema():
+        posts_qs = posts_qs.filter(tenant=tenant)
     
-    posts_query = Post.objects.filter(is_published=True)
-    if current_tenant:
-        posts_query = posts_query.filter(tenant=current_tenant)
-    
-    posts_count = posts_query.count()
-    latest_post = posts_query.order_by('-created_at').first()
+    posts_count = posts_qs.count()
+    latest_post = posts_qs.order_by('-created_at').first()
 
     context = {
         'latest_cars': latest_cars,
@@ -276,7 +281,7 @@ def car_list(request):
 
 
 def expired_auctions(request):
-    now = timezone.now()
+    now = datetime.now()
     qs = ApiCar.objects.select_related(
         'manufacturer', 'model', 'badge', 'color', 'body'
     ).filter(category__name='auction', auction_date__lt=now)
@@ -498,20 +503,12 @@ def toggle_wishlist(request, car_id):
     try:
         car = get_object_or_404(ApiCar, pk=car_id)
         
-        # Check if user exists in current tenant schema
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        try:
-            user_in_tenant = User.objects.get(id=request.user.id)
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'المستخدم غير موجود في هذا النطاق', 'redirect': '/login/?next=' + request.META.get('HTTP_REFERER', '/')}, status=401)
-        
         # Debug info
-        print(f"User ID: {user_in_tenant.id}, Username: {user_in_tenant.username}")
+        print(f"User ID: {request.user.id}, Username: {request.user.username}")
         print(f"Car ID: {car_id}, Car Title: {car.title}")
         
         wishlist_item, created = Wishlist.objects.get_or_create(
-            user=user_in_tenant,  # Use the user from current tenant schema
+            user=request.user, 
             car=car
         )
         print(f"Wishlist item created: {created}")
@@ -583,15 +580,14 @@ def wishlist_count(request):
 @ensure_csrf_cookie
 def post_list(request):
     # Get current tenant
-    from django.db import connection
-    current_tenant = getattr(connection, 'tenant', None)
+    tenant = _get_current_tenant()
     
-    # Filter posts by current tenant
-    posts_query = Post.objects.filter(is_published=True)
-    if current_tenant:
-        posts_query = posts_query.filter(tenant=current_tenant)
+    # Filter posts by tenant (or show all if public schema)
+    posts = Post.objects.filter(is_published=True)
+    if tenant and not _is_public_schema():
+        posts = posts.filter(tenant=tenant)
     
-    posts = posts_query.prefetch_related('images')
+    posts = posts.prefetch_related('images')
     
     # Pagination
     paginator = Paginator(posts, 9)  # 9 posts per page
@@ -607,18 +603,16 @@ def post_list(request):
 @ensure_csrf_cookie
 def post_detail(request, pk):
     # Get current tenant
-    from django.db import connection
-    current_tenant = getattr(connection, 'tenant', None)
+    tenant = _get_current_tenant()
     
-    # Filter posts by current tenant
-    posts_query = Post.objects.filter(is_published=True)
-    if current_tenant:
-        posts_query = posts_query.filter(tenant=current_tenant)
+    # Base query
+    qs = Post.objects.prefetch_related('images').filter(pk=pk, is_published=True)
     
-    post = get_object_or_404(
-        posts_query.prefetch_related('images'),
-        pk=pk
-    )
+    # Filter by tenant if not public schema
+    if tenant and not _is_public_schema():
+        qs = qs.filter(tenant=tenant)
+    
+    post = get_object_or_404(qs)
     
     # Increment view count
     post.views_count += 1
@@ -648,7 +642,17 @@ def post_like_toggle(request, pk):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
-    post = get_object_or_404(Post, pk=pk)
+    # Get current tenant
+    tenant = _get_current_tenant()
+    
+    # Base query
+    qs = Post.objects.filter(pk=pk)
+    
+    # Filter by tenant if not public schema
+    if tenant and not _is_public_schema():
+        qs = qs.filter(tenant=tenant)
+    
+    post = get_object_or_404(qs)
     
     like, created = PostLike.objects.get_or_create(post=post, user=request.user)
     
@@ -672,7 +676,17 @@ def post_comment_add(request, pk):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
-    post = get_object_or_404(Post, pk=pk)
+    # Get current tenant
+    tenant = _get_current_tenant()
+    
+    # Base query
+    qs = Post.objects.filter(pk=pk)
+    
+    # Filter by tenant if not public schema
+    if tenant and not _is_public_schema():
+        qs = qs.filter(tenant=tenant)
+    
+    post = get_object_or_404(qs)
     comment_text = request.POST.get('comment', '').strip()
     
     if not comment_text:
@@ -719,83 +733,38 @@ def post_create(request):
         messages.error(request, 'غير مصرح لك بإنشاء منشورات')
         return redirect('post_list')
     
+    # Get current tenant
+    tenant = _get_current_tenant()
+    
     if request.method == 'POST':
-        try:
-            title_ar = request.POST.get('title_ar', '').strip()
-            content_ar = request.POST.get('content_ar', '').strip()
-            video_url = request.POST.get('video_url', '').strip()
-            is_published = request.POST.get('is_published') == 'on'
-            
-            # Validation
-            if not title_ar:
-                messages.error(request, 'العنوان مطلوب')
-                return render(request, 'cars/posts/post_form.html', {
-                    'action': 'create',
-                    'title_ar': title_ar,
-                    'content_ar': content_ar,
-                    'video_url': video_url,
-                    'is_published': is_published
-                })
-            
-            if not content_ar:
-                messages.error(request, 'المحتوى مطلوب')
-                return render(request, 'cars/posts/post_form.html', {
-                    'action': 'create',
-                    'title_ar': title_ar,
-                    'content_ar': content_ar,
-                    'video_url': video_url,
-                    'is_published': is_published
-                })
-            
-            # Check if user exists in current tenant schema
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            try:
-                user_in_tenant = User.objects.get(id=request.user.id)
-            except User.DoesNotExist:
-                messages.error(request, 'المستخدم غير موجود في هذا النطاق. يرجى تسجيل الدخول مرة أخرى.')
-                return redirect('login')
-            
-            # Get current tenant
-            from django.db import connection
-            current_tenant = getattr(connection, 'tenant', None)
-            
-            # Create post (use Arabic content for both fields)
-            post = Post.objects.create(
-                title=title_ar,  # Use Arabic title for English field too
-                title_ar=title_ar,
-                content=content_ar,  # Use Arabic content for English field too
-                content_ar=content_ar,
-                video_url=video_url if video_url else None,
-                author=user_in_tenant,  # Use the user from current tenant schema
-                tenant=current_tenant,  # Assign current tenant
-                is_published=is_published
+        title_ar = request.POST.get('title_ar')
+        content_ar = request.POST.get('content_ar')
+        video_url = request.POST.get('video_url')
+        is_published = request.POST.get('is_published') == 'on'
+        
+        # Create post (use Arabic content for both fields)
+        post = Post.objects.create(
+            title=title_ar,  # Use Arabic title for English field too
+            title_ar=title_ar,
+            content=content_ar,  # Use Arabic content for English field too
+            content_ar=content_ar,
+            video_url=video_url if video_url else None,
+            author=request.user,
+            tenant=tenant,  # Auto-set tenant
+            is_published=is_published
+        )
+        
+        # Handle images
+        images = request.FILES.getlist('images')
+        for idx, image in enumerate(images):
+            PostImage.objects.create(
+                post=post,
+                image=image,
+                order=idx
             )
-            
-            # Handle images
-            images = request.FILES.getlist('images')
-            for idx, image in enumerate(images):
-                try:
-                    PostImage.objects.create(
-                        post=post,
-                        image=image,
-                        order=idx
-                    )
-                except Exception as e:
-                    messages.warning(request, f'خطأ في رفع الصورة {idx+1}: {str(e)}')
-            
-            messages.success(request, 'تم إنشاء المنشور بنجاح!')
-            return redirect('post_detail', pk=post.pk)
-            
-        except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء إنشاء المنشور: {str(e)}')
-            return render(request, 'cars/posts/post_form.html', {
-                'action': 'create',
-                'title_ar': request.POST.get('title_ar', ''),
-                'content_ar': request.POST.get('content_ar', ''),
-                'video_url': request.POST.get('video_url', ''),
-                'is_published': request.POST.get('is_published') == 'on'
-            })
+        
+        messages.success(request, 'تم إنشاء المنشور بنجاح!')
+        return redirect('post_detail', pk=post.pk)
     
     return render(request, 'cars/posts/post_form.html', {
         'action': 'create'
@@ -805,7 +774,17 @@ def post_create(request):
 @login_required
 def post_edit(request, pk):
     """Edit an existing post (staff only)"""
-    post = get_object_or_404(Post, pk=pk)
+    # Get current tenant
+    tenant = _get_current_tenant()
+    
+    # Base query
+    qs = Post.objects.filter(pk=pk)
+    
+    # Filter by tenant if not public schema
+    if tenant and not _is_public_schema():
+        qs = qs.filter(tenant=tenant)
+    
+    post = get_object_or_404(qs)
     
     if not request.user.is_staff:
         messages.error(request, 'غير مصرح لك بتعديل المنشورات')
@@ -852,7 +831,16 @@ def post_image_delete(request, pk):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
+    # Get current tenant
+    tenant = _get_current_tenant()
+    
+    # Get image and filter by tenant through post
     image = get_object_or_404(PostImage, pk=pk)
+    
+    # Check tenant access
+    if tenant and not _is_public_schema():
+        if image.post.tenant != tenant:
+            return JsonResponse({'error': 'غير مصرح'}, status=403)
     
     # Only allow staff to delete
     if not request.user.is_staff:
