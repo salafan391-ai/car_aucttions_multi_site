@@ -879,20 +879,32 @@ def manufacturer_logo(request, manufacturer_id):
         if not manufacturer.logo:
             return HttpResponse('', status=404)
         
-        # Create cache key
-        cache_key = f'manufacturer_logo_{manufacturer_id}'
+        logo_content = manufacturer.logo
         
-        # Try to get from cache
-        cached_logo = cache.get(cache_key)
-        if cached_logo:
-            return HttpResponse(cached_logo, content_type='image/svg+xml')
+        # If logo is a URL, redirect to it
+        if logo_content.startswith('http'):
+            return redirect(logo_content)
         
-        # Cache the logo
-        cache.set(cache_key, manufacturer.logo, 3600)  # 1 hour cache
+        # If logo contains SVG content, serve it directly
+        elif '<svg' in logo_content.lower():
+            return HttpResponse(logo_content, content_type='image/svg+xml')
         
-        return HttpResponse(manufacturer.logo, content_type='image/svg+xml')
+        # If logo is base64 encoded, decode and serve
+        elif logo_content.startswith('data:image/svg+xml;base64,'):
+            import base64
+            try:
+                decoded_logo = base64.b64decode(logo_content.split(',')[1])
+                return HttpResponse(decoded_logo, content_type='image/svg+xml')
+            except:
+                # Fallback to original approach if decoding fails
+                pass
+        
+        # Fallback: serve as-is with appropriate content type
+        return HttpResponse(logo_content, content_type='image/svg+xml')
         
     except Manufacturer.DoesNotExist:
         return HttpResponse('', status=404)
     except Exception as e:
-        return HttpResponse('', status=500)
+        # Log error but don't break the page
+        print(f"Error serving logo for manufacturer {manufacturer_id}: {str(e)}")
+        return HttpResponse('', status=404)
