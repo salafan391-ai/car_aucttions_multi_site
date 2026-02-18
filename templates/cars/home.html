@@ -451,6 +451,8 @@
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                {% elif car.images and car.images|length > 0 %}
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -526,6 +528,8 @@
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                {% elif car.images and car.images|length > 0 %}
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

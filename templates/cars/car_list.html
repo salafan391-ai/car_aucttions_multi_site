@@ -201,12 +201,14 @@
 
     <!-- ═══════════════ FILTER PANEL (slide-down) ═══════════════ -->
     <div class="mb-4 sm:mb-6">
-        <button type="button" id="toggle-filters" class="group inline-flex items-center gap-3 px-6 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 shadow-sm">
+        <button type="button" id="toggle-filters" class="group inline-flex items-center gap-3 px-6 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 shadow-sm relative">
             <div class="flex items-center gap-2">
                 <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
                 <span>فلاتر متقدمة</span>
+                <!-- Red dot indicator -->
+                <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white shadow-sm"></span>
             </div>
             <svg id="filter-arrow" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -481,6 +483,8 @@
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                {% elif car.images and car.images|length > 0 %}
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -616,15 +620,40 @@ const filterForm = document.getElementById('filter-form');
 const filterArrow = document.getElementById('filter-arrow');
 
 toggleBtn.addEventListener('click', function() {
+    const isHidden = filterForm.classList.contains('hidden');
     filterForm.classList.toggle('hidden');
     filterArrow.classList.toggle('rotate-180');
+    
+    // Handle red dot visibility
+    const redDot = toggleBtn.querySelector('.animate-pulse');
+    if (redDot) {
+        if (isHidden) {
+            // Opening filters - hide red dot
+            redDot.classList.add('hidden');
+        } else {
+            // Closing filters - show red dot
+            redDot.classList.remove('hidden');
+        }
+    }
 });
 
-// Auto-open if filters are active
-{% if request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.seat_count or request.GET.seat_color or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.status or request.GET.manufacturer or request.GET.model or request.GET.year_from or request.GET.year_to %}
-filterForm.classList.remove('hidden');
-filterArrow.classList.add('rotate-180');
-{% endif %}
+// Keep filters open when form submits via onchange events
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if filters should be open (has active filters or was just submitted)
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasActiveFilters = urlParams.toString().length > 0;
+    
+    // If there are active filters, keep the panel open
+    if (hasActiveFilters) {
+        filterForm.classList.remove('hidden');
+        filterArrow.classList.add('rotate-180');
+        // Hide red dot if filters are active
+        const redDot = toggleBtn.querySelector('.animate-pulse');
+        if (redDot) {
+            redDot.classList.add('hidden');
+        }
+    }
+});
 
 // Dynamic model and badge loading when manufacturer changes
 const manuSelect = document.getElementById('manufacturer-select');

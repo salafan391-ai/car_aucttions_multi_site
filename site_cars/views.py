@@ -521,6 +521,19 @@ def upload_auction_json(request):
             return int(val)
         return int(val.replace(",", "").strip() or 0)
 
+    def parse_power(val):
+        """Parse power value, removing commas and 'cc' suffix"""
+        if not val:
+            return 0
+        if isinstance(val, (int, float)):
+            return int(val)
+        # Remove commas, 'cc', and any whitespace, then convert to int
+        cleaned = str(val).replace(",", "").replace("cc", "").replace("CC", "").strip()
+        try:
+            return int(cleaned) if cleaned else 0
+        except ValueError:
+            return 0
+
     def parse_auction_date(val):
         if not val:
             return None
@@ -595,7 +608,7 @@ def upload_auction_json(request):
                 "badge": badge,
                 "color": color,
                 "transmission": (item.get("mission") or "")[:100],
-                "power": int(item.get("power") or 0),
+                "power": parse_power(item.get("power")),
                 "price": int(item.get("price") or 0),
                 "mileage": parse_mileage(item.get("mileage")),
                 "fuel": (item.get("fuel_en") or item.get("fuel") or "")[:100],
