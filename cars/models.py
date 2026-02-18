@@ -58,12 +58,15 @@ class BodyType(models.Model):
         return self.name
 
 class Wishlist(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    car = models.ForeignKey('ApiCar', on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True)
+    car = models.ForeignKey('ApiCar', on_delete=models.CASCADE, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
     class Meta:
         unique_together = ['user', 'car']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+        ]
     
     def __str__(self):
         return f"{self.user.username} - {self.car.title}"

@@ -537,9 +537,9 @@ def toggle_wishlist(request, car_id):
             # Item was created
             in_wishlist = True
         
-        # Clear the wishlist count cache
-        cache_key = f'wishlist_count_{request.user.id}'
-        cache.delete(cache_key)
+        # Clear the session cache
+        if 'wishlist_count' in request.session:
+            del request.session['wishlist_count']
         
         return JsonResponse({'in_wishlist': in_wishlist})
         
@@ -580,26 +580,31 @@ def wishlist(request):
 
 
 def wishlist_count(request):
-    """Get user's wishlist count - optimized with caching"""
+    """Get user's wishlist count - ultra-fast optimized version"""
     if not request.user.is_authenticated:
         return JsonResponse({'count': 0})
     
-    # Use cache to avoid database queries
-    cache_key = f'wishlist_count_{request.user.id}'
-    cached_count = cache.get(cache_key)
-    
-    if cached_count is not None:
-        return JsonResponse({'count': cached_count})
+    # Try session cache first - instant response
+    session_key = 'wishlist_count'
+    if session_key in request.session:
+        return JsonResponse({'count': request.session[session_key]})
     
     try:
-        # Simple count query without unnecessary user lookup
-        count = Wishlist.objects.filter(user_id=request.user.id).count()
+        # Most efficient count query - uses database index
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) FROM cars_wishlist WHERE user_id = %s",
+                [request.user.id]
+            )
+            count = cursor.fetchone()[0]
         
-        # Cache for 5 minutes
-        cache.set(cache_key, count, 300)
+        # Store in session for subsequent requests
+        request.session[session_key] = count
         
         return JsonResponse({'count': count})
-    except Exception:
+    except Exception as e:
+        print(f"Wishlist count error: {e}")
         return JsonResponse({'count': 0})
     except Exception as e:
         return JsonResponse({'count': 0})
