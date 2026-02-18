@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from django.utils import timezone
 
 from django.core.paginator import Paginator
 from django.contrib import messages
@@ -17,7 +18,7 @@ from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColo
 
 def _exclude_expired_auctions(qs):
     """Exclude auction cars whose auction_date has passed."""
-    now = datetime.now()
+    now = timezone.now()
     return qs.exclude(category__name='auction', auction_date__lt=now)
 
 
@@ -268,7 +269,7 @@ def car_list(request):
 
 
 def expired_auctions(request):
-    now = datetime.now()
+    now = timezone.now()
     qs = ApiCar.objects.select_related(
         'manufacturer', 'model', 'badge', 'color', 'body'
     ).filter(category__name='auction', auction_date__lt=now)
@@ -687,33 +688,68 @@ def post_create(request):
         return redirect('post_list')
     
     if request.method == 'POST':
-        title_ar = request.POST.get('title_ar')
-        content_ar = request.POST.get('content_ar')
-        video_url = request.POST.get('video_url')
-        is_published = request.POST.get('is_published') == 'on'
-        
-        # Create post (use Arabic content for both fields)
-        post = Post.objects.create(
-            title=title_ar,  # Use Arabic title for English field too
-            title_ar=title_ar,
-            content=content_ar,  # Use Arabic content for English field too
-            content_ar=content_ar,
-            video_url=video_url if video_url else None,
-            author=request.user,
-            is_published=is_published
-        )
-        
-        # Handle images
-        images = request.FILES.getlist('images')
-        for idx, image in enumerate(images):
-            PostImage.objects.create(
-                post=post,
-                image=image,
-                order=idx
+        try:
+            title_ar = request.POST.get('title_ar', '').strip()
+            content_ar = request.POST.get('content_ar', '').strip()
+            video_url = request.POST.get('video_url', '').strip()
+            is_published = request.POST.get('is_published') == 'on'
+            
+            # Validation
+            if not title_ar:
+                messages.error(request, 'العنوان مطلوب')
+                return render(request, 'cars/posts/post_form.html', {
+                    'action': 'create',
+                    'title_ar': title_ar,
+                    'content_ar': content_ar,
+                    'video_url': video_url,
+                    'is_published': is_published
+                })
+            
+            if not content_ar:
+                messages.error(request, 'المحتوى مطلوب')
+                return render(request, 'cars/posts/post_form.html', {
+                    'action': 'create',
+                    'title_ar': title_ar,
+                    'content_ar': content_ar,
+                    'video_url': video_url,
+                    'is_published': is_published
+                })
+            
+            # Create post (use Arabic content for both fields)
+            post = Post.objects.create(
+                title=title_ar,  # Use Arabic title for English field too
+                title_ar=title_ar,
+                content=content_ar,  # Use Arabic content for English field too
+                content_ar=content_ar,
+                video_url=video_url if video_url else None,
+                author=request.user,
+                is_published=is_published
             )
-        
-        messages.success(request, 'تم إنشاء المنشور بنجاح!')
-        return redirect('post_detail', pk=post.pk)
+            
+            # Handle images
+            images = request.FILES.getlist('images')
+            for idx, image in enumerate(images):
+                try:
+                    PostImage.objects.create(
+                        post=post,
+                        image=image,
+                        order=idx
+                    )
+                except Exception as e:
+                    messages.warning(request, f'خطأ في رفع الصورة {idx+1}: {str(e)}')
+            
+            messages.success(request, 'تم إنشاء المنشور بنجاح!')
+            return redirect('post_detail', pk=post.pk)
+            
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء إنشاء المنشور: {str(e)}')
+            return render(request, 'cars/posts/post_form.html', {
+                'action': 'create',
+                'title_ar': request.POST.get('title_ar', ''),
+                'content_ar': request.POST.get('content_ar', ''),
+                'video_url': request.POST.get('video_url', ''),
+                'is_published': request.POST.get('is_published') == 'on'
+            })
     
     return render(request, 'cars/posts/post_form.html', {
         'action': 'create'
