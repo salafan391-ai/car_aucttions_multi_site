@@ -52,10 +52,17 @@ def home(request):
         from site_cars.models import SiteCar
         site_cars = SiteCar.objects.order_by('-created_at')[:8]
 
-    # Get posts count and latest post
+    # Get posts count and latest post for current tenant
     from cars.models import Post
-    posts_count = Post.objects.filter(is_published=True).count()
-    latest_post = Post.objects.filter(is_published=True).order_by('-created_at').first()
+    from django.db import connection
+    current_tenant = getattr(connection, 'tenant', None)
+    
+    posts_query = Post.objects.filter(is_published=True)
+    if current_tenant:
+        posts_query = posts_query.filter(tenant=current_tenant)
+    
+    posts_count = posts_query.count()
+    latest_post = posts_query.order_by('-created_at').first()
 
     context = {
         'latest_cars': latest_cars,
@@ -491,12 +498,20 @@ def toggle_wishlist(request, car_id):
     try:
         car = get_object_or_404(ApiCar, pk=car_id)
         
+        # Check if user exists in current tenant schema
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        try:
+            user_in_tenant = User.objects.get(id=request.user.id)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'المستخدم غير موجود في هذا النطاق', 'redirect': '/login/?next=' + request.META.get('HTTP_REFERER', '/')}, status=401)
+        
         # Debug info
-        print(f"User ID: {request.user.id}, Username: {request.user.username}")
+        print(f"User ID: {user_in_tenant.id}, Username: {user_in_tenant.username}")
         print(f"Car ID: {car_id}, Car Title: {car.title}")
         
         wishlist_item, created = Wishlist.objects.get_or_create(
-            user=request.user, 
+            user=user_in_tenant,  # Use the user from current tenant schema
             car=car
         )
         print(f"Wishlist item created: {created}")
@@ -567,7 +582,16 @@ def wishlist_count(request):
 # Posts Views
 @ensure_csrf_cookie
 def post_list(request):
-    posts = Post.objects.filter(is_published=True).prefetch_related('images')
+    # Get current tenant
+    from django.db import connection
+    current_tenant = getattr(connection, 'tenant', None)
+    
+    # Filter posts by current tenant
+    posts_query = Post.objects.filter(is_published=True)
+    if current_tenant:
+        posts_query = posts_query.filter(tenant=current_tenant)
+    
+    posts = posts_query.prefetch_related('images')
     
     # Pagination
     paginator = Paginator(posts, 9)  # 9 posts per page
@@ -582,10 +606,18 @@ def post_list(request):
 
 @ensure_csrf_cookie
 def post_detail(request, pk):
+    # Get current tenant
+    from django.db import connection
+    current_tenant = getattr(connection, 'tenant', None)
+    
+    # Filter posts by current tenant
+    posts_query = Post.objects.filter(is_published=True)
+    if current_tenant:
+        posts_query = posts_query.filter(tenant=current_tenant)
+    
     post = get_object_or_404(
-        Post.objects.prefetch_related('images'),
-        pk=pk,
-        is_published=True
+        posts_query.prefetch_related('images'),
+        pk=pk
     )
     
     # Increment view count
@@ -715,6 +747,19 @@ def post_create(request):
                     'is_published': is_published
                 })
             
+            # Check if user exists in current tenant schema
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                user_in_tenant = User.objects.get(id=request.user.id)
+            except User.DoesNotExist:
+                messages.error(request, 'المستخدم غير موجود في هذا النطاق. يرجى تسجيل الدخول مرة أخرى.')
+                return redirect('login')
+            
+            # Get current tenant
+            from django.db import connection
+            current_tenant = getattr(connection, 'tenant', None)
+            
             # Create post (use Arabic content for both fields)
             post = Post.objects.create(
                 title=title_ar,  # Use Arabic title for English field too
@@ -722,7 +767,8 @@ def post_create(request):
                 content=content_ar,  # Use Arabic content for English field too
                 content_ar=content_ar,
                 video_url=video_url if video_url else None,
-                author=request.user,
+                author=user_in_tenant,  # Use the user from current tenant schema
+                tenant=current_tenant,  # Assign current tenant
                 is_published=is_published
             )
             

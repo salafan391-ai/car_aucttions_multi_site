@@ -193,6 +193,7 @@ class Post(models.Model):
     content_ar = models.TextField(null=True, blank=True, verbose_name="المحتوى بالعربي")
     video_url = models.URLField(null=True, blank=True, verbose_name="رابط الفيديو", help_text="رابط فيديو من YouTube أو Vimeo أو غيرها")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="الكاتب")
+    tenant = models.ForeignKey('tenants.Tenant', on_delete=models.CASCADE, null=True, blank=True, verbose_name="الموقع")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
     is_published = models.BooleanField(default=True, verbose_name="منشور")
