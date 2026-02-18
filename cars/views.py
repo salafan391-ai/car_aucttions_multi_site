@@ -9,6 +9,7 @@ from django.db.models import Q, Max
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Count
+from django.utils import timezone
 
 from django.http import JsonResponse, HttpResponse
 from django.core.cache import cache
@@ -31,7 +32,7 @@ def _get_current_tenant():
 
 def _exclude_expired_auctions(qs):
     """Exclude auction cars whose auction_date has passed."""
-    now = datetime.now()
+    now = timezone.now()
     return qs.exclude(category__name='auction', auction_date__lt=now)
 
 
@@ -299,7 +300,7 @@ def car_list(request):
 
 
 def expired_auctions(request):
-    now = datetime.now()
+    now = timezone.now()
     qs = ApiCar.objects.select_related(
         'manufacturer', 'model', 'badge', 'color', 'body'
     ).filter(category__name='auction', auction_date__lt=now)
