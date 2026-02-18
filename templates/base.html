@@ -975,6 +975,37 @@
             updateWishlistCountFAB();
         };
     </script>
+    
+    <!-- Lazy Loading for Manufacturer Logos -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lazy loading for manufacturer logos
+            const lazyImages = document.querySelectorAll('img.lazy-load');
+            
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.src; // Trigger load
+                            img.classList.remove('lazy-load');
+                            observer.unobserve(img);
+                        }
+                    });
+                });
+                
+                lazyImages.forEach(img => {
+                    imageObserver.observe(img);
+                });
+            } else {
+                // Fallback for older browsers
+                lazyImages.forEach(img => {
+                    img.src = img.src;
+                    img.classList.remove('lazy-load');
+                });
+            }
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

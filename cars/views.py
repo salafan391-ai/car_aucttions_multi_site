@@ -10,7 +10,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Count
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.core.cache import cache
+from django.views.decorators.cache import cache_control
+import hashlib
 from django.db import connection
 
 from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment, PostImage
@@ -866,3 +869,30 @@ def post_image_delete(request, pk):
     image.delete()
     
     return JsonResponse({'success': True})
+
+
+@cache_control(max_age=3600, public=True)  # Cache for 1 hour
+def manufacturer_logo(request, manufacturer_id):
+    """Serve manufacturer logo with caching"""
+    try:
+        manufacturer = Manufacturer.objects.get(id=manufacturer_id)
+        if not manufacturer.logo:
+            return HttpResponse('', status=404)
+        
+        # Create cache key
+        cache_key = f'manufacturer_logo_{manufacturer_id}'
+        
+        # Try to get from cache
+        cached_logo = cache.get(cache_key)
+        if cached_logo:
+            return HttpResponse(cached_logo, content_type='image/svg+xml')
+        
+        # Cache the logo
+        cache.set(cache_key, manufacturer.logo, 3600)  # 1 hour cache
+        
+        return HttpResponse(manufacturer.logo, content_type='image/svg+xml')
+        
+    except Manufacturer.DoesNotExist:
+        return HttpResponse('', status=404)
+    except Exception as e:
+        return HttpResponse('', status=500)

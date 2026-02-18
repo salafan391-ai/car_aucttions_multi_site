@@ -68,7 +68,7 @@
             {% for m in popular_manufacturers %}
             <a href="?manufacturer={{ m.id }}{% if request.GET.car_type %}&car_type={{ request.GET.car_type }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
                class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-brand hover:text-brand hover:shadow-sm transition whitespace-nowrap">
-                {% if m.logo %}<img src="{{ m.logo }}" class="w-5 h-5 object-contain" alt="">{% endif %}
+                {% if m.logo %}<img src="{% url 'manufacturer_logo' m.id %}" class="w-5 h-5 object-contain lazy-load" loading="lazy" alt="">{% endif %}
                 <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
                 <span class="text-xs text-gray-400">{{ m.car_count|intcomma }}</span>
             </a>

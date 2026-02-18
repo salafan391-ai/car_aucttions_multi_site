@@ -114,7 +114,7 @@
                             >
                                 {% if m.logo %}
                                 <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img src="{{ m.logo }}" alt="{{ m.name_ar|default:m.name }}" class="w-full h-full object-contain">
+                                    <img src="{% url 'manufacturer_logo' m.id %}" alt="{{ m.name_ar|default:m.name }}" class="w-full h-full object-contain lazy-load" loading="lazy">
                                 </div>
                                 {% else %}
                                 <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gradient-to-br from-brand to-brand-light flex items-center justify-center">
@@ -399,7 +399,7 @@
         {% for m in manufacturers %}
         <a href="{% url 'car_list' %}?manufacturer={{ m.id }}" class="flex-shrink-0 w-16 sm:w-20 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md p-2 sm:p-3 text-center transition group">
             {% if m.logo %}
-            <img src="{{ m.logo }}" alt="{{ m.name }}" class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain">
+            <img src="{% url 'manufacturer_logo' m.id %}" alt="{{ m.name }}" class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain lazy-load" loading="lazy">
             {% else %}
             <div class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-xs sm:text-sm">
                 {{ m.name|first }}
