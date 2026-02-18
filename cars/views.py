@@ -413,10 +413,12 @@ def car_detail(request, pk):
         
         # Show only approved ratings to regular users
         if request.user.is_staff:
-            # Staff can see all ratings
-            ratings = SiteRating.objects.filter(car=car).select_related('user').order_by('-created_at')[:50]
-            # Get pending ratings for staff to review
-            pending_ratings = ratings.filter(is_approved=False)[:20]
+            # Staff can see all ratings - get queryset without slicing first
+            all_ratings = SiteRating.objects.filter(car=car).select_related('user').order_by('-created_at')
+            # Get pending ratings for staff to review (before slicing)
+            pending_ratings = all_ratings.filter(is_approved=False)[:20]
+            # Then slice for display
+            ratings = all_ratings[:50]
         else:
             # Regular users only see approved ratings
             ratings = SiteRating.objects.filter(car=car, is_approved=True).select_related('user').order_by('-created_at')[:50]
