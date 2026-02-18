@@ -515,11 +515,17 @@ def upload_auction_json(request):
             return manager.filter(**kwargs).order_by("id").first()
 
     def parse_mileage(val):
+        """Parse mileage value, removing commas and 'km' suffix"""
         if not val:
             return 0
         if isinstance(val, (int, float)):
             return int(val)
-        return int(val.replace(",", "").strip() or 0)
+        # Remove commas, 'km', and any whitespace, then convert to int
+        cleaned = str(val).replace(",", "").replace("km", "").replace("KM", "").replace("Km", "").strip()
+        try:
+            return int(cleaned) if cleaned else 0
+        except ValueError:
+            return 0
 
     def parse_power(val):
         """Parse power value, removing commas and 'cc' suffix"""
