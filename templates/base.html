@@ -681,26 +681,59 @@
             }
         });
 
-        // Wishlist count functionality
-        function updateWishlistCount() {
+        // Wishlist count functionality with caching
+        let wishlistCountCache = null;
+        let wishlistCountPromise = null;
+        
+        function fetchWishlistCount() {
             {% if user.is_authenticated %}
-            fetch('/wishlist/count/')
+            // Return cached promise if already fetching
+            if (wishlistCountPromise) {
+                return wishlistCountPromise;
+            }
+            
+            // Return cached value if available and fresh (less than 5 seconds old)
+            if (wishlistCountCache && Date.now() - wishlistCountCache.timestamp < 5000) {
+                return Promise.resolve(wishlistCountCache.count);
+            }
+            
+            // Fetch new count
+            wishlistCountPromise = fetch('/wishlist/count/')
                 .then(response => response.json())
                 .then(data => {
-                    const desktopCount = document.getElementById('wishlist-count');
-                    const mobileCount = document.getElementById('wishlist-count-mobile');
-                    
-                    if (desktopCount) {
-                        desktopCount.textContent = data.count;
-                        desktopCount.style.display = data.count > 0 ? 'flex' : 'none';
-                    }
-                    if (mobileCount) {
-                        mobileCount.textContent = data.count;
-                        mobileCount.style.display = data.count > 0 ? 'flex' : 'none';
-                    }
+                    wishlistCountCache = {
+                        count: data.count,
+                        timestamp: Date.now()
+                    };
+                    wishlistCountPromise = null;
+                    return data.count;
                 })
-                .catch(error => console.error('Error fetching wishlist count:', error));
+                .catch(error => {
+                    console.error('Error fetching wishlist count:', error);
+                    wishlistCountPromise = null;
+                    return 0;
+                });
+            
+            return wishlistCountPromise;
+            {% else %}
+            return Promise.resolve(0);
             {% endif %}
+        }
+        
+        function updateWishlistCount() {
+            fetchWishlistCount().then(count => {
+                const desktopCount = document.getElementById('wishlist-count');
+                const mobileCount = document.getElementById('wishlist-count-mobile');
+                
+                if (desktopCount) {
+                    desktopCount.textContent = count;
+                    desktopCount.style.display = count > 0 ? 'flex' : 'none';
+                }
+                if (mobileCount) {
+                    mobileCount.textContent = count;
+                    mobileCount.style.display = count > 0 ? 'flex' : 'none';
+                }
+            });
         }
 
         // Update wishlist count on page load
@@ -911,20 +944,15 @@
             });
         }
         
-        // Update wishlist count for FAB
+        // Update wishlist count for FAB (uses same cache)
         function updateWishlistCountFAB() {
-            {% if user.is_authenticated %}
-            fetch('/wishlist/count/')
-                .then(response => response.json())
-                .then(data => {
-                    const fabCount = document.getElementById('wishlist-count-fab');
-                    if (fabCount) {
-                        fabCount.textContent = data.count;
-                        fabCount.style.display = data.count > 0 ? 'flex' : 'none';
-                    }
-                })
-                .catch(error => console.error('Error fetching wishlist count:', error));
-            {% endif %}
+            fetchWishlistCount().then(count => {
+                const fabCount = document.getElementById('wishlist-count-fab');
+                if (fabCount) {
+                    fabCount.textContent = count;
+                    fabCount.style.display = count > 0 ? 'flex' : 'none';
+                }
+            });
         }
         
         // First-time user gesture hints
@@ -971,6 +999,11 @@
         // Update FAB count when wishlist changes
         const originalUpdateWishlistCount = window.updateWishlistCount;
         window.updateWishlistCount = function() {
+            // Clear cache to force fresh fetch
+            wishlistCountCache = null;
+            wishlistCountPromise = null;
+            
+            // Update both displays
             originalUpdateWishlistCount();
             updateWishlistCountFAB();
         };

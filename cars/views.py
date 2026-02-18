@@ -537,10 +537,6 @@ def toggle_wishlist(request, car_id):
             # Item was created
             in_wishlist = True
         
-        # Clear the session cache
-        if 'wishlist_count' in request.session:
-            del request.session['wishlist_count']
-        
         return JsonResponse({'in_wishlist': in_wishlist})
         
     except Exception as e:
@@ -580,31 +576,15 @@ def wishlist(request):
 
 
 def wishlist_count(request):
-    """Get user's wishlist count - ultra-fast optimized version"""
+    """Get user's wishlist count"""
     if not request.user.is_authenticated:
         return JsonResponse({'count': 0})
     
-    # Try session cache first - instant response
-    session_key = 'wishlist_count'
-    if session_key in request.session:
-        return JsonResponse({'count': request.session[session_key]})
-    
     try:
-        # Most efficient count query - uses database index
-        from django.db import connection
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT COUNT(*) FROM cars_wishlist WHERE user_id = %s",
-                [request.user.id]
-            )
-            count = cursor.fetchone()[0]
-        
-        # Store in session for subsequent requests
-        request.session[session_key] = count
-        
+        # Simple, fast count query
+        count = Wishlist.objects.filter(user_id=request.user.id).count()
         return JsonResponse({'count': count})
-    except Exception as e:
-        print(f"Wishlist count error: {e}")
+    except Exception:
         return JsonResponse({'count': 0})
     except Exception as e:
         return JsonResponse({'count': 0})
