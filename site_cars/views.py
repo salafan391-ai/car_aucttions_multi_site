@@ -556,8 +556,35 @@ def upload_auction_json(request):
             messages.error(request, 'يجب أن يكون الملف قائمة من السيارات.')
             return redirect('upload_auction_json')
 
+        # Pre-fetch all related objects to minimize database queries
         auction_category = safe_get_or_create(Category.objects, name="auction")
-        manu_cache, model_cache, badge_cache, color_cache, body_cache = {}, {}, {}, {}, {}
+        
+        # Get all existing car IDs in one query
+        existing_car_ids = set(
+            ApiCar.objects.filter(
+                car_id__in=[
+                    (item.get("car_identifire") or item.get("car_ids") or "").strip() 
+                    for item in data
+                ]
+            ).values_list('car_id', flat=True)
+        )
+        
+        # Pre-load all manufacturers, models, badges, colors, and body types
+        all_manufacturers = {m.name: m for m in Manufacturer.objects.all()}
+        all_models = {(m.name, m.manufacturer_id): m for m in CarModel.objects.select_related('manufacturer').all()}
+        all_badges = {(b.name, b.model_id): b for b in CarBadge.objects.select_related('model').all()}
+        all_colors = {c.name: c for c in CarColor.objects.all()}
+        all_bodies = {b.name: b for b in BodyType.objects.all()}
+        
+        # Collect new objects to create
+        new_manufacturers = {}
+        new_models = {}
+        new_badges = {}
+        new_colors = {}
+        new_bodies = {}
+        
+        cars_to_create = []
+        cars_to_update = []
         created = updated = skipped = 0
 
         for item in data:
@@ -566,36 +593,115 @@ def upload_auction_json(request):
                 skipped += 1
                 continue
 
+            # Handle manufacturer
             make_name = item.get("make_en") or item.get("make") or "Unknown"
-            if make_name not in manu_cache:
-                manu_cache[make_name] = safe_get_or_create(Manufacturer.objects, defaults={"country": "Unknown"}, name=make_name)
-            manufacturer = manu_cache[make_name]
+            if make_name not in all_manufacturers and make_name not in new_manufacturers:
+                new_manufacturers[make_name] = Manufacturer(name=make_name, country="Unknown")
+            manufacturer = all_manufacturers.get(make_name) or new_manufacturers.get(make_name)
 
+            # Handle model
             model_name = item.get("models_en") or item.get("models") or "Unknown"
-            model_key = (model_name, manufacturer.id)
-            if model_key not in model_cache:
-                model_cache[model_key] = safe_get_or_create(CarModel.objects, name=model_name, manufacturer=manufacturer)
-            car_model = model_cache[model_key]
-
-            badge_key = (model_name, car_model.id)
-            if badge_key not in badge_cache:
-                badge_cache[badge_key] = safe_get_or_create(CarBadge.objects, name=model_name, model=car_model)
-            badge = badge_cache[badge_key]
-
+            model_key = (model_name, manufacturer.id if hasattr(manufacturer, 'id') else None)
+            if model_key not in all_models and model_name not in new_models:
+                new_models[model_name] = (model_name, manufacturer)
+            
+            # Handle color
             color_name = item.get("color_en") or item.get("color") or "Unknown"
-            if color_name not in color_cache:
-                color_cache[color_name] = safe_get_or_create(CarColor.objects, name=color_name)
-            color = color_cache[color_name]
+            if color_name not in all_colors and color_name not in new_colors:
+                new_colors[color_name] = CarColor(name=color_name)
+            
+            # Handle body type
+            
 
+        # Bulk create missing manufacturers
+        if new_manufacturers:
+            Manufacturer.objects.bulk_create(new_manufacturers.values(), ignore_conflicts=True)
+            all_manufacturers.update({m.name: m for m in Manufacturer.objects.filter(name__in=new_manufacturers.keys())})
+        
+        # Bulk create missing colors
+        if new_colors:
+            CarColor.objects.bulk_create(new_colors.values(), ignore_conflicts=True)
+            all_colors.update({c.name: c for c in CarColor.objects.filter(name__in=new_colors.keys())})
+        
+        # Bulk create missing body types
+        if new_bodies:
+            BodyType.objects.bulk_create(new_bodies.values(), ignore_conflicts=True)
+            all_bodies.update({b.name: b for b in BodyType.objects.filter(name__in=new_bodies.keys())})
+        
+        # Bulk create missing models
+        if new_models:
+            models_to_create = []
+            for model_name, manufacturer in new_models.values():
+                models_to_create.append(CarModel(name=model_name, manufacturer=manufacturer))
+            CarModel.objects.bulk_create(models_to_create, ignore_conflicts=True)
+            all_models.update({
+                (m.name, m.manufacturer_id): m 
+                for m in CarModel.objects.filter(name__in=[name for name, _ in new_models.values()]).select_related('manufacturer')
+            })
+        
+        # Bulk create missing badges
+        badges_to_check = set()
+        for item in data:
+            model_name = item.get("models_en") or item.get("models") or "Unknown"
+            make_name = item.get("make_en") or item.get("make") or "Unknown"
+            manufacturer = all_manufacturers.get(make_name)
+            if manufacturer:
+                model_key = (model_name, manufacturer.id)
+                if model_key in all_models:
+                    badges_to_check.add((model_name, all_models[model_key].id))
+        
+        existing_badges = {
+            (b.name, b.model_id): b 
+            for b in CarBadge.objects.filter(
+                name__in=[name for name, _ in badges_to_check],
+                model_id__in=[model_id for _, model_id in badges_to_check]
+            )
+        }
+        all_badges.update(existing_badges)
+        
+        badges_to_create = []
+        for badge_key in badges_to_check:
+            if badge_key not in all_badges:
+                name, model_id = badge_key
+                model = next((m for m in all_models.values() if m.id == model_id), None)
+                if model:
+                    badges_to_create.append(CarBadge(name=name, model=model))
+        
+        if badges_to_create:
+            CarBadge.objects.bulk_create(badges_to_create, ignore_conflicts=True)
+            all_badges.update({
+                (b.name, b.model_id): b 
+                for b in CarBadge.objects.filter(
+                    name__in=[b.name for b in badges_to_create]
+                )
+            })
+
+        # Now process all cars
+        for item in data:
+            car_id = (item.get("car_identifire") or item.get("car_ids") or "").strip()
+            if not car_id:
+                continue
+
+            make_name = item.get("make_en") or item.get("make") or "Unknown"
+            manufacturer = all_manufacturers.get(make_name)
+            
+            model_name = item.get("models_en") or item.get("models") or "Unknown"
+            model_key = (model_name, manufacturer.id if manufacturer else None)
+            car_model = all_models.get(model_key)
+            
+            badge_key = (model_name, car_model.id if car_model else None)
+            badge = all_badges.get(badge_key)
+            
+            color_name = item.get("color_en") or item.get("color") or "Unknown"
+            color = all_colors.get(color_name)
+            
             shape = (item.get("shape") or "").strip()
-            body_obj = None
-            if shape:
-                if shape not in body_cache:
-                    body_cache[shape] = safe_get_or_create(BodyType.objects, name=shape)
-                body_obj = body_cache[shape]
+            body_obj = all_bodies.get(shape) if shape else None
 
             title = item.get("title") or f"{make_name} {model_name}"
-            defaults = {
+            
+            car_data = {
+                "car_id": car_id,
                 "title": title[:100],
                 "image": (item.get("image") or "")[:255],
                 "manufacturer": manufacturer,
@@ -619,18 +725,43 @@ def upload_auction_json(request):
                 "body": body_obj,
                 "vin": car_id,
             }
+            
+            if car_id in existing_car_ids:
+                cars_to_update.append(car_data)
+            else:
+                cars_to_create.append(ApiCar(**car_data))
 
-            try:
-                with transaction.atomic():
-                    obj, was_created = ApiCar.objects.update_or_create(car_id=car_id, defaults=defaults)
-                    if was_created:
-                        created += 1
-                    else:
-                        updated += 1
-            except Exception:
-                skipped += 1
+        # Bulk create new cars
+        with transaction.atomic():
+            if cars_to_create:
+                ApiCar.objects.bulk_create(cars_to_create, batch_size=500)
+                created = len(cars_to_create)
+            
+            # Bulk update existing cars
+            if cars_to_update:
+                existing_cars = {car.car_id: car for car in ApiCar.objects.filter(car_id__in=[c['car_id'] for c in cars_to_update])}
+                cars_to_bulk_update = []
+                
+                for car_data in cars_to_update:
+                    car_id = car_data.pop('car_id')
+                    if car_id in existing_cars:
+                        car = existing_cars[car_id]
+                        for key, value in car_data.items():
+                            setattr(car, key, value)
+                        cars_to_bulk_update.append(car)
+                
+                if cars_to_bulk_update:
+                    ApiCar.objects.bulk_update(
+                        cars_to_bulk_update,
+                        ['title', 'image', 'manufacturer', 'category', 'auction_date', 'auction_name', 
+                         'lot_number', 'model', 'year', 'badge', 'color', 'transmission', 'power', 
+                         'price', 'mileage', 'fuel', 'images', 'inspection_image', 'points', 
+                         'address', 'body', 'vin'],
+                        batch_size=500
+                    )
+                    updated = len(cars_to_bulk_update)
 
-        messages.success(request, f'تم الاستيراد: {created} جديدة، {updated} محدّثة، {skipped} تم تخطيها')
+        messages.success(request, f'تم الاستيراد بنجاح! {created} سيارة جديدة، {updated} سيارة محدّثة، {skipped} تم تخطيها')
         return redirect('upload_auction_json')
 
     # GET — show recent auction cars

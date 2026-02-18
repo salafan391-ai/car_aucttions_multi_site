@@ -91,7 +91,7 @@ class ApiCar(models.Model):
     seat_count = models.CharField(max_length=100,blank=True,null=True)
     transmission = models.CharField(max_length=100,blank=True,null=True)
     engine = models.CharField(max_length=100,blank=True,null=True)
-    conition = models.CharField(max_length=100,blank=True,null=True)
+    condition = models.CharField(max_length=100,blank=True,null=True)
     body = models.ForeignKey(BodyType, on_delete=models.CASCADE,blank=True,null=True)
     power = models.IntegerField(null=True,blank=True)
     price = models.BigIntegerField()  # Changed to BigIntegerField for large prices
