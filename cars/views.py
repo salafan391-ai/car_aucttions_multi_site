@@ -524,29 +524,30 @@ def toggle_wishlist(request, car_id):
     try:
         car = get_object_or_404(ApiCar, pk=car_id)
         
-        # Debug info
-        print(f"User ID: {request.user.id}, Username: {request.user.username}")
-        print(f"Car ID: {car_id}, Car Title: {car.title}")
-        
         wishlist_item, created = Wishlist.objects.get_or_create(
             user=request.user, 
             car=car
         )
-        print(f"Wishlist item created: {created}")
+        
+        if not created:
+            # Item exists, so remove it
+            wishlist_item.delete()
+            in_wishlist = False
+        else:
+            # Item was created
+            in_wishlist = True
+        
+        # Clear the wishlist count cache
+        cache_key = f'wishlist_count_{request.user.id}'
+        cache.delete(cache_key)
+        
+        return JsonResponse({'in_wishlist': in_wishlist})
         
     except Exception as e:
         print(f"Error in toggle_wishlist: {e}")
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': f'حدث خطأ: {str(e)}'}, status=500)
-    
-    if not created:
-        # Item exists, so remove it
-        wishlist_item.delete()
-        return JsonResponse({'in_wishlist': False})
-    else:
-        # Item was created
-        return JsonResponse({'in_wishlist': True})
 
 
 @login_required
@@ -579,20 +580,27 @@ def wishlist(request):
 
 
 def wishlist_count(request):
-    """Get user's wishlist count"""
+    """Get user's wishlist count - optimized with caching"""
     if not request.user.is_authenticated:
         return JsonResponse({'count': 0})
     
+    # Use cache to avoid database queries
+    cache_key = f'wishlist_count_{request.user.id}'
+    cached_count = cache.get(cache_key)
+    
+    if cached_count is not None:
+        return JsonResponse({'count': cached_count})
+    
     try:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
+        # Simple count query without unnecessary user lookup
+        count = Wishlist.objects.filter(user_id=request.user.id).count()
         
-        try:
-            user_in_tenant = User.objects.get(id=request.user.id)
-            count = Wishlist.objects.filter(user=user_in_tenant).count()
-            return JsonResponse({'count': count})
-        except User.DoesNotExist:
-            return JsonResponse({'count': 0})
+        # Cache for 5 minutes
+        cache.set(cache_key, count, 300)
+        
+        return JsonResponse({'count': count})
+    except Exception:
+        return JsonResponse({'count': 0})
     except Exception as e:
         return JsonResponse({'count': 0})
 
