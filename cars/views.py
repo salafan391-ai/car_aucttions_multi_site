@@ -223,17 +223,20 @@ def car_list(request):
     if car_type == 'auction':
         # For auctions, only show manufacturers/models for non-expired auction cars
         base_auction_qs = _exclude_expired_auctions(ApiCar.objects.filter(category__name='auction'))
-        manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:50]  # Limit
-        models_qs = CarModel.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:100]  # Limit
+        manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:50]
+        models_qs = CarModel.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
     else:
-        manufacturers = Manufacturer.objects.all().order_by('name')[:50]  # Limit
-        models_qs = CarModel.objects.all().order_by('name')[:100]  # Limit
+        manufacturers = Manufacturer.objects.all().order_by('name')[:50]
+        models_qs = CarModel.objects.all().order_by('name')
     
     if manufacturer:
         if car_type == 'auction':
-            models_qs = models_qs.filter(manufacturer_id=manufacturer, apicar__in=base_auction_qs).distinct()[:100]
+            models_qs = models_qs.filter(manufacturer_id=manufacturer, apicar__in=base_auction_qs).distinct()
         else:
-            models_qs = models_qs.filter(manufacturer_id=manufacturer)[:100]
+            models_qs = models_qs.filter(manufacturer_id=manufacturer)
+    
+    # Apply limit after all filters
+    models_qs = models_qs[:100]
     years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')[:30]  # Last 30 years
     colors = CarColor.objects.all().order_by('name')[:30]  # Limit colors
     
