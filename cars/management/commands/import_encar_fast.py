@@ -13,7 +13,6 @@ from django.db import transaction, connection
 
 from cars.models import (
     ApiCar,
-    BodyType,
     Manufacturer,
     CarModel,
     CarBadge,
@@ -89,20 +88,20 @@ class Command(BaseCommand):
         parser.add_argument(
             "--chunk-size",
             type=int,
-            default=500,
-            help="Number of rows per processing chunk for active feed (default 500)",
+            default=2000,
+            help="Number of rows per processing chunk for active feed (default 2000)",
         )
         parser.add_argument(
             "--update-batch-size",
             type=int,
-            default=100,
-            help="Batch size for bulk_update and bulk_create (default 100)",
+            default=1000,
+            help="Batch size for bulk_update and bulk_create (default 1000)",
         )
         parser.add_argument(
             "--delete-batch-size",
             type=int,
-            default=1000,
-            help="Batch size for removed deletions (default 1000)",
+            default=3000,
+            help="Batch size for removed deletions (default 3000)",
         )
 
     # ------------- helpers -------------
@@ -172,7 +171,7 @@ class Command(BaseCommand):
         except MultipleObjectsReturned:
             return manager.filter(**kwargs).order_by('id').first()
 
-    def _get_or_create_related(self, caches: Dict[str, Dict], manufacturer_name: str, model_name: str, badge_name: str, color_name: str, seat_color_name: Optional[str], body_type_name: Optional[str] = None):
+    def _get_or_create_related(self, caches: Dict[str, Dict], manufacturer_name: str, model_name: str, badge_name: str, color_name: str, seat_color_name: Optional[str]):
         # Manufacturer
         manu_cache = caches.setdefault("manufacturer", {})
         if manufacturer_name not in manu_cache:
@@ -225,18 +224,7 @@ class Command(BaseCommand):
                 )
             seat_color_obj = seat_cache[seat_color_name]
 
-        # Body Type (optional)
-        body_cache = caches.setdefault("body_type", {})
-        body_obj = None
-        if body_type_name:
-            if body_type_name not in body_cache:
-                body_cache[body_type_name] = self._safe_get_or_create(
-                    BodyType.objects,
-                    name=body_type_name,
-                )
-            body_obj = body_cache[body_type_name]
-
-        return manufacturer, model, badge, color, seat_color_obj, body_obj
+        return manufacturer, model, badge, color, seat_color_obj
 
     def _row_to_fields(self, row: Dict[str, str]) -> Dict[str, Any]:
         norm = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
@@ -357,14 +345,13 @@ class Command(BaseCommand):
 
             for fields in rows:
                 ln = fields["lot_number"]
-                manufacturer, model, badge, color, seat_color, body = self._get_or_create_related(
+                manufacturer, model, badge, color, seat_color = self._get_or_create_related(
                     caches,
                     fields["manufacturer_name"],
                     fields["model_name"],
                     fields["badge_name"],
                     fields["color_name"],
                     fields["seat_color_name"],
-                    fields["body_type"],
                 )
                 if ln in existing_map:
                     existing_id = existing_map[ln]
@@ -372,7 +359,6 @@ class Command(BaseCommand):
                     if not dry_run:
                         upd_objs.append(ApiCar(
                             id=existing_id,
-                            car_id=ln,
                             title=fields["title"],
                             image=fields["image"],
                             images=fields["images"],
@@ -386,7 +372,7 @@ class Command(BaseCommand):
                             seat_color=seat_color,
                             transmission=fields["transmission"],
                             engine=None,
-                            body=body,
+                            body_type=fields["body_type"],
                             power=fields["power"],
                             price=fields["price"],
                             mileage=fields["mileage"],
@@ -402,7 +388,6 @@ class Command(BaseCommand):
                     created += 1
                     if not dry_run:
                         new_objs.append(ApiCar(
-                            car_id=ln,
                             title=fields["title"],
                             image=fields["image"],
                             images=fields["images"],
@@ -416,7 +401,7 @@ class Command(BaseCommand):
                             seat_color=seat_color,
                             transmission=fields["transmission"],
                             engine=None,
-                            body=body,
+                            body_type=fields["body_type"],
                             power=fields["power"],
                             price=fields["price"],
                             mileage=fields["mileage"],
@@ -433,16 +418,14 @@ class Command(BaseCommand):
                 return
 
             with transaction.atomic():
-                # Disable statement timeout for this transaction so Heroku's
-                # default timeout (30s) doesn't cancel large bulk operations.
-                connection.cursor().execute("SET LOCAL statement_timeout = 0")
                 if new_objs:
                     ApiCar.objects.bulk_create(new_objs, ignore_conflicts=True, batch_size=batch_size)
                 if upd_objs:
+                    # Ensure updated_at is handled if your model has it (manually set here if needed)
                     ApiCar.objects.bulk_update(
                         upd_objs,
                         fields=[
-                            'car_id','title','image','images','manufacturer','vin','lot_number','model','year','badge','color','seat_color','transmission','engine','body','power','price','mileage','drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
+                            'title','image','images','manufacturer','vin','lot_number','model','year','badge','color','seat_color','transmission','engine','body_type','power','price','mileage','drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
                         ],
                         batch_size=batch_size,
                     )
@@ -484,7 +467,6 @@ class Command(BaseCommand):
                 # Estimate would be unknown without hitting DB; skip counting exact rows here
                 return
             with transaction.atomic():
-                connection.cursor().execute("SET LOCAL statement_timeout = 0")
                 qs = ApiCar.objects.filter(lot_number__in=b)
                 cnt = qs.count()
                 if cnt:
@@ -524,9 +506,9 @@ class Command(BaseCommand):
         progress = options.get("progress", False)
         progress_every = options.get("progress_every", 5000)
         max_rows = options.get("max_rows", 0)
-        chunk_size = options.get("chunk_size", 500)
-        batch_size = options.get("update_batch_size", 100)
-        delete_batch_size = options.get("delete_batch_size", 1000)
+        chunk_size = options.get("chunk_size", 2000)
+        batch_size = options.get("update_batch_size", 1000)
+        delete_batch_size = options.get("delete_batch_size", 3000)
 
         # Validate required connection settings early to avoid AttributeError
         missing = []
