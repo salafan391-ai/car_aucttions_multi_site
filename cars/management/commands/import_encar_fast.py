@@ -1,8 +1,10 @@
 import csv
 import io
+import itertools
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -116,14 +118,19 @@ class Command(BaseCommand):
             f"{base}/removed_offer.csv",
         )
 
-    def _download_csv_stream(self, url: str, username: str, password: str) -> Optional[requests.Response]:
+    def _download_csv_stream(self, url: str, username: str, password: str, byte_offset: int = 0) -> Optional[requests.Response]:
+        headers = {}
+        if byte_offset > 0:
+            headers["Range"] = f"bytes={byte_offset}-"
         try:
-            resp = requests.get(url, auth=(username, password), timeout=60, stream=True)
+            resp = requests.get(url, auth=(username, password), timeout=60, stream=True, headers=headers)
             if resp.status_code == 404:
                 self.stdout.write(self.style.WARNING(f"CSV not found: {url}"))
                 resp.close()
                 return None
-            resp.raise_for_status()
+            # 206 = Partial Content (range accepted), 200 = full response
+            if resp.status_code not in (200, 206):
+                resp.raise_for_status()
             if not resp.encoding:
                 resp.encoding = "utf-8"
             return resp
@@ -305,22 +312,90 @@ class Command(BaseCommand):
         }
 
     # ------------- processing -------------
-    def _iter_csv_stream(self, resp: requests.Response) -> Iterable[Dict[str, str]]:
-        raw_iter = resp.iter_lines(decode_unicode=False)
-        line_iter = (
-            (line.decode(resp.encoding or "utf-8", errors="replace") if isinstance(line, (bytes, bytearray)) else line)
-            for line in raw_iter if line is not None
-        )
-        # Increase CSV field size limit to handle very large fields (e.g., long image lists or JSON)
+    def _iter_csv_stream(self, resp: requests.Response, url: str = "", username: str = "", password: str = "") -> Iterable[Dict[str, str]]:
+        """Stream-parse a pipe-delimited CSV, transparently reconnecting on network drops.
+
+        If `url`, `username`, and `password` are provided the iterator will attempt up to
+        5 reconnects using HTTP Range requests to resume from the byte offset where the
+        connection was lost.  Without those arguments it behaves exactly as before.
+        """
+        MAX_RETRIES = 5
+        RETRY_WAIT  = 5  # seconds between reconnect attempts
+
         try:
-            csv.field_size_limit(1024 * 1024 * 1024)  # 1GB
+            csv.field_size_limit(1024 * 1024 * 1024)
         except OverflowError:
             csv.field_size_limit(sys.maxsize)
-        reader = csv.DictReader(line_iter, delimiter='|')
-        for row in reader:
-            yield row
 
-    def _process_active_chunked(self, resp: requests.Response, *, chunk_size: int, batch_size: int, progress: bool = False, progress_every: int = 5000, max_rows: int = 0, dry_run: bool = False) -> Tuple[int, int]:
+        encoding  = resp.encoding or "utf-8"
+        bytes_read = 0
+        header_line: Optional[str] = None
+        retries = 0
+
+        current_resp = resp
+
+        while True:
+            try:
+                raw_iter = current_resp.iter_lines(decode_unicode=False)
+
+                def decoded_lines(raw):
+                    nonlocal bytes_read
+                    for raw_line in raw:
+                        if raw_line is None:
+                            continue
+                        if isinstance(raw_line, (bytes, bytearray)):
+                            bytes_read += len(raw_line) + 1  # +1 for the newline stripped by iter_lines
+                            yield raw_line.decode(encoding, errors="replace")
+                        else:
+                            bytes_read += len(raw_line.encode(encoding, errors="replace")) + 1
+                            yield raw_line
+
+                line_iter = decoded_lines(raw_iter)
+
+                if header_line is None:
+                    # First time — let DictReader read the header normally
+                    reader = csv.DictReader(line_iter, delimiter='|')
+                    for row in reader:
+                        if header_line is None:
+                            # Capture the raw pipe-delimited header after DictReader reads it
+                            header_line = '|'.join(reader.fieldnames or [])
+                        yield row
+                else:
+                    # After reconnect — server resumes from byte_offset (no header in stream).
+                    # Prepend the saved header line so DictReader can parse field names.
+                    reader = csv.DictReader(
+                        itertools.chain([header_line], line_iter),
+                        delimiter='|',
+                    )
+                    for row in reader:
+                        yield row
+
+                # Clean exit — stream finished
+                break
+
+            except (
+                requests.exceptions.ChunkedEncodingError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+            ) as exc:
+                current_resp.close()
+
+                if not url or retries >= MAX_RETRIES:
+                    raise
+
+                retries += 1
+                self.stdout.write(self.style.WARNING(
+                    f"Stream dropped at ~{bytes_read // 1024 // 1024} MB "
+                    f"(attempt {retries}/{MAX_RETRIES}): {exc}. Reconnecting in {RETRY_WAIT}s…"
+                ))
+                time.sleep(RETRY_WAIT)
+
+                new_resp = self._download_csv_stream(url, username, password, byte_offset=bytes_read)
+                if new_resp is None:
+                    raise RuntimeError(f"Could not reconnect to {url} after drop at byte {bytes_read}")
+                current_resp = new_resp
+
+    def _process_active_chunked(self, resp: requests.Response, *, url: str = "", username: str = "", password: str = "", chunk_size: int, batch_size: int, progress: bool = False, progress_every: int = 5000, max_rows: int = 0, dry_run: bool = False) -> Tuple[int, int]:
         created = 0
         updated = 0
         processed = 0
@@ -451,7 +526,7 @@ class Command(BaseCommand):
                         connection.cursor().execute("SET LOCAL statement_timeout = 0")
                         ApiCar.objects.bulk_update(sub_batch, fields=update_fields, batch_size=len(sub_batch))
 
-        for row in self._iter_csv_stream(resp):
+        for row in self._iter_csv_stream(resp, url=url, username=username, password=password):
             processed += 1
             fields = self._row_to_fields(row)
             if not fields["lot_number"]:
@@ -474,11 +549,11 @@ class Command(BaseCommand):
 
         return created, updated
 
-    def _process_removed_chunked(self, resp: requests.Response, *, delete_batch_size: int, progress: bool = False, progress_every: int = 5000, max_rows: int = 0, dry_run: bool = False) -> int:
+    def _process_removed_chunked(self, resp: requests.Response, *, url: str = "", username: str = "", password: str = "", delete_batch_size: int, progress: bool = False, progress_every: int = 5000, max_rows: int = 0, dry_run: bool = False) -> int:
         removed = 0
         processed = 0
         batch: List[str] = []
-        reader = self._iter_csv_stream(resp)
+        reader = self._iter_csv_stream(resp, url=url, username=username, password=password)
 
         def flush_delete(b: List[str]):
             nonlocal removed
@@ -556,6 +631,9 @@ class Command(BaseCommand):
         if active_resp:
             created, updated = self._process_active_chunked(
                 active_resp,
+                url=active_url,
+                username=username,
+                password=password,
                 chunk_size=chunk_size,
                 batch_size=batch_size,
                 progress=progress,
@@ -576,6 +654,9 @@ class Command(BaseCommand):
             if removed_resp:
                 removed = self._process_removed_chunked(
                     removed_resp,
+                    url=removed_url,
+                    username=username,
+                    password=password,
                     delete_batch_size=delete_batch_size,
                     progress=progress,
                     progress_every=progress_every,
