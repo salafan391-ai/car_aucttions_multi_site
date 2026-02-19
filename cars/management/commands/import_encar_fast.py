@@ -242,7 +242,7 @@ class Command(BaseCommand):
         price_kw = price * 10000
 
         transmission = norm.get("transmission_type") or "Unknown"
-        body_type = norm.get("body_type")
+        body = norm.get("body_type")
         fuel = norm.get("engine_type")
         color_name = norm.get("color") or "Unknown"
         seat_color_name = norm.get("seatColor")
@@ -277,7 +277,7 @@ class Command(BaseCommand):
             "price": price_kw,
             "power": power,
             "transmission": transmission,
-            "body_type": body_type,
+            "body": body,
             "fuel": fuel,
             "color_name": color_name,
             "seat_color_name": seat_color_name,
@@ -372,7 +372,7 @@ class Command(BaseCommand):
                             seat_color=seat_color,
                             transmission=fields["transmission"],
                             engine=None,
-                            body_type=fields["body_type"],
+                            body=fields["body"],
                             power=fields["power"],
                             price=fields["price"],
                             mileage=fields["mileage"],
@@ -401,7 +401,7 @@ class Command(BaseCommand):
                             seat_color=seat_color,
                             transmission=fields["transmission"],
                             engine=None,
-                            body_type=fields["body_type"],
+                            body=fields["body"],
                             power=fields["power"],
                             price=fields["price"],
                             mileage=fields["mileage"],
@@ -425,7 +425,7 @@ class Command(BaseCommand):
                     ApiCar.objects.bulk_update(
                         upd_objs,
                         fields=[
-                            'title','image','images','manufacturer','vin','lot_number','model','year','badge','color','seat_color','transmission','engine','body_type','power','price','mileage','drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
+                            'title','image','images','manufacturer','vin','lot_number','model','year','badge','color','seat_color','transmission','engine','body','power','price','mileage','drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
                         ],
                         batch_size=batch_size,
                     )
