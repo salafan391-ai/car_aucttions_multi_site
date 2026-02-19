@@ -261,6 +261,15 @@
                         </select>
                     </div>
                     <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">تفاصيل الموديل</label>
+                        <select name="badge" id="badge-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for b in badges %}
+                            <option value="{{ b.id }}" {% if request.GET.badge == b.id|stringformat:"d" %}selected{% endif %}>{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">من سنة</label>
                         <select name="year_from" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">من</option>
@@ -373,6 +382,17 @@
                         <option value="">الكل</option>
                         {% for m in models %}
                         <option value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Badge -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">تفاصيل الموديل</label>
+                    <select name="badge" id="sb-badge" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for b in badges %}
+                        <option value="{{ b.id }}" {% if request.GET.badge == b.id|stringformat:"d" %}selected{% endif %}>{{ b.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -706,10 +726,11 @@ const badgeSelect = document.getElementById('badge-select');
 // Sidebar equivalents
 const sbManuSelect  = document.getElementById('sb-manufacturer');
 const sbModelSelect = document.getElementById('sb-model');
+const sbBadgeSelect = document.getElementById('sb-badge');
 
-function loadBadgesForModel(modelId, selectedBadgeId = null) {
-    if (!badgeSelect) return;
-    badgeSelect.innerHTML = '<option value="">جميع العلامات</option>';
+function loadBadgesFor(modelId, badgeEl, selectedBadgeId = null) {
+    if (!badgeEl) return;
+    badgeEl.innerHTML = '<option value="">الكل</option>';
     if (!modelId) return;
     fetch(`{% url 'api_badges_by_model' %}?model_id=${modelId}`)
         .then(r => r.json())
@@ -719,9 +740,14 @@ function loadBadgesForModel(modelId, selectedBadgeId = null) {
                 opt.value = b.id;
                 opt.textContent = b.name;
                 if (selectedBadgeId && b.id == selectedBadgeId) opt.selected = true;
-                badgeSelect.appendChild(opt);
+                badgeEl.appendChild(opt);
             });
         });
+}
+
+// Keep old name as alias so nothing else breaks
+function loadBadgesForModel(modelId, selectedBadgeId = null) {
+    loadBadgesFor(modelId, badgeSelect, selectedBadgeId);
 }
 
 function loadModels(manuId, modelSelectEl, onDone) {
@@ -741,25 +767,36 @@ function loadModels(manuId, modelSelectEl, onDone) {
         });
 }
 
+// Mobile drawer: manufacturer → model → badge cascade
 if (manuSelect && modelSelect) {
-    modelSelect.addEventListener('change', function () { loadBadgesForModel(this.value); });
-    const initialModelId  = modelSelect.value;
-    const initialBadgeId  = '{{ request.GET.badge|default:"" }}';
-    if (initialModelId) loadBadgesForModel(initialModelId, initialBadgeId);
+    modelSelect.addEventListener('change', function () {
+        loadBadgesFor(this.value, badgeSelect);
+    });
+    const initialModelId = modelSelect.value;
+    const initialBadgeId = '{{ request.GET.badge|default:"" }}';
+    if (initialModelId) loadBadgesFor(initialModelId, badgeSelect, initialBadgeId);
 
     manuSelect.addEventListener('change', function () {
         loadModels(this.value, modelSelect, null);
-        if (badgeSelect) badgeSelect.innerHTML = '<option value="">اختر الموديل أولاً</option>';
+        if (badgeSelect) badgeSelect.innerHTML = '<option value="">الكل</option>';
     });
 }
 
-// Sidebar: manufacturer → model cascade
+// Sidebar: manufacturer → model → badge cascade
 if (sbManuSelect && sbModelSelect) {
+    sbModelSelect.addEventListener('change', function () {
+        loadBadgesFor(this.value, sbBadgeSelect);
+        sbManuSelect.form.submit();
+    });
+    const sbInitialModelId = sbModelSelect.value;
+    const sbInitialBadgeId = '{{ request.GET.badge|default:"" }}';
+    if (sbInitialModelId) loadBadgesFor(sbInitialModelId, sbBadgeSelect, sbInitialBadgeId);
+
     sbManuSelect.addEventListener('change', function () {
-        loadModels(this.value, sbModelSelect, function (models) {
-            // auto-submit after models load if user just changed manufacturer
+        loadModels(this.value, sbModelSelect, function () {
             sbManuSelect.form.submit();
         });
+        if (sbBadgeSelect) sbBadgeSelect.innerHTML = '<option value="">الكل</option>';
     });
 }
 
