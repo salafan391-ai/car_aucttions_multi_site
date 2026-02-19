@@ -560,14 +560,18 @@ class Command(BaseCommand):
             if not b:
                 return
             if dry_run:
-                # Estimate would be unknown without hitting DB; skip counting exact rows here
                 return
             with transaction.atomic():
-                qs = ApiCar.objects.filter(lot_number__in=b)
-                cnt = qs.count()
-                if cnt:
-                    qs.delete()
-                removed += cnt
+                # Use raw SQL DELETE to avoid Django's cascade collector, which
+                # tries to query related tables (e.g. site_cars_siteorder) that
+                # only exist in tenant schemas, not in the public schema where
+                # this management command runs.
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "DELETE FROM cars_apicar WHERE lot_number = ANY(%s) RETURNING id",
+                        [b],
+                    )
+                    removed += cursor.rowcount
 
         for row in reader:
             processed += 1
