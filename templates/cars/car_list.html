@@ -479,12 +479,12 @@
     <!-- ═══════════════ CAR GRID ═══════════════ -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
         {% for car in page_obj %}
-        <div class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200">
+        <a href="{% url 'car_detail' car.id %}" target="_blank" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200 block">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model.name }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.images and car.images|length > 0 %}
-                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.images.0 }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model.name }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,9 +498,9 @@
                     <span class="bg-red-500 text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">تم البيع</span>
                     {% endif %}
                     <!-- Wishlist Button -->
-                    <button onclick="toggleWishlist({{ car.id }}); event.stopPropagation();" 
-                            class="wishlist-btn w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors"
-                            data-car-id="{{ car.id }}">
+                    <button onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist({{ car.id }});" 
+                            class="wishlist-btn w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors z-20"
+                            data-car-id="{{ car.id }}" style="pointer-events: auto;">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                         </svg>
@@ -517,9 +517,9 @@
                 </div>
             </div>
             <div class="p-2.5 sm:p-4">
-                <a href="{% url 'car_detail' car.id %}" class="block font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px] hover:text-brand transition-colors">
+                <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px] group-hover:text-brand transition-colors">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}
-                </a>
+                </div>
                 <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-400 mb-2 sm:mb-3 truncate">
                     <span>{{ car.badge.name }}</span>
                     {% if car.mileage %}
@@ -543,11 +543,9 @@
                     <span class="text-[9px] sm:text-[10px] bg-gray-100 text-gray-500 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium hidden sm:inline">{{ car.transmission }}</span>
                     {% endif %}
                 </div>
-                <a href="{% url 'car_detail' car.id %}" class="block w-full bg-brand text-white text-center px-3 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-brand-hover transition-colors mt-3">
-                    <span class="bilingual" data-lang-ar="التفاصيل" data-lang-en="Details">التفاصيل</span>
-                </a>
+
             </div>
-        </div>
+        </a>
         {% empty %}
         <div class="col-span-full text-center py-20">
             <div class="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
@@ -611,6 +609,30 @@
     </div>
     {% endif %}
 </section>
+
+<!-- ═══════════════ LIGHTBOX MODAL ═══════════════ -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center p-4">
+    <div class="relative max-w-screen-lg max-h-screen-lg">
+        <!-- Close button -->
+        <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white hover:text-gray-300 z-10 bg-black bg-opacity-50 rounded-full p-2 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        
+        <!-- Image -->
+        <img id="modalImage" src="" alt="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        
+        <!-- Car info -->
+        <div id="modalInfo" class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded-lg">
+            <h3 id="modalTitle" class="font-bold text-lg"></h3>
+            <p id="modalPrice" class="text-brand-light"></p>
+        </div>
+    </div>
+    
+    <!-- Background click to close -->
+    <div class="absolute inset-0 -z-10" onclick="closeLightbox()"></div>
+</div>
 
 <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
 <script>
@@ -765,6 +787,36 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// ═══════════════ LIGHTBOX FUNCTIONS ═══════════════
+function openLightbox(imageSrc, title, price) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalPrice = document.getElementById('modalPrice');
+    
+    modalImage.src = imageSrc;
+    modalTitle.textContent = title;
+    modalPrice.textContent = price;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeLightbox() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = ''; // Restore scrolling
+}
+
+// Close lightbox with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeLightbox();
+    }
+});
 </script>
 
 <style>

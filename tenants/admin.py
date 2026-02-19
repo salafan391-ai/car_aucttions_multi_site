@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django_tenants.admin import TenantAdminMixin
-from .models import Tenant, Domain, TenantPhoneNumber
+from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage
 
 from cars.models import ApiCar,CarImage,Manufacturer,BodyType
 
@@ -20,10 +20,17 @@ class TenantPhoneNumberInline(admin.TabularInline):
     ordering = ['order', '-is_primary']
 
 
+class TenantHeroImageInline(admin.TabularInline):
+    model = TenantHeroImage
+    extra = 1
+    fields = ('image', 'order')
+    ordering = ['order']
+
+
 @admin.register(Tenant)
 class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     list_display = ("name", "schema_name", "primary_color", "created_at")
-    inlines = [TenantPhoneNumberInline]
+    inlines = [TenantPhoneNumberInline, TenantHeroImageInline]
     fieldsets = (
         (None, {"fields": ("schema_name", "name")}),
         ("Branding", {"fields": ("logo", "favicon", "hero_image", "primary_color", "secondary_color", "accent_color")}),

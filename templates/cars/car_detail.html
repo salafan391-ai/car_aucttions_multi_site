@@ -24,7 +24,7 @@
                     <!-- Main Image -->
                     {% if car.image %}
                     <div class="slider-image active w-full h-full">
-                        <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                        <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endif %}
                     
@@ -32,7 +32,7 @@
                     {% if car.images %}
                     {% for img in car.images %}
                     <div class="slider-image {% if not car.image and forloop.first %}active{% endif %} w-full h-full {% if car.image or not forloop.first %}hidden{% endif %}">
-                        <img src="{{ img }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                        <img src="{{ img }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endfor %}
                     {% endif %}
@@ -607,5 +607,128 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Lightbox — reads image URLs directly from the DOM, no template variable issues
+var currentImageIndex = 0;
+var allImages = [];
+
+function openLightbox(imgEl) {
+    // Collect all slider image srcs from the DOM
+    allImages = Array.from(
+        document.querySelectorAll('#image-slider .slider-image img')
+    ).map(function(img) { return img.src; });
+
+    var clickedSrc = imgEl.src;
+    currentImageIndex = allImages.indexOf(clickedSrc);
+    if (currentImageIndex < 0) currentImageIndex = 0;
+
+    document.getElementById('lightbox-image').src = allImages[currentImageIndex];
+    document.getElementById('lightbox-counter').textContent = (currentImageIndex + 1) + ' / ' + allImages.length;
+    document.getElementById('lightbox-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    updateNavigationButtons();
+}
+
+function updateLightboxImage() {
+    document.getElementById('lightbox-image').src = allImages[currentImageIndex];
+    document.getElementById('lightbox-counter').textContent = (currentImageIndex + 1) + ' / ' + allImages.length;
+}
+
+function nextLightboxImage() {
+    if (currentImageIndex < allImages.length - 1) {
+        currentImageIndex++;
+        updateLightboxImage();
+        updateNavigationButtons();
+    }
+}
+
+function prevLightboxImage() {
+    if (currentImageIndex > 0) {
+        currentImageIndex--;
+        updateLightboxImage();
+        updateNavigationButtons();
+    }
+}
+
+function updateNavigationButtons() {
+    var prevBtn = document.getElementById('lightbox-prev');
+    var nextBtn = document.getElementById('lightbox-next');
+    var counter = document.getElementById('lightbox-counter');
+
+    if (allImages.length <= 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        counter.style.display = 'none';
+    } else {
+        prevBtn.style.display = 'flex';
+        nextBtn.style.display = 'flex';
+        counter.style.display = 'block';
+        prevBtn.style.opacity = currentImageIndex > 0 ? '1' : '0.4';
+        nextBtn.style.opacity = currentImageIndex < allImages.length - 1 ? '1' : '0.4';
+    }
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close lightbox when clicking outside the image or pressing Escape
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('lightbox-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeLightbox();
+    });
+});
+
+document.addEventListener('keydown', function(e) {
+    var modal = document.getElementById('lightbox-modal');
+    var isOpen = modal && modal.style.display !== 'none';
+    if (isOpen) {
+        if (e.key === 'Escape') { closeLightbox(); e.stopPropagation(); }
+        else if (e.key === 'ArrowLeft') { prevLightboxImage(); e.stopPropagation(); }
+        else if (e.key === 'ArrowRight') { nextLightboxImage(); e.stopPropagation(); }
+    }
+});
 </script>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" class="hidden fixed inset-0 bg-black bg-opacity-95 z-50 p-4" style="display:none;">
+    <!-- Top bar: counter + close -->
+    <div class="flex items-center justify-between mb-3">
+        <div id="lightbox-counter" class="text-white text-sm font-medium px-3 py-1 bg-white/10 rounded-full"></div>
+        <button onclick="closeLightbox()" class="text-white hover:text-gray-300 p-2">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Main area: prev arrow + image + next arrow -->
+    <div class="flex items-center justify-center gap-4 h-[80vh]">
+
+        <!-- Prev button -->
+        <button id="lightbox-prev" onclick="prevLightboxImage()" class="shrink-0 w-14 h-14 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+
+        <!-- Image -->
+        <div class="flex-1 flex items-center justify-center h-full">
+            <img id="lightbox-image" src="" alt="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        </div>
+
+        <!-- Next button -->
+        <button id="lightbox-next" onclick="nextLightboxImage()" class="shrink-0 w-14 h-14 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+
+    </div>
+
+    <!-- Bottom: click backdrop to close hint -->
+    <div class="text-center mt-3 text-white/40 text-xs">اضغط ESC للإغلاق · استخدم ← → للتنقل</div>
+</div>
+
 {% endblock %}

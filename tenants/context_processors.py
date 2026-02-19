@@ -1,4 +1,5 @@
 from django.db import connection
+from .models import TenantHeroImage
 
 
 def tenant_branding(request):
@@ -22,11 +23,15 @@ def tenant_branding(request):
     # Get WhatsApp phone numbers
     whatsapp_phones = [p for p in phone_numbers if p.phone_type == 'whatsapp']
     
+    # Get hero images for slideshow
+    hero_images = list(TenantHeroImage.objects.filter(tenant=tenant))
+
     return {
         "site_name": tenant.name or "سيارات",
         "site_logo": tenant.logo.url if tenant.logo else "",
         "site_favicon": tenant.favicon.url if tenant.favicon else "",
         "site_hero_image": tenant.hero_image.url if tenant.hero_image else "",
+        "site_hero_images": hero_images,
         "primary_color": tenant.primary_color or "#2563eb",
         "secondary_color": tenant.secondary_color or "#1e3a8a",
         "accent_color": tenant.accent_color or "#3b82f6",

@@ -60,6 +60,20 @@ class Domain(DomainMixin):
     pass
 
 
+class TenantHeroImage(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='hero_images', verbose_name="الموقع")
+    image = models.ImageField(upload_to='tenant_hero/', verbose_name="الصورة")
+    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "صورة الهيرو"
+        verbose_name_plural = "صور الهيرو"
+
+    def __str__(self):
+        return f"{self.tenant.name} - Hero {self.order}"
+
+
 class TenantPhoneNumber(models.Model):
     """
     Multiple phone numbers for a tenant with different types

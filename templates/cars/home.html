@@ -40,7 +40,47 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" {% if site_hero_image %}style="background-image: url('{{ site_hero_image }}'); background-size: cover; background-position: center;"{% else %}style="background-color brand;"{% endif %}>
+<section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" id="hero-section">
+
+    <!-- Slideshow Background -->
+    {% if site_hero_images %}
+    <div id="hero-slideshow" class="absolute inset-0 overflow-hidden">
+        {% for hero_img in site_hero_images %}
+        <div class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out {% if not forloop.first %}opacity-0{% else %}opacity-100{% endif %}"
+             style="background-image: url('{{ hero_img.image.url }}'); background-size: cover; background-position: center;">
+            <!-- Dark overlay for readability -->
+            <div class="absolute inset-0 bg-black/40"></div>
+        </div>
+        {% endfor %}
+
+        <!-- Prev / Next Arrows -->
+        {% if site_hero_images|length > 1 %}
+        <button onclick="heroSlide(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        <button onclick="heroSlide(1)" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+
+        <!-- Dot Indicators -->
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            {% for hero_img in site_hero_images %}
+            <button onclick="heroGoTo({{ forloop.counter0 }})"
+                    class="hero-dot w-2.5 h-2.5 rounded-full transition-all duration-300 {% if forloop.first %}bg-white scale-125{% else %}bg-white/50{% endif %}">
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% elif site_hero_image %}
+    <div class="absolute inset-0" style="background-image: url('{{ site_hero_image }}'); background-size: cover; background-position: center;">
+        <div class="absolute inset-0 bg-black/30"></div>
+    </div>
+    {% endif %}
     <!-- Hero Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-8 sm:mb-12">
@@ -447,12 +487,12 @@
         
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="cars-scroll">
         {% for car in latest_cars %}
-        <div class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden">
+        <a href="{% url 'car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.images and car.images|length > 0 %}
-                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.images.0 }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -464,18 +504,18 @@
                     <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
                 </div>
                 <!-- Wishlist Button -->
-                <button onclick="toggleWishlist({{ car.id }}); event.stopPropagation();" 
-                        class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors"
-                        data-car-id="{{ car.id }}">
+                <button onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist({{ car.id }});" 
+                        class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors z-20"
+                        data-car-id="{{ car.id }}" style="pointer-events: auto;">
                     <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
                 </button>
             </div>
             <div class="p-2.5 sm:p-4">
-                <a href="{% url 'car_detail' car.id %}" class="block font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base hover:text-brand transition-colors">
+                <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base group-hover:text-brand transition-colors">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}
-                </a>
+                </div>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     {% if car.mileage %}
@@ -489,11 +529,8 @@
                     <span class="text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline">{{ car.transmission }}</span>
                     {% endif %}
                 </div>
-                <a href="{% url 'car_detail' car.id %}" class="block w-full bg-brand text-white text-center px-3 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-brand-hover transition-colors mt-2">
-                    <span class="bilingual" data-lang-ar="التفاصيل" data-lang-en="Details">التفاصيل</span>
-                </a>
             </div>
-        </div>
+        </a>
         {% endfor %}
     </div>
     </div>
@@ -524,12 +561,12 @@
         
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="auctions-scroll">
         {% for car in latest_auctions %}
-        <div class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden">
+        <a href="{% url 'car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.images and car.images|length > 0 %}
-                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.images.0 }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -546,18 +583,18 @@
                     <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
                 </div>
                 <!-- Wishlist Button -->
-                <button onclick="toggleWishlist({{ car.id }}); event.stopPropagation();" 
-                        class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors"
-                        data-car-id="{{ car.id }}">
+                <button onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist({{ car.id }});" 
+                        class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors z-20"
+                        data-car-id="{{ car.id }}" style="pointer-events: auto;">
                     <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
                 </button>
             </div>
             <div class="p-2.5 sm:p-4">
-                <a href="{% url 'car_detail' car.id %}" class="block font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base hover:text-brand transition-colors">
+                <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base group-hover:text-brand transition-colors">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}
-                </a>
+                </div>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     {% if car.mileage %}
@@ -577,11 +614,8 @@
                     <span class="text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline">{{ car.transmission }}</span>
                     {% endif %}
                 </div>
-                <a href="{% url 'car_detail' car.id %}" class="block w-full bg-purple-600 text-white text-center px-3 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-purple-700 transition-colors mt-2">
-                    <span class="bilingual" data-lang-ar="التفاصيل" data-lang-en="Details">التفاصيل</span>
-                </a>
             </div>
-        </div>
+        </a>
         {% endfor %}
     </div>
     </div>
@@ -616,12 +650,12 @@
         
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="site-cars-scroll">
         {% for car in site_cars %}
-        <a href="{% url 'site_car_detail' car.id %}" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block border-2 border-transparent hover:border-brand/20">
+        <a href="{% url 'site_car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block border-2 border-transparent hover:border-brand/20">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.gallery.first %}
-                <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.gallery.first.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1032,5 +1066,101 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// Lightbox functions
+function openLightbox(imageSrc, title, price) {
+    document.getElementById('lightbox-image').src = imageSrc;
+    document.getElementById('lightbox-title').textContent = title;
+    document.getElementById('lightbox-price').textContent = price;
+    document.getElementById('lightbox-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto'; // Restore scrolling
+}
+
+// Close lightbox when clicking outside the image or pressing Escape
+document.addEventListener('DOMContentLoaded', function() {
+    const lightboxModal = document.getElementById('lightbox-modal');
+    if (lightboxModal) {
+        lightboxModal.addEventListener('click', function(e) {
+            if (e.target === lightboxModal) {
+                closeLightbox();
+            }
+        });
+    }
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !document.getElementById('lightbox-modal').classList.contains('hidden')) {
+            closeLightbox();
+        }
+    });
+});
 </script>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+    <div class="relative max-w-4xl max-h-full">
+        <!-- Close button -->
+        <button onclick="closeLightbox()" class="absolute -top-12 right-0 text-white hover:text-gray-300 z-10">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <!-- Image container -->
+        <div class="relative bg-white rounded-lg overflow-hidden shadow-2xl">
+            <img id="lightbox-image" src="" alt="" class="max-w-full max-h-[80vh] object-contain">
+            
+            <!-- Image info overlay -->
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-4">
+                <h3 id="lightbox-title" class="text-lg font-semibold"></h3>
+        <p id="lightbox-price" class="text-green-400 font-bold text-xl"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Hero Slideshow ──────────────────────────────────────────────────────────
+(function () {
+    const slides = document.querySelectorAll('.hero-slide');
+    const dots   = document.querySelectorAll('.hero-dot');
+    if (!slides.length) return;
+
+    let current = 0;
+    let timer   = null;
+
+    function goTo(index) {
+        slides[current].classList.remove('opacity-100');
+        slides[current].classList.add('opacity-0');
+        dots[current]?.classList.remove('bg-white', 'scale-125');
+        dots[current]?.classList.add('bg-white/50');
+
+        current = (index + slides.length) % slides.length;
+
+        slides[current].classList.remove('opacity-0');
+        slides[current].classList.add('opacity-100');
+        dots[current]?.classList.remove('bg-white/50');
+        dots[current]?.classList.add('bg-white', 'scale-125');
+    }
+
+    function startAuto() {
+        timer = setInterval(() => goTo(current + 1), 5000);
+    }
+
+    function resetAuto() {
+        clearInterval(timer);
+        startAuto();
+    }
+
+    window.heroSlide = function (dir) { goTo(current + dir); resetAuto(); };
+    window.heroGoTo  = function (idx) { goTo(idx);           resetAuto(); };
+
+    startAuto();
+})();
+</script>
+
 {% endblock %}

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import connection
-from .models import Tenant, TenantPhoneNumber
+from .models import Tenant, TenantPhoneNumber, TenantHeroImage
 
 
 @staff_member_required
@@ -138,6 +138,36 @@ def site_settings(request):
                         order=i
                     )
         
+        # Handle hero images: delete requested ones
+        delete_hero_ids = request.POST.getlist('delete_hero_image[]')
+        if delete_hero_ids:
+            for hero_id in delete_hero_ids:
+                try:
+                    hero_obj = TenantHeroImage.objects.get(id=hero_id, tenant=tenant)
+                    hero_obj.image.delete(save=False)
+                    hero_obj.delete()
+                except TenantHeroImage.DoesNotExist:
+                    pass
+
+        # Update order of existing hero images
+        hero_orders = request.POST.getlist('hero_image_order[]')
+        hero_ids = request.POST.getlist('hero_image_id[]')
+        for hero_id, order_val in zip(hero_ids, hero_orders):
+            try:
+                TenantHeroImage.objects.filter(id=hero_id, tenant=tenant).update(order=int(order_val))
+            except (ValueError, TenantHeroImage.DoesNotExist):
+                pass
+
+        # Add new hero images
+        new_hero_images = request.FILES.getlist('new_hero_images[]')
+        existing_count = tenant.hero_images.count()
+        for i, img_file in enumerate(new_hero_images):
+            TenantHeroImage.objects.create(
+                tenant=tenant,
+                image=img_file,
+                order=existing_count + i
+            )
+
         messages.success(request, 'تم حفظ الإعدادات بنجاح!')
         return redirect('site_settings')
     
@@ -145,5 +175,6 @@ def site_settings(request):
         'tenant': tenant,
         'phone_numbers': tenant.phone_numbers.all(),
         'phone_types': TenantPhoneNumber.PHONE_TYPES,
+        'hero_images': tenant.hero_images.all(),
     }
     return render(request, 'tenants/site_settings.html', context)
