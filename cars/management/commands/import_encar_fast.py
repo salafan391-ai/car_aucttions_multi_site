@@ -364,7 +364,7 @@ class Command(BaseCommand):
                     fields["badge_name"],
                     fields["color_name"],
                     fields["seat_color_name"],
-                    fields["body_type"],
+                    fields["body"],
                 )
                 if ln in existing_map:
                     existing_id = existing_map[ln]
