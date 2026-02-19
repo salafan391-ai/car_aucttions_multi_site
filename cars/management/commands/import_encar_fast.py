@@ -18,6 +18,7 @@ from cars.models import (
     CarBadge,
     CarColor,
     CarSeatColor,
+    BodyType,
 )
 
 
@@ -171,7 +172,7 @@ class Command(BaseCommand):
         except MultipleObjectsReturned:
             return manager.filter(**kwargs).order_by('id').first()
 
-    def _get_or_create_related(self, caches: Dict[str, Dict], manufacturer_name: str, model_name: str, badge_name: str, color_name: str, seat_color_name: Optional[str]):
+    def _get_or_create_related(self, caches: Dict[str, Dict], manufacturer_name: str, model_name: str, badge_name: str, color_name: str, seat_color_name: Optional[str], body_type_name: Optional[str] = None):
         # Manufacturer
         manu_cache = caches.setdefault("manufacturer", {})
         if manufacturer_name not in manu_cache:
@@ -224,7 +225,18 @@ class Command(BaseCommand):
                 )
             seat_color_obj = seat_cache[seat_color_name]
 
-        return manufacturer, model, badge, color, seat_color_obj
+        # Body Type (optional)
+        body_cache = caches.setdefault("body_type", {})
+        body_obj = None
+        if body_type_name:
+            if body_type_name not in body_cache:
+                body_cache[body_type_name] = self._safe_get_or_create(
+                    BodyType.objects,
+                    name=body_type_name,
+                )
+            body_obj = body_cache[body_type_name]
+
+        return manufacturer, model, badge, color, seat_color_obj, body_obj
 
     def _row_to_fields(self, row: Dict[str, str]) -> Dict[str, Any]:
         norm = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
@@ -345,13 +357,14 @@ class Command(BaseCommand):
 
             for fields in rows:
                 ln = fields["lot_number"]
-                manufacturer, model, badge, color, seat_color = self._get_or_create_related(
+                manufacturer, model, badge, color, seat_color, body = self._get_or_create_related(
                     caches,
                     fields["manufacturer_name"],
                     fields["model_name"],
                     fields["badge_name"],
                     fields["color_name"],
                     fields["seat_color_name"],
+                    fields["body_type"],
                 )
                 if ln in existing_map:
                     existing_id = existing_map[ln]
@@ -372,7 +385,7 @@ class Command(BaseCommand):
                             seat_color=seat_color,
                             transmission=fields["transmission"],
                             engine=None,
-                            body=fields["body"],
+                            body=body,
                             power=fields["power"],
                             price=fields["price"],
                             mileage=fields["mileage"],
@@ -401,7 +414,7 @@ class Command(BaseCommand):
                             seat_color=seat_color,
                             transmission=fields["transmission"],
                             engine=None,
-                            body=fields["body"],
+                            body=body,
                             power=fields["power"],
                             price=fields["price"],
                             mileage=fields["mileage"],
@@ -417,18 +430,26 @@ class Command(BaseCommand):
             if dry_run:
                 return
 
-            with transaction.atomic():
-                if new_objs:
+            update_fields = [
+                'title','image','images','manufacturer','vin','lot_number','model','year','badge',
+                'color','seat_color','transmission','engine','body','power','price','mileage',
+                'drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
+            ]
+
+            # bulk_create in one transaction
+            if new_objs:
+                with transaction.atomic():
+                    connection.cursor().execute("SET LOCAL statement_timeout = 0")
                     ApiCar.objects.bulk_create(new_objs, ignore_conflicts=True, batch_size=batch_size)
-                if upd_objs:
-                    # Ensure updated_at is handled if your model has it (manually set here if needed)
-                    ApiCar.objects.bulk_update(
-                        upd_objs,
-                        fields=[
-                            'title','image','images','manufacturer','vin','lot_number','model','year','badge','color','seat_color','transmission','engine','body','power','price','mileage','drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
-                        ],
-                        batch_size=batch_size,
-                    )
+
+            # bulk_update: each sub-batch in its own transaction + SET LOCAL so
+            # Heroku's 30s statement timeout never fires on a single UPDATE statement.
+            if upd_objs:
+                for i in range(0, len(upd_objs), batch_size):
+                    sub_batch = upd_objs[i : i + batch_size]
+                    with transaction.atomic():
+                        connection.cursor().execute("SET LOCAL statement_timeout = 0")
+                        ApiCar.objects.bulk_update(sub_batch, fields=update_fields, batch_size=len(sub_batch))
 
         for row in self._iter_csv_stream(resp):
             processed += 1
