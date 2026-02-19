@@ -415,6 +415,16 @@
                     <div class="text-brand font-extrabold text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
                 </div>
 
+                {% if car.auction_date %}
+                <div class="border border-purple-200 bg-purple-50 rounded-xl px-4 py-3 mb-4 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 text-purple-600">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-sm font-medium">موعد المزاد</span>
+                    </div>
+                    <span class="auction-countdown text-sm" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d H:i" }}</span>
+                </div>
+                {% endif %}
+
                 <div class="space-y-3 text-sm border-t border-gray-100 pt-4 mb-6">
                     <div class="flex justify-between">
                         <span class="text-gray-500">سنة الصنع</span>

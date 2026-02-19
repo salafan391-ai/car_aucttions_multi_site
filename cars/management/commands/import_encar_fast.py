@@ -89,20 +89,20 @@ class Command(BaseCommand):
         parser.add_argument(
             "--chunk-size",
             type=int,
-            default=2000,
-            help="Number of rows per processing chunk for active feed (default 2000)",
+            default=500,
+            help="Number of rows per processing chunk for active feed (default 500)",
         )
         parser.add_argument(
             "--update-batch-size",
             type=int,
-            default=1000,
-            help="Batch size for bulk_update and bulk_create (default 1000)",
+            default=100,
+            help="Batch size for bulk_update and bulk_create (default 100)",
         )
         parser.add_argument(
             "--delete-batch-size",
             type=int,
-            default=3000,
-            help="Batch size for removed deletions (default 3000)",
+            default=1000,
+            help="Batch size for removed deletions (default 1000)",
         )
 
     # ------------- helpers -------------
@@ -433,10 +433,12 @@ class Command(BaseCommand):
                 return
 
             with transaction.atomic():
+                # Disable statement timeout for this transaction so Heroku's
+                # default timeout (30s) doesn't cancel large bulk operations.
+                connection.cursor().execute("SET LOCAL statement_timeout = 0")
                 if new_objs:
                     ApiCar.objects.bulk_create(new_objs, ignore_conflicts=True, batch_size=batch_size)
                 if upd_objs:
-                    # Ensure updated_at is handled if your model has it (manually set here if needed)
                     ApiCar.objects.bulk_update(
                         upd_objs,
                         fields=[
@@ -482,6 +484,7 @@ class Command(BaseCommand):
                 # Estimate would be unknown without hitting DB; skip counting exact rows here
                 return
             with transaction.atomic():
+                connection.cursor().execute("SET LOCAL statement_timeout = 0")
                 qs = ApiCar.objects.filter(lot_number__in=b)
                 cnt = qs.count()
                 if cnt:
@@ -521,9 +524,9 @@ class Command(BaseCommand):
         progress = options.get("progress", False)
         progress_every = options.get("progress_every", 5000)
         max_rows = options.get("max_rows", 0)
-        chunk_size = options.get("chunk_size", 2000)
-        batch_size = options.get("update_batch_size", 1000)
-        delete_batch_size = options.get("delete_batch_size", 3000)
+        chunk_size = options.get("chunk_size", 500)
+        batch_size = options.get("update_batch_size", 100)
+        delete_batch_size = options.get("delete_batch_size", 1000)
 
         # Validate required connection settings early to avoid AttributeError
         missing = []

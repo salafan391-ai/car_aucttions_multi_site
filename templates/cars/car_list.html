@@ -199,267 +199,126 @@
     </div>
     {% endif %}
 
-    <!-- ═══════════════ FILTER PANEL (slide-down) ═══════════════ -->
-    <div class="mb-4 sm:mb-6">
-        <button type="button" id="toggle-filters" class="group inline-flex items-center gap-3 px-6 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 shadow-sm relative">
-            <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                </svg>
-                <span>فلاتر متقدمة</span>
-                <!-- Red dot indicator -->
-                <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white shadow-sm"></span>
-            </div>
-            <svg id="filter-arrow" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    <!-- ═══════════════ FILTER BUTTON (mobile only) ═══════════════ -->
+    <div class="mb-4 sm:mb-6 lg:hidden">
+        <button type="button" id="toggle-filters" class="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md transition-all duration-200 shadow-sm relative">
+            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
+            <span>فلاتر متقدمة</span>
+            {% if request.GET.manufacturer or request.GET.model or request.GET.year_from or request.GET.year_to or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.color or request.GET.status or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+            <span class="inline-flex items-center justify-center w-5 h-5 bg-brand text-white text-[10px] font-bold rounded-full">!</span>
+            {% endif %}
         </button>
     </div>
 
-    <form method="get" id="filter-form" class="hidden mb-6 sm:mb-8 bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 overflow-hidden transition-all duration-300" style="animation: slideDown 0.3s ease-out;">
-        {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
-        {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+    <!-- ═══════════════ MOBILE FILTER DRAWER (fixed bottom sheet) ═══════════════ -->
+    <!-- Backdrop -->
+    <div id="filter-backdrop" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileFilters()"></div>
 
-        <div class="p-6 space-y-8">
-            <!-- Row 1: Core filters -->
-            <div class="space-y-4">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-1 h-6 bg-gradient-to-b from-brand to-brand-light rounded-full"></div>
-                    <h3 class="text-lg font-bold text-gray-900">الفلاتر الأساسية</h3>
+    <!-- Drawer -->
+    <div id="filter-drawer" class="fixed inset-x-0 bottom-0 z-50 translate-y-full transition-transform duration-300 ease-out lg:hidden">
+        <form method="get" id="filter-form" class="bg-white rounded-t-2xl shadow-2xl flex flex-col max-h-[85vh]">
+            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+            {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+
+            <!-- Drawer header -->
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+                <!-- Drag handle -->
+                <div class="absolute top-2.5 left-1/2 -translate-x-1/2 w-10 h-1 bg-gray-300 rounded-full"></div>
+                <div class="flex items-center gap-2 mt-1">
+                    <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span class="font-bold text-gray-900 text-base">فلاتر البحث</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
-                            </svg>
-                            الشركة المصنعة
-                        </label>
-                        <div class="relative">
-                            <select name="manufacturer" id="manufacturer-select" class="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-200 rounded-xl text-sm font-medium shadow-sm focus:border-brand focus:ring-4 focus:ring-brand/10 focus:bg-white outline-none transition-all duration-200 appearance-none" onchange="this.form.submit()">
-                                <option value="">جميع الشركات</option>
-                                {% for m in manufacturers %}
-                                <option value="{{ m.id }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        </div>
+                <button type="button" onclick="closeMobileFilters()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Scrollable filters body -->
+            <div class="overflow-y-auto flex-1 p-5 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الشركة المصنعة</label>
+                        <select name="manufacturer" id="manufacturer-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for m in manufacturers %}
+                            <option value="{{ m.id }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                            </svg>
-                            الموديل
-                        </label>
-                        <div class="relative">
-                            <select name="model" id="model-select" class="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-200 rounded-xl text-sm font-medium shadow-sm focus:border-brand focus:ring-4 focus:ring-brand/10 focus:bg-white outline-none transition-all duration-200 appearance-none" onchange="this.form.submit()">
-                                <option value="">جميع الموديلات</option>
-                                {% for m in models %}
-                                <option value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الموديل</label>
+                        <select name="model" id="model-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for m in models %}
+                            <option value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0-8v8m0-8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2m0 0v4"/>
-                            </svg>
-                            تفاصيل الموديل
-                        </label>
-                        <div class="relative">
-                            <select name="badge" id="badge-select" class="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-200 rounded-xl text-sm font-medium shadow-sm focus:border-brand focus:ring-4 focus:ring-brand/10 focus:bg-white outline-none transition-all duration-200 appearance-none" onchange="this.form.submit()">
-                                <option value="">اختر الموديل أولاً</option>
-                            </select>
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">من سنة</label>
+                        <select name="year_from" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">من</option>
+                            {% for y in years %}<option value="{{ y }}" {% if selected_year_from == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+                        </select>
                     </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            من سنة
-                        </label>
-                        <div class="relative">
-                            <select name="year_from" class="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-200 rounded-xl text-sm font-medium shadow-sm focus:border-brand focus:ring-4 focus:ring-brand/10 focus:bg-white outline-none transition-all duration-200 appearance-none" onchange="this.form.submit()">
-                                <option value="">من سنة</option>
-                                {% for y in years %}
-                                <option value="{{ y }}" {% if selected_year_from == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">إلى سنة</label>
+                        <select name="year_to" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">إلى</option>
+                            {% for y in years %}<option value="{{ y }}" {% if selected_year_to == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>{% endfor %}
+                        </select>
                     </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                            إلى سنة
-                        </label>
-                        <div class="relative">
-                            <select name="year_to" class="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-200 rounded-xl text-sm font-medium shadow-sm focus:border-brand focus:ring-4 focus:ring-brand/10 focus:bg-white outline-none transition-all duration-200 appearance-none" onchange="this.form.submit()">
-                                <option value="">إلى سنة</option>
-                                {% for y in years %}
-                                <option value="{{ y }}" {% if selected_year_to == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الوقود</label>
+                        <select name="fuel" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for f in fuels %}<option value="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+                        </select>
                     </div>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            الحالة
-                        </label>
-                        <div class="relative">
-                            <select name="status" class="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-200 rounded-xl text-sm font-medium shadow-sm focus:border-brand focus:ring-4 focus:ring-brand/10 focus:bg-white outline-none transition-all duration-200 appearance-none" onchange="this.form.submit()">
-                                <option value="">الكل</option>
-                                <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>متاح</option>
-                                <option value="sold" {% if request.GET.status == 'sold' %}selected{% endif %}>تم البيع</option>
-                                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
-                            </select>
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">ناقل الحركة</label>
+                        <select name="transmission" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for t in transmissions %}<option value="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+                        </select>
                     </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اللون</label>
+                        <select name="color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for c in colors %}<option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">لون المقاعد</label>
+                        <select name="seat_color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for sc in seat_colors %}<option value="{{ sc.id }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <!-- Range inputs -->
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="السعر من ₩" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="السعر إلى ₩" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="المسافة من كم" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="المسافة إلى كم" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
                 </div>
             </div>
 
-            <!-- Row 2: Secondary filters -->
-            <div class="space-y-4">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-1 h-6 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full"></div>
-                    <h3 class="text-lg font-bold text-gray-900">المواصفات التفصيلية</h3>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                            <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17v4a2 2 0 002 2h4a2 2 0 002-2v-4"/>
-                            </svg>
-                            اللون
-                        </label>
-                        <div class="relative">
-                            <select name="color" class="w-full px-4 py-3 bg-gray-50/50 border-2 border-gray-200 rounded-xl text-sm font-medium shadow-sm focus:border-brand focus:ring-4 focus:ring-brand/10 focus:bg-white outline-none transition-all duration-200 appearance-none" onchange="this.form.submit()">
-                                <option value="">جميع الألوان</option>
-                                {% for c in colors %}
-                                <option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">نوع الهيكل</label>
-                    <select name="body_type" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
-                        <option value="">جميع الأنواع</option>
-                        {% for b in body_types %}
-                        <option value="{{ b.name }}" {% if request.GET.body_type == b.name %}selected{% endif %}>{{ b.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الوقود</label>
-                    <select name="fuel" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
-                        <option value="">جميع أنواع الوقود</option>
-                        {% for f in fuels %}
-                        <option value="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">ناقل الحركة</label>
-                    <select name="transmission" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
-                        <option value="">الكل</option>
-                        {% for t in transmissions %}
-                        <option value="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">عدد المقاعد</label>
-                    <select name="seat_count" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
-                        <option value="">الكل</option>
-                        {% for s in seat_counts %}
-                        <option value="{{ s }}" {% if request.GET.seat_count == s %}selected{% endif %}>{{ s }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">لون المقاعد</label>
-                    <select name="seat_color" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" onchange="this.form.submit()">
-                        <option value="">الكل</option>
-                        {% for sc in seat_colors %}
-                        <option value="{{ sc.id }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <!-- Drawer footer: actions -->
+            <div class="shrink-0 bg-white border-t border-gray-100 px-5 py-4 flex gap-3 pb-safe">
+                <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="flex-1 py-3 text-center text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition">مسح الكل</a>
+                <button type="submit" class="flex-1 py-3 bg-brand text-white font-bold rounded-xl transition text-sm">تطبيق الفلاتر</button>
             </div>
-
-            <!-- Row 3: Range filters -->
-            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">السعر من (₩)</label>
-                    <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">السعر إلى (₩)</label>
-                    <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="بلا حدود" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">المسافة من (كم)</label>
-                    <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">المسافة إلى (كم)</label>
-                    <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="بلا حدود" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                </div>
-            </div>
-        </div>
-
-        <!-- Filter actions -->
-        <div class="bg-gray-50 px-4 sm:px-6 py-3 flex items-center justify-between border-t border-gray-100">
-            <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="text-sm text-gray-500 hover:text-gray-700 font-medium transition">مسح جميع الفلاتر</a>
-            <button type="submit" class="px-6 py-2 bg-brand bg-brand-hover text-white font-bold rounded-xl transition text-sm">
-                تطبيق الفلاتر
-            </button>
-        </div>
-    </form>
+        </form>
+    </div>
 
     <!-- ═══════════════ SORT BAR ═══════════════ -->
     <div class="flex items-center justify-between mb-4 sm:mb-6">
@@ -476,8 +335,175 @@
         </div>
     </div>
 
+    <!-- ═══════════════ SIDEBAR + GRID LAYOUT ═══════════════ -->
+    <div class="flex gap-6 items-start">
+
+    <!-- ── SIDEBAR FILTERS (desktop only) ─────────────────── -->
+    <aside id="sidebar-filters" class="hidden lg:block w-64 xl:w-72 shrink-0 sticky top-4 self-start max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
+        <form method="get" id="filter-form-sidebar" class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+            {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <span class="font-bold text-sm text-gray-800">فلاتر البحث</span>
+                </div>
+                <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="text-xs text-red-500 hover:text-red-700 font-medium transition">مسح الكل</a>
+            </div>
+
+            <div class="p-4 space-y-5">
+
+                <!-- Manufacturer -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الشركة المصنعة</label>
+                    <select name="manufacturer" id="sb-manufacturer" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for m in manufacturers %}
+                        <option value="{{ m.id }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Model -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الموديل</label>
+                    <select name="model" id="sb-model" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for m in models %}
+                        <option value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Year Range -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">سنة الصنع</label>
+                    <div class="flex gap-2">
+                        <select name="year_from" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                            <option value="">من</option>
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if selected_year_from == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="year_to" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                            <option value="">إلى</option>
+                            {% for y in years %}
+                            <option value="{{ y }}" {% if selected_year_to == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Body Type -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">نوع الهيكل</label>
+                    <select name="body_type" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for b in body_types %}
+                        <option value="{{ b.name }}" {% if request.GET.body_type == b.name %}selected{% endif %}>{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Fuel -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الوقود</label>
+                    <select name="fuel" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for f in fuels %}
+                        <option value="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Transmission -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">ناقل الحركة</label>
+                    <select name="transmission" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for t in transmissions %}
+                        <option value="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Color -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اللون</label>
+                    <select name="color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for c in colors %}
+                        <option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Seat Count -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">عدد المقاعد</label>
+                    <select name="seat_count" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for s in seat_counts %}
+                        <option value="{{ s }}" {% if request.GET.seat_count == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Seat Color -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">لون المقاعد</label>
+                    <select name="seat_color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for sc in seat_colors %}
+                        <option value="{{ sc.id }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الحالة</label>
+                    <select name="status" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>متاح</option>
+                        <option value="sold" {% if request.GET.status == 'sold' %}selected{% endif %}>تم البيع</option>
+                        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                    </select>
+                </div>
+
+                <!-- Price Range -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">السعر (₩)</label>
+                    <div class="flex gap-2">
+                        <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="من" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="إلى" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Mileage Range -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">المسافة (كم)</label>
+                    <div class="flex gap-2">
+                        <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="من" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="إلى" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Apply button -->
+                <button type="submit" class="w-full py-2.5 bg-brand bg-brand-hover text-white font-bold rounded-xl transition text-sm">
+                    تطبيق
+                </button>
+            </div>
+        </form>
+    </aside>
+
+    <!-- ── RIGHT COLUMN: cars + pagination ───────────────── -->
+    <div class="flex-1 min-w-0">
+
     <!-- ═══════════════ CAR GRID ═══════════════ -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-5">
         {% for car in page_obj %}
         <a href="{% url 'car_detail' car.id %}" target="_blank" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200 block">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
@@ -532,9 +558,9 @@
                     {% endif %}
                 </div>
                 {% if car.auction_date %}
-                <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-purple-500 font-medium mb-2 sm:mb-3">
-                    <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    {{ car.auction_date|date:"Y/m/d" }}
+                <div class="flex items-center gap-1 sm:gap-1.5 mb-2 sm:mb-3">
+                    <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-between items-center pt-2 sm:pt-3 border-t border-gray-100">
@@ -608,6 +634,9 @@
         صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages|intcomma }}
     </div>
     {% endif %}
+
+    </div><!-- end right column -->
+    </div><!-- end sidebar+grid flex wrapper -->
 </section>
 
 <!-- ═══════════════ LIGHTBOX MODAL ═══════════════ -->
@@ -636,45 +665,37 @@
 
 <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
 <script>
-// Toggle filter panel
+// Mobile filter drawer
 const toggleBtn = document.getElementById('toggle-filters');
+const filterDrawer = document.getElementById('filter-drawer');
+const filterBackdrop = document.getElementById('filter-backdrop');
 const filterForm = document.getElementById('filter-form');
-const filterArrow = document.getElementById('filter-arrow');
+
+function openMobileFilters() {
+    filterBackdrop.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    // Trigger transition on next frame
+    requestAnimationFrame(() => {
+        filterDrawer.classList.remove('translate-y-full');
+    });
+}
+
+function closeMobileFilters() {
+    filterDrawer.classList.add('translate-y-full');
+    document.body.style.overflow = '';
+    setTimeout(() => {
+        filterBackdrop.classList.add('hidden');
+    }, 300);
+}
 
 toggleBtn.addEventListener('click', function() {
-    const isHidden = filterForm.classList.contains('hidden');
-    filterForm.classList.toggle('hidden');
-    filterArrow.classList.toggle('rotate-180');
-    
-    // Handle red dot visibility
-    const redDot = toggleBtn.querySelector('.animate-pulse');
-    if (redDot) {
-        if (isHidden) {
-            // Opening filters - hide red dot
-            redDot.classList.add('hidden');
-        } else {
-            // Closing filters - show red dot
-            redDot.classList.remove('hidden');
-        }
-    }
+    if (window.innerWidth >= 1024) return;
+    openMobileFilters();
 });
 
-// Keep filters open when form submits via onchange events
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if filters should be open (has active filters or was just submitted)
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasActiveFilters = urlParams.toString().length > 0;
-    
-    // If there are active filters, keep the panel open
-    if (hasActiveFilters) {
-        filterForm.classList.remove('hidden');
-        filterArrow.classList.add('rotate-180');
-        // Hide red dot if filters are active
-        const redDot = toggleBtn.querySelector('.animate-pulse');
-        if (redDot) {
-            redDot.classList.add('hidden');
-        }
-    }
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeMobileFilters();
 });
 
 // Dynamic model and badge loading when manufacturer changes
@@ -682,55 +703,63 @@ const manuSelect = document.getElementById('manufacturer-select');
 const modelSelect = document.getElementById('model-select');
 const badgeSelect = document.getElementById('badge-select');
 
+// Sidebar equivalents
+const sbManuSelect  = document.getElementById('sb-manufacturer');
+const sbModelSelect = document.getElementById('sb-model');
+
+function loadBadgesForModel(modelId, selectedBadgeId = null) {
+    if (!badgeSelect) return;
+    badgeSelect.innerHTML = '<option value="">جميع العلامات</option>';
+    if (!modelId) return;
+    fetch(`{% url 'api_badges_by_model' %}?model_id=${modelId}`)
+        .then(r => r.json())
+        .then(badges => {
+            badges.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.name;
+                if (selectedBadgeId && b.id == selectedBadgeId) opt.selected = true;
+                badgeSelect.appendChild(opt);
+            });
+        });
+}
+
+function loadModels(manuId, modelSelectEl, onDone) {
+    if (!modelSelectEl) return;
+    modelSelectEl.innerHTML = '<option value="">جميع الموديلات</option>';
+    if (!manuId) { if (onDone) onDone([]); return; }
+    fetch(`{% url 'api_models_by_manufacturer' %}?manufacturer_id=${manuId}`)
+        .then(r => r.json())
+        .then(models => {
+            models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                modelSelectEl.appendChild(opt);
+            });
+            if (onDone) onDone(models);
+        });
+}
+
 if (manuSelect && modelSelect) {
-    // Function to load badges for a model
-    function loadBadgesForModel(modelId, selectedBadgeId = null) {
-        badgeSelect.innerHTML = '<option value="">جميع العلامات</option>';
-        if (!modelId) return;
+    modelSelect.addEventListener('change', function () { loadBadgesForModel(this.value); });
+    const initialModelId  = modelSelect.value;
+    const initialBadgeId  = '{{ request.GET.badge|default:"" }}';
+    if (initialModelId) loadBadgesForModel(initialModelId, initialBadgeId);
 
-        fetch(`{% url 'api_badges_by_model' %}?model_id=${modelId}`)
-            .then(r => r.json())
-            .then(badges => {
-                badges.forEach(b => {
-                    const opt = document.createElement('option');
-                    opt.value = b.id;
-                    opt.textContent = b.name;
-                    if (selectedBadgeId && b.id == selectedBadgeId) {
-                        opt.selected = true;
-                    }
-                    badgeSelect.appendChild(opt);
-                });
-            });
-    }
-
-    // Load badges when model changes
-    modelSelect.addEventListener('change', function() {
-        loadBadgesForModel(this.value);
+    manuSelect.addEventListener('change', function () {
+        loadModels(this.value, modelSelect, null);
+        if (badgeSelect) badgeSelect.innerHTML = '<option value="">اختر الموديل أولاً</option>';
     });
+}
 
-    // Load badges on page load if model is pre-selected
-    const initialModelId = modelSelect.value;
-    const initialBadgeId = '{{ request.GET.badge|default:"" }}';
-    if (initialModelId) {
-        loadBadgesForModel(initialModelId, initialBadgeId);
-    }
-
-    manuSelect.addEventListener('change', function() {
-        const manuId = this.value;
-        modelSelect.innerHTML = '<option value="">جميع الموديلات</option>';
-        badgeSelect.innerHTML = '<option value="">اختر الموديل أولاً</option>';
-        if (!manuId) return;
-
-        fetch(`{% url 'api_models_by_manufacturer' %}?manufacturer_id=${manuId}`)
-            .then(r => r.json())
-            .then(models => {
-                models.forEach(m => {
-                    const opt = document.createElement('option');
-                    opt.value = m.id;
-                    opt.textContent = m.name;
-                    modelSelect.appendChild(opt);
-                });
-            });
+// Sidebar: manufacturer → model cascade
+if (sbManuSelect && sbModelSelect) {
+    sbManuSelect.addEventListener('change', function () {
+        loadModels(this.value, sbModelSelect, function (models) {
+            // auto-submit after models load if user just changed manufacturer
+            sbManuSelect.form.submit();
+        });
     });
 }
 

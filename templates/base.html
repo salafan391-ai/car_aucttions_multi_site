@@ -1039,6 +1039,124 @@
             }
         });
     </script>
+
+    <!-- ── Auction Countdown Engine ─────────────────────────────────────── -->
+    <script>
+    (function () {
+        function pad(n) { return String(n).padStart(2, '0'); }
+
+        function renderCountdown(el, targetMs) {
+            const diff = targetMs - Date.now();
+            if (diff <= 0) {
+                el.innerHTML = '<span class="auction-ended-badge">انتهى المزاد</span>';
+                el.classList.add('auction-ended');
+                return false; // stop ticking
+            }
+
+            const totalSec = Math.floor(diff / 1000);
+            const days  = Math.floor(totalSec / 86400);
+            const hours = Math.floor((totalSec % 86400) / 3600);
+            const mins  = Math.floor((totalSec % 3600)  / 60);
+            const secs  = totalSec % 60;
+
+            const urgency = diff < 3600000   ? 'countdown-urgent'   // < 1 hr  → red
+                          : diff < 86400000  ? 'countdown-soon'      // < 1 day → amber
+                          :                    'countdown-ok';        // ≥ 1 day → green
+
+            // remove old urgency classes
+            el.classList.remove('countdown-urgent', 'countdown-soon', 'countdown-ok');
+            el.classList.add(urgency);
+
+            if (days > 0) {
+                el.innerHTML =
+                    `<span class="cd-unit">${days}<small>ي</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(hours)}<small>س</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(mins)}<small>د</small></span>`;
+            } else {
+                el.innerHTML =
+                    `<span class="cd-unit">${pad(hours)}<small>س</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(mins)}<small>د</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(secs)}<small>ث</small></span>`;
+            }
+            return true;
+        }
+
+        function initCountdowns() {
+            const elements = document.querySelectorAll('[data-auction-date]');
+            elements.forEach(function (el) {
+                const iso = el.getAttribute('data-auction-date');
+                if (!iso) return;
+                const targetMs = new Date(iso).getTime();
+                if (isNaN(targetMs)) return;
+
+                // initial render
+                const alive = renderCountdown(el, targetMs);
+                if (!alive) return;
+
+                // tick every second
+                const timer = setInterval(function () {
+                    const still = renderCountdown(el, targetMs);
+                    if (!still) clearInterval(timer);
+                }, 1000);
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCountdowns);
+        } else {
+            initCountdowns();
+        }
+
+        // expose so dynamically added cards (infinite scroll etc.) can call it
+        window.initAuctionCountdowns = initCountdowns;
+    })();
+    </script>
+
+    <style>
+    /* Countdown base */
+    .auction-countdown {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 0.7rem;
+        letter-spacing: 0.02em;
+        transition: background 0.4s, color 0.4s;
+    }
+    .auction-countdown .cd-unit {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.1;
+    }
+    .auction-countdown .cd-unit small {
+        font-size: 0.55em;
+        font-weight: 500;
+        opacity: 0.8;
+        line-height: 1;
+    }
+    .auction-countdown .cd-sep { opacity: 0.6; font-weight: 400; }
+
+    /* colour states */
+    .countdown-ok     { background: #f0fdf4; color: #15803d; }
+    .countdown-soon   { background: #fffbeb; color: #b45309; }
+    .countdown-urgent { background: #fef2f2; color: #dc2626; animation: pulse-red 1s ease-in-out infinite; }
+    .auction-ended    { background: #f3f4f6; color: #6b7280; }
+    .auction-ended-badge { font-size: 0.7rem; font-weight: 600; }
+
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.65; }
+    }
+    </style>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
