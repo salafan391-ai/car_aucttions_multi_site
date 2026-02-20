@@ -578,7 +578,6 @@ def upload_auction_json(request):
         # Pre-load all manufacturers, models, badges, colors, and body types
         all_manufacturers = {m.name: m for m in Manufacturer.objects.all()}
         all_models = {(m.name, m.manufacturer_id): m for m in CarModel.objects.select_related('manufacturer').all()}
-        all_badges = {(b.name, b.model_id): b for b in CarBadge.objects.select_related('model').all()}
         all_colors = {c.name: c for c in CarColor.objects.all()}
         all_bodies = {b.name: b for b in BodyType.objects.all()}
         
@@ -587,7 +586,6 @@ def upload_auction_json(request):
         new_models = {}
         new_badges = {}
         new_colors = {}
-        new_bodies = {}
         
         cars_to_create = []
         cars_to_update = []
@@ -608,8 +606,10 @@ def upload_auction_json(request):
             # Handle model
             model_name = item.get("models_en") or item.get("models") or "Unknown"
             model_key = (model_name, manufacturer.id if hasattr(manufacturer, 'id') else None)
+            # Store manufacturer name (string) for new models so we can resolve
+            # to the saved Manufacturer instance after bulk-creating missing manufacturers.
             if model_key not in all_models and model_name not in new_models:
-                new_models[model_name] = (model_name, manufacturer)
+                new_models[model_name] = (model_name, make_name)
             
             # Handle color
             color_name = item.get("color_en") or item.get("color") or "Unknown"
@@ -629,59 +629,23 @@ def upload_auction_json(request):
             CarColor.objects.bulk_create(new_colors.values(), ignore_conflicts=True)
             all_colors.update({c.name: c for c in CarColor.objects.filter(name__in=new_colors.keys())})
         
-        # Bulk create missing body types
-        if new_bodies:
-            BodyType.objects.bulk_create(new_bodies.values(), ignore_conflicts=True)
-            all_bodies.update({b.name: b for b in BodyType.objects.filter(name__in=new_bodies.keys())})
-        
+       
         # Bulk create missing models
         if new_models:
             models_to_create = []
-            for model_name, manufacturer in new_models.values():
-                models_to_create.append(CarModel(name=model_name, manufacturer=manufacturer))
-            CarModel.objects.bulk_create(models_to_create, ignore_conflicts=True)
+            for model_name, make_name in new_models.values():
+                manufacturer_obj = all_manufacturers.get(make_name)
+                if manufacturer_obj:
+                    models_to_create.append(CarModel(name=model_name, manufacturer=manufacturer_obj))
+            if models_to_create:
+                CarModel.objects.bulk_create(models_to_create, ignore_conflicts=True)
             all_models.update({
                 (m.name, m.manufacturer_id): m 
                 for m in CarModel.objects.filter(name__in=[name for name, _ in new_models.values()]).select_related('manufacturer')
             })
         
-        # Bulk create missing badges
-        badges_to_check = set()
-        for item in data:
-            model_name = item.get("models_en") or item.get("models") or "Unknown"
-            make_name = item.get("make_en") or item.get("make") or "Unknown"
-            manufacturer = all_manufacturers.get(make_name)
-            if manufacturer:
-                model_key = (model_name, manufacturer.id)
-                if model_key in all_models:
-                    badges_to_check.add((model_name, all_models[model_key].id))
         
-        existing_badges = {
-            (b.name, b.model_id): b 
-            for b in CarBadge.objects.filter(
-                name__in=[name for name, _ in badges_to_check],
-                model_id__in=[model_id for _, model_id in badges_to_check]
-            )
-        }
-        all_badges.update(existing_badges)
         
-        badges_to_create = []
-        for badge_key in badges_to_check:
-            if badge_key not in all_badges:
-                name, model_id = badge_key
-                model = next((m for m in all_models.values() if m.id == model_id), None)
-                if model:
-                    badges_to_create.append(CarBadge(name=name, model=model))
-        
-        if badges_to_create:
-            CarBadge.objects.bulk_create(badges_to_create, ignore_conflicts=True)
-            all_badges.update({
-                (b.name, b.model_id): b 
-                for b in CarBadge.objects.filter(
-                    name__in=[b.name for b in badges_to_create]
-                )
-            })
-
         # Now process all cars
         for item in data:
             car_id = (item.get("car_identifire") or item.get("car_ids") or "").strip()
@@ -695,14 +659,12 @@ def upload_auction_json(request):
             model_key = (model_name, manufacturer.id if manufacturer else None)
             car_model = all_models.get(model_key)
             
-            badge_key = (model_name, car_model.id if car_model else None)
-            badge = all_badges.get(badge_key)
+     
             
             color_name = item.get("color_en") or item.get("color") or "Unknown"
             color = all_colors.get(color_name)
             
-            shape = (item.get("shape") or "").strip()
-            body_obj = all_bodies.get(shape) if shape else None
+   
 
             title = item.get("title") or f"{make_name} {model_name}"
             
@@ -717,7 +679,6 @@ def upload_auction_json(request):
                 "lot_number": car_id,
                 "model": car_model,
                 "year": int(item.get("year") or 0),
-                "badge": badge,
                 "color": color,
                 "transmission": (item.get("mission") or "")[:100],
                 "power": parse_power(item.get("power")),
@@ -728,7 +689,6 @@ def upload_auction_json(request):
                 "inspection_image": item.get("inspection_image") or "",
                 "points": str(item.get("points") or item.get("score") or "")[:50],
                 "address": (item.get("region") or "")[:255],
-                "body": body_obj,
                 "vin": car_id,
             }
             
@@ -760,9 +720,9 @@ def upload_auction_json(request):
                     ApiCar.objects.bulk_update(
                         cars_to_bulk_update,
                         ['title', 'image', 'manufacturer', 'category', 'auction_date', 'auction_name', 
-                         'lot_number', 'model', 'year', 'badge', 'color', 'transmission', 'power', 
+                         'lot_number', 'model', 'year', 'color', 'transmission', 'power', 
                          'price', 'mileage', 'fuel', 'images', 'inspection_image', 'points', 
-                         'address', 'body', 'vin'],
+                         'address', 'vin'],
                         batch_size=500
                     )
                     updated = len(cars_to_bulk_update)
