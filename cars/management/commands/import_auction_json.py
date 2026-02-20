@@ -74,9 +74,7 @@ class Command(BaseCommand):
         # Caches for related objects
         manu_cache = {}
         model_cache = {}
-        badge_cache = {}
         color_cache = {}
-        body_cache = {}
 
         created = 0
         updated = 0
@@ -111,15 +109,7 @@ class Command(BaseCommand):
             car_model = model_cache[model_key]
 
             # Badge — auction cars don't have badge, use model name as badge
-            badge_key = (model_name, car_model.id)
-            if badge_key not in badge_cache:
-                badge_cache[badge_key] = self._safe_get_or_create(
-                    CarBadge.objects,
-                    name=model_name,
-                    model=car_model,
-                )
-            badge = badge_cache[badge_key]
-
+           
             # Color
             color_name = item.get("color_en") or item.get("color") or "Unknown"
             if color_name not in color_cache:
@@ -129,17 +119,7 @@ class Command(BaseCommand):
                 )
             color = color_cache[color_name]
 
-            # Body type from shape field
-            shape = (item.get("shape") or "").strip()
-            body_obj = None
-            if shape:
-                if shape not in body_cache:
-                    body_cache[shape] = self._safe_get_or_create(
-                        BodyType.objects,
-                        name=shape,
-                    )
-                body_obj = body_cache[shape]
-
+           
             # Parse fields
             title = item.get("title") or f"{make_name} {model_name}"
             year = int(item.get("year") or 0)
@@ -175,7 +155,6 @@ class Command(BaseCommand):
                 "lot_number": car_id,
                 "model": car_model,
                 "year": year,
-                "badge": badge,
                 "color": color,
                 "transmission": transmission[:100] if transmission else "",
                 "power": power,
@@ -186,7 +165,6 @@ class Command(BaseCommand):
                 "inspection_image": inspection_image,
                 "points": str(points)[:50] if points else "",
                 "address": address[:255] if address else "",
-                "body": body_obj,
                 "vin": car_id,
             }
 
