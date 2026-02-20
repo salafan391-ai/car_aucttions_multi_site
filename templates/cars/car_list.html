@@ -617,9 +617,9 @@
         <a href="{% url 'car_detail' car.slug %}" target="_blank" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200 block">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model.name }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy">
                 {% elif car.images and car.images|length > 0 %}
-                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.images.0 }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model.name }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
