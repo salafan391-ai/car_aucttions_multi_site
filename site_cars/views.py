@@ -579,12 +579,11 @@ def upload_auction_json(request):
         all_manufacturers = {m.name: m for m in Manufacturer.objects.all()}
         all_models = {(m.name, m.manufacturer_id): m for m in CarModel.objects.select_related('manufacturer').all()}
         all_colors = {c.name: c for c in CarColor.objects.all()}
-        all_bodies = {b.name: b for b in BodyType.objects.all()}
+        all_badges = {(b.name, b.model_id): b for b in CarBadge.objects.select_related('model').all()}
         
         # Collect new objects to create
         new_manufacturers = {}
         new_models = {}
-        new_badges = {}
         new_colors = {}
         
         cars_to_create = []
@@ -658,9 +657,43 @@ def upload_auction_json(request):
             model_name = item.get("models_en") or item.get("models") or "Unknown"
             model_key = (model_name, manufacturer.id if manufacturer else None)
             car_model = all_models.get(model_key)
+            # If model is missing but we have a manufacturer, create or reuse an
+            # 'Unknown' model for this manufacturer to allow creating a badge.
+            if not car_model and manufacturer:
+                unknown_model_key = ("Unknown", manufacturer.id)
+                car_model = all_models.get(unknown_model_key)
+                if not car_model:
+                    car_model = CarModel.objects.create(name='Unknown', manufacturer=manufacturer)
+                    all_models[(car_model.name, car_model.manufacturer_id)] = car_model
             
      
             
+            # Resolve badge. Auctions feeds often omit badge info; in that case
+            # prefer an existing badge for the model. Only create a placeholder
+            # badge when no badge exists for the model to avoid creating many
+            # meaningless badges.
+            raw_badge = (item.get("badge_en") or item.get("badge") or item.get("trim"))
+            badge = None
+            if raw_badge and raw_badge.strip():
+                badge_name = raw_badge.strip()
+                badge_key = (badge_name, car_model.id if car_model else None)
+                badge = all_badges.get(badge_key)
+                if not badge and car_model:
+                    badge = CarBadge.objects.filter(model=car_model, name__iexact=badge_name).first()
+                    if not badge:
+                        badge = CarBadge.objects.create(name=badge_name, model=car_model)
+                    all_badges[(badge.name, badge.model_id)] = badge
+            else:
+                # No badge provided in feed — reuse first existing badge for model
+                if car_model:
+                    badge = CarBadge.objects.filter(model=car_model).first()
+                    if badge:
+                        all_badges[(badge.name, badge.model_id)] = badge
+                    else:
+                        # create a single placeholder badge for this model
+                        badge = CarBadge.objects.create(name='Unknown', model=car_model)
+                        all_badges[(badge.name, badge.model_id)] = badge
+
             color_name = item.get("color_en") or item.get("color") or "Unknown"
             color = all_colors.get(color_name)
             
@@ -678,6 +711,7 @@ def upload_auction_json(request):
                 "auction_name": (item.get("auction_name") or "")[:100],
                 "lot_number": car_id,
                 "model": car_model,
+                "badge": badge,
                 "year": int(item.get("year") or 0),
                 "color": color,
                 "transmission": (item.get("mission") or "")[:100],
@@ -692,6 +726,11 @@ def upload_auction_json(request):
                 "vin": car_id,
             }
             
+            # If we don't have a resolved badge, skip the row to avoid DB constraint errors
+            if not badge:
+                skipped += 1
+                continue
+
             if car_id in existing_car_ids:
                 cars_to_update.append(car_data)
             else:
