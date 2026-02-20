@@ -55,7 +55,7 @@
                 <div class="p-4 sm:p-5">
                     <!-- Title -->
                     <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-brand transition-colors">
-                        <a href="{% url 'car_detail' item.car.pk %}" class="hover:text-brand">
+                        <a href="{% url 'car_detail' item.car.slug %}" class="hover:text-brand">
                             {{ item.car.title }}
                         </a>
                     </h3>
@@ -90,7 +90,7 @@
 
                     <!-- Action Buttons -->
                     <div class="flex gap-2">
-                        <a href="{% url 'car_detail' item.car.pk %}" 
+                        <a href="{% url 'car_detail' item.car.slug %}" 
                            class="flex-1 bg-brand text-white px-3 py-2 rounded-lg text-center text-sm font-medium hover:bg-brand-hover transition-colors">
                             <span class="bilingual" data-lang-ar="عرض التفاصيل" data-lang-en="View Details">عرض التفاصيل</span>
                         </a>

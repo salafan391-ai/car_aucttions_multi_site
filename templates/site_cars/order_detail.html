@@ -101,7 +101,7 @@
                     </div>
                     <div class="text-sm text-gray-500 mb-1">السعر المعلن</div>
                     <div class="font-extrabold text-lg text-gray-900 mb-4">{{ order.car.price|floatformat:0 }} ₩</div>
-                    <a href="{% url 'car_detail' order.car.pk %}" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl transition text-sm">
+                    <a href="{% url 'car_detail' order.car.slug %}" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl transition text-sm">
                         عرض السيارة
                     </a>
                 </div>

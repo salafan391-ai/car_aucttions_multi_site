@@ -5,7 +5,8 @@ from . import views
 urlpatterns = [
     path('', views.home, name='home'),
     path('cars/', views.car_list, name='car_list'),
-    path('cars/<int:pk>/', views.car_detail, name='car_detail'),
+    path('cars/<int:pk>/', views.car_detail_by_pk, name='car_detail_by_pk'),  # legacy redirect
+    path('cars/<slug:slug>/', views.car_detail, name='car_detail'),
     path('expired-auctions/', views.expired_auctions, name='expired_auctions'),
     path('api/models/', views.api_models_by_manufacturer, name='api_models_by_manufacturer'),
     path('api/badges/', views.api_badges_by_model, name='api_badges_by_model'),

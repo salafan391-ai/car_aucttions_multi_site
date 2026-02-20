@@ -9,7 +9,7 @@
         <span>/</span>
         <a href="{% url 'car_list' %}" class="text-brand-hover transition">السيارات</a>
         <span>/</span>
-        <a href="{% url 'car_detail' car.pk %}" class="text-brand-hover transition">{{ car.title }}</a>
+        <a href="{% url 'car_detail' car.slug %}" class="text-brand-hover transition">{{ car.title }}</a>
         <span>/</span>
         <span class="text-gray-800">تقديم طلب</span>
     </nav>
@@ -71,7 +71,7 @@
                 <button type="submit" class="flex-1 bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition text-center">
                     تأكيد الطلب
                 </button>
-                <a href="{% url 'car_detail' car.pk %}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition text-center">
+                <a href="{% url 'car_detail' car.slug %}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition text-center">
                     إلغاء
                 </a>
             </div>

@@ -3,6 +3,54 @@
 {% load i18n %}
 {% load humanize %}
 
+{% block meta_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لبيع وشراء السيارات الجديدة والمستعملة في السعودية. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
+{% block meta_keywords %}{{ site_name|default:"سيارات" }}, سيارات للبيع, شراء سيارات, سيارات مستعملة, سيارات جديدة, مزادات سيارات, سيارات السعودية, تجارة سيارات, معارض سيارات{% endblock %}
+
+{% block og_title %}{{ site_name|default:"سيارات" }} - بيع وشراء السيارات في السعودية{% endblock %}
+{% block og_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لبيع وشراء السيارات الجديدة والمستعملة في السعودية. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
+{% block og_type %}website{% endblock %}
+
+{% block twitter_title %}{{ site_name|default:"سيارات" }} - بيع وشراء السيارات في السعودية{% endblock %}
+{% block twitter_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لبيع وشراء السيارات الجديدة والمستعملة في السعودية. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "{{ site_name|default:'سيارات' }}",
+    "url": "{{ request.build_absolute_uri }}",
+    "description": "{{ site_name|default:'سيارات' }} - أفضل منصة لبيع وشراء السيارات الجديدة والمستعملة في السعودية. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.",
+    "inLanguage": "ar",
+    "potentialAction": {
+        "@type": "SearchAction",
+        "target": "{{ request.build_absolute_uri }}cars/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+    },
+    "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": "{{ total_cars|default:0 }}",
+        "itemListElement": [
+            {% for car in latest_cars %}
+            {
+                "@type": "Car",
+                "name": "{{ car.title }}",
+                "brand": "{{ car.manufacturer.name }}",
+                "model": "{{ car.model.name }}",
+                "year": "{{ car.year }}",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "{{ car.price }}",
+                    "priceCurrency": "SAR"
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+}
+</script>
+{% endblock %}
+
 {% block title %}الرئيسية - {{ site_name|default:"سيارات" }}{% endblock %}
 
 {% block extra_head %}
@@ -487,7 +535,7 @@
         
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="cars-scroll">
         {% for car in latest_cars %}
-        <a href="{% url 'car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
+        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
@@ -561,7 +609,7 @@
         
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="auctions-scroll">
         {% for car in latest_auctions %}
-        <a href="{% url 'car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
+        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">

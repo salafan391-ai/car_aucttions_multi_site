@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils.text import slugify
 
 
 
@@ -116,6 +117,7 @@ class ApiCar(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     points = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField(blank=True,null=True)
+    slug = models.SlugField(max_length=200, unique=True, blank=True, null=True, db_index=True)
     
     class Meta:
         indexes = [
@@ -127,6 +129,22 @@ class ApiCar(models.Model):
     
     def __str__(self):
         return self.title
+
+    def _generate_slug(self):
+        base = slugify(f"{self.year or ''}-{getattr(self.manufacturer, 'name', '') or ''}-{getattr(self.model, 'name', '') or ''}-{self.pk or ''}")
+        return base or f"car-{self.pk}"
+
+    def save(self, *args, **kwargs):
+        # Generate slug after first save so we have a PK
+        if not self.pk:
+            super().save(*args, **kwargs)
+            self.slug = self._generate_slug()
+            # Use update_fields to avoid a second full save
+            ApiCar.objects.filter(pk=self.pk).update(slug=self.slug)
+            return
+        if not self.slug:
+            self.slug = self._generate_slug()
+        super().save(*args, **kwargs)
 
     
 

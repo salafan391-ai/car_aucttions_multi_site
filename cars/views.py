@@ -171,6 +171,10 @@ def car_list(request):
     if seat_color:
         qs = qs.filter(seat_color_id=seat_color)
 
+    auction_name = request.GET.get('auction_name', '').strip()
+    if auction_name:
+        qs = qs.filter(auction_name__iexact=auction_name)
+
     car_type = request.GET.get('car_type')
     if car_type == 'auction':
         qs = qs.filter(category__name='auction')
@@ -260,6 +264,13 @@ def car_list(request):
     seat_colors = CarSeatColor.objects.all().order_by('name')
     badges = CarBadge.objects.all().order_by('name')
 
+    # Distinct auction names for auction filter
+    auction_names = (
+        ApiCar.objects.filter(category__name='auction')
+        .exclude(auction_name__isnull=True).exclude(auction_name='')
+        .values_list('auction_name', flat=True).distinct().order_by('auction_name')
+    )
+
     # Counts for tabs
     base_qs = _exclude_expired_auctions(ApiCar.objects.all())
     count_all = base_qs.count()
@@ -290,6 +301,8 @@ def car_list(request):
         'transmissions': transmissions,
         'seat_counts': seat_counts,
         'seat_colors': seat_colors,
+        'auction_names': auction_names,
+        'auction_name': request.GET.get('auction_name', ''),
         'query_string': query_string,
         'count_all': count_all,
         'count_cars': count_cars,
@@ -398,13 +411,22 @@ def api_badges_by_model(request):
     )
     return JsonResponse(badges, safe=False)
 
-def car_detail(request, pk):
+def car_detail_by_pk(request, pk):
+    """Legacy numeric-ID URL — redirect permanently to the slug URL."""
+    car = get_object_or_404(ApiCar, pk=pk)
+    if car.slug:
+        return redirect('car_detail', slug=car.slug, permanent=True)
+    return redirect('car_detail', slug=str(pk), permanent=True)
+
+
+def car_detail(request, slug):
+    # Accept either a slug or a numeric string that was previously used as pk
     # Use select_related to fetch all related objects in one query
     car = get_object_or_404(
         ApiCar.objects.select_related(
             'manufacturer', 'model', 'badge', 'color', 'seat_color', 'body', 'category'
         ),
-        pk=pk,
+        slug=slug,
     )
 
     ratings = []

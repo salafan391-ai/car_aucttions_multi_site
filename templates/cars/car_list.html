@@ -1,5 +1,52 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize i18n %}
+
+{% block meta_description %}{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" - {{ site_name|default:"سيارات" }}{% else %}{% if request.GET.car_type == 'auction' %}مزادات السيارات - {{ site_name|default:"سيارات" }}{% else %}سيارات للبيع - {{ site_name|default:"سيارات" }}{% endif %} - استعرض آلاف السيارات الجديدة والمستعملة{% endif %}{% endblock %}
+{% block meta_keywords %}{% if request.GET.car_type == 'auction' %}مزادات سيارات, مزادات, سيارات مزاد, مزاد سيارات{% else %}سيارات للبيع, سيارات مستعملة, سيارات جديدة, شراء سيارات{% endif %}{% if request.GET.manufacturer %}, {{ request.GET.manufacturer }}{% endif %}, {% for manufacturer in manufacturers %}{{ manufacturer.name_ar|default:manufacturer.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block og_title %}{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" - {{ site_name|default:"سيارات" }}{% else %}{% if request.GET.car_type == 'auction' %}مزادات السيارات - {{ site_name|default:"سيارات" }}{% else %}سيارات للبيع - {{ site_name|default:"سيارات" }}{% endif %}{% endif %}{% endblock %}
+{% block og_description %}{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" في {{ site_name|default:"سيارات" }}. {{ count_all|intcomma }} سيارة متاحة للبحث{% else %}{% if request.GET.car_type == 'auction' %}استعرض أحدث مزادات السيارات في {{ site_name|default:"سيارات" }}. {{ count_auction|intcomma }} سيارة في المزاد{% else %}استعرض آلاف السيارات الجديدة والمستعملة في {{ site_name|default:"سيارات" }}. {{ count_cars|intcomma }} سيارة متاحة للبيع{% endif %}{% endif %}{% endblock %}
+{% block og_type %}website{% endblock %}
+
+{% block twitter_title %}{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" - {{ site_name|default:"سيارات" }}{% else %}{% if request.GET.car_type == 'auction' %}مزادات السيارات - {{ site_name|default:"سيارات" }}{% else %}سيارات للبيع - {{ site_name|default:"سيارات" }}{% endif %}{% endif %}{% endblock %}
+{% block twitter_description %}{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" في {{ site_name|default:"سيارات" }}. {{ count_all|intcomma }} سيارة متاحة للبحث{% else %}{% if request.GET.car_type == 'auction' %}استعرض أحدث مزادات السيارات في {{ site_name|default:"سيارات" }}. {{ count_auction|intcomma }} سيارة في المزاد{% else %}استعرض آلاف السيارات الجديدة والمستعملة في {{ site_name|default:"سيارات" }}. {{ count_cars|intcomma }} سيارة متاحة للبيع{% endif %}{% endif %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" - {{ site_name|default:"سيارات" }}{% else %}{% if request.GET.car_type == 'auction' %}مزادات السيارات - {{ site_name|default:"سيارات" }}{% else %}سيارات للبيع - {{ site_name|default:"سيارات" }}{% endif %}{% endif %}",
+    "description": "{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" في {{ site_name|default:"سيارات" }}. {{ count_all|intcomma }} سيارة متاحة للبحث{% else %}{% if request.GET.car_type == 'auction' %}استعرض أحدث مزادات السيارات في {{ site_name|default:"سيارات" }}. {{ count_auction|intcomma }} سيارة في المزاد{% else %}استعرض آلاف السيارات الجديدة والمستعملة في {{ site_name|default:"سيارات" }}. {{ count_cars|intcomma }} سيارة متاحة للبيع{% endif %}{% endif %}",
+    "url": "{{ request.build_absolute_uri }}",
+    "inLanguage": "ar",
+    "numberOfItems": "{{ count_all|intcomma }}",
+    "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": "{{ count_all|intcomma }}",
+        "itemListElement": [
+            {% for car in page_obj %}
+            {
+                "@type": "Car",
+                "name": "{{ car.title }}",
+                "brand": "{{ car.manufacturer.name }}",
+                "model": "{{ car.model.name }}",
+                "year": "{{ car.year }}",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "{{ car.price }}",
+                    "priceCurrency": "SAR",
+                    "availability": "{% if car.status == 'available' %}InStock{% else %}OutOfStock{% endif %}"
+                },
+                "image": "{% if car.image %}{{ request.build_absolute_uri }}{{ car.image.url }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}",
+                "url": "{{ request.build_absolute_uri }}cars/{{ car.id }}/"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+}
+</script>
+{% endblock %}
 
 {% block title %}{% if request.GET.car_type == 'auction' %}المزادات{% else %}السيارات{% endif %} - {{ site_name|default:"سيارات" }}{% endblock %}
 
@@ -21,6 +68,7 @@
             {% if request.GET.transmission %}<input type="hidden" name="transmission" value="{{ request.GET.transmission }}">{% endif %}
             {% if request.GET.seat_count %}<input type="hidden" name="seat_count" value="{{ request.GET.seat_count }}">{% endif %}
             {% if request.GET.seat_color %}<input type="hidden" name="seat_color" value="{{ request.GET.seat_color }}">{% endif %}
+            {% if request.GET.auction_name %}<input type="hidden" name="auction_name" value="{{ request.GET.auction_name }}">{% endif %}
             {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
             {% if request.GET.price_min %}<input type="hidden" name="price_min" value="{{ request.GET.price_min }}">{% endif %}
             {% if request.GET.price_max %}<input type="hidden" name="price_max" value="{{ request.GET.price_max }}">{% endif %}
@@ -100,6 +148,7 @@
             {% endif %}
         {% endfor %}
 
+        {% if request.GET.car_type != 'auction' %}
         {% for b in badges %}
             {% if request.GET.badge == b.id|stringformat:"d" %}
             <a href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full hover:bg-purple-100 transition group">
@@ -108,6 +157,7 @@
             </a>
             {% endif %}
         {% endfor %}
+        {% endif %}
 
         {% if request.GET.year_from %}
         <a href="?{% for k,v in request.GET.items %}{% if k != 'year_from' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-full hover:bg-green-100 transition group">
@@ -144,6 +194,7 @@
         </a>
         {% endif %}
 
+        {% if request.GET.car_type != 'auction' %}
         {% for sc in seat_colors %}
             {% if request.GET.seat_color == sc.id|stringformat:"d" %}
             <a href="?{% for k,v in request.GET.items %}{% if k != 'seat_color' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 text-xs font-medium rounded-full hover:bg-rose-100 transition group">
@@ -152,6 +203,14 @@
             </a>
             {% endif %}
         {% endfor %}
+        {% endif %}
+
+        {% if request.GET.car_type == 'auction' and request.GET.auction_name %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'auction_name' and k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full hover:bg-purple-100 transition group">
+            المزاد: {{ request.GET.auction_name }}
+            <svg class="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </a>
+        {% endif %}
 
         {% for c in colors %}
             {% if request.GET.color == c.id|stringformat:"d" %}
@@ -260,6 +319,7 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% if request.GET.car_type != 'auction' %}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">تفاصيل الموديل</label>
                         <select name="badge" id="badge-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
@@ -269,6 +329,7 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% endif %}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">من سنة</label>
                         <select name="year_from" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
@@ -304,6 +365,7 @@
                             {% for c in colors %}<option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
                         </select>
                     </div>
+                    {% if request.GET.car_type != 'auction' %}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">لون المقاعد</label>
                         <select name="seat_color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
@@ -311,6 +373,16 @@
                             {% for sc in seat_colors %}<option value="{{ sc.id }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name }}</option>{% endfor %}
                         </select>
                     </div>
+                    {% endif %}
+                    {% if request.GET.car_type == 'auction' %}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اسم المزاد</label>
+                        <select name="auction_name" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
+                            <option value="">الكل</option>
+                            {% for an in auction_names %}<option value="{{ an }}" {% if request.GET.auction_name == an %}selected{% endif %}>{{ an }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
                 </div>
                 <!-- Range inputs -->
                 <div class="grid grid-cols-2 gap-3">
@@ -386,6 +458,7 @@
                     </select>
                 </div>
 
+                {% if request.GET.car_type != 'auction' %}
                 <!-- Badge -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">تفاصيل الموديل</label>
@@ -396,6 +469,7 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% endif %}
 
                 <!-- Year Range -->
                 <div>
@@ -471,6 +545,7 @@
                     </select>
                 </div>
 
+                {% if request.GET.car_type != 'auction' %}
                 <!-- Seat Color -->
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">لون المقاعد</label>
@@ -481,6 +556,20 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% endif %}
+
+                {% if request.GET.car_type == 'auction' %}
+                <!-- Auction Name -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اسم المزاد</label>
+                    <select name="auction_name" id="sb-auction-name" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
+                        <option value="">الكل</option>
+                        {% for an in auction_names %}
+                        <option value="{{ an }}" {% if auction_name == an %}selected{% endif %}>{{ an }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
 
                 <!-- Status -->
                 <div>
@@ -525,7 +614,7 @@
     <!-- ═══════════════ CAR GRID ═══════════════ -->
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-5">
         {% for car in page_obj %}
-        <a href="{% url 'car_detail' car.id %}" target="_blank" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200 block">
+        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200 block">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
                 <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image }}', '{{ car.manufacturer.name_ar|default:car.manufacturer.name }} {{ car.model.name }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">

@@ -13,7 +13,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {% for sold in sold_cars %}
-        <a href="{% url 'car_detail' sold.car.pk %}" class="car-card bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
+        <a href="{% url 'car_detail' sold.car.slug %}" class="car-card bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if sold.car.image %}
                 <img src="{{ sold.car.image }}" alt="{{ sold.car.title }}" class="w-full h-full object-cover" loading="lazy">

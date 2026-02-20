@@ -1,5 +1,66 @@
 {% extends "base.html" %}
-{% load whatsapp_tags %}
+{% load whatsapp_tags humanize static %}
+
+{% block meta_description %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_keywords %}{{ car.title }}, {{ car.manufacturer.name }}, {{ car.model.name }}, سيارة {{ car.year }}, {% if car.color.name %}{{ car.color.name }}, {% endif %}{% if car.body.name %}{{ car.body.name }}, {% endif %}{% if car.category.name == 'auction' %}مزاد سيارة, سيارة مزاد{% else %}سيارة للبيع, شراء سيارة{% endif %}, {{ car.price|intcomma }} ريال, {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block og_title %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
+{% block og_description %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_image %}{% if car.image %}{{ car.image }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
+
+{% block twitter_title %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
+{% block twitter_description %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block twitter_image %}{% if car.image %}{{ car.image }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
+
+{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": {% if car.category.name == 'auction' %}"Offer"{% else %}"Vehicle"{% endif %},
+    "name": "{{ car.title }}",
+    "description": "{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال",
+    "brand": {
+        "@type": "Brand",
+        "name": "{{ car.manufacturer.name }}"
+    },
+    "model": "{{ car.model.name }}",
+    "year": {{ car.year }},
+    "offers": {
+        "@type": "Offer",
+        "price": "{{ car.price }}",
+        "priceCurrency": "SAR",
+        "availability": "{% if car.status == 'available' %}InStock{% else %}OutOfStock{% endif %}",
+        "seller": {
+            "@type": "Organization",
+            "name": "{{ site_name|default:'سيارات' }}"
+        }
+    },
+    "image": [
+        {% if car.image %}"{{ car.image }}"{% endif %}
+        {% for image in car.images.all %}
+        {% if forloop.counter0 > 0 or not car.image %},
+        "{{ request.build_absolute_uri }}{{ image.image.url }}"{% endif %}
+        {% endfor %}
+    ],
+    "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}",
+    "inLanguage": "ar",
+    {% if car.category.name == 'auction' %}
+    "auction": {
+        "@type": "Event",
+        "name": "مزاد سيارة",
+        "startDate": "{{ car.auction_date|date:'c' }}",
+        "location": {
+            "@type": "Place",
+            "name": "السعودية"
+        }
+    }
+    {% endif %}
+}
+</script>
+{% endblock %}
 
 {% block title %}{{ car.title }} - {{ site_name|default:"سيارات" }}{% endblock %}
 
