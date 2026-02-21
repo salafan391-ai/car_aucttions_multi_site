@@ -32,13 +32,22 @@ class Command(BaseCommand):
 
         for tenant in tenants:
             self.stdout.write(self.style.HTTP_INFO(f'\n=== Tenant: {tenant.name} (schema: {tenant.schema_name}) ==='))
-            self.stdout.write(f'  email (admin recipient): "{tenant.email}"')
+            self.stdout.write(f'  email (business contact): "{tenant.email}"')
             self.stdout.write(f'  email_host:              "{tenant.email_host}"')
             self.stdout.write(f'  email_port:              {tenant.email_port}')
             self.stdout.write(f'  email_username (SMTP):   "{tenant.email_username}"')
             self.stdout.write(f'  email_password set:      {"YES ✓" if tenant.email_password else "NO ✗ <-- MISSING"}')
             self.stdout.write(f'  email_use_tls:           {tenant.email_use_tls}')
             self.stdout.write(f'  email_from_name:         "{tenant.email_from_name}"')
+
+            # Show superusers who will receive order notifications
+            from django.contrib.auth.models import User
+            superusers = User.objects.filter(is_superuser=True, is_active=True)
+            self.stdout.write(f'\n  Superusers (will receive order emails):')
+            for su in superusers:
+                has_email = bool(su.email)
+                marker = '✓' if has_email else '✗ NO EMAIL SET'
+                self.stdout.write(f'    - {su.username}: "{su.email}" {marker}')
 
             # Diagnose issues
             issues = []

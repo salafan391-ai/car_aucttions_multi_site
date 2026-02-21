@@ -101,15 +101,21 @@ def send_order_placed_email(order):
     if order.user.email:
         send_tenant_email(order.user.email, subject, body, 'order_placed', order.user)
 
-    # Notify the admin — use tenant.email (business contact), fallback to SMTP username
+    # Notify all superusers who have an email address
+    admin_emails = list(
+        User.objects.filter(is_superuser=True, is_active=True)
+        .exclude(email='').exclude(email__isnull=True)
+        .values_list('email', flat=True)
+    )
+    # Also include tenant.email if set and not already covered
     try:
-        schema = connection.schema_name
-        tenant = Tenant.objects.get(schema_name=schema)
-        admin_email = tenant.email or tenant.email_username or None
+        tenant = Tenant.objects.get(schema_name=connection.schema_name)
+        if tenant.email and tenant.email not in admin_emails:
+            admin_emails.append(tenant.email)
     except Tenant.DoesNotExist:
-        admin_email = None
+        pass
 
-    if admin_email:
+    if admin_emails:
         admin_subject = f"🛒 طلب شراء جديد #{order.pk} من {order.user.get_short_name() or order.user.username}"
         admin_body = f"""
         <div dir="rtl" style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -125,7 +131,8 @@ def send_order_placed_email(order):
             <p style="margin-top:16px;color:#6b7280;font-size:13px;">تم الاستلام في: {order.created_at.strftime('%Y-%m-%d %H:%M')}</p>
         </div>
         """
-        send_tenant_email(admin_email, admin_subject, admin_body, 'order_placed_admin')
+        for email in admin_emails:
+            send_tenant_email(email, admin_subject, admin_body, 'order_placed_admin')
 
 
 def send_order_status_email(order):
