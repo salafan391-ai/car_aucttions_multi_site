@@ -117,11 +117,15 @@ def send_order_placed_email(order):
 
     if admin_emails:
         # Build the tenant domain for clickable links
+        # Domain is a public-schema model — must query it from the public schema
         try:
             from tenants.models import Domain
+            current_schema = connection.schema_name
+            connection.set_schema_to_public()
             domain_obj = Domain.objects.filter(
-                tenant__schema_name=connection.schema_name, is_primary=True
+                tenant__schema_name=current_schema, is_primary=True
             ).first()
+            connection.set_tenant(Tenant.objects.get(schema_name=current_schema))
             base_url = f"https://{domain_obj.domain}" if domain_obj else ""
         except Exception:
             base_url = ""
