@@ -212,6 +212,12 @@
                         <div class="font-bold text-sm">{{ car.seat_color.name }}</div>
                     </div>
                     {% endif %}
+                      {% if car.seat_count %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">عدد المقاعد</div>
+                        <div class="font-bold text-sm">{{ car.seat_count }}</div>
+                    </div>
+                    {% endif %}
                     {% if car.body %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">نوع الهيكل</div>
@@ -230,6 +236,8 @@
                         <div class="font-bold text-sm">{{ car.drive_wheel }}</div>
                     </div>
                     {% endif %}
+
+
                     {% if car.engine %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">المحرك</div>

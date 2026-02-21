@@ -288,7 +288,6 @@ def car_list(request):
         popular_manufacturers = Manufacturer.objects.annotate(
             car_count=Count('apicar')
         ).order_by('-car_count')
-
     context = {
         'page_obj': page_obj,
         'manufacturers': manufacturers,
@@ -457,6 +456,9 @@ def car_detail(request, slug):
         
         if request.user.is_authenticated:
             user_rating = SiteRating.objects.filter(car=car, user=request.user).first()
+            
+            
+    print(car.seat_count)
     
     context = {
         'car': car,

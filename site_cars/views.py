@@ -701,6 +701,7 @@ def upload_auction_json(request):
 
             title = item.get("title") or f"{make_name} {model_name}"
             
+            
             car_data = {
                 "car_id": car_id,
                 "title": title[:100],
@@ -723,6 +724,7 @@ def upload_auction_json(request):
                 "inspection_image": item.get("inspection_image") or "",
                 "points": str(item.get("points") or item.get("score") or "")[:50],
                 "address": (item.get("region") or "")[:255],
+                "seat_count": int(item.get("seats") or 0),
                 "vin": car_id,
             }
             
@@ -761,7 +763,7 @@ def upload_auction_json(request):
                         ['title', 'image', 'manufacturer', 'category', 'auction_date', 'auction_name', 
                          'lot_number', 'model', 'year', 'color', 'transmission', 'power', 
                          'price', 'mileage', 'fuel', 'images', 'inspection_image', 'points', 
-                         'address', 'vin'],
+                         'address', 'vin',"seat_count"],
                         batch_size=500
                     )
                     updated = len(cars_to_bulk_update)
