@@ -186,10 +186,18 @@
                         <div class="text-xs text-gray-500 mb-1">سنة الصنع</div>
                         <div class="font-bold text-sm">{{ car.year }}</div>
                     </div>
+                    {% if car.entry %}
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <div class="text-xs text-gray-500 mb-1">رقم الإعلان</div>
+                            <div class="font-bold text-sm">{{ car.entry }}</div>
+                        </div>
+                    {% endif %}
+                    {% if car.mileage %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">المسافة المقطوعة</div>
                         <div class="font-bold text-sm">{{ car.mileage|floatformat:0 }} كم</div>
                     </div>
+                    {% endif %}
                     {% if car.transmission %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">ناقل الحركة</div>
@@ -562,7 +570,7 @@
                     </div>
                 </div>
 
-                {% if car.category != 'auction' and request.user.is_superuser %}
+                {% if car.category.name != 'auction' and request.user.is_superuser %}
                 <div class="mt-4 p-3 bg-red-600 border border-gray-200 rounded-lg text-center">
                     <a class="text-xs text-white mt-4 text-center" href="https://fem.encar.com/cars/detail/{{ car.lot_number }}">
                         عرض في موقع إنكار

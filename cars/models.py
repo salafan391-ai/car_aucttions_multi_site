@@ -118,6 +118,7 @@ class ApiCar(models.Model):
     points = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField(blank=True,null=True)
     slug = models.SlugField(max_length=200, unique=True, blank=True, null=True, db_index=True)
+    entry = models.CharField(max_length=100, blank=True, null=True, db_index=True)  # New field for entry number or date
     
     class Meta:
         indexes = [
