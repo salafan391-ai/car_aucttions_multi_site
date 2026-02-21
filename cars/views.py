@@ -466,6 +466,18 @@ def car_detail(request, slug):
         'avg_rating': avg_rating,
         'user_rating': user_rating,
         'pending_ratings': pending_ratings,
+        'inspection_legend': [
+            ('P',   'وكالة'),
+            ('A',   'وكالة'),
+            ('Q',   'وكالة'),
+            ('W',   'رش'),
+            ('X',   'تغيير بدون رش'),
+            ('XXP', 'مغير ومرشوش'),
+            ('PP',  'رش تجميلي'),
+            ('WR',  'رش'),
+            ('R',   'وكالة'),
+            ('WU',  'رش'),
+        ],
     }
     return render(request, 'cars/car_detail.html', context)
 
