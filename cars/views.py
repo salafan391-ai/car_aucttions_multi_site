@@ -247,8 +247,7 @@ def car_list(request):
     # Apply limit after all filters
     models_qs = models_qs[:100]
     years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')[:30]  # Last 30 years
-    colors = CarColor.objects.all().order_by('name')[:30]  # Limit colors
-    
+
     # Filter body types based on car type
     if car_type == 'auction':
         body_types = BodyType.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:20]
@@ -258,12 +257,14 @@ def car_list(request):
             apicar__in=base_regular_qs
         ).distinct().order_by('name')[:20]
     
-    fuels = ApiCar.objects.values_list('fuel', flat=True).exclude(fuel__isnull=True).exclude(fuel='').distinct().order_by('fuel')[:15]
-    transmissions = ApiCar.objects.values_list('transmission', flat=True).exclude(transmission__isnull=True).exclude(transmission='').distinct().order_by('transmission')[:10]
-    seat_counts = ApiCar.objects.values_list('seat_count', flat=True).exclude(seat_count__isnull=True).exclude(seat_count='').distinct().order_by('seat_count')
+    # Scope filter options to the current car_type for relevant dropdowns
+    filter_base_qs = base_auction_qs if car_type == 'auction' else _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction'))
+    fuels = filter_base_qs.values_list('fuel', flat=True).exclude(fuel__isnull=True).exclude(fuel='').distinct().order_by('fuel')[:15]
+    transmissions = filter_base_qs.values_list('transmission', flat=True).exclude(transmission__isnull=True).exclude(transmission='').distinct().order_by('transmission')[:10]
+    seat_counts = filter_base_qs.values_list('seat_count', flat=True).exclude(seat_count__isnull=True).exclude(seat_count='').distinct().order_by('seat_count')
+    colors = CarColor.objects.filter(apicar__in=filter_base_qs).distinct().order_by('name')[:30]
     seat_colors = CarSeatColor.objects.all().order_by('name')
     badges = CarBadge.objects.all().order_by('name')
-
     # Distinct auction names for auction filter
     auction_names = (
         ApiCar.objects.filter(category__name='auction')
