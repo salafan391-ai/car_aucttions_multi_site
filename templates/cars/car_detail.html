@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load whatsapp_tags humanize static %}
+{% load whatsapp_tags custom_filters humanize static %}
 
 {% block meta_description %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
 {% block meta_keywords %}{{ car.title }}, {{ car.manufacturer.name }}, {{ car.model.name }}, سيارة {{ car.year }}, {% if car.color.name %}{{ car.color.name }}, {% endif %}{% if car.body.name %}{{ car.body.name }}, {% endif %}{% if car.category.name == 'auction' %}مزاد سيارة, سيارة مزاد{% else %}سيارة للبيع, شراء سيارة{% endif %}, {{ car.price|intcomma }} ريال, {{ site_name|default:"سيارات" }}{% endblock %}
@@ -266,62 +266,38 @@
                 <div class="flex flex-wrap gap-2">
                     {% for opt in car.options.standard %}
                     <span class="bg-brand-light text-brand text-sm px-3 py-1.5 rounded-full">
-                            {% if opt == "001" %}نظام منع انغلاق المكابح / Anti-lock Braking System
-                            {% elif opt == "002" %}وسائد هوائية / Airbag
-                            {% elif opt == "003" %}حساسات ركن / Parking Sensors
-                            {% elif opt == "004" %}مثبت سرعة / Cruise Control
-                            {% elif opt == "005" %}نظام ملاحة / Navigation
-                            {% elif opt == "006" %}أقفال أبواب كهربائية / Power Door Locks
-                            {% elif opt == "007" %}مقاعد مدفأة / Heated Seats
-                            {% elif opt == "008" %}عجلة قيادة كهربائية / Power Steering Wheel
-                            {% elif opt == "009" %}مقاعد مهواة / Ventilated Seats
-                            {% elif opt == "010" %}فتحة سقف / Sunroof
-                            {% elif opt == "014" %}مقاعد جلدية / Leather Seats
-                            {% elif opt == "015" %}قفل أبواب لاسلكي / Wireless Door Lock
-                            {% elif opt == "017" %}عجلات ألومنيوم / Aluminum Wheels
-                            {% elif opt == "019" %}نظام التحكم بالجر / Traction Control System
-                            {% elif opt == "020" %}وسائد هوائية جانبية / Side Airbags
-                            {% elif opt == "023" %}تكييف هواء أوتوماتيكي / Automatic Air Conditioning
-                            {% elif opt == "024" %}مرايا جانبية كهربائية قابلة للطي / Power Folding Side Mirrors
-                            {% elif opt == "030" %}مرآة داخلية ذات تعتيم إلكتروني / ECM Room Mirror
-                            {% elif opt == "031" %}أزرار تحكم على عجلة القيادة / Steering Wheel Remote Control
-                            {% elif opt == "032" %}تشغيل بضغطة زر / Push Button Start
-                            {% elif opt == "033" %}نظام مراقبة ضغط الإطارات / Tire Pressure Monitoring System
-                            {% elif opt == "035" %}فتحة سقف / Sunroof
-                            {% elif opt == "051" %}مقاعد مدفأة / Heated Seats
-                            {% elif opt == "054" %}شاشة ترفيهية للمقاعد الخلفية / Rear Seat AV Monitor
-                            {% elif opt == "055" %}نظام التحكم الإلكتروني بالثبات / Electronic Stability Control
-                            {% elif opt == "056" %}وسائد هوائية ستارية / Curtain Airbags
-                            {% elif opt == "057" %}مفتاح ذكي / Smart Key
-                            {% elif opt == "058" %}كاميرا خلفية / Rear View Camera
-                            {% elif opt == "059" %}صندوق أمتعة كهربائي / Power Trunk
-                            {% elif opt == "062" %}حامل سقف / Roof Rack
-                            {% elif opt == "068" %}نظام مراقبة النقطة العمياء / Blind Spot Detection
-                            {% elif opt == "071" %}منفذ AUX / AUX Port
-                            {% elif opt == "072" %}منفذ USB / USB Port
-                            {% elif opt == "074" %}نظام دفع الرسوم الآلي / Hi-Pass
-                            {% elif opt == "080" %}إغلاق أبواب أوتوماتيكي / Ghost Door Closing
-                            {% elif opt == "081" %}حساس مطر / Rain Sensor
-                            {% elif opt == "082" %}عجلة قيادة مدفأة / Heated Steering Wheel
-                            {% elif opt == "083" %}عجلة قيادة قابلة للتعديل كهربائياً / Power Adjustable Steering Wheel
-                            {% elif opt == "084" %}مبدل سرعات على عجلة القيادة / Paddle Shift
-                            {% elif opt == "086" %}نظام مراقبة النقطة العمياء / Blind Spot Detection
-                            {% elif opt == "087" %}رؤية محيطية 360 درجة / 360-degree Around View
-                            {% elif opt == "088" %}نظام التحذير من مغادرة المسار / Lane Departure Warning System
-                            {% elif opt == "089" %}مقاعد كهربائية (خلفية) / Power Seats (Rear)
-                            {% elif opt == "090" %}مقاعد مهواة (خلفية) / Ventilated Seats (Rear)
-                            {% elif opt == "091" %}مقاعد بخاصية التدليك / Massage Seats
-                            {% elif opt == "094" %}فرامل يد إلكترونية / Electronic Parking Brake
-                            {% elif opt == "095" %}شاشة عرض أمامية / Head-Up Display
-                            {% elif opt == "096" %}بلوتوث / Bluetooth
-                            {% elif opt == "097" %}إضاءة أوتوماتيكية / Auto Light
-                            {% else %}{{ opt }}
-                        {% endif %}
+                        {{ opt|translate_option }}
                     </span>
                     {% endfor %}
                 </div>
             </div>
             {% endif %}
+        <!-- Inspection Images -->
+            {% if car.lot_number and car.category.name != "auction" %}
+            {{car.lot_number}} {{car.category.name}}
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h5 class="font-semibold text-lg mb-3">Inspection Images</h5>
+                <div class="w-full overflow-hidden rounded-lg border border-gray-200 relative" style="height: 600px;">
+                    <iframe 
+                        src="https://fem.encar.com/cars/report/inspect/{{car.lot_number}}" 
+                        class="w-full h-full border-0"
+                        style="
+                            position: absolute;
+                            top: 0;
+                            left: 25%;
+                            width: 100%;
+                            height: 1000px;
+                            transform: scale(0.8) translateX(-12.5%);
+                            transform-origin: top left;
+                        "
+                        scrolling="no"
+                        frameborder="0"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+            {% endif %}
+
 
             <!-- Ratings Section -->
             {% if ratings is not None %}
