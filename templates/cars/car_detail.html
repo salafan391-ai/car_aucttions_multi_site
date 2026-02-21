@@ -235,7 +235,7 @@
                         <div class="font-bold text-sm">{{ car.seat_color.name }}</div>
                     </div>
                     {% endif %}
-                      {% if car.seat_count %}
+                      {% if car.seat_count and car.seat_count > 0 %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">عدد المقاعد</div>
                         <div class="font-bold text-sm">{{ car.seat_count }}</div>
