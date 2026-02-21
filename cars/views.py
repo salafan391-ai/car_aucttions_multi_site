@@ -618,12 +618,12 @@ def wishlist_count(request):
 def post_list(request):
     # Get current tenant
     tenant = _get_current_tenant()
-    
-    # Filter posts by tenant (or show all if public schema)
+
+    # Always filter by tenant — posts are site-specific
     posts = Post.objects.filter(is_published=True)
-    if tenant and not _is_public_schema():
+    if tenant:
         posts = posts.filter(tenant=tenant)
-    
+
     posts = posts.prefetch_related('images')
     
     # Pagination
@@ -644,11 +644,11 @@ def post_detail(request, pk):
     
     # Base query
     qs = Post.objects.prefetch_related('images').filter(pk=pk, is_published=True)
-    
-    # Filter by tenant if not public schema
-    if tenant and not _is_public_schema():
+
+    # Always filter by tenant — posts are site-specific
+    if tenant:
         qs = qs.filter(tenant=tenant)
-    
+
     post = get_object_or_404(qs)
     
     # Increment view count
@@ -682,15 +682,15 @@ def post_like_toggle(request, pk):
     # Get current tenant
     tenant = _get_current_tenant()
     
-    # Base query
+    # Base query — post_like_toggle
     qs = Post.objects.filter(pk=pk)
-    
-    # Filter by tenant if not public schema
-    if tenant and not _is_public_schema():
+
+    # Always filter by tenant — posts are site-specific
+    if tenant:
         qs = qs.filter(tenant=tenant)
-    
+
     post = get_object_or_404(qs)
-    
+
     like, created = PostLike.objects.get_or_create(post=post, user=request.user)
     
     if not created:
@@ -716,13 +716,13 @@ def post_comment_add(request, pk):
     # Get current tenant
     tenant = _get_current_tenant()
     
-    # Base query
+    # Base query — post_comment_add
     qs = Post.objects.filter(pk=pk)
-    
-    # Filter by tenant if not public schema
-    if tenant and not _is_public_schema():
+
+    # Always filter by tenant — posts are site-specific
+    if tenant:
         qs = qs.filter(tenant=tenant)
-    
+
     post = get_object_or_404(qs)
     comment_text = request.POST.get('comment', '').strip()
     
@@ -814,13 +814,13 @@ def post_edit(request, pk):
     # Get current tenant
     tenant = _get_current_tenant()
     
-    # Base query
+    # Base query — post_edit
     qs = Post.objects.filter(pk=pk)
-    
-    # Filter by tenant if not public schema
-    if tenant and not _is_public_schema():
+
+    # Always filter by tenant — posts are site-specific
+    if tenant:
         qs = qs.filter(tenant=tenant)
-    
+
     post = get_object_or_404(qs)
     
     if not request.user.is_staff:

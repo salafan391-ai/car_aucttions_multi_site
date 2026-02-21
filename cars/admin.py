@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.db import connection
-from .models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Wishlist, Post, PostImage, PostLike, PostComment
+from .models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Wishlist, Post, PostImage, PostLike, PostComment,Category
 
 class PostImageInline(admin.TabularInline):
     model = PostImage
@@ -105,3 +105,7 @@ class WishlistAdmin(admin.ModelAdmin):
     list_display = ('user', 'car', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('user__username', 'car__title')
+
+
+
+admin.site.register(Category)

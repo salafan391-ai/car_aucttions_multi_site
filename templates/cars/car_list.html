@@ -662,8 +662,8 @@
                     <span>{{ car.mileage|intcomma }} كم</span>
                     {% endif %}
                     {% if car.fuel %}
-                    <span class="hidden sm:inline">&bull;</span>
-                    <span class="hidden sm:inline">{{ car.fuel }}</span>
+                    <span>&bull;</span>
+                    <span>{{ car.fuel }}</span>
                     {% endif %}
                 </div>
                 {% if car.auction_date %}
