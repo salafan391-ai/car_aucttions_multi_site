@@ -101,10 +101,15 @@ def send_order_placed_email(order):
     if order.user.email:
         send_tenant_email(order.user.email, subject, body, 'order_placed', order.user)
 
-    # Notify the admin (using tenant email)
-    config = get_tenant_email_config()
-    if config:
-        admin_email = config['from_email']
+    # Notify the admin — use tenant.email (business contact), fallback to SMTP username
+    try:
+        schema = connection.schema_name
+        tenant = Tenant.objects.get(schema_name=schema)
+        admin_email = tenant.email or tenant.email_username or None
+    except Tenant.DoesNotExist:
+        admin_email = None
+
+    if admin_email:
         admin_subject = f"🛒 طلب شراء جديد #{order.pk} من {order.user.get_short_name() or order.user.username}"
         admin_body = f"""
         <div dir="rtl" style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -112,7 +117,7 @@ def send_order_placed_email(order):
             <table style="border-collapse:collapse;width:100%;">
               <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">رقم الطلب</td><td style="padding:8px;border:1px solid #e5e7eb;">#{order.pk}</td></tr>
               <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">العميل</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.user.get_short_name() or order.user.username}</td></tr>
-              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">البريد الإلكتروني</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.user.email or '—'}</td></tr>
+              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">بريد العميل</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.user.email or '—'}</td></tr>
               <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">السيارة</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.car.title}</td></tr>
               <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">السعر المعروض</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.offer_price:,.0f} ₩</td></tr>
               <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">ملاحظات العميل</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.notes or '—'}</td></tr>
