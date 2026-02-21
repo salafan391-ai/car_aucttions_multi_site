@@ -116,6 +116,39 @@ def send_order_placed_email(order):
         pass
 
     if admin_emails:
+        # Build the tenant domain for clickable links
+        try:
+            from tenants.models import Domain
+            domain_obj = Domain.objects.filter(
+                tenant__schema_name=connection.schema_name, is_primary=True
+            ).first()
+            base_url = f"https://{domain_obj.domain}" if domain_obj else ""
+        except Exception:
+            base_url = ""
+
+        dashboard_url = f"{base_url}/site/dashboard/" if base_url else ""
+        admin_order_url = f"{base_url}/admin/site_cars/siteorder/{order.pk}/change/" if base_url else ""
+
+        # Build link buttons HTML
+        links_html = ""
+        if dashboard_url or admin_order_url:
+            links_html = '<div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">'
+            if admin_order_url:
+                links_html += (
+                    f'<a href="{admin_order_url}" '
+                    f'style="background:#7c3aed;color:#fff;padding:10px 20px;border-radius:8px;'
+                    f'text-decoration:none;font-weight:bold;font-size:14px;">'
+                    f'📋 فتح الطلب في الإدارة</a>'
+                )
+            if dashboard_url:
+                links_html += (
+                    f'<a href="{dashboard_url}" '
+                    f'style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:8px;'
+                    f'text-decoration:none;font-weight:bold;font-size:14px;margin-right:8px;">'
+                    f'📊 لوحة التحكم</a>'
+                )
+            links_html += '</div>'
+
         admin_subject = f"🛒 طلب شراء جديد #{order.pk} من {order.user.get_short_name() or order.user.username}"
         admin_body = f"""
         <div dir="rtl" style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
@@ -128,6 +161,7 @@ def send_order_placed_email(order):
               <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">السعر المعروض</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.offer_price:,.0f} ₩</td></tr>
               <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">ملاحظات العميل</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.notes or '—'}</td></tr>
             </table>
+            {links_html}
             <p style="margin-top:16px;color:#6b7280;font-size:13px;">تم الاستلام في: {order.created_at.strftime('%Y-%m-%d %H:%M')}</p>
         </div>
         """
