@@ -97,8 +97,30 @@ def send_order_placed_email(order):
         <p style="color: #9ca3af; font-size: 12px;">هذه رسالة تلقائية، لا تقم بالرد عليها.</p>
     </div>
     """
+    # Notify the customer
     if order.user.email:
         send_tenant_email(order.user.email, subject, body, 'order_placed', order.user)
+
+    # Notify the admin (using tenant email)
+    config = get_tenant_email_config()
+    if config:
+        admin_email = config['from_email']
+        admin_subject = f"🛒 طلب شراء جديد #{order.pk} من {order.user.get_short_name() or order.user.username}"
+        admin_body = f"""
+        <div dir="rtl" style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #7c3aed;">🛒 طلب شراء جديد</h2>
+            <table style="border-collapse:collapse;width:100%;">
+              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">رقم الطلب</td><td style="padding:8px;border:1px solid #e5e7eb;">#{order.pk}</td></tr>
+              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">العميل</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.user.get_short_name() or order.user.username}</td></tr>
+              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">البريد الإلكتروني</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.user.email or '—'}</td></tr>
+              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">السيارة</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.car.title}</td></tr>
+              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">السعر المعروض</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.offer_price:,.0f} ₩</td></tr>
+              <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">ملاحظات العميل</td><td style="padding:8px;border:1px solid #e5e7eb;">{order.notes or '—'}</td></tr>
+            </table>
+            <p style="margin-top:16px;color:#6b7280;font-size:13px;">تم الاستلام في: {order.created_at.strftime('%Y-%m-%d %H:%M')}</p>
+        </div>
+        """
+        send_tenant_email(admin_email, admin_subject, admin_body, 'order_placed_admin')
 
 
 def send_order_status_email(order):

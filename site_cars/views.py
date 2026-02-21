@@ -271,6 +271,7 @@ def sold_cars(request):
 
 
 @login_required
+@login_required
 def place_order(request, pk):
     if _is_public_schema():
         return redirect('home')

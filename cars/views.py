@@ -472,7 +472,7 @@ def car_detail(request, slug):
 
 def car_request(request):
     if request.method == 'POST':
-        CarRequest.objects.create(
+        car_req = CarRequest.objects.create(
             name=request.POST.get('name', ''),
             phone=request.POST.get('phone', ''),
             city=request.POST.get('city', ''),
@@ -483,6 +483,37 @@ def car_request(request):
             fuel=request.POST.get('fuel', ''),
             details=request.POST.get('details', ''),
         )
+        # Send email notification to admin
+        try:
+            tenant = _get_current_tenant()
+            admin_email = tenant.email if tenant and tenant.email else None
+            if admin_email:
+                from site_cars.email_utils import send_tenant_email
+                body = f"""
+                <div dir="rtl" style="font-family:Arial,sans-serif;">
+                <h2 style="color:#7c3aed;">🚗 طلب سيارة جديد</h2>
+                <table style="border-collapse:collapse;width:100%;">
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الاسم</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.name}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الجوال</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.phone}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">المدينة</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.city}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الشركة</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.brand}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الموديل</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.model}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">السنة</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.year}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الوقود</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.fuel}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الألوان</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.colors}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">التفاصيل</td><td style="padding:8px;border:1px solid #e5e7eb;">{car_req.details or '—'}</td></tr>
+                </table>
+                <p style="margin-top:16px;color:#6b7280;font-size:13px;">تم الاستلام في: {car_req.created_at.strftime('%Y-%m-%d %H:%M')}</p>
+                </div>
+                """
+                send_tenant_email(
+                    recipient_email=admin_email,
+                    subject=f'طلب سيارة جديد من {car_req.name}',
+                    body_html=body,
+                    email_type='order_notification',
+                )
+        except Exception:
+            pass  # Never block the user if email fails
         messages.success(request, 'تم إرسال طلبك بنجاح! سنتواصل معك قريباً.')
         return redirect('car_request')
     return render(request, 'cars/car_request.html')
@@ -531,12 +562,38 @@ def logout_view(request):
 
 def contact(request):
     if request.method == 'POST':
-        Contact.objects.create(
+        msg = Contact.objects.create(
             name=request.POST.get('name', ''),
             email=request.POST.get('email', ''),
             phone=request.POST.get('phone', ''),
             message=request.POST.get('message', ''),
         )
+        # Send email notification to admin
+        try:
+            tenant = _get_current_tenant()
+            admin_email = tenant.email if tenant and tenant.email else None
+            if admin_email:
+                from site_cars.email_utils import send_tenant_email
+                body = f"""
+                <div dir="rtl" style="font-family:Arial,sans-serif;">
+                <h2 style="color:#2563eb;">✉️ رسالة تواصل جديدة</h2>
+                <table style="border-collapse:collapse;width:100%;">
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الاسم</td><td style="padding:8px;border:1px solid #e5e7eb;">{msg.name}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">البريد الإلكتروني</td><td style="padding:8px;border:1px solid #e5e7eb;">{msg.email}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الجوال</td><td style="padding:8px;border:1px solid #e5e7eb;">{msg.phone}</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;font-weight:bold;">الرسالة</td><td style="padding:8px;border:1px solid #e5e7eb;">{msg.message}</td></tr>
+                </table>
+                <p style="margin-top:16px;color:#6b7280;font-size:13px;">تم الاستلام في: {msg.created_at.strftime('%Y-%m-%d %H:%M')}</p>
+                </div>
+                """
+                send_tenant_email(
+                    recipient_email=admin_email,
+                    subject=f'رسالة تواصل جديدة من {msg.name}',
+                    body_html=body,
+                    email_type='contact_notification',
+                )
+        except Exception:
+            pass  # Never block the user if email fails
         messages.success(request, 'تم إرسال رسالتك بنجاح! شكراً لتواصلك معنا.')
         return redirect('contact')
     return render(request, 'cars/contact.html')

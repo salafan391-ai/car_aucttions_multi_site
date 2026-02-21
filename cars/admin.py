@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db import connection
-from .models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Wishlist, Post, PostImage, PostLike, PostComment,Category
+from django.utils.html import format_html
+from .models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Wishlist, Post, PostImage, PostLike, PostComment, Category, CarRequest, Contact
 
 class PostImageInline(admin.TabularInline):
     model = PostImage
@@ -106,6 +107,56 @@ class WishlistAdmin(admin.ModelAdmin):
     list_filter = ('created_at',)
     search_fields = ('user__username', 'car__title')
 
+
+@admin.register(CarRequest)
+class CarRequestAdmin(admin.ModelAdmin):
+    list_display = ('name', 'phone', 'brand', 'model', 'year', 'city', 'status', 'is_read', 'created_at')
+    list_filter = ('status', 'is_read', 'created_at')
+    search_fields = ('name', 'phone', 'brand', 'model', 'city')
+    list_editable = ('status', 'is_read')
+    readonly_fields = ('created_at', 'updated_at')
+    ordering = ('-created_at',)
+
+    fieldsets = (
+        ('معلومات العميل', {
+            'fields': ('name', 'phone', 'city')
+        }),
+        ('تفاصيل السيارة المطلوبة', {
+            'fields': ('brand', 'model', 'year', 'colors', 'fuel', 'details')
+        }),
+        ('حالة الطلب', {
+            'fields': ('status', 'is_read', 'admin_notes')
+        }),
+        ('التواريخ', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # Mark unread count in the title
+        return qs
+
+    def changelist_view(self, request, extra_context=None):
+        # Mark as read when admin opens the list
+        extra_context = extra_context or {}
+        extra_context['unread_count'] = CarRequest.objects.filter(is_read=False).count()
+        return super().changelist_view(request, extra_context=extra_context)
+
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'phone', 'message_preview', 'is_read', 'created_at')
+    list_filter = ('is_read', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'message')
+    list_editable = ('is_read',)
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
+
+    def message_preview(self, obj):
+        return obj.message[:60] + '...' if len(obj.message) > 60 else obj.message
+    message_preview.short_description = 'الرسالة'
 
 
 admin.site.register(Category)
