@@ -512,6 +512,9 @@ def delete_expired_auctions(request):
     schema = connection.tenant.schema_name
     cutoff = timezone.now()
 
+    # Double-quote the schema name so hyphens (e.g. "hassan-trading") are valid.
+    quoted = f'"{schema}"'
+
     # Use raw SQL with explicit schema-qualified table names so the DELETE
     # runs entirely inside the tenant schema and bypasses Django ORM's
     # cross-schema cascade collector (which causes FK violations).
@@ -525,13 +528,13 @@ def delete_expired_auctions(request):
               AND a.auction_date < %s
               AND a.status = 'available'
               AND a.id NOT IN (
-                  SELECT car_id FROM {schema}.site_cars_siteorder
+                  SELECT car_id FROM {quoted}.site_cars_siteorder
                   UNION ALL
-                  SELECT car_id FROM {schema}.site_cars_siterating
+                  SELECT car_id FROM {quoted}.site_cars_siterating
                   UNION ALL
-                  SELECT car_id FROM {schema}.site_cars_sitesoldcar
+                  SELECT car_id FROM {quoted}.site_cars_sitesoldcar
                   UNION ALL
-                  SELECT car_id FROM {schema}.site_cars_sitequestion WHERE car_id IS NOT NULL
+                  SELECT car_id FROM {quoted}.site_cars_sitequestion WHERE car_id IS NOT NULL
               )
         """, [cutoff])
         ids_to_delete = [row[0] for row in cur.fetchall()]
