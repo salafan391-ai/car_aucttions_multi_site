@@ -22,4 +22,5 @@ urlpatterns = [
     path('inbox/compose/', views.compose_message, name='compose_message'),
     path('send-email/', views.send_email_view, name='send_email'),
     path('upload-auction/', views.upload_auction_json, name='upload_auction_json'),
+    path('upload-auction/delete-expired/', views.delete_expired_auctions, name='delete_expired_auctions'),
 ]

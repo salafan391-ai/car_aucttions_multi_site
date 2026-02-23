@@ -6,6 +6,7 @@ from django.db.models import Avg, Sum, Count, Q
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
 from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
@@ -494,6 +495,62 @@ def send_email_view(request):
 
     recent_logs = SiteEmailLog.objects.all()[:20]
     return render(request, 'site_cars/send_email.html', {'recent_logs': recent_logs})
+
+
+# ── Admin: Delete Expired Auctions ──
+
+@require_POST
+@staff_member_required
+def delete_expired_auctions(request):
+    if _is_public_schema():
+        return redirect('home')
+
+    from django.db import connection
+    from django.utils import timezone
+    from django.contrib import messages as dj_messages
+
+    schema = connection.tenant.schema_name
+    cutoff = timezone.now()
+
+    # Use raw SQL with explicit schema-qualified table names so the DELETE
+    # runs entirely inside the tenant schema and bypasses Django ORM's
+    # cross-schema cascade collector (which causes FK violations).
+    with connection.cursor() as cur:
+        # 1. Collect IDs of expired available auction cars that have NO
+        #    references in any tenant-side FK table.
+        cur.execute(f"""
+            SELECT a.id FROM cars_apicar a
+            INNER JOIN cars_category c ON c.id = a.category_id
+            WHERE c.name = 'auction'
+              AND a.auction_date < %s
+              AND a.status = 'available'
+              AND a.id NOT IN (
+                  SELECT car_id FROM {schema}.site_cars_siteorder
+                  UNION ALL
+                  SELECT car_id FROM {schema}.site_cars_siterating
+                  UNION ALL
+                  SELECT car_id FROM {schema}.site_cars_sitesoldcar
+                  UNION ALL
+                  SELECT car_id FROM {schema}.site_cars_sitequestion WHERE car_id IS NOT NULL
+              )
+        """, [cutoff])
+        ids_to_delete = [row[0] for row in cur.fetchall()]
+
+    if not ids_to_delete:
+        dj_messages.info(request, 'لا توجد سيارات مزاد منتهية للحذف.')
+        return redirect('upload_auction_json')
+
+    # 2. Delete in batches using ORM (safe now — none of these IDs have FK refs)
+    from cars.models import ApiCar
+    deleted_count = 0
+    batch_size = 200
+    for i in range(0, len(ids_to_delete), batch_size):
+        batch = ids_to_delete[i:i + batch_size]
+        count, _ = ApiCar.objects.filter(id__in=batch).delete()
+        deleted_count += count
+
+    dj_messages.success(request, f'تم حذف {deleted_count} سيارة مزاد منتهية الصلاحية بنجاح.')
+    return redirect('upload_auction_json')
 
 
 # ── Admin: Upload Auction JSON ──
