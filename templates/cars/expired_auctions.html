@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize safe_query %}
 
 {% block title %}مزادات منتهية - {{ site_name|default:"سيارات" }}{% endblock %}
 
@@ -35,11 +35,11 @@
     <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide mb-4 sm:mb-6">
         <span class="text-[10px] sm:text-xs text-gray-400 font-medium whitespace-nowrap">ترتيب:</span>
         {% with current_sort=request.GET.sort|default:"-auction_date" %}
-        <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=-auction_date" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-auction_date' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث تاريخاً</a>
-        <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=auction_date" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'auction_date' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأقدم تاريخاً</a>
-        <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'price' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأرخص</a>
-        <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=-price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-price' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأغلى</a>
-        <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}sort=-year" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-year' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث صنعاً</a>
+    <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}sort=-auction_date" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-auction_date' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث تاريخاً</a>
+    <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}sort=auction_date" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'auction_date' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأقدم تاريخاً</a>
+    <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}sort=price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'price' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأرخص</a>
+    <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}sort=-price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-price' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأغلى</a>
+    <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}sort=-year" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-year' %}bg-purple-600 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث صنعاً</a>
         {% endwith %}
     </div>
 
@@ -108,17 +108,17 @@
     <nav class="mt-8 flex justify-center">
         <div class="flex items-center gap-1">
             {% if page_obj.has_previous %}
-            <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition">&rarr;</a>
+            <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort|qs_value }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition">&rarr;</a>
             {% endif %}
             {% for num in page_obj.paginator.page_range %}
                 {% if page_obj.number == num %}
                 <span class="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold">{{ num }}</span>
                 {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
-                <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ num }}" class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition">{{ num }}</a>
+                <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort|qs_value }}&{% endif %}page={{ num }}" class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition">{{ num }}</a>
                 {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
-            <a href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition">&larr;</a>
+            <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort|qs_value }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition">&larr;</a>
             {% endif %}
         </div>
     </nav>
