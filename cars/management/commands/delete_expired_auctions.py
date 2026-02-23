@@ -42,9 +42,12 @@ class Command(BaseCommand):
             with schema_context(tenant.schema_name):
                 # Only consider auction cars that are still marked as available —
                 # we don't want to delete sold/pending records.
+                # Also exclude cars that have linked SiteOrders to avoid FK violations.
+                from site_cars.models import SiteOrder
+                ordered_car_ids = SiteOrder.objects.values_list('car_id', flat=True)
                 qs = ApiCar.objects.filter(
                     category__name='auction', auction_date__lt=cutoff, status='available'
-                )
+                ).exclude(id__in=ordered_car_ids)
                 count = qs.count()
                 total_found += count
                 if count == 0:
