@@ -6,6 +6,9 @@ def tenant_branding(request):
     tenant = getattr(connection, "tenant", None)
     if tenant is None:
         return {}
+    # FakeTenant is used by django_tenants when no real tenant is active
+    if not hasattr(tenant, 'name'):
+        return {}
     
     # Get all phone numbers for the tenant
     phone_numbers = []
