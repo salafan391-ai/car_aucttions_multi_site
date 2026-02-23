@@ -62,6 +62,7 @@ TAILWIND_APP_NAME = "theme"
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 MIDDLEWARE = [
+    "tenants.middleware.QueryStringGuardMiddleware",
     "django_tenants.middleware.main.TenantMainMiddleware",
     "tenants.middleware.TenantPublicSchemaMiddleware",
     "django.middleware.security.SecurityMiddleware",

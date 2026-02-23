@@ -37,51 +37,90 @@ def _exclude_expired_auctions(qs):
 
 
 @ensure_csrf_cookie
+@cache_page(60 * 3)  # Cache homepage for 3 minutes
+@cache_control(public=True, max_age=180)
 def home(request):
-    # Use select_related for foreign keys to reduce queries
-    _base_qs = _exclude_expired_auctions(
-        ApiCar.objects.select_related(
-            'manufacturer', 'model', 'badge', 'color', 'body', 'category'
-        )
-    )
-    
-    # Get cars excluding auctions - limit early for performance
-    latest_cars = _base_qs.exclude(category__name='auction').order_by('-created_at')[:12]
-    
-    # Get auctions only - limit early for performance
-    latest_auctions = _base_qs.filter(category__name='auction').order_by('-created_at')[:12]
-    
-    # Only show manufacturers that have non-expired cars
-    base_qs = _exclude_expired_auctions(ApiCar.objects.all())
-    manufacturers = Manufacturer.objects.filter(
-        apicar__in=base_qs
-    ).annotate(car_count=Count('apicar')).distinct().order_by('-car_count')[:20]  # Limit to top 20
-    
-    # Only show body types that have non-expired cars
-    body_types = BodyType.objects.filter(
-        apicar__in=base_qs
-    ).distinct().order_by('name')[:15]  # Limit to 15
-    
-    # Get distinct years efficiently
-    years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')[:20]  # Last 20 years
+    now = timezone.now()
 
+    # ── Single base queryset with direct filter (no subquery) ──
+    _base_qs = ApiCar.objects.select_related(
+        'manufacturer', 'model', 'badge', 'color', 'body', 'category'
+    ).exclude(category__name='auction', auction_date__lt=now)
+
+    # Latest cars (non-auction) – limited early
+    latest_cars = list(
+        _base_qs.exclude(category__name='auction')
+        .order_by('-created_at')
+        .only('id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
+              'status', 'manufacturer_id', 'model_id', 'badge_id',
+              'color_id', 'body_id', 'category_id', 'created_at')[:12]
+    )
+
+    # Latest auctions – limited early
+    latest_auctions = list(
+        _base_qs.filter(category__name='auction')
+        .order_by('-created_at')
+        .only('id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
+              'auction_date', 'auction_name', 'status',
+              'manufacturer_id', 'model_id', 'badge_id',
+              'color_id', 'body_id', 'category_id', 'created_at')[:12]
+    )
+
+    # ── Aggregate counts in ONE query instead of 3+ separate count() calls ──
+    _count_base = ApiCar.objects.exclude(
+        category__name='auction', auction_date__lt=now
+    )
+    agg = _count_base.aggregate(
+        total=Count('id'),
+        auction_count=Count('id', filter=Q(category__name='auction')),
+        cars_count=Count('id', filter=~Q(category__name='auction')),
+    )
+
+    # Manufacturers – use simple annotation, no subquery
+    manufacturers = list(
+        Manufacturer.objects.filter(
+            apicar__in=_count_base
+        ).annotate(
+            car_count=Count('apicar')
+        ).distinct().order_by('-car_count')[:20]
+    )
+
+    # Body types – simple filter
+    body_types = list(
+        BodyType.objects.filter(
+            apicar__in=_count_base
+        ).distinct().order_by('name')[:15]
+    )
+
+    # Years – cheap distinct
+    years = list(
+        ApiCar.objects.values_list('year', flat=True)
+        .distinct().order_by('-year')[:20]
+    )
+
+    # Tenant site cars
     site_cars = []
     tenant = _get_current_tenant()
     if tenant and tenant.schema_name != 'public':
         from site_cars.models import SiteCar
-        site_cars = SiteCar.objects.only('id', 'title', 'image', 'manufacturer', 'model', 'year', 'price').order_by('-created_at')[:8]
+        site_cars = list(
+            SiteCar.objects.only(
+                'id', 'title', 'image', 'manufacturer', 'model', 'year', 'price'
+            ).order_by('-created_at')[:8]
+        )
 
-    # Get posts count and latest post (filtered by tenant)
+    # Posts (filtered by tenant)
     posts_qs = Post.objects.filter(is_published=True)
     if tenant and not _is_public_schema():
         posts_qs = posts_qs.filter(tenant=tenant)
-    
     posts_count = posts_qs.count()
-    latest_post = posts_qs.select_related('author').prefetch_related('images').order_by('-created_at').first()
+    latest_post = (
+        posts_qs.select_related('author')
+        .prefetch_related('images')
+        .order_by('-created_at')
+        .first()
+    )
 
-    # Use exists() for faster boolean checks
-    available_cars_qs = _exclude_expired_auctions(ApiCar.objects.filter(status='available'))
-    
     context = {
         'latest_cars': latest_cars,
         'latest_auctions': latest_auctions,
@@ -89,13 +128,10 @@ def home(request):
         'manufacturers': manufacturers,
         'body_types': body_types,
         'years': years,
-        'total_cars': available_cars_qs.count(),
-        'auction_count': _exclude_expired_auctions(ApiCar.objects.filter(category__name='auction')).count(),
-        'cars_count': _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction')).count(),
+        'total_cars': agg['total'],
+        'auction_count': agg['auction_count'],
+        'cars_count': agg['cars_count'],
         'total_manufacturers': Manufacturer.objects.count(),
-        'total_models': CarModel.objects.count(),
-        'posts_count': posts_count,
-        'latest_post': latest_post,
         'total_models': CarModel.objects.count(),
         'posts_count': posts_count,
         'latest_post': latest_post,
@@ -272,11 +308,17 @@ def car_list(request):
         .values_list('auction_name', flat=True).distinct().order_by('auction_name')
     )
 
-    # Counts for tabs
-    base_qs = _exclude_expired_auctions(ApiCar.objects.all())
-    count_all = base_qs.count()
-    count_cars = base_qs.exclude(category__name='auction').count()
-    count_auction = base_qs.filter(category__name='auction').count()
+    # Counts for tabs – single aggregate query instead of 3 separate counts
+    now = timezone.now()
+    _tab_base = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
+    tab_agg = _tab_base.aggregate(
+        count_all=Count('id'),
+        count_auction=Count('id', filter=Q(category__name='auction')),
+        count_cars=Count('id', filter=~Q(category__name='auction')),
+    )
+    count_all = tab_agg['count_all']
+    count_cars = tab_agg['count_cars']
+    count_auction = tab_agg['count_auction']
 
     # Popular manufacturers (top 20 by car count)
 
