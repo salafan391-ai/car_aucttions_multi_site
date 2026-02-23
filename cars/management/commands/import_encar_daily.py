@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, Tuple
 
 import requests
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import connection, transaction
 from django.core.exceptions import MultipleObjectsReturned
 
 from core.models import (
@@ -359,6 +359,23 @@ class Command(BaseCommand):
         if not dry_run and batch_new:
             with transaction.atomic():
                 ApiCar.objects.bulk_create(batch_new, ignore_conflicts=True)
+                with connection.cursor() as cur:
+                    cur.execute("""
+                        UPDATE cars_apicar
+                        SET slug = CONCAT(
+                            COALESCE(CAST(year AS TEXT), ''), '-',
+                            LOWER(REGEXP_REPLACE(
+                                COALESCE((SELECT name FROM cars_manufacturer WHERE id = manufacturer_id), ''),
+                                '[^a-zA-Z0-9]+', '-', 'g'
+                            )), '-',
+                            LOWER(REGEXP_REPLACE(
+                                COALESCE((SELECT name FROM cars_carmodel WHERE id = model_id), ''),
+                                '[^a-zA-Z0-9]+', '-', 'g'
+                            )), '-',
+                            CAST(id AS TEXT)
+                        )
+                        WHERE slug IS NULL OR slug = ''
+                    """)
 
         return created, updated
 
@@ -469,6 +486,23 @@ class Command(BaseCommand):
             if not dry_run and len(batch_new) >= 1000:
                 with transaction.atomic():
                     ApiCar.objects.bulk_create(batch_new, ignore_conflicts=True)
+                    with connection.cursor() as cur:
+                        cur.execute("""
+                            UPDATE cars_apicar
+                            SET slug = CONCAT(
+                                COALESCE(CAST(year AS TEXT), ''), '-',
+                                LOWER(REGEXP_REPLACE(
+                                    COALESCE((SELECT name FROM cars_manufacturer WHERE id = manufacturer_id), ''),
+                                    '[^a-zA-Z0-9]+', '-', 'g'
+                                )), '-',
+                                LOWER(REGEXP_REPLACE(
+                                    COALESCE((SELECT name FROM cars_carmodel WHERE id = model_id), ''),
+                                    '[^a-zA-Z0-9]+', '-', 'g'
+                                )), '-',
+                                CAST(id AS TEXT)
+                            )
+                            WHERE slug IS NULL OR slug = ''
+                        """)
                 batch_new.clear()
 
             # Progress output
@@ -482,6 +516,23 @@ class Command(BaseCommand):
         if not dry_run and batch_new:
             with transaction.atomic():
                 ApiCar.objects.bulk_create(batch_new, ignore_conflicts=True)
+                with connection.cursor() as cur:
+                    cur.execute("""
+                        UPDATE cars_apicar
+                        SET slug = CONCAT(
+                            COALESCE(CAST(year AS TEXT), ''), '-',
+                            LOWER(REGEXP_REPLACE(
+                                COALESCE((SELECT name FROM cars_manufacturer WHERE id = manufacturer_id), ''),
+                                '[^a-zA-Z0-9]+', '-', 'g'
+                            )), '-',
+                            LOWER(REGEXP_REPLACE(
+                                COALESCE((SELECT name FROM cars_carmodel WHERE id = model_id), ''),
+                                '[^a-zA-Z0-9]+', '-', 'g'
+                            )), '-',
+                            CAST(id AS TEXT)
+                        )
+                        WHERE slug IS NULL OR slug = ''
+                    """)
 
         return created, updated
 

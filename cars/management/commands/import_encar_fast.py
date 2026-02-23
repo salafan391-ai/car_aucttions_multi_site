@@ -516,6 +516,23 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     connection.cursor().execute("SET LOCAL statement_timeout = 0")
                     ApiCar.objects.bulk_create(new_objs, ignore_conflicts=True, batch_size=batch_size)
+                    # Generate slugs for newly created cars that have none
+                    connection.cursor().execute("""
+                        UPDATE cars_apicar
+                        SET slug = CONCAT(
+                            COALESCE(CAST(year AS TEXT), ''), '-',
+                            LOWER(REGEXP_REPLACE(
+                                COALESCE((SELECT name FROM cars_manufacturer WHERE id = manufacturer_id), ''),
+                                '[^a-zA-Z0-9]+', '-', 'g'
+                            )), '-',
+                            LOWER(REGEXP_REPLACE(
+                                COALESCE((SELECT name FROM cars_carmodel WHERE id = model_id), ''),
+                                '[^a-zA-Z0-9]+', '-', 'g'
+                            )), '-',
+                            CAST(id AS TEXT)
+                        )
+                        WHERE slug IS NULL OR slug = ''
+                    """)
 
             # bulk_update: each sub-batch in its own transaction + SET LOCAL so
             # Heroku's 30s statement timeout never fires on a single UPDATE statement.
