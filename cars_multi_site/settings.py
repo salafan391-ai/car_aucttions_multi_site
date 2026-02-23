@@ -256,10 +256,7 @@ if not DEBUG:
             "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         },
         "staticfiles": {
-            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-            "OPTIONS": {
-                "manifest_strict": False,
-            },
+            "BACKEND": "cars_multi_site.storage.RelaxedManifestStaticFilesStorage",
         }
     }
 else:
