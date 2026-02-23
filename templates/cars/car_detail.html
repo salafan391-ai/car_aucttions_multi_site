@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% load whatsapp_tags custom_filters humanize static %}
 
-{% block meta_description %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
-{% block meta_keywords %}{{ car.title }}, {{ car.manufacturer.name }}, {{ car.model.name }}, سيارة {{ car.year }}, {% if car.color.name %}{{ car.color.name }}, {% endif %}{% if car.body.name %}{{ car.body.name }}, {% endif %}{% if car.category.name == 'auction' %}مزاد سيارة, سيارة مزاد{% else %}سيارة للبيع, شراء سيارة{% endif %}, {{ car.price|intcomma }} ريال, {{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_keywords %}{{ car.manufacturer.name }}, {{ car.model.name }}, سيارة {{ car.year }}, {% if car.color.name %}{{ car.color.name }}, {% endif %}{% if car.body.name %}{{ car.body.name }}, {% endif %}{% if car.category.name == 'auction' %}مزاد سيارة, سيارة مزاد{% else %}سيارة للبيع, شراء سيارة{% endif %}, {{ car.price|intcomma }} ريال, {{ site_name|default:"سيارات" }}{% endblock %}
 
-{% block og_title %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
-{% block og_description %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block og_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
+{% block og_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
 {% block og_type %}product{% endblock %}
 {% block og_image %}{% if car.image %}{{ car.image }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
 
-{% block twitter_title %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
-{% block twitter_description %}{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block twitter_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
+{% block twitter_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
 {% block twitter_image %}{% if car.image %}{{ car.image }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
 
 {% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}{% endblock %}
@@ -20,8 +20,8 @@
 {
     "@context": "https://schema.org",
     "@type": {% if car.category.name == 'auction' %}"Offer"{% else %}"Vehicle"{% endif %},
-    "name": "{{ car.title }}",
-    "description": "{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال",
+    "name": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}",
+    "description": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال",
     "brand": {
         "@type": "Brand",
         "name": "{{ car.manufacturer.name }}"
@@ -62,7 +62,7 @@
 </script>
 {% endblock %}
 
-{% block title %}{{ car.title }} - {{ site_name|default:"سيارات" }}{% endblock %}
+{% block title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }} - {{ site_name|default:"سيارات" }}{% endblock %}
 
 {% block content %}
 <section class="max-w-7xl mx-auto px-4 py-8">
@@ -85,7 +85,7 @@
                     <!-- Main Image -->
                     {% if car.image %}
                     <div class="slider-image active w-full h-full">
-                        <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
+                        <img src="{{ car.image }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endif %}
                     
@@ -93,7 +93,7 @@
                     {% if car.images %}
                     {% for img in car.images %}
                     <div class="slider-image {% if not car.image and forloop.first %}active{% endif %} w-full h-full {% if car.image or not forloop.first %}hidden{% endif %}">
-                        <img src="{{ img }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
+                        <img src="{{ img }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endfor %}
                     {% endif %}
@@ -140,7 +140,7 @@
             <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
                 {% if car.image %}
                 <button onclick="goToSlide(0)" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
-                    <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
+                    <img src="{{ car.image }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover" loading="lazy">
                 </button>
                 {% endif %}
                 {% for img in car.images %}
@@ -557,7 +557,7 @@
                     <p class="text-xs text-gray-400 mb-2 text-center">مشاركة السيارة</p>
                     <div class="flex gap-2">
                         <!-- WhatsApp share (with image link in text) -->
-                        <a href="https://wa.me/?text={{ car.title }}%20{{ car.year }}%20-%20{{ car.price|intcomma }}%20ريال%0A{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}"
+                        <a href="https://wa.me/?text={{ car.year }}%20-%20{{ car.manufacturer.name }}%20{{ car.model.name }}%20-%20{{ car.price|intcomma }}%20ريال%0A{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}"
                            target="_blank"
                            class="flex-1 flex items-center justify-center gap-1.5 bg-green-500 hover:bg-green-600 text-white text-sm font-medium py-2.5 rounded-xl transition">
                             <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
@@ -610,8 +610,8 @@ function copyCarLink(btn) {
 
 function nativeShare() {
     navigator.share({
-        title: '{{ car.title }} {{ car.year }} - {{ car.manufacturer.name }}',
-        text: '{{ car.title }} {{ car.year }} - {{ car.price|intcomma }} ريال',
+        title: '{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}',
+        text: '{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }} - {{ car.price|intcomma }} ريال',
         url: '{{ request.scheme }}://{{ request.get_host }}{% url "car_detail" car.slug %}',
     });
 }

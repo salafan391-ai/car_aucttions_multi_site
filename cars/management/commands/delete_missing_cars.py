@@ -8,7 +8,7 @@ import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from core.models import ApiCar
+from cars.models import ApiCar
 
 class Command(BaseCommand):
     help = 'Deletes cars from the database that are not in the current file'
