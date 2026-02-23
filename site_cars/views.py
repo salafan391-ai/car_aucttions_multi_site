@@ -770,6 +770,26 @@ def upload_auction_json(request):
                     )
                     updated = len(cars_to_bulk_update)
 
+            # Always fix any missing slugs (covers both new and pre-existing cars)
+            from django.db import connection as _conn
+            with _conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE cars_apicar
+                    SET slug = CONCAT(
+                        COALESCE(CAST(year AS TEXT), ''), '-',
+                        LOWER(REGEXP_REPLACE(
+                            COALESCE((SELECT name FROM cars_manufacturer WHERE id = manufacturer_id), ''),
+                            '[^a-zA-Z0-9]+', '-', 'g'
+                        )), '-',
+                        LOWER(REGEXP_REPLACE(
+                            COALESCE((SELECT name FROM cars_carmodel WHERE id = model_id), ''),
+                            '[^a-zA-Z0-9]+', '-', 'g'
+                        )), '-',
+                        CAST(id AS TEXT)
+                    )
+                    WHERE slug IS NULL OR slug = ''
+                """)
+
         messages.success(request, f'تم الاستيراد بنجاح! {created} سيارة جديدة، {updated} سيارة محدّثة، {skipped} تم تخطيها')
         return redirect('upload_auction_json')
 
