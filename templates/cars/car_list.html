@@ -38,8 +38,8 @@
                     "priceCurrency": "SAR",
                     "availability": "{% if car.status == 'available' %}InStock{% else %}OutOfStock{% endif %}"
                 },
-                "image": "{% if car.image %}{{ request.build_absolute_uri }}{{ car.image.url }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}",
-                "url": "{{ request.build_absolute_uri }}cars/{{ car.id }}/"
+                "image": "{% if car.image %}{{ request.scheme }}://{{ request.get_host }}{{ car.image.url }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}",
+                "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}"
             }{% if not forloop.last %},{% endif %}
             {% endfor %}
         ]
