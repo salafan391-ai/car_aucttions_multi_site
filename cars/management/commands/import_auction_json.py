@@ -44,9 +44,13 @@ class Command(BaseCommand):
     def _parse_auction_date(self, val):
         if not val:
             return None
-        for fmt in ("%d/%m/%Y %I:%M %p", "%d/%m/%Y", "%Y-%m-%d"):
+        from zoneinfo import ZoneInfo
+        from django.utils.timezone import make_aware
+        sa_tz = ZoneInfo("Asia/Riyadh")
+        for fmt in ("%d/%m/%Y %I:%M %p", "%d/%m/%Y %H:%M", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
             try:
-                return datetime.strptime(val.strip(), fmt)
+                naive_dt = datetime.strptime(val.strip(), fmt)
+                return make_aware(naive_dt, sa_tz)
             except ValueError:
                 continue
         return None
