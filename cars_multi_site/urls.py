@@ -19,9 +19,28 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
 from tenants.views import site_settings
 
+
+def robots_txt(request):
+    lines = [
+        "User-agent: *",
+        "Disallow: /order/",
+        "Disallow: /my-orders/",
+        "Disallow: /login/",
+        "Disallow: /register/",
+        "Disallow: /admin/",
+        "Disallow: /site/",
+        "Disallow: /inbox/",
+        "Allow: /cars/",
+        "Allow: /",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
 urlpatterns = [
+    path("robots.txt", robots_txt),
     path("admin/", admin.site.urls),
     path("settings/", site_settings, name="site_settings"),
     path("", include("cars.urls")),
