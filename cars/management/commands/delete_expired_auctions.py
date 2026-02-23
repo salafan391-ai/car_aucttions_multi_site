@@ -42,12 +42,19 @@ class Command(BaseCommand):
             with schema_context(tenant.schema_name):
                 # Only consider auction cars that are still marked as available —
                 # we don't want to delete sold/pending records.
-                # Also exclude cars that have linked SiteOrders to avoid FK violations.
-                from site_cars.models import SiteOrder
-                ordered_car_ids = SiteOrder.objects.values_list('car_id', flat=True)
+                # Exclude any car referenced by tenant-schema tables (SiteOrder,
+                # SiteRating, SiteQuestion, SiteSoldCar) to avoid cross-schema
+                # FK violations that Django's ORM cascade cannot handle.
+                from site_cars.models import SiteOrder, SiteRating, SiteQuestion, SiteSoldCar
+                protected_ids = set()
+                protected_ids.update(SiteOrder.objects.values_list('car_id', flat=True))
+                protected_ids.update(SiteRating.objects.values_list('car_id', flat=True))
+                protected_ids.update(SiteQuestion.objects.exclude(car_id=None).values_list('car_id', flat=True))
+                protected_ids.update(SiteSoldCar.objects.values_list('car_id', flat=True))
+
                 qs = ApiCar.objects.filter(
                     category__name='auction', auction_date__lt=cutoff, status='available'
-                ).exclude(id__in=ordered_car_ids)
+                ).exclude(id__in=protected_ids)
                 count = qs.count()
                 total_found += count
                 if count == 0:
