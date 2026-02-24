@@ -285,15 +285,27 @@ def car_list(request):
             Manufacturer.objects.filter(_filt)
             .distinct().order_by('name')[:50]
         )
-        models_qs = CarModel.objects.filter(_filt).distinct().order_by('name')
     else:
         manufacturers = list(Manufacturer.objects.all().order_by('name')[:50])
-        models_qs = CarModel.objects.all().order_by('name')
 
+    # Only load models/badges when manufacturer/model is selected
+    # (otherwise AJAX loads them on user interaction)
     if manufacturer:
-        models_qs = models_qs.filter(manufacturer_id=manufacturer)
+        models_qs = list(
+            CarModel.objects.filter(manufacturer_id=manufacturer)
+            .order_by('name')[:100]
+        )
+    else:
+        models_qs = []
 
-    models_qs = list(models_qs[:100])
+    model_param = request.GET.get('model')
+    if model_param:
+        badges = list(
+            CarBadge.objects.filter(apicar__model_id=model_param)
+            .distinct().order_by('name')[:50]
+        )
+    else:
+        badges = []
 
     years = list(
         ApiCar.objects.values_list('year', flat=True)
@@ -321,7 +333,6 @@ def car_list(request):
     )
     colors = list(CarColor.objects.all().order_by('name')[:30])
     seat_colors = list(CarSeatColor.objects.all().order_by('name'))
-    badges = list(CarBadge.objects.all().order_by('name'))
 
     auction_names = list(
         ApiCar.objects.filter(category__name='auction')
