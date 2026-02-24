@@ -25,6 +25,32 @@ from tenants.views import site_settings
 
 def robots_txt(request):
     lines = [
+        # ── Block aggressive AI / SEO bots entirely ──
+        "User-agent: GPTBot",
+        "Disallow: /",
+        "",
+        "User-agent: ChatGPT-User",
+        "Disallow: /",
+        "",
+        "User-agent: Google-Extended",
+        "Disallow: /",
+        "",
+        "User-agent: CCBot",
+        "Disallow: /",
+        "",
+        "User-agent: DotBot",
+        "Disallow: /",
+        "",
+        "User-agent: AhrefsBot",
+        "Disallow: /",
+        "",
+        "User-agent: SemrushBot",
+        "Disallow: /",
+        "",
+        "User-agent: MJ12bot",
+        "Disallow: /",
+        "",
+        # ── Normal bots: allow detail pages, block filtered/paginated lists ──
         "User-agent: *",
         "Disallow: /order/",
         "Disallow: /my-orders/",
@@ -33,8 +59,14 @@ def robots_txt(request):
         "Disallow: /admin/",
         "Disallow: /site/",
         "Disallow: /inbox/",
+        "Disallow: /cars/?*page=",
+        "Disallow: /cars/?*car_type=",
+        "Disallow: /cars/?*sort=",
+        "Disallow: /expired-auctions/",
         "Allow: /cars/",
         "Allow: /",
+        "",
+        "Crawl-delay: 5",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
 

@@ -140,7 +140,7 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
         'OPTIONS': {
-            'MAX_ENTRIES': 1000,
+            'MAX_ENTRIES': 200,  # Keep small on 512MB dyno
         }
     }
 }

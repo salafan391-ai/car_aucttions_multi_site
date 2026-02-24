@@ -141,11 +141,20 @@ def home(request):
 
 
 @ensure_csrf_cookie
-@cache_page(60 * 5)  # Cache for 5 minutes
+@cache_control(public=True, max_age=120)
 def car_list(request):
     qs = _exclude_expired_auctions(
         ApiCar.objects.select_related(
             'manufacturer', 'model', 'badge', 'color', 'body'
+        ).only(
+            'id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
+            'status', 'lot_number', 'vin', 'fuel', 'transmission',
+            'auction_date', 'auction_name', 'condition', 'created_at',
+            'manufacturer__id', 'manufacturer__name', 'manufacturer__logo',
+            'model__id', 'model__name',
+            'badge__id', 'badge__name',
+            'color__id', 'color__name',
+            'body__id', 'body__name',
         )
     )
 
@@ -256,60 +265,72 @@ def car_list(request):
     else:
         qs = qs.order_by('-created_at')
 
-    paginator = Paginator(qs, 24)
+    paginator = Paginator(qs, 20)  # 20 items per page to reduce response size
     page_obj = paginator.get_page(request.GET.get('page'))
 
     query_params = request.GET.copy()
     query_params.pop('page', None)
     query_string = query_params.urlencode()
 
-    # Filter manufacturers and models based on car type
+    # ── Filter options – avoid expensive subqueries, use direct joins ──
+    now = timezone.now()
     car_type = request.GET.get('car_type')
-    if car_type == 'auction':
-        # For auctions, only show manufacturers/models for non-expired auction cars
-        base_auction_qs = _exclude_expired_auctions(ApiCar.objects.filter(category__name='auction'))
-        manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:50]
-        models_qs = CarModel.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')
-    else:
-        manufacturers = Manufacturer.objects.all().order_by('name')[:50]
-        models_qs = CarModel.objects.all().order_by('name')
-    
-    if manufacturer:
-        if car_type == 'auction':
-            models_qs = models_qs.filter(manufacturer_id=manufacturer, apicar__in=base_auction_qs).distinct()
-        else:
-            models_qs = models_qs.filter(manufacturer_id=manufacturer)
-    
-    # Apply limit after all filters
-    models_qs = models_qs[:100]
-    years = ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')[:30]  # Last 30 years
 
-    # Filter body types based on car type
     if car_type == 'auction':
-        body_types = BodyType.objects.filter(apicar__in=base_auction_qs).distinct().order_by('name')[:20]
+        # Direct join filter instead of apicar__in=subquery
+        _filt = Q(apicar__category__name='auction') & ~Q(
+            apicar__category__name='auction', apicar__auction_date__lt=now
+        )
+        manufacturers = list(
+            Manufacturer.objects.filter(_filt)
+            .distinct().order_by('name')[:50]
+        )
+        models_qs = CarModel.objects.filter(_filt).distinct().order_by('name')
     else:
-        base_regular_qs = _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction'))
-        body_types = BodyType.objects.filter(
-            apicar__in=base_regular_qs
-        ).distinct().order_by('name')[:20]
-    
-    # Scope filter options to the current car_type for relevant dropdowns
-    filter_base_qs = base_auction_qs if car_type == 'auction' else _exclude_expired_auctions(ApiCar.objects.exclude(category__name='auction'))
-    fuels = filter_base_qs.values_list('fuel', flat=True).exclude(fuel__isnull=True).exclude(fuel='').distinct().order_by('fuel')[:15]
-    transmissions = filter_base_qs.values_list('transmission', flat=True).exclude(transmission__isnull=True).exclude(transmission='').distinct().order_by('transmission')[:10]
-    seat_counts = filter_base_qs.values_list('seat_count', flat=True).exclude(seat_count__isnull=True).exclude(seat_count='').distinct().order_by('seat_count')
-    colors = CarColor.objects.filter(apicar__in=filter_base_qs).distinct().order_by('name')[:30]
-    seat_colors = CarSeatColor.objects.all().order_by('name')
-    badges = CarBadge.objects.all().order_by('name')
-    # Distinct auction names for auction filter
-    auction_names = (
-        ApiCar.objects.filter(category__name='auction')
-        .exclude(auction_name__isnull=True).exclude(auction_name='')
-        .values_list('auction_name', flat=True).distinct().order_by('auction_name')
+        manufacturers = list(Manufacturer.objects.all().order_by('name')[:50])
+        models_qs = CarModel.objects.all().order_by('name')
+
+    if manufacturer:
+        models_qs = models_qs.filter(manufacturer_id=manufacturer)
+
+    models_qs = list(models_qs[:100])
+
+    years = list(
+        ApiCar.objects.values_list('year', flat=True)
+        .distinct().order_by('-year')[:30]
     )
 
-    # Counts for tabs – single aggregate query instead of 3 separate counts
-    now = timezone.now()
+    # Body types – simple all() is fine, not per-car_type
+    body_types = list(BodyType.objects.all().order_by('name')[:20])
+
+    # Simple distinct values – no subquery needed
+    fuels = list(
+        ApiCar.objects.values_list('fuel', flat=True)
+        .exclude(fuel__isnull=True).exclude(fuel='')
+        .distinct().order_by('fuel')[:15]
+    )
+    transmissions = list(
+        ApiCar.objects.values_list('transmission', flat=True)
+        .exclude(transmission__isnull=True).exclude(transmission='')
+        .distinct().order_by('transmission')[:10]
+    )
+    seat_counts = list(
+        ApiCar.objects.values_list('seat_count', flat=True)
+        .exclude(seat_count__isnull=True).exclude(seat_count='')
+        .distinct().order_by('seat_count')
+    )
+    colors = list(CarColor.objects.all().order_by('name')[:30])
+    seat_colors = list(CarSeatColor.objects.all().order_by('name'))
+    badges = list(CarBadge.objects.all().order_by('name'))
+
+    auction_names = list(
+        ApiCar.objects.filter(category__name='auction')
+        .exclude(auction_name__isnull=True).exclude(auction_name='')
+        .values_list('auction_name', flat=True)
+        .distinct().order_by('auction_name')
+    )
+
+    # Counts for tabs – single aggregate query
     _tab_base = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
     tab_agg = _tab_base.aggregate(
         count_all=Count('id'),
@@ -320,16 +341,12 @@ def car_list(request):
     count_cars = tab_agg['count_cars']
     count_auction = tab_agg['count_auction']
 
-    # Popular manufacturers (top 20 by car count)
-
-    if car_type == 'auction':
-        popular_manufacturers = Manufacturer.objects.filter(apicar__in=base_auction_qs).annotate(
-            car_count=Count('apicar', filter=Q(apicar__in=base_auction_qs))
-        ).order_by('-car_count')
-    else:
-        popular_manufacturers = Manufacturer.objects.annotate(
+    # Popular manufacturers – top 20, use simple annotation
+    popular_manufacturers = list(
+        Manufacturer.objects.annotate(
             car_count=Count('apicar')
-        ).order_by('-car_count')
+        ).order_by('-car_count')[:20]
+    )
     context = {
         'page_obj': page_obj,
         'manufacturers': manufacturers,
@@ -359,7 +376,15 @@ def expired_auctions(request):
     now = timezone.now()
     qs = ApiCar.objects.select_related(
         'manufacturer', 'model', 'badge', 'color', 'body'
-    ).filter(category__name='auction', auction_date__lt=now)
+    ).filter(category__name='auction', auction_date__lt=now).only(
+        'id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
+        'status', 'lot_number', 'auction_date', 'auction_name', 'created_at',
+        'manufacturer__id', 'manufacturer__name',
+        'model__id', 'model__name',
+        'badge__id', 'badge__name',
+        'color__id', 'color__name',
+        'body__id', 'body__name',
+    )
 
     q = request.GET.get('q', '').strip()
     if q:
@@ -375,7 +400,7 @@ def expired_auctions(request):
     else:
         qs = qs.order_by('-auction_date')
 
-    paginator = Paginator(qs, 24)
+    paginator = Paginator(qs, 20)  # 20 items per page
     page_obj = paginator.get_page(request.GET.get('page'))
 
     context = {
