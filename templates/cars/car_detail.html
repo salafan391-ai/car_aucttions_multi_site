@@ -270,7 +270,7 @@
                     {% if car.address %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">الموقع</div>
-                        <div class="font-bold text-sm">{{ car.address }}</div>
+                        <div class="font-bold text-sm">{{ car.address|ar_address }}</div>
                     </div>
                     {% endif %}
                 </div>

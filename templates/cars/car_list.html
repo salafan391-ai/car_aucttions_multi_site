@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static humanize i18n safe_query %}
+{% load static humanize i18n safe_query custom_filters %}
 
 {% block meta_description %}{% if request.GET.q %}نتائج البحث عن "{{ request.GET.q }}" - {{ site_name|default:"سيارات" }}{% else %}{% if request.GET.car_type == 'auction' %}مزادات السيارات - {{ site_name|default:"سيارات" }}{% else %}سيارات للبيع - {{ site_name|default:"سيارات" }}{% endif %} - استعرض آلاف السيارات الجديدة والمستعملة{% endif %}{% endblock %}
 {% block meta_keywords %}{% if request.GET.car_type == 'auction' %}مزادات سيارات, مزادات, سيارات مزاد, مزاد سيارات{% else %}سيارات للبيع, سيارات مستعملة, سيارات جديدة, شراء سيارات{% endif %}{% if request.GET.manufacturer %}, {{ request.GET.manufacturer }}{% endif %}, {% for manufacturer in manufacturers %}{{ manufacturer.name_ar|default:manufacturer.name }}{% if not forloop.last %}, {% endif %}{% endfor %}, {{ site_name|default:"سيارات" }}{% endblock %}
@@ -646,9 +646,16 @@
                     <span class="bg-purple-600/90 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">{{ car.auction_name }}</span>
                 </div>
                 {% endif %}
-                <!-- Year pill -->
-                <div class="absolute bottom-2 sm:bottom-3 right-2 sm:right-3">
+                <!-- Year pill (flush to the very right edge) -->
+                <div class="absolute bottom-2 sm:bottom-3 right-1 sm:right-1">
                     <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
+                </div>
+
+                <!-- Address pill (flush to the very left edge) -->
+                <div class="absolute bottom-2 sm:bottom-3 left-1 sm:left-1">
+                    {% if car.category.name != 'auction' %}
+                        <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.address|ar_address }}</span>
+                    {% endif %}
                 </div>
             </div>
             <div class="p-2.5 sm:p-4">
