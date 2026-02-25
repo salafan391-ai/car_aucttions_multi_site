@@ -143,6 +143,14 @@ def home(request):
 @ensure_csrf_cookie
 @cache_control(public=True, max_age=120)
 def car_list(request):
+    # For anonymous users, try to serve a cached full response to reduce DB load.
+    cache_key = None
+    if not request.user.is_authenticated:
+        cache_key = f"car_list:{request.get_full_path()}"
+        cached_html = cache.get(cache_key)
+        if cached_html:
+            return HttpResponse(cached_html)
+
     qs = _exclude_expired_auctions(
         ApiCar.objects.select_related(
             'manufacturer', 'model', 'badge', 'color', 'body'
@@ -380,7 +388,16 @@ def car_list(request):
         'selected_year_from': request.GET.get('year_from', ''),
         'selected_year_to': request.GET.get('year_to', ''),
     }
-    return render(request, 'cars/car_list.html', context)
+    response = render(request, 'cars/car_list.html', context)
+    # Cache the rendered HTML for anonymous users only
+    try:
+        if cache_key and not request.user.is_authenticated:
+            cache.set(cache_key, response.content, 60)  # cache 60s
+    except Exception:
+        # Don't let caching errors break the response
+        pass
+
+    return response
 
 
 def expired_auctions(request):
@@ -752,14 +769,17 @@ def wishlist_count(request):
     """Get user's wishlist count"""
     if not request.user.is_authenticated:
         return JsonResponse({'count': 0})
-    
+
+    cache_key = f"wishlist_count_{request.user.id}"
+    count = cache.get(cache_key)
+    if count is not None:
+        return JsonResponse({'count': count})
+
     try:
-        # Simple, fast count query
         count = Wishlist.objects.filter(user_id=request.user.id).count()
+        cache.set(cache_key, count, 60)  # Cache for 60 seconds
         return JsonResponse({'count': count})
     except Exception:
-        return JsonResponse({'count': 0})
-    except Exception as e:
         return JsonResponse({'count': 0})
 
 
