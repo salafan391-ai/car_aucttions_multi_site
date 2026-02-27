@@ -3,16 +3,15 @@
 {% load i18n %}
 {% load humanize %}
 
-{% block meta_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لبيع وشراء السيارات الجديدة والمستعملة في السعودية. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
+{% block meta_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لشراء السيارات وتصديرها إلى المملكة العربية السعودية وجميع أنحاء العالم. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
 {% block meta_keywords %}{{ site_name|default:"سيارات" }}, سيارات للبيع, شراء سيارات, سيارات مستعملة, سيارات جديدة, مزادات سيارات, سيارات السعودية, تجارة سيارات, معارض سيارات{% endblock %}
 
 {% block og_title %}{{ site_name|default:"سيارات" }} - بيع وشراء السيارات في السعودية{% endblock %}
-{% block og_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لبيع وشراء السيارات الجديدة والمستعملة في السعودية. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
+{% block og_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لشراء السيارات وتصديرها إلى المملكة العربية السعودية وجميع أنحاء العالم. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
 {% block og_type %}website{% endblock %}
 
 {% block twitter_title %}{{ site_name|default:"سيارات" }} - بيع وشراء السيارات في السعودية{% endblock %}
-{% block twitter_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لبيع وشراء السيارات الجديدة والمستعملة في السعودية. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
-
+{% block twitter_description %}{{ site_name|default:"سيارات" }} - أفضل منصة لشراء السيارات وتصديرها إلى المملكة العربية السعودية وجميع أنحاء العالم. استعرض آلاف السيارات، شارك في المزادات، واعثر على سيارتك المثالية.{% endblock %}
 {% block structured_data %}
 <script type="application/ld+json">
 {
@@ -134,7 +133,7 @@
         <div class="text-center mb-8 sm:mb-12">
             <div class="max-w-2xl mx-auto flex items-center justify-center gap-4 mb-4">
             {% if site_logo %}
-            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 rounded-2xl w-auto">
+            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 rounded-2xl w-auto z-40">
             {% endif %}
             <div class="group bg-brand/20 rounded-lg p-4 border border-brand">
                 <h1 class="text-4xl sm:text-5xl md:text-6xl text-brand font-bold text-shadow-2xl bg-clip-text text-transparent drop-shadow-2xl group-hover:from-brand group-hover:via-white group-hover:to-brand transition-all duration-500 transform group-hover:scale-105">
@@ -143,7 +142,7 @@
             </div>
             </div>
             <p class="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto drop-shadow-lg bg-gradient-to-r from-white/80 via-brand-light/60 to-white/80 bg-clip-text text-transparent" style="text-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.3), 0 2px 4px rgba(0,0,0,0.2);">
-                {% if site_tagline %}{{ site_tagline }}{% else %}منصة متخصصة في عرض وبيع السيارات المستوردة بأفضل الأسعار{% endif %}
+                {% if site_tagline %}{{ site_tagline }}{% else %}أفضل منصة لشراء السيارات وتصديرها إلي المملكة العربية السعودية وجميع أنحاء العالم{% endif %}
             </p>
         </div>
         
