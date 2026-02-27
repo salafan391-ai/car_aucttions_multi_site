@@ -142,7 +142,7 @@
         {% for m in models %}
             {% if request.GET.model == m.id|stringformat:"d" %}
             <a href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full hover:bg-indigo-100 transition group">
-                الموديل: {{ m.name }}
+                الموديل: <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
                 <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </a>
             {% endif %}
@@ -175,14 +175,14 @@
 
         {% if request.GET.fuel %}
     <a href="?{% for k,v in request.GET.items %}{% if k != 'fuel' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 text-xs font-medium rounded-full hover:bg-amber-100 transition group">
-            الوقود: {{ request.GET.fuel }}
+            الوقود: <span class="bilingual" data-lang-ar="{{ request.GET.fuel|translate_fuel }}" data-lang-en="{{ request.GET.fuel }}">{{ request.GET.fuel|translate_fuel }}</span>
             <svg class="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
 
         {% if request.GET.transmission %}
     <a href="?{% for k,v in request.GET.items %}{% if k != 'transmission' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full hover:bg-teal-100 transition group">
-            ناقل: {{ request.GET.transmission }}
+            ناقل: <span class="bilingual" data-lang-ar="{{ request.GET.transmission|translate_transmission }}" data-lang-en="{{ request.GET.transmission }}">{{ request.GET.transmission|translate_transmission }}</span>
             <svg class="w-3.5 h-3.5 text-teal-400 group-hover:text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
@@ -306,7 +306,7 @@
                         <select name="manufacturer" id="manufacturer-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
                             {% for m in manufacturers %}
-                            <option value="{{ m.id }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
+                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -315,12 +315,12 @@
                         <select name="model" id="model-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
                             {% for m in models %}
-                            <option value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m|translate_model }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     {% if request.GET.car_type != 'auction' %}
-                    <div>
+                    <div class="col-span-2">
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">تفاصيل الموديل</label>
                         <select name="badge" id="badge-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
@@ -330,6 +330,8 @@
                         </select>
                     </div>
                     {% endif %}
+
+                    <br>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">من سنة</label>
                         <select name="year_from" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
@@ -348,21 +350,27 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الوقود</label>
                         <select name="fuel" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
-                            {% for f in fuels %}<option value="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+                            {% for f in fuels %}
+                            <option value="{{ f }}" class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f|translate_fuel }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">ناقل الحركة</label>
                         <select name="transmission" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
-                            {% for t in transmissions %}<option value="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+                            {% for t in transmissions %}
+                            <option value="{{ t }}" class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t|translate_transmission }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اللون</label>
                         <select name="color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
-                            {% for c in colors %}<option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                            {% for c in colors %}
+                            <option value="{{ c.id }}" class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name|translate_color }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     {% if request.GET.car_type != 'auction' %}
@@ -442,7 +450,7 @@
                     <select name="manufacturer" id="sb-manufacturer" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for m in manufacturers %}
-                        <option value="{{ m.id }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
+                        <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -453,7 +461,7 @@
                     <select name="model" id="sb-model" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for m in models %}
-                        <option value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name }}</option>
+                        <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m|translate_model }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -470,6 +478,11 @@
                     </select>
                 </div>
                 {% endif %}
+
+
+                <br>
+
+                <div>
 
                 <!-- Year Range -->
                 <div>
@@ -489,6 +502,7 @@
                         </select>
                     </div>
                 </div>
+                </div>
 
                 <!-- Body Type -->
                 <div>
@@ -496,7 +510,7 @@
                     <select name="body_type" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for b in body_types %}
-                        <option value="{{ b.name }}" {% if request.GET.body_type == b.name %}selected{% endif %}>{{ b.name }}</option>
+                        <option value="{{ b.name }}" class="bilingual" data-lang-ar="{{ b.name_ar|default:b.name }}" data-lang-en="{{ b.name }}" {% if request.GET.body_type == b.name %}selected{% endif %}>{{ b.name_ar|default:b.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -507,7 +521,7 @@
                     <select name="fuel" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for f in fuels %}
-                        <option value="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f }}</option>
+                        <option value="{{ f }}" class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f|translate_fuel }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -518,7 +532,7 @@
                     <select name="transmission" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for t in transmissions %}
-                        <option value="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t }}</option>
+                        <option value="{{ t }}" class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t|translate_transmission }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -529,7 +543,7 @@
                     <select name="color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for c in colors %}
-                        <option value="{{ c.id }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name }}</option>
+                        <option value="{{ c.id }}" class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name|translate_color }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -540,7 +554,7 @@
                     <select name="seat_count" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for s in seat_counts %}
-                        <option value="{{ s }}" {% if request.GET.seat_count == s %}selected{% endif %}>{{ s }}</option>
+                        <option value="{{ s }}" class="bilingual" data-lang-ar="{{ s }}" data-lang-en="{{ s }}" {% if request.GET.seat_count == s %}selected{% endif %}>{{ s }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -552,7 +566,7 @@
                     <select name="seat_color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
                         <option value="">الكل</option>
                         {% for sc in seat_colors %}
-                        <option value="{{ sc.id }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name }}</option>
+                        <option value="{{ sc.id }}" class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name|translate_color }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -663,14 +677,18 @@
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}
                 </div>
                 <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-400 mb-2 sm:mb-3 truncate">
-                    <span>{{ car.badge.name }}</span>
+                    <p>{{ car.badge.name }}</p>
+                
+                </div>
+                <div class="flex items-center justify-between gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">   
                     {% if car.mileage %}
-                    <span>&bull;</span>
-                    <span>{{ car.mileage|intcomma }} كم</span>
+                    <span class="text-brand p-2 rounded-md border-brand">{{ car.mileage|intcomma }} كم</span>
+                    {% endif %}
+                      {% if car.transmission %}
+                    <span class="text-brand" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission }}">{{ car.transmission|translate_transmission }}</span>
                     {% endif %}
                     {% if car.fuel %}
-                    <span>&bull;</span>
-                    <span>{{ car.fuel }}</span>
+                    <span class=" text-brand p-2 rounded-md" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel }}">{{ car.fuel|translate_fuel }}</span>
                     {% endif %}
                 </div>
                 {% if car.auction_date %}
@@ -679,11 +697,8 @@
                     <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
-                <div class="flex justify-between items-center pt-2 sm:pt-3 border-t border-gray-100">
+                <div class="flex justify-end items-center pt-2 sm:pt-3 border-t border-gray-100">
                     <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} <span class="text-[9px] sm:text-xs font-medium">₩</span></span>
-                    {% if car.transmission %}
-                    <span class="text-[9px] sm:text-[10px] bg-gray-100 text-gray-500 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium hidden sm:inline">{{ car.transmission }}</span>
-                    {% endif %}
                 </div>
 
             </div>

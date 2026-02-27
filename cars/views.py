@@ -291,17 +291,17 @@ def car_list(request):
         )
         manufacturers = list(
             Manufacturer.objects.filter(_filt)
-            .distinct().order_by('name')[:50]
+            .distinct().order_by('name')
         )
     else:
-        manufacturers = list(Manufacturer.objects.all().order_by('name')[:50])
+        manufacturers = list(Manufacturer.objects.all().order_by('name'))
 
     # Only load models/badges when manufacturer/model is selected
     # (otherwise AJAX loads them on user interaction)
     if manufacturer:
         models_qs = list(
             CarModel.objects.filter(manufacturer_id=manufacturer)
-            .order_by('name')[:100]
+            .order_by('name')
         )
     else:
         models_qs = []
@@ -310,19 +310,18 @@ def car_list(request):
     if model_param:
         badges = list(
             CarBadge.objects.filter(apicar__model_id=model_param)
-            .distinct().order_by('name')[:50]
+            .distinct().order_by('name')
         )
     else:
         badges = []
 
     years = list(
         ApiCar.objects.values_list('year', flat=True)
-        .distinct().order_by('-year')[:30]
+        .distinct().order_by('-year')
     )
 
     # Body types – simple all() is fine, not per-car_type
-    body_types = list(BodyType.objects.all().order_by('name')[:20])
-
+    body_types = list(BodyType.objects.all().order_by('name'))
     # Simple distinct values – no subquery needed
     fuels = list(
         ApiCar.objects.values_list('fuel', flat=True)
@@ -332,14 +331,14 @@ def car_list(request):
     transmissions = list(
         ApiCar.objects.values_list('transmission', flat=True)
         .exclude(transmission__isnull=True).exclude(transmission='')
-        .distinct().order_by('transmission')[:10]
+        .distinct().order_by('transmission')
     )
     seat_counts = list(
         ApiCar.objects.values_list('seat_count', flat=True)
         .exclude(seat_count__isnull=True).exclude(seat_count='')
         .distinct().order_by('seat_count')
     )
-    colors = list(CarColor.objects.all().order_by('name')[:30])
+    colors = list(CarColor.objects.all().order_by('name'))
     seat_colors = list(CarSeatColor.objects.all().order_by('name'))
 
     auction_names = list(
@@ -364,7 +363,7 @@ def car_list(request):
     popular_manufacturers = list(
         Manufacturer.objects.annotate(
             car_count=Count('apicar')
-        ).order_by('-car_count')[:20]
+        ).order_by('-car_count')
     )
     context = {
         'page_obj': page_obj,

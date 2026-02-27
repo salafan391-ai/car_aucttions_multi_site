@@ -2,7 +2,7 @@
 {% load whatsapp_tags custom_filters humanize static %}
 
 {% block meta_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
-{% block meta_keywords %}{{ car.manufacturer.name }}, {{ car.model.name }}, سيارة {{ car.year }}, {% if car.color.name %}{{ car.color.name }}, {% endif %}{% if car.body.name %}{{ car.body.name }}, {% endif %}{% if car.category.name == 'auction' %}مزاد سيارة, سيارة مزاد{% else %}سيارة للبيع, شراء سيارة{% endif %}, {{ car.price|intcomma }} ريال, {{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_keywords %}{{ car.manufacturer.name }}, {{ car.model.name }}, سيارة {{ car.year }}, {% if car.color.name %}{{ car.color.name|translate_color }}, {% endif %}{% if car.body.name %}{{ car.body.name }}, {% endif %}{% if car.category.name == 'auction' %}مزاد سيارة, سيارة مزاد{% else %}سيارة للبيع, شراء سيارة{% endif %}, {{ car.price|intcomma }} ريال, {{ site_name|default:"سيارات" }}{% endblock %}
 
 {% block og_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
 {% block og_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
@@ -222,17 +222,17 @@
                     {% if car.fuel %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">الوقود</div>
-                        <div class="font-bold text-sm">{{ car.fuel }}</div>
+                        <div class="font-bold text-sm">{{ car.fuel|translate_fuel }}</div>
                     </div>
                     {% endif %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">اللون</div>
-                        <div class="font-bold text-sm">{{ car.color.name }}</div>
+                        <div class="font-bold text-sm">{{ car.color.name|translate_color }}</div>
                     </div>
                     {% if car.seat_color %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">لون المقاعد</div>
-                        <div class="font-bold text-sm">{{ car.seat_color.name }}</div>
+                        <div class="font-bold text-sm">{{ car.seat_color.name|translate_color }}</div>
                     </div>
                     {% endif %}
                       {% if car.seat_count and car.seat_count != '0' %}

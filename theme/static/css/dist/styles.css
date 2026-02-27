@@ -484,6 +484,9 @@
   .z-50 {
     z-index: 50;
   }
+  .col-span-2 {
+    grid-column: span 2 / span 2;
+  }
   .col-span-full {
     grid-column: 1 / -1;
   }
@@ -3037,11 +3040,6 @@
       top: calc(var(--spacing) * 3);
     }
   }
-  .sm\:right-0 {
-    @media (width >= 40rem) {
-      right: calc(var(--spacing) * 0);
-    }
-  }
   .sm\:right-1 {
     @media (width >= 40rem) {
       right: calc(var(--spacing) * 1);
@@ -3055,11 +3053,6 @@
   .sm\:bottom-3 {
     @media (width >= 40rem) {
       bottom: calc(var(--spacing) * 3);
-    }
-  }
-  .sm\:left-0 {
-    @media (width >= 40rem) {
-      left: calc(var(--spacing) * 0);
     }
   }
   .sm\:left-1 {
