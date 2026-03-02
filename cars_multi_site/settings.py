@@ -135,19 +135,37 @@ DATABASE_ROUTERS = (
 )
 
 # Caching Configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'OPTIONS': {
-            'MAX_ENTRIES': 200,  # Keep small on 512MB dyno
+_REDIS_URL = os.environ.get("REDIS_URL")
+
+if _REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": _REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "CONNECTION_POOL_KWARGS": {"max_connections": 5},
+                "SOCKET_CONNECT_TIMEOUT": 5,
+                "SOCKET_TIMEOUT": 5,
+                "IGNORE_EXCEPTIONS": True,  # Degrade gracefully if Redis is down
+            },
+            "KEY_PREFIX": "cars",
         }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+            "OPTIONS": {
+                "MAX_ENTRIES": 500,
+            },
+        }
+    }
 
 # Cache timeouts (in seconds)
 CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes
-CACHE_MIDDLEWARE_KEY_PREFIX = 'cars_multi_site'
+CACHE_MIDDLEWARE_KEY_PREFIX = "cars_multi_site"
 
 
 # Password validation
