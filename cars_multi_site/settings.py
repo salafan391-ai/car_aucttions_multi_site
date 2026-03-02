@@ -144,7 +144,10 @@ if _REDIS_URL:
             "LOCATION": _REDIS_URL,
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                "CONNECTION_POOL_KWARGS": {"max_connections": 5},
+                "CONNECTION_POOL_KWARGS": {
+                    "max_connections": 5,
+                    "ssl_cert_reqs": None,  # Heroku Redis uses self-signed certs
+                },
                 "SOCKET_CONNECT_TIMEOUT": 5,
                 "SOCKET_TIMEOUT": 5,
                 "IGNORE_EXCEPTIONS": True,  # Degrade gracefully if Redis is down
