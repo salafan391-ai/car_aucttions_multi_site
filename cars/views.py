@@ -42,8 +42,14 @@ def home(request):
     now = timezone.now()
     schema = getattr(connection, 'schema_name', 'public')
 
-    # Cache the expensive DB context by tenant schema (not the full response,
-    # so Vary: Cookie from the session/CSRF middleware doesn't break caching).
+    # Cache the full rendered HTML keyed by schema (no CSRF tokens are embedded
+    # in the home template, so this is safe and bypasses Vary: Cookie).
+    html_cache_key = f"home_html:{schema}"
+    cached_html = cache.get(html_cache_key)
+    if cached_html:
+        return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
+
+    # Cache the expensive DB context by tenant schema.
     ctx_cache_key = f"home_ctx:{schema}"
     context = cache.get(ctx_cache_key)
 
@@ -145,7 +151,9 @@ def home(request):
         }
         cache.set(ctx_cache_key, context, 60 * 5)  # 5 minutes
 
-    return render(request, 'cars/home.html', context)
+    response = render(request, 'cars/home.html', context)
+    cache.set(html_cache_key, response.content, 60 * 5)  # 5 minutes
+    return response
 
 
 @ensure_csrf_cookie
