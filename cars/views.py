@@ -304,7 +304,27 @@ def car_list(request):
     else:
         qs = qs.order_by('-created_at')
 
-    paginator = Paginator(qs, 20)  # 20 items per page to reduce response size
+    # Cache the paginator COUNT per unique filter combination (excludes sort/page
+    # which don't affect the total count).  This avoids a full-table COUNT(*) on
+    # every cache miss for different sort orders.
+    _count_params = {k: v for k, v in request.GET.items() if k not in ('sort', 'page')}
+    _count_hash = hashlib.md5(
+        json.dumps(_count_params, sort_keys=True).encode()
+    ).hexdigest()
+    _count_cache_key = f"car_list:count:{schema}:{_count_hash}"
+    _cached_count = cache.get(_count_cache_key)
+
+    class _CachedCountPaginator(Paginator):
+        """Paginator that uses a pre-cached count to avoid a DB COUNT(*) query."""
+        @property
+        def count(self):
+            if _cached_count is not None:
+                return _cached_count
+            c = super().count
+            cache.set(_count_cache_key, c, 60 * 5)
+            return c
+
+    paginator = _CachedCountPaginator(qs, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     query_params = request.GET.copy()
@@ -316,13 +336,20 @@ def car_list(request):
     car_type = request.GET.get('car_type')
 
     if car_type == 'auction':
-        _filt = Q(apicar__category__name='auction') & ~Q(
-            apicar__category__name='auction', apicar__auction_date__lt=now
-        )
-        manufacturers = list(
-            Manufacturer.objects.filter(_filt)
-            .distinct().order_by('name')
-        )
+        # Use flat values_list to avoid a correlated subquery — cached 15 min
+        _auction_mfr_key = f"car_list:auction_manufacturers:{schema}"
+        manufacturers = cache.get(_auction_mfr_key)
+        if manufacturers is None:
+            _auction_mfr_ids = list(
+                ApiCar.objects.filter(category__name='auction')
+                .exclude(auction_date__lt=timezone.now())
+                .values_list('manufacturer_id', flat=True)
+                .distinct()
+            )
+            manufacturers = list(
+                Manufacturer.objects.filter(id__in=_auction_mfr_ids).order_by('name')
+            )
+            cache.set(_auction_mfr_key, manufacturers, 60 * 15)
     else:
         _mfr_cache_key = "car_list:manufacturers_all"
         manufacturers = cache.get(_mfr_cache_key)
