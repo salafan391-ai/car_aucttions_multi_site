@@ -1,4 +1,6 @@
 from datetime import datetime, date
+import hashlib
+import json
 
 from django.core.paginator import Paginator
 from django.contrib import messages
@@ -14,7 +16,6 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.cache import cache
 from django.views.decorators.cache import cache_control
-import hashlib
 from django.db import connection
 
 from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment, PostImage
@@ -168,9 +169,15 @@ def home(request):
 @cache_control(public=True, max_age=120)
 def car_list(request):
     # For anonymous users, try to serve a cached full response to reduce DB load.
+    # Use a stable hash of sorted GET params so param-order variants share the same key.
+    schema = getattr(connection, 'schema_name', 'public')
     cache_key = None
     if not request.user.is_authenticated:
-        cache_key = f"car_list:{request.get_full_path()}"
+        _params = {k: v for k, v in request.GET.items()}
+        _params_hash = hashlib.md5(
+            json.dumps(_params, sort_keys=True).encode()
+        ).hexdigest()
+        cache_key = f"car_list:{schema}:{_params_hash}"
         cached_html = cache.get(cache_key)
         if cached_html:
             return HttpResponse(cached_html)
@@ -388,16 +395,20 @@ def car_list(request):
     seat_colors   = static_filters['seat_colors']
     auction_names = static_filters['auction_names']
 
-    # Counts for tabs – single aggregate query
-    _tab_base = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
-    tab_agg = _tab_base.aggregate(
-        count_all=Count('id'),
-        count_auction=Count('id', filter=Q(category__name='auction')),
-        count_cars=Count('id', filter=~Q(category__name='auction')),
-    )
-    count_all = tab_agg['count_all']
-    count_cars = tab_agg['count_cars']
-    count_auction = tab_agg['count_auction']
+    # Counts for tabs – single aggregate query, cached 5 min (global, not filter-specific)
+    _tab_count_key = f"car_list:tab_counts:{schema}"
+    tab_counts = cache.get(_tab_count_key)
+    if tab_counts is None:
+        _tab_base = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
+        tab_counts = _tab_base.aggregate(
+            count_all=Count('id'),
+            count_auction=Count('id', filter=Q(category__name='auction')),
+            count_cars=Count('id', filter=~Q(category__name='auction')),
+        )
+        cache.set(_tab_count_key, tab_counts, 60 * 5)
+    count_all = tab_counts['count_all']
+    count_cars = tab_counts['count_cars']
+    count_auction = tab_counts['count_auction']
 
     # Popular manufacturers – cached, annotated list
     _pop_mfr_key = "car_list:popular_manufacturers"
