@@ -304,12 +304,11 @@ def car_list(request):
     query_params.pop('page', None)
     query_string = query_params.urlencode()
 
-    # ── Filter options – avoid expensive subqueries, use direct joins ──
+    # ── Filter options – cache static-ish lookups for 15 minutes ──
     now = timezone.now()
     car_type = request.GET.get('car_type')
 
     if car_type == 'auction':
-        # Direct join filter instead of apicar__in=subquery
         _filt = Q(apicar__category__name='auction') & ~Q(
             apicar__category__name='auction', apicar__auction_date__lt=now
         )
@@ -318,59 +317,76 @@ def car_list(request):
             .distinct().order_by('name')
         )
     else:
-        manufacturers = list(Manufacturer.objects.all().order_by('name'))
+        _mfr_cache_key = "car_list:manufacturers_all"
+        manufacturers = cache.get(_mfr_cache_key)
+        if manufacturers is None:
+            manufacturers = list(Manufacturer.objects.all().order_by('name'))
+            cache.set(_mfr_cache_key, manufacturers, 60 * 15)
 
     # Only load models/badges when manufacturer/model is selected
-    # (otherwise AJAX loads them on user interaction)
     if manufacturer:
-        models_qs = list(
-            CarModel.objects.filter(manufacturer_id=manufacturer)
-            .order_by('name')
-        )
+        _models_cache_key = f"car_list:models:{manufacturer}"
+        models_qs = cache.get(_models_cache_key)
+        if models_qs is None:
+            models_qs = list(CarModel.objects.filter(manufacturer_id=manufacturer).order_by('name'))
+            cache.set(_models_cache_key, models_qs, 60 * 15)
     else:
         models_qs = []
 
     model_param = request.GET.get('model')
     if model_param:
-        badges = list(
-            CarBadge.objects.filter(apicar__model_id=model_param)
-            .distinct().order_by('name')
-        )
+        _badges_cache_key = f"car_list:badges:{model_param}"
+        badges = cache.get(_badges_cache_key)
+        if badges is None:
+            badges = list(
+                CarBadge.objects.filter(model_id=model_param)
+                .distinct().order_by('name')
+            )
+            cache.set(_badges_cache_key, badges, 60 * 15)
     else:
         badges = []
 
-    years = list(
-        ApiCar.objects.values_list('year', flat=True)
-        .distinct().order_by('-year')
-    )
+    # Static lookup lists — cache for 30 minutes
+    _static_cache_key = "car_list:static_filters"
+    static_filters = cache.get(_static_cache_key)
+    if static_filters is None:
+        static_filters = {
+            'years': list(ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')),
+            'body_types': list(BodyType.objects.all().order_by('name')),
+            'fuels': list(
+                ApiCar.objects.values_list('fuel', flat=True)
+                .exclude(fuel__isnull=True).exclude(fuel='')
+                .distinct().order_by('fuel')[:15]
+            ),
+            'transmissions': list(
+                ApiCar.objects.values_list('transmission', flat=True)
+                .exclude(transmission__isnull=True).exclude(transmission='')
+                .distinct().order_by('transmission')
+            ),
+            'seat_counts': list(
+                ApiCar.objects.values_list('seat_count', flat=True)
+                .exclude(seat_count__isnull=True).exclude(seat_count='')
+                .distinct().order_by('seat_count')
+            ),
+            'colors': list(CarColor.objects.all().order_by('name')),
+            'seat_colors': list(CarSeatColor.objects.all().order_by('name')),
+            'auction_names': list(
+                ApiCar.objects.filter(category__name='auction')
+                .exclude(auction_name__isnull=True).exclude(auction_name='')
+                .values_list('auction_name', flat=True)
+                .distinct().order_by('auction_name')
+            ),
+        }
+        cache.set(_static_cache_key, static_filters, 60 * 30)
 
-    # Body types – simple all() is fine, not per-car_type
-    body_types = list(BodyType.objects.all().order_by('name'))
-    # Simple distinct values – no subquery needed
-    fuels = list(
-        ApiCar.objects.values_list('fuel', flat=True)
-        .exclude(fuel__isnull=True).exclude(fuel='')
-        .distinct().order_by('fuel')[:15]
-    )
-    transmissions = list(
-        ApiCar.objects.values_list('transmission', flat=True)
-        .exclude(transmission__isnull=True).exclude(transmission='')
-        .distinct().order_by('transmission')
-    )
-    seat_counts = list(
-        ApiCar.objects.values_list('seat_count', flat=True)
-        .exclude(seat_count__isnull=True).exclude(seat_count='')
-        .distinct().order_by('seat_count')
-    )
-    colors = list(CarColor.objects.all().order_by('name'))
-    seat_colors = list(CarSeatColor.objects.all().order_by('name'))
-
-    auction_names = list(
-        ApiCar.objects.filter(category__name='auction')
-        .exclude(auction_name__isnull=True).exclude(auction_name='')
-        .values_list('auction_name', flat=True)
-        .distinct().order_by('auction_name')
-    )
+    years         = static_filters['years']
+    body_types    = static_filters['body_types']
+    fuels         = static_filters['fuels']
+    transmissions = static_filters['transmissions']
+    seat_counts   = static_filters['seat_counts']
+    colors        = static_filters['colors']
+    seat_colors   = static_filters['seat_colors']
+    auction_names = static_filters['auction_names']
 
     # Counts for tabs – single aggregate query
     _tab_base = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
@@ -383,12 +399,14 @@ def car_list(request):
     count_cars = tab_agg['count_cars']
     count_auction = tab_agg['count_auction']
 
-    # Popular manufacturers – top 20, use simple annotation
-    popular_manufacturers = list(
-        Manufacturer.objects.annotate(
-            car_count=Count('apicar')
-        ).order_by('-car_count')
-    )
+    # Popular manufacturers – cached, annotated list
+    _pop_mfr_key = "car_list:popular_manufacturers"
+    popular_manufacturers = cache.get(_pop_mfr_key)
+    if popular_manufacturers is None:
+        popular_manufacturers = list(
+            Manufacturer.objects.annotate(car_count=Count('apicar')).order_by('-car_count')
+        )
+        cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     context = {
         'page_obj': page_obj,
         'manufacturers': manufacturers,
@@ -464,7 +482,13 @@ def api_models_by_manufacturer(request):
     manufacturer_id = request.GET.get('manufacturer_id')
     if not manufacturer_id:
         return JsonResponse([], safe=False)
-    
+
+    # Serve from cache — these change only when new cars are imported
+    _cache_key = f"api_models:{manufacturer_id}"
+    cached = cache.get(_cache_key)
+    if cached is not None:
+        return JsonResponse(cached, safe=False)
+
     # Get manufacturer info for logo
     manufacturer_logo = None
     try:
@@ -476,29 +500,23 @@ def api_models_by_manufacturer(request):
                 
                 # Check if logo is a file field (has .url attribute) or a string path
                 if hasattr(manufacturer.logo, 'url'):
-                    # It's a file field
                     manufacturer_logo = request.build_absolute_uri(manufacturer.logo.url)
                 else:
-                    # It's a string path - build URL manually
                     if logo_string.startswith('/'):
-                        # Absolute path from root
                         manufacturer_logo = request.build_absolute_uri(logo_string)
                     elif logo_string.startswith('http'):
-                        # Already a full URL
                         manufacturer_logo = logo_string
                     else:
-                        # Relative path - assume it's in media
                         from django.conf import settings
                         if hasattr(settings, 'MEDIA_URL'):
                             manufacturer_logo = request.build_absolute_uri(settings.MEDIA_URL + logo_string)
                         else:
                             manufacturer_logo = request.build_absolute_uri('/media/' + logo_string)
-                
-            except Exception as logo_error:
+            except Exception:
                 manufacturer_logo = None
     except Manufacturer.DoesNotExist:
         pass
-    except Exception as e:
+    except Exception:
         pass
     
     try:
@@ -508,25 +526,30 @@ def api_models_by_manufacturer(request):
             .order_by('-car_count')
             .values('id', 'name', 'car_count')
         )
-        
-        # Add manufacturer logo to each model
         for model in models:
             model['manufacturer_logo'] = manufacturer_logo
-        
+
+        cache.set(_cache_key, models, 60 * 30)  # 30 minutes
         return JsonResponse(models, safe=False)
-    except Exception as e:
-        # Return empty list if there's any error
+    except Exception:
         return JsonResponse([], safe=False)
 
 def api_badges_by_model(request):
     model_id = request.GET.get('model_id')
     if not model_id:
         return JsonResponse([], safe=False)
+
+    _cache_key = f"api_badges:{model_id}"
+    cached = cache.get(_cache_key)
+    if cached is not None:
+        return JsonResponse(cached, safe=False)
+
     badges = list(
         CarBadge.objects.filter(model_id=model_id)
         .order_by('name')
         .values('id', 'name')
     )
+    cache.set(_cache_key, badges, 60 * 30)  # 30 minutes
     return JsonResponse(badges, safe=False)
 
 def car_detail_by_pk(request, pk):
@@ -574,10 +597,7 @@ def car_detail(request, slug):
         
         if request.user.is_authenticated:
             user_rating = SiteRating.objects.filter(car=car, user=request.user).first()
-            
-            
-    print(car.seat_count)
-    
+
     context = {
         'car': car,
         'ratings': ratings,
