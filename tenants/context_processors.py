@@ -1,4 +1,5 @@
 from django.db import connection
+from django.core.cache import cache
 from .models import TenantHeroImage
 
 
@@ -9,11 +10,17 @@ def tenant_branding(request):
     # FakeTenant is used by django_tenants when no real tenant is active
     if not hasattr(tenant, 'name'):
         return {}
-    
+
+    schema = getattr(connection, 'schema_name', 'public')
+    _cache_key = f"tenant_branding:{schema}"
+    cached = cache.get(_cache_key)
+    if cached:
+        return cached
+
     # Get all phone numbers for the tenant
     phone_numbers = []
     if hasattr(tenant, 'phone_numbers'):
-        phone_numbers = tenant.phone_numbers.filter(is_active=True).order_by('order', '-is_primary')
+        phone_numbers = list(tenant.phone_numbers.filter(is_active=True).order_by('order', '-is_primary'))
     
     # Get primary phone number
     primary_phone = None
@@ -41,7 +48,7 @@ def tenant_branding(request):
         except Exception:
             return ""
 
-    return {
+    result = {
         "site_name": tenant.name or "سيارات",
         "site_logo": _file_url(getattr(tenant, 'logo', None)),
         "site_favicon": _file_url(getattr(tenant, 'favicon', None)),
@@ -84,3 +91,6 @@ def tenant_branding(request):
         "sales_phones": sales_phones,
         "whatsapp_phones": whatsapp_phones,
     }
+    # Cache for 10 minutes — tenant branding rarely changes
+    cache.set(_cache_key, result, 60 * 10)
+    return result

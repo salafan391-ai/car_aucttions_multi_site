@@ -78,30 +78,38 @@ def home(request):
                   'color_id', 'body_id', 'category_id', 'created_at')[:12]
         )
 
-        # ── Aggregate counts in ONE query instead of 3+ separate count() calls ──
-        _count_base = ApiCar.objects.exclude(
+        # ── ALL counts in ONE query ──
+        from django.db.models import Count as _Count
+        agg = ApiCar.objects.exclude(
             category__name='auction', auction_date__lt=now
-        )
-        agg = _count_base.aggregate(
-            total=Count('id'),
-            auction_count=Count('id', filter=Q(category__name='auction')),
-            cars_count=Count('id', filter=~Q(category__name='auction')),
+        ).aggregate(
+            total=_Count('id'),
+            auction_count=_Count('id', filter=Q(category__name='auction')),
+            cars_count=_Count('id', filter=~Q(category__name='auction')),
+            total_manufacturers=_Count('manufacturer_id', distinct=True),
+            total_models=_Count('model_id', distinct=True),
         )
 
-        # Manufacturers – use simple annotation, no subquery
+        # Manufacturers – use flat VALUES list to avoid a correlated subquery
+        _active_mfr_ids = list(
+            ApiCar.objects.exclude(
+                category__name='auction', auction_date__lt=now
+            ).values_list('manufacturer_id', flat=True).distinct()
+        )
         manufacturers = list(
-            Manufacturer.objects.filter(
-                apicar__in=_count_base
-            ).annotate(
-                car_count=Count('apicar')
-            ).distinct().order_by('-car_count')[:20]
+            Manufacturer.objects.filter(id__in=_active_mfr_ids)
+            .annotate(car_count=Count('apicar'))
+            .order_by('-car_count')[:20]
         )
 
         # Body types – simple filter
+        _active_body_ids = list(
+            ApiCar.objects.exclude(
+                category__name='auction', auction_date__lt=now
+            ).values_list('body_id', flat=True).distinct()
+        )
         body_types = list(
-            BodyType.objects.filter(
-                apicar__in=_count_base
-            ).distinct().order_by('name')[:15]
+            BodyType.objects.filter(id__in=_active_body_ids).order_by('name')[:15]
         )
 
         # Years – cheap distinct
@@ -143,8 +151,8 @@ def home(request):
             'total_cars': agg['total'],
             'auction_count': agg['auction_count'],
             'cars_count': agg['cars_count'],
-            'total_manufacturers': Manufacturer.objects.count(),
-            'total_models': CarModel.objects.count(),
+            'total_manufacturers': agg['total_manufacturers'],
+            'total_models': agg['total_models'],
             'posts_count': posts_count,
             'latest_post': latest_post,
             'year': datetime.now().year,
