@@ -33,7 +33,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     inlines = [TenantPhoneNumberInline, TenantHeroImageInline]
     fieldsets = (
         (None, {"fields": ("schema_name", "name")}),
-        ("Branding", {"fields": ("logo", "favicon", "hero_image", "primary_color", "secondary_color", "accent_color")}),
+        ("Branding", {"fields": ("logo", "favicon", "hero_image", "theme", "primary_color", "secondary_color", "accent_color", "body_bg_color")}),
         ("Footer", {"fields": ("footer_text", "footer_text_en")}),
         ("Business Info (عربي)", {"fields": ("about", "address", "city", "working_hours")}),
         ("Business Info (English)", {"fields": ("about_en", "address_en", "city_en", "working_hours_en")}),

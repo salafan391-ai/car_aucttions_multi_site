@@ -1,6 +1,6 @@
 {% load static tailwind_tags whatsapp_tags %}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl" id="html-root" data-theme="{{ site_theme|default:'light' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -86,8 +86,9 @@
             --color-primary: {{ primary_color|default:'#2563eb' }};
             --color-secondary: {{ secondary_color|default:'#1e3a8a' }};
             --color-accent: {{ accent_color|default:'#3b82f6' }};
+            --color-body-bg: {{ body_bg_color|default:'#ffffff' }};
         }
-        body { font-family: 'Tajawal', sans-serif; }
+        body { font-family: 'Tajawal', sans-serif; background-color: var(--color-body-bg); }
         html[lang="en"] body, html[lang="ko"] body { font-family: 'Inter', 'Tajawal', sans-serif; }
         .car-card:hover { transform: translateY(-4px); }
         .car-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -108,13 +109,356 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .text-brand-on-light { color: var(--color-primary); }
+
+        /* ── Dark theme ── */
+        [data-theme="dark"] {
+            --color-body-bg: #0f172a;
+            --color-card-bg: #1e293b;
+            --color-nav-bg: #1e293b;
+            --color-text: #f1f5f9;
+            --color-text-muted: #94a3b8;
+            --color-border: #334155;
+            --color-input-bg: #1e293b;
+        }
+        [data-theme="dark"] body { color: var(--color-text); }
+        [data-theme="dark"] .bg-white { background-color: var(--color-card-bg) !important; }
+        [data-theme="dark"] .bg-gray-50 { background-color: #1e293b !important; }
+        [data-theme="dark"] .bg-gray-100 { background-color: #273549 !important; }
+        [data-theme="dark"] .bg-gray-200 { background-color: #2d3f55 !important; }
+        [data-theme="dark"] .text-gray-900,
+        [data-theme="dark"] .text-gray-800,
+        [data-theme="dark"] .text-gray-700,
+        [data-theme="dark"] .text-gray-600 { color: var(--color-text) !important; }
+        [data-theme="dark"] .text-gray-500,
+        [data-theme="dark"] .text-gray-400 { color: var(--color-text-muted) !important; }
+        [data-theme="dark"] .border-gray-200,
+        [data-theme="dark"] .border-gray-100 { border-color: var(--color-border) !important; }
+        [data-theme="dark"] nav { background-color: var(--color-nav-bg) !important; }
+        [data-theme="dark"] footer { background-color: #020617 !important; }
+        [data-theme="dark"] input,
+        [data-theme="dark"] select,
+        [data-theme="dark"] textarea { background-color: var(--color-input-bg) !important; border-color: var(--color-border) !important; color: var(--color-text) !important; }
+        [data-theme="dark"] .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
+        [data-theme="dark"] .shadow { box-shadow: 0 2px 6px rgba(0,0,0,0.6) !important; }
+        [data-theme="dark"] .divide-gray-200 > * + * { border-color: var(--color-border) !important; }
+        [data-theme="dark"] .hover\:bg-gray-50:hover,
+        [data-theme="dark"] .hover\:bg-gray-100:hover { background-color: #2d3f55 !important; }
+
+        /* ── Light theme (default — no overrides needed) ── */
+        [data-theme="light"] {}
+
+        /* ── Custom theme — uses tenant color fields ── */
+        [data-theme="custom"] {
+            --color-body-bg: {{ body_bg_color|default:'#ffffff' }};
+        }
+
+        /* ════════════════════════════════════════════════════════════════
+           🐪  DESERT ARABIA THEME
+           Palette: sand dunes, camel brown, warm gold, terracotta,
+                    deep midnight-blue for contrast.
+           ════════════════════════════════════════════════════════════════ */
+
+        /* ── CSS variable palette ── */
+        [data-theme="desert"] {
+            --color-primary:     #c8860a;   /* rich camel gold          */
+            --color-secondary:   #7a4a1e;   /* dark camel / saddle brown*/
+            --color-accent:      #e9a832;   /* burnished gold            */
+            --color-body-bg:     #f5e9d0;   /* warm sand                 */
+            --desert-sand:       #f5e9d0;
+            --desert-sand-dark:  #e8d5a3;
+            --desert-dune:       #d4aa6b;
+            --desert-camel:      #c8860a;
+            --desert-saddle:     #7a4a1e;
+            --desert-clay:       #c05c2b;   /* terracotta / clay          */
+            --desert-night:      #1a0f07;   /* desert midnight            */
+            --desert-sky:        #2d4a6b;   /* deep desert sky blue       */
+            --desert-text:       #3d2408;   /* dark parchment text        */
+            --desert-text-muted: #7a5c38;
+            --desert-border:     #c8a96e;
+            --desert-card:       #fdf6e3;
+            --desert-card-hover: #f7ead0;
+            --desert-gold-light: #fff8e7;
+            --color-body-bg:     var(--desert-sand);
+        }
+
+        /* ── Google Font import for desert — Scheherazade New (Arabic calligraphy) ── */
+        @import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap');
+
+        /* ── Base body & font ── */
+        [data-theme="desert"] body {
+            color: var(--desert-text);
+            background-color: var(--desert-sand);
+            background-image:
+                radial-gradient(ellipse 120% 40% at 50% 0%,   rgba(200,134,10,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 80%  60% at 80% 100%, rgba(122,74,30,0.07)  0%, transparent 70%);
+            font-family: 'Tajawal', 'Scheherazade New', sans-serif;
+        }
+
+        /* ── Ornamental top-border stripe ── */
+        [data-theme="desert"]::before {
+            content: '';
+            display: block;
+            height: 4px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--desert-camel)   0px,  var(--desert-camel)   12px,
+                var(--desert-clay)    12px, var(--desert-clay)    24px,
+                var(--desert-dune)    24px, var(--desert-dune)    36px,
+                var(--desert-camel)   36px, var(--desert-camel)   48px
+            );
+        }
+
+        /* ── Headings — Arabic calligraphic feel ── */
+        [data-theme="desert"] h1,
+        [data-theme="desert"] h2,
+        [data-theme="desert"] h3 {
+            font-family: 'Scheherazade New', 'Tajawal', serif;
+            color: var(--desert-saddle);
+            letter-spacing: 0.01em;
+        }
+
+        /* ── Navbar ── */
+        [data-theme="desert"] nav {
+            background: linear-gradient(135deg, var(--desert-saddle) 0%, #5c3412 60%, var(--desert-night) 100%) !important;
+            border-bottom: 3px solid var(--desert-camel) !important;
+            box-shadow: 0 4px 24px rgba(122,74,30,0.35) !important;
+        }
+        [data-theme="desert"] nav a,
+        [data-theme="desert"] nav span,
+        [data-theme="desert"] nav button { color: #f5deb3 !important; }
+        [data-theme="desert"] nav a:hover { color: var(--desert-accent, #e9a832) !important; }
+        [data-theme="desert"] .text-brand { color: var(--desert-camel) !important; }
+        [data-theme="desert"] .bg-brand   { background-color: var(--desert-camel) !important; }
+        [data-theme="desert"] .bg-brand:hover,
+        [data-theme="desert"] .bg-brand-hover:hover { background-color: var(--desert-saddle) !important; }
+        [data-theme="desert"] .text-brand-hover:hover { color: var(--desert-accent, #e9a832) !important; }
+
+        /* Logo circle in navbar */
+        [data-theme="desert"] nav .bg-brand.rounded-full {
+            background: radial-gradient(circle, var(--desert-camel), var(--desert-saddle)) !important;
+            border: 2px solid var(--desert-dune) !important;
+        }
+
+        /* Nav active/hover pill */
+        [data-theme="desert"] nav .bg-brand\/10 {
+            background-color: rgba(200,134,10,0.18) !important;
+            border: 1px solid rgba(200,134,10,0.3) !important;
+        }
+
+        /* Mobile menu */
+        [data-theme="desert"] #mobile-menu {
+            background: linear-gradient(180deg, #5c3412, var(--desert-night)) !important;
+            border-top: 2px solid var(--desert-camel) !important;
+        }
+        [data-theme="desert"] #mobile-menu a,
+        [data-theme="desert"] #mobile-menu span { color: #f5deb3 !important; }
+
+        /* ── Cards / White containers ── */
+        [data-theme="desert"] .bg-white {
+            background-color: var(--desert-card) !important;
+            border: 1px solid var(--desert-border) !important;
+        }
+        [data-theme="desert"] .car-card {
+            background-color: var(--desert-card) !important;
+            border: 1px solid var(--desert-border) !important;
+            box-shadow: 0 2px 12px rgba(122,74,30,0.12) !important;
+        }
+        [data-theme="desert"] .car-card:hover {
+            background-color: var(--desert-card-hover) !important;
+            box-shadow: 0 8px 32px rgba(122,74,30,0.22) !important;
+            border-color: var(--desert-camel) !important;
+        }
+
+        /* ── Gray backgrounds → sand tones ── */
+        [data-theme="desert"] .bg-gray-50  { background-color: #f9f0dc !important; }
+        [data-theme="desert"] .bg-gray-100 { background-color: #f0ddb8 !important; }
+        [data-theme="desert"] .bg-gray-200 { background-color: #e5cc99 !important; }
+        [data-theme="desert"] .bg-gray-800 { background-color: var(--desert-saddle) !important; }
+        [data-theme="desert"] .bg-gray-900 { background-color: var(--desert-night) !important; }
+
+        /* ── Text ── */
+        [data-theme="desert"] .text-gray-900,
+        [data-theme="desert"] .text-gray-800,
+        [data-theme="desert"] .text-gray-700 { color: var(--desert-text)       !important; }
+        [data-theme="desert"] .text-gray-600,
+        [data-theme="desert"] .text-gray-500 { color: var(--desert-text-muted) !important; }
+        [data-theme="desert"] .text-gray-400 { color: var(--desert-dune)       !important; }
+        [data-theme="desert"] .text-white     { color: #fdf6e3                  !important; }
+
+        /* ── Borders ── */
+        [data-theme="desert"] .border-gray-100,
+        [data-theme="desert"] .border-gray-200 { border-color: var(--desert-border) !important; }
+        [data-theme="desert"] .divide-gray-200 > * + * { border-color: var(--desert-border) !important; }
+
+        /* ── Inputs & selects ── */
+        [data-theme="desert"] input,
+        [data-theme="desert"] select,
+        [data-theme="desert"] textarea {
+            background-color: var(--desert-gold-light) !important;
+            border-color: var(--desert-border)         !important;
+            color: var(--desert-text)                  !important;
+        }
+        [data-theme="desert"] input:focus,
+        [data-theme="desert"] select:focus,
+        [data-theme="desert"] textarea:focus {
+            border-color: var(--desert-camel) !important;
+            box-shadow: 0 0 0 3px rgba(200,134,10,0.2) !important;
+            outline: none !important;
+        }
+        [data-theme="desert"] input::placeholder,
+        [data-theme="desert"] textarea::placeholder { color: var(--desert-dune) !important; }
+
+        /* ── Buttons ── */
+        [data-theme="desert"] button.bg-brand,
+        [data-theme="desert"] a.bg-brand {
+            background: linear-gradient(135deg, var(--desert-camel), var(--desert-clay)) !important;
+            border: none !important;
+            color: #fff8e7 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.03em !important;
+        }
+        [data-theme="desert"] button.bg-brand:hover,
+        [data-theme="desert"] a.bg-brand:hover {
+            background: linear-gradient(135deg, var(--desert-clay), var(--desert-saddle)) !important;
+        }
+
+        /* ── Hero gradient override ── */
+        [data-theme="desert"] .hero-gradient {
+            background: linear-gradient(
+                160deg,
+                var(--desert-night)  0%,
+                var(--desert-saddle) 45%,
+                var(--desert-camel)  80%,
+                var(--desert-dune)   100%
+            ) !important;
+        }
+
+        /* ── Ornamental section divider ── */
+        [data-theme="desert"] .desert-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 1.5rem 0;
+            color: var(--desert-camel);
+            font-size: 1.25rem;
+        }
+        [data-theme="desert"] .desert-divider::before,
+        [data-theme="desert"] .desert-divider::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--desert-camel)  0, var(--desert-camel)  6px,
+                transparent          6px, transparent         12px
+            );
+        }
+
+        /* ── Car-card badge (price) ── */
+        [data-theme="desert"] .badge-price,
+        [data-theme="desert"] .bg-brand-light {
+            background: linear-gradient(90deg, #fff8e7, #fdecc8) !important;
+            color: var(--desert-saddle) !important;
+            border: 1px solid var(--desert-dune) !important;
+        }
+
+        /* ── Tags / chips ── */
+        [data-theme="desert"] .rounded-full.bg-brand\/10,
+        [data-theme="desert"] .rounded-full.bg-blue-50,
+        [data-theme="desert"] .rounded-full.bg-green-50,
+        [data-theme="desert"] .rounded-full.bg-amber-50 {
+            background: linear-gradient(135deg, #fff2cc, #ffe098) !important;
+            color: var(--desert-saddle) !important;
+            border: 1px solid var(--desert-dune) !important;
+        }
+
+        /* ── Shadows ── */
+        [data-theme="desert"] .shadow-sm { box-shadow: 0 1px 4px  rgba(122,74,30,0.18) !important; }
+        [data-theme="desert"] .shadow    { box-shadow: 0 2px 10px rgba(122,74,30,0.22) !important; }
+        [data-theme="desert"] .shadow-lg { box-shadow: 0 6px 28px rgba(122,74,30,0.30) !important; }
+
+        /* ── Footer ── */
+        [data-theme="desert"] footer {
+            background: linear-gradient(180deg, var(--desert-night) 0%, #0a0603 100%) !important;
+            border-top: 4px solid var(--desert-camel) !important;
+            position: relative;
+        }
+        [data-theme="desert"] footer::before {
+            content: '🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽';
+            display: block;
+            text-align: center;
+            font-size: 0.65rem;
+            color: rgba(200,134,10,0.45);
+            padding: 6px 0 0;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        [data-theme="desert"] footer h3 { color: var(--desert-dune) !important; }
+        [data-theme="desert"] footer .text-gray-300,
+        [data-theme="desert"] footer .text-gray-400 { color: #c4a86b !important; }
+        [data-theme="desert"] footer a:hover { color: var(--desert-camel) !important; }
+        [data-theme="desert"] footer .bg-gray-800 {
+            background-color: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(200,134,10,0.2) !important;
+        }
+
+        /* ── Hover list items ── */
+        [data-theme="desert"] .hover\:bg-gray-50:hover,
+        [data-theme="desert"] .hover\:bg-gray-100:hover { background-color: #f0ddb8 !important; }
+
+        /* ── Scrollbar (Webkit) ── */
+        [data-theme="desert"] ::-webkit-scrollbar { width: 8px; }
+        [data-theme="desert"] ::-webkit-scrollbar-track { background: var(--desert-sand); }
+        [data-theme="desert"] ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--desert-camel), var(--desert-saddle));
+            border-radius: 4px;
+        }
+
+        /* ── Auction countdown in desert ── */
+        [data-theme="desert"] .countdown-ok     { background: #fffbeb; color: #92400e; }
+        [data-theme="desert"] .countdown-soon   { background: #fef3c7; color: #b45309; }
+        [data-theme="desert"] .countdown-urgent { background: #fef2f2; color: #dc2626; }
+
+        /* ── Glass card override ── */
+        [data-theme="desert"] .glass {
+            background: rgba(253,246,227,0.15) !important;
+            border: 1px solid rgba(200,134,10,0.25) !important;
+        }
+
+        /* ── Mobile FAB buttons ── */
+        [data-theme="desert"] .fixed.bottom-4 .bg-white.rounded-full {
+            background: linear-gradient(135deg, var(--desert-gold-light), #fdecc8) !important;
+            border: 1px solid var(--desert-border) !important;
+            box-shadow: 0 4px 16px rgba(122,74,30,0.25) !important;
+        }
+
+        /* ── Section headings ornament ── */
+        [data-theme="desert"] .section-heading-ornament {
+            display: inline-block;
+            position: relative;
+        }
+        [data-theme="desert"] .section-heading-ornament::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            right: 0;
+            left: 0;
+            height: 3px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--desert-camel) 0, var(--desert-camel) 8px,
+                transparent 8px, transparent 16px
+            );
+            border-radius: 2px;
+        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 font-tajawal text-gray-800 min-h-screen flex flex-col">
+<body class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <nav class="shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <a href="{% url 'home' %}" class="flex items-center gap-2">

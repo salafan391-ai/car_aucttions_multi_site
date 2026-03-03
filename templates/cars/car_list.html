@@ -215,7 +215,7 @@
         {% for c in colors %}
             {% if request.GET.color == c.id|stringformat:"d" %}
             <a href="?{% for k,v in request.GET.items %}{% if k != 'color' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 text-xs font-medium rounded-full hover:bg-pink-100 transition group">
-                اللون: {{ c.name }}
+                اللون: {% if LANGUAGE_CODE == 'ar' %}{{ c.name|translate_color }}{% else %}{{ c.name }}{% endif %}
                 <svg class="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </a>
             {% endif %}

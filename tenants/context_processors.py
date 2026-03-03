@@ -50,6 +50,8 @@ def tenant_branding(request):
         "primary_color": tenant.primary_color or "#2563eb",
         "secondary_color": tenant.secondary_color or "#1e3a8a",
         "accent_color": tenant.accent_color or "#3b82f6",
+        "body_bg_color": getattr(tenant, 'body_bg_color', None) or "#ffffff",
+        "site_theme": getattr(tenant, 'theme', 'light') or 'light',
         "footer_text": tenant.footer_text or "",
         "footer_text_en": tenant.footer_text_en or "",
         # Business info

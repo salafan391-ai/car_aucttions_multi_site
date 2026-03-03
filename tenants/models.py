@@ -7,9 +7,23 @@ class Tenant(TenantMixin):
     logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True, verbose_name="الشعار")
     favicon = models.ImageField(upload_to='tenant_favicons/', blank=True, null=True, verbose_name="أيقونة الموقع")
     hero_image = models.ImageField(upload_to='tenant_hero/', blank=True, null=True, verbose_name="صورة الخلفية الرئيسية", help_text="صورة خلفية الصفحة الرئيسية")
-    primary_color = models.CharField(max_length=7, default="#2563eb", help_text="Hex color e.g. #2563eb")
-    secondary_color = models.CharField(max_length=7, default="#1e3a8a", help_text="Hex color e.g. #1e3a8a")
-    accent_color = models.CharField(max_length=7, default="#3b82f6", help_text="Hex color e.g. #3b82f6")
+    THEME_CHOICES = [
+        ('light',  'فاتح (Light)'),
+        ('dark',   'داكن (Dark)'),
+        ('desert', '🐪 صحراوي عربي (Desert Arabia)'),
+        ('custom', 'مخصص (Custom Colors)'),
+    ]
+    theme = models.CharField(
+        max_length=10,
+        choices=THEME_CHOICES,
+        default='light',
+        verbose_name="ثيم الموقع",
+        help_text="اختر المظهر العام للموقع. 🐪 صحراوي: تصميم عربي بألوان الصحراء والجِمال. مخصص: يستخدم الألوان المحددة أدناه.",
+    )
+    primary_color = models.CharField(max_length=7, default="#2563eb", help_text="Hex color e.g. #2563eb (used in Custom theme)")
+    secondary_color = models.CharField(max_length=7, default="#1e3a8a", help_text="Hex color e.g. #1e3a8a (used in Custom theme)")
+    accent_color = models.CharField(max_length=7, default="#3b82f6", help_text="Hex color e.g. #3b82f6 (used in Custom theme)")
+    body_bg_color = models.CharField(max_length=7, default="#ffffff", blank=True, verbose_name="Body Background Color", help_text="Hex color for the page background (used in Custom theme).")
     footer_text = models.CharField(max_length=255, blank=True, null=True, verbose_name="نص الفوتر (عربي)")
     footer_text_en = models.CharField(max_length=255, blank=True, null=True, verbose_name="Footer Text (EN)")
 
