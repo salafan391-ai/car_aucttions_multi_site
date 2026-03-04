@@ -53,6 +53,8 @@
 {% block content %}
 <section class="max-w-7xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-8 sm:pb-12">
 
+
+
     <!-- ═══════════════ STICKY SEARCH BAR ═══════════════ -->
     <div class="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 pt-2 pb-3 sm:pb-4 bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50/0">
         <form method="get" id="main-form" class="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-gray-200/60 border border-gray-100 p-2 sm:p-3 flex gap-2 sm:gap-3">
@@ -712,9 +714,9 @@
             </div>
             <h3 class="text-lg font-bold text-gray-700 mb-2">لا توجد نتائج</h3>
             <p class="text-gray-400 text-sm mb-4">جرّب تغيير الفلاتر أو البحث بكلمات مختلفة</p>
-            <a href="{% url 'car_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand bg-brand-hover text-white text-sm font-medium rounded-xl transition">
+            <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand bg-brand-hover text-white text-sm font-medium rounded-xl transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                عرض جميع السيارات
+                {% if request.GET.car_type == 'auction' %}عرض جميع مزادات السيارات{% else %}عرض جميع السيارات{% endif %}
             </a>
         </div>
         {% endfor %}

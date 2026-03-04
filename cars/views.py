@@ -384,13 +384,41 @@ def car_list(request):
             manufacturers = list(Manufacturer.objects.all().order_by('name'))
             cache.set(_mfr_cache_key, manufacturers, 60 * 15)
 
-    # Only load models/badges when manufacturer/model is selected
+    # Only load models/badges when manufacturer/model is selected, scoped to car_type
     if manufacturer:
-        _models_cache_key = f"car_list:models:{manufacturer}"
-        models_qs = cache.get(_models_cache_key)
-        if models_qs is None:
-            models_qs = list(CarModel.objects.filter(manufacturer_id=manufacturer).order_by('name'))
-            cache.set(_models_cache_key, models_qs, 60 * 15)
+        if car_type == 'auction':
+            _models_cache_key = f"car_list:models_auction:{manufacturer}"
+            models_qs = cache.get(_models_cache_key)
+            if models_qs is None:
+                _auction_model_ids = list(
+                    ApiCar.objects.filter(
+                        category__name='auction', manufacturer_id=manufacturer
+                    ).exclude(auction_date__lt=now)
+                    .values_list('model_id', flat=True).distinct()
+                )
+                models_qs = list(
+                    CarModel.objects.filter(id__in=_auction_model_ids).order_by('name')
+                )
+                cache.set(_models_cache_key, models_qs, 60 * 15)
+        elif car_type == 'cars':
+            _models_cache_key = f"car_list:models_cars:{manufacturer}"
+            models_qs = cache.get(_models_cache_key)
+            if models_qs is None:
+                _cars_model_ids = list(
+                    ApiCar.objects.filter(manufacturer_id=manufacturer)
+                    .exclude(category__name='auction')
+                    .values_list('model_id', flat=True).distinct()
+                )
+                models_qs = list(
+                    CarModel.objects.filter(id__in=_cars_model_ids).order_by('name')
+                )
+                cache.set(_models_cache_key, models_qs, 60 * 15)
+        else:
+            _models_cache_key = f"car_list:models:{manufacturer}"
+            models_qs = cache.get(_models_cache_key)
+            if models_qs is None:
+                models_qs = list(CarModel.objects.filter(manufacturer_id=manufacturer).order_by('name'))
+                cache.set(_models_cache_key, models_qs, 60 * 15)
     else:
         models_qs = []
 
@@ -407,32 +435,56 @@ def car_list(request):
     else:
         badges = []
 
-    # Static lookup lists — cache for 30 minutes
-    _static_cache_key = "car_list:static_filters"
+    # Static lookup lists — scoped to the current car_type, cached 30 min
+    if car_type == 'auction':
+        _static_cache_key = f"car_list:static_filters_auction:{schema}"
+        _base_qs = ApiCar.objects.filter(category__name='auction').exclude(auction_date__lt=now)
+    elif car_type == 'cars':
+        _static_cache_key = f"car_list:static_filters_cars:{schema}"
+        _base_qs = ApiCar.objects.exclude(category__name='auction')
+    else:
+        _static_cache_key = f"car_list:static_filters_all:{schema}"
+        _base_qs = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
+
     static_filters = cache.get(_static_cache_key)
     if static_filters is None:
         static_filters = {
-            'years': list(ApiCar.objects.values_list('year', flat=True).distinct().order_by('-year')),
-            'body_types': list(BodyType.objects.all().order_by('name')),
+            'years': list(
+                _base_qs.values_list('year', flat=True).distinct().order_by('-year')
+            ),
+            'body_types': list(
+                BodyType.objects.filter(
+                    id__in=_base_qs.values_list('body_id', flat=True).distinct()
+                ).order_by('name')
+            ),
             'fuels': list(
-                ApiCar.objects.values_list('fuel', flat=True)
+                _base_qs.values_list('fuel', flat=True)
                 .exclude(fuel__isnull=True).exclude(fuel='')
                 .distinct().order_by('fuel')[:15]
             ),
             'transmissions': list(
-                ApiCar.objects.values_list('transmission', flat=True)
+                _base_qs.values_list('transmission', flat=True)
                 .exclude(transmission__isnull=True).exclude(transmission='')
                 .distinct().order_by('transmission')
             ),
             'seat_counts': list(
-                ApiCar.objects.values_list('seat_count', flat=True)
+                _base_qs.values_list('seat_count', flat=True)
                 .exclude(seat_count__isnull=True).exclude(seat_count='')
                 .distinct().order_by('seat_count')
             ),
-            'colors': list(CarColor.objects.all().order_by('name')),
-            'seat_colors': list(CarSeatColor.objects.all().order_by('name')),
+            'colors': list(
+                CarColor.objects.filter(
+                    id__in=_base_qs.values_list('color_id', flat=True).distinct()
+                ).order_by('name')
+            ),
+            'seat_colors': list(
+                CarSeatColor.objects.filter(
+                    id__in=_base_qs.values_list('seat_color_id', flat=True).distinct()
+                ).order_by('name')
+            ),
             'auction_names': list(
                 ApiCar.objects.filter(category__name='auction')
+                .exclude(auction_date__lt=now)
                 .exclude(auction_name__isnull=True).exclude(auction_name='')
                 .values_list('auction_name', flat=True)
                 .distinct().order_by('auction_name')
@@ -464,14 +516,31 @@ def car_list(request):
     count_cars = tab_counts['count_cars']
     count_auction = tab_counts['count_auction']
 
-    # Popular manufacturers – cached, annotated list
-    _pop_mfr_key = "car_list:popular_manufacturers"
-    popular_manufacturers = cache.get(_pop_mfr_key)
-    if popular_manufacturers is None:
-        popular_manufacturers = list(
-            Manufacturer.objects.annotate(car_count=Count('apicar')).order_by('-car_count')
-        )
-        cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
+    # Popular manufacturers – scoped to the current car_type for accurate quick-picks
+    if car_type == 'auction':
+        _pop_mfr_key = f"car_list:popular_manufacturers_auction:{schema}"
+        popular_manufacturers = cache.get(_pop_mfr_key)
+        if popular_manufacturers is None:
+            _auction_mfr_ids = list(
+                ApiCar.objects.filter(category__name='auction')
+                .exclude(auction_date__lt=now)
+                .values_list('manufacturer_id', flat=True)
+                .distinct()
+            )
+            popular_manufacturers = list(
+                Manufacturer.objects.filter(id__in=_auction_mfr_ids)
+                .annotate(car_count=Count('apicar', filter=Q(apicar__category__name='auction')))
+                .order_by('-car_count')
+            )
+            cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
+    else:
+        _pop_mfr_key = "car_list:popular_manufacturers"
+        popular_manufacturers = cache.get(_pop_mfr_key)
+        if popular_manufacturers is None:
+            popular_manufacturers = list(
+                Manufacturer.objects.annotate(car_count=Count('apicar')).order_by('-car_count')
+            )
+            cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     context = {
         'page_obj': page_obj,
         'manufacturers': manufacturers,
