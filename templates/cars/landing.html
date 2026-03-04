@@ -1,0 +1,387 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_name|default:"سيارات" }}</title>
+  {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+
+  <!-- Preload critical font subset only -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── Reset ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── Root vars (overridden by tenant) ─── */
+    :root {
+      --p: {{ primary_color|default:"#2563eb" }};
+      --s: {{ secondary_color|default:"#1e3a8a" }};
+      --a: {{ accent_color|default:"#3b82f6" }};
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Tajawal', sans-serif;
+      background: #0a0a0f;
+      color: #fff;
+      overflow: hidden; /* prevent scroll on landing */
+    }
+
+    /* ─── Animated gradient background ─── */
+    .bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%, color-mix(in srgb, var(--p) 30%, transparent), transparent),
+        radial-gradient(ellipse 60% 50% at 80% 80%,  color-mix(in srgb, var(--s) 25%, transparent), transparent),
+        radial-gradient(ellipse 50% 40% at 10% 70%,  color-mix(in srgb, var(--a) 20%, transparent), transparent),
+        #0a0a0f;
+      animation: pulse-bg 8s ease-in-out infinite alternate;
+    }
+    @keyframes pulse-bg {
+      from { opacity: 1; }
+      to   { opacity: .85; }
+    }
+
+    /* subtle grid overlay */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    /* ─── Main layout ─── */
+    .stage {
+      position: relative;
+      z-index: 10;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+      gap: 2.5rem;
+    }
+
+    /* ─── Hero image backdrop (if tenant has one) ─── */
+    {% if site_hero_image or site_hero_images %}
+    .bg-canvas {
+      background-image: url('{% if site_hero_images %}{{ site_hero_images.0.image.url }}{% else %}{{ site_hero_image }}{% endif %}');
+      background-size: cover;
+      background-position: center;
+    }
+    .bg-canvas::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%, color-mix(in srgb, var(--p) 40%, transparent), transparent),
+        linear-gradient(160deg, rgba(10,10,15,.85) 0%, rgba(10,10,15,.70) 100%);
+    }
+    {% endif %}
+
+    /* ─── Logo ─── */
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .75rem;
+      animation: fade-up .5s ease both;
+    }
+    .logo-wrap img {
+      height: 88px;
+      width: auto;
+      border-radius: 20px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 20px 60px rgba(0,0,0,.5);
+      object-fit: contain;
+    }
+    .logo-wordmark {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      background: linear-gradient(135deg, #fff 30%, color-mix(in srgb, var(--p) 60%, #fff));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+    }
+    .logo-tagline {
+      font-size: clamp(.85rem, 2.5vw, 1.1rem);
+      color: rgba(255,255,255,.6);
+      font-weight: 400;
+      text-align: center;
+      max-width: 32ch;
+      line-height: 1.6;
+      animation: fade-up .55s .1s ease both;
+    }
+
+    /* ─── Cards row ─── */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 640px;
+      animation: fade-up .6s .2s ease both;
+    }
+    @media (max-width: 400px) {
+      .cards { grid-template-columns: 1fr; max-width: 320px; }
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .75rem;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      /* glass base */
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      transition: transform .2s cubic-bezier(.22,1,.36,1),
+                  box-shadow .2s cubic-bezier(.22,1,.36,1),
+                  border-color .2s;
+      will-change: transform;
+    }
+    .card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 24px 64px -12px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.25);
+    }
+    .card:active { transform: translateY(-2px) scale(.99); }
+
+    /* coloured glow per card */
+    .card-cars   { --glow: var(--p); }
+    .card-auction { --glow: #f59e0b; }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 120% 80% at 50% 120%, color-mix(in srgb, var(--glow) 22%, transparent), transparent);
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+    .card:hover::before { opacity: 1.5; }
+
+    /* top accent line */
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 2px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, transparent, var(--glow), transparent);
+      opacity: .7;
+    }
+
+    .card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--glow) 18%, rgba(255,255,255,.08));
+      border: 1px solid color-mix(in srgb, var(--glow) 30%, rgba(255,255,255,.1));
+      flex-shrink: 0;
+    }
+    .card-icon svg { width: 26px; height: 26px; color: var(--glow); }
+
+    .card-label {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+    }
+    .card-sub {
+      font-size: .8rem;
+      color: rgba(255,255,255,.5);
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .15rem .55rem;
+      border-radius: 99px;
+      font-size: .7rem;
+      font-weight: 700;
+      background: color-mix(in srgb, var(--glow) 20%, rgba(255,255,255,.06));
+      color: color-mix(in srgb, var(--glow) 80%, #fff);
+      border: 1px solid color-mix(in srgb, var(--glow) 35%, transparent);
+    }
+
+    .card-arrow {
+      margin-top: auto;
+      align-self: flex-end;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--glow) 20%, rgba(255,255,255,.07));
+      border: 1px solid color-mix(in srgb, var(--glow) 25%, rgba(255,255,255,.1));
+      transition: background .2s, transform .2s;
+    }
+    .card:hover .card-arrow {
+      background: var(--glow);
+      transform: translateX(-4px); /* RTL nudge */
+    }
+    .card-arrow svg { width: 15px; height: 15px; }
+
+    /* ─── Keyframes ─── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Floating particles (pure CSS, no JS) ─── */
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .p {
+      position: absolute;
+      border-radius: 50%;
+      background: var(--p);
+      opacity: 0;
+      animation: float linear infinite;
+    }
+    .p:nth-child(1)  { width:4px;  height:4px;  left:10%; animation-duration:14s; animation-delay:0s;    opacity:.25; }
+    .p:nth-child(2)  { width:3px;  height:3px;  left:25%; animation-duration:18s; animation-delay:2s;    opacity:.2;  }
+    .p:nth-child(3)  { width:5px;  height:5px;  left:40%; animation-duration:12s; animation-delay:1s;    opacity:.18; }
+    .p:nth-child(4)  { width:3px;  height:3px;  left:60%; animation-duration:16s; animation-delay:3s;    opacity:.22; }
+    .p:nth-child(5)  { width:4px;  height:4px;  left:75%; animation-duration:20s; animation-delay:.5s;   opacity:.2;  }
+    .p:nth-child(6)  { width:2px;  height:2px;  left:88%; animation-duration:15s; animation-delay:4s;    opacity:.15; }
+    @keyframes float {
+      0%   { transform: translateY(100vh) scale(1);   opacity: 0; }
+      10%  { opacity: .25; }
+      90%  { opacity: .1; }
+      100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background layers -->
+  <div class="bg-canvas" aria-hidden="true"></div>
+  <div class="bg-grid"   aria-hidden="true"></div>
+  <div class="particles" aria-hidden="true">
+    <span class="p"></span><span class="p"></span><span class="p"></span>
+    <span class="p"></span><span class="p"></span><span class="p"></span>
+  </div>
+
+  <!-- Main content -->
+  <main class="stage">
+
+    <!-- Logo + name + tagline -->
+    <div class="logo-wrap">
+      {% if site_logo %}
+        <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+      {% else %}
+        <!-- Default SVG car icon when no logo uploaded -->
+        <div style="width:88px;height:88px;border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+          <svg width="48" height="48" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+          </svg>
+        </div>
+      {% endif %}
+
+      <span class="logo-wordmark">{{ site_name|default:"سيارات" }}</span>
+      <p class="logo-tagline">
+        {% if site_tagline %}{{ site_tagline }}
+        {% else %}أفضل منصة لشراء السيارات وتصديرها{% endif %}
+      </p>
+    </div>
+
+    <!-- Two CTA cards -->
+    <div class="cards">
+
+      <!-- Card 1: Cars -->
+      <a href="{% url 'car_list' %}" class="card card-cars">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+          </svg>
+        </div>
+
+        <div>
+          <div class="card-label">سيارات</div>
+          <div class="card-sub">
+            {% if cars_count %}
+              <span class="card-badge">{{ cars_count }}</span>
+              سيارة متاحة
+            {% else %}
+              استعرض الكتالوج
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-arrow">
+          <!-- left arrow for RTL -->
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- Card 2: Auction Cars -->
+      <a href="{% url 'car_list' %}?category=auction" class="card card-auction">
+        <div class="card-icon">
+          <!-- gavel icon -->
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/>
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M14 3l2.5 2.5M16.5 5.5L19 8"/>
+          </svg>
+        </div>
+
+        <div>
+          <div class="card-label">سيارات المزاد</div>
+          <div class="card-sub">
+            {% if auction_count %}
+              <span class="card-badge">{{ auction_count }}</span>
+              مزاد نشط
+            {% else %}
+              شارك في المزادات
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-arrow">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </div>
+      </a>
+
+    </div><!-- /cards -->
+
+  </main>
+
+</body>
+</html>

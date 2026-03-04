@@ -37,6 +37,33 @@ def _exclude_expired_auctions(qs):
     return qs.exclude(category__name='auction', auction_date__lt=now)
 
 
+@cache_control(public=True, max_age=600)
+def landing(request):
+    """Ultra-fast opening page – logo + two CTA cards."""
+    schema = getattr(connection, 'schema_name', 'public')
+    html_cache_key = f"landing_html:{schema}"
+    cached_html = cache.get(html_cache_key)
+    if cached_html:
+        return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
+
+    now = timezone.now()
+    agg = ApiCar.objects.exclude(
+        category__name='auction', auction_date__lt=now
+    ).aggregate(
+        cars_count=Count('id', filter=~Q(category__name='auction')),
+        auction_count=Count('id', filter=Q(category__name='auction')),
+    )
+
+    context = {
+        'cars_count': agg['cars_count'],
+        'auction_count': agg['auction_count'],
+    }
+
+    response = render(request, 'cars/landing.html', context)
+    cache.set(html_cache_key, response.content, 60 * 10)  # 10 min
+    return response
+
+
 @ensure_csrf_cookie
 @cache_control(public=True, max_age=180)
 def home(request):
