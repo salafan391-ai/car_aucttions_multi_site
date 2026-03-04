@@ -654,6 +654,7 @@ def upload_auction_json(request):
         cars_to_create = []
         cars_to_update = []
         created = updated = skipped = 0
+        seen_car_ids = set()  # track IDs seen in this upload batch to skip in-file duplicates
 
         for item in data:
             car_id = (item.get("car_identifire") or item.get("car_ids") or "").strip()
@@ -801,13 +802,18 @@ def upload_auction_json(request):
 
             if car_id in existing_car_ids:
                 cars_to_update.append(car_data)
+            elif car_id in seen_car_ids:
+                # Duplicate within the uploaded file — skip to avoid bulk_create IntegrityError
+                skipped += 1
+                continue
             else:
+                seen_car_ids.add(car_id)
                 cars_to_create.append(ApiCar(**car_data))
 
         # Bulk create new cars
         with transaction.atomic():
             if cars_to_create:
-                ApiCar.objects.bulk_create(cars_to_create, batch_size=500)
+                ApiCar.objects.bulk_create(cars_to_create, batch_size=500, ignore_conflicts=True)
                 created = len(cars_to_create)
             
             # Bulk update existing cars
