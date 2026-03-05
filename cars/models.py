@@ -129,6 +129,14 @@ class ApiCar(models.Model):
             models.Index(fields=['category', '-auction_date']),
             models.Index(fields=['manufacturer', 'year']),
             models.Index(fields=['price', 'mileage']),
+            # Static filter sidebar covering indexes (added migration 0017)
+            models.Index(fields=['category', 'fuel'],         name='cars_apicar_cat_fuel_idx'),
+            models.Index(fields=['category', 'transmission'], name='cars_apicar_cat_trans_idx'),
+            models.Index(fields=['category', 'seat_count'],   name='cars_apicar_cat_seat_cnt_idx'),
+            models.Index(fields=['category', 'body'],         name='cars_apicar_cat_body_idx'),
+            models.Index(fields=['category', 'color'],        name='cars_apicar_cat_color_idx'),
+            models.Index(fields=['category', 'seat_color'],   name='cars_apicar_cat_seat_clr_idx'),
+            models.Index(fields=['category', '-year'],        name='cars_apicar_cat_year_idx'),
         ]
     
     def __str__(self):

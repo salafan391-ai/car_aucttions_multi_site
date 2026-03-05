@@ -211,16 +211,18 @@ def car_list(request):
 
     qs = _exclude_expired_auctions(
         ApiCar.objects.select_related(
-            'manufacturer', 'model', 'badge', 'color', 'body'
+            'manufacturer', 'model', 'badge', 'color', 'body', 'category'
         ).only(
             'id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
             'status', 'lot_number', 'vin', 'fuel', 'transmission',
             'auction_date', 'auction_name', 'condition', 'created_at',
-            'manufacturer__id', 'manufacturer__name', 'manufacturer__logo',
+            'manufacturer__id', 'manufacturer__name', 'manufacturer__name_ar',
+            'manufacturer__logo',
             'model__id', 'model__name',
             'badge__id', 'badge__name',
             'color__id', 'color__name',
             'body__id', 'body__name',
+            'category__id', 'category__name',
         )
     )
 
@@ -342,12 +344,25 @@ def car_list(request):
     _cached_count = cache.get(_count_cache_key)
 
     class _CachedCountPaginator(Paginator):
-        """Paginator that uses a pre-cached count to avoid a DB COUNT(*) query."""
+        """Paginator that uses a pre-cached count to avoid a DB COUNT(*) query.
+
+        Uses a two-level approach:
+          1. Redis/LocMem cache across requests (keyed by filter params).
+          2. Instance-level _count_memo so that multiple accesses within the
+             same request (Django calls .count several times for num_pages,
+             page_range, etc.) never hit the DB more than once.
+        """
+        _count_memo = None
+
         @property
         def count(self):
+            if self._count_memo is not None:
+                return self._count_memo
             if _cached_count is not None:
-                return _cached_count
+                self._count_memo = _cached_count
+                return self._count_memo
             c = super().count
+            self._count_memo = c
             cache.set(_count_cache_key, c, 60 * 5)
             return c
 
