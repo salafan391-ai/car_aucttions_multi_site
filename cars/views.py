@@ -91,19 +91,29 @@ def home(request):
         latest_cars = list(
             _base_qs.exclude(category__name='auction')
             .order_by('-created_at')
-            .only('id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
-                  'status', 'manufacturer_id', 'model_id', 'badge_id',
-                  'color_id', 'body_id', 'category_id', 'created_at')[:12]
+            .only(
+                'id', 'title', 'slug', 'image', 'images', 'price', 'year',
+                'mileage', 'status', 'transmission', 'address', 'created_at',
+                'manufacturer__id', 'manufacturer__name', 'manufacturer__name_ar',
+                'model__id', 'model__name',
+                'badge__id', 'badge__name',
+                'category__id', 'category__name',
+            )[:12]
         )
 
         # Latest auctions – limited early
         latest_auctions = list(
             _base_qs.filter(category__name='auction')
             .order_by('-created_at')
-            .only('id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
-                  'auction_date', 'auction_name', 'status',
-                  'manufacturer_id', 'model_id', 'badge_id',
-                  'color_id', 'body_id', 'category_id', 'created_at')[:12]
+            .only(
+                'id', 'title', 'slug', 'image', 'images', 'price', 'year',
+                'mileage', 'status', 'transmission', 'auction_date',
+                'auction_name', 'address', 'created_at',
+                'manufacturer__id', 'manufacturer__name', 'manufacturer__name_ar',
+                'model__id', 'model__name',
+                'badge__id', 'badge__name',
+                'category__id', 'category__name',
+            )[:12]
         )
 
         # ── ALL counts in ONE query ──
@@ -153,8 +163,9 @@ def home(request):
             from site_cars.models import SiteCar
             site_cars = list(
                 SiteCar.objects.only(
-                    'id', 'title', 'image', 'manufacturer', 'model', 'year', 'price'
-                ).order_by('-created_at')[:8]
+                    'id', 'title', 'image', 'manufacturer', 'model',
+                    'year', 'price', 'status', 'is_featured', 'mileage',
+                ).prefetch_related('gallery').order_by('-created_at')[:8]
             )
 
         # Posts (filtered by tenant)
