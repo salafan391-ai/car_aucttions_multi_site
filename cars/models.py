@@ -302,6 +302,12 @@ class PostImage(models.Model):
     def __str__(self):
         return f"{self.post.title} - Image {self.order}"
 
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, 'file'):
+            from site_cars.image_utils import optimize_image
+            self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)
+        super().save(*args, **kwargs)
+
 
 class PostLike(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, verbose_name="المنشور")

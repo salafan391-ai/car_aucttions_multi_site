@@ -1,5 +1,6 @@
 from django.db import models
 from django_tenants.models import TenantMixin, DomainMixin
+from site_cars.image_utils import optimize_image
 
 
 class Tenant(TenantMixin):
@@ -69,6 +70,17 @@ class Tenant(TenantMixin):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        if self.logo and hasattr(self.logo, 'file'):
+            self.logo = optimize_image(self.logo, max_width=400, max_height=400, quality=85)
+        if self.favicon and hasattr(self.favicon, 'file'):
+            self.favicon = optimize_image(self.favicon, max_width=64, max_height=64, quality=90)
+        if self.hero_image and hasattr(self.hero_image, 'file'):
+            self.hero_image = optimize_image(self.hero_image, max_width=1920, max_height=1080, quality=82)
+        if self.contact_person_photo and hasattr(self.contact_person_photo, 'file'):
+            self.contact_person_photo = optimize_image(self.contact_person_photo, max_width=400, max_height=400, quality=85)
+        super().save(*args, **kwargs)
+
 
 class Domain(DomainMixin):
     pass
@@ -86,6 +98,11 @@ class TenantHeroImage(models.Model):
 
     def __str__(self):
         return f"{self.tenant.name} - Hero {self.order}"
+
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, 'file'):
+            self.image = optimize_image(self.image, max_width=1920, max_height=1080, quality=82)
+        super().save(*args, **kwargs)
 
 
 class TenantPhoneNumber(models.Model):

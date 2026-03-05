@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from cars.models import ApiCar
+from site_cars.image_utils import optimize_image
 
 
 class SiteCar(models.Model):
@@ -37,6 +38,11 @@ class SiteCar(models.Model):
     def __str__(self):
         return f"{self.manufacturer} {self.model} {self.year}"
 
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, 'file'):
+            self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)
+        super().save(*args, **kwargs)
+
 
 class SiteCarImage(models.Model):
     car = models.ForeignKey(SiteCar, on_delete=models.CASCADE, related_name='gallery', verbose_name="السيارة")
@@ -52,6 +58,11 @@ class SiteCarImage(models.Model):
 
     def __str__(self):
         return f"صورة - {self.car}"
+
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, 'file'):
+            self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)
+        super().save(*args, **kwargs)
 
 
 class SiteOrder(models.Model):
