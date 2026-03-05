@@ -84,7 +84,7 @@ def home(request):
     if context is None:
         # ── Single base queryset with direct filter (no subquery) ──
         _base_qs = ApiCar.objects.select_related(
-            'manufacturer', 'model', 'badge', 'color', 'body', 'category'
+            'manufacturer', 'model', 'badge', 'category'
         ).exclude(category__name='auction', auction_date__lt=now)
 
         # Latest cars (non-auction) – limited early
