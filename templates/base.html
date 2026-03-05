@@ -78,20 +78,6 @@
               href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap">
     </noscript>
     {% tailwind_css %}
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'tajawal': ['Tajawal', 'sans-serif'],
-                    },
-                    colors: {
-                        dark: { 800: '#1a1a2e', 900: '#0f0f23' },
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         :root {
             --color-primary: {{ primary_color|default:'#2563eb' }};
@@ -1077,6 +1063,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const lang = localStorage.getItem('site_lang') || 'ar';
             const currency = localStorage.getItem('site_currency') || 'KRW';
+            // Only run heavy DOM scan if non-default language is active
             if (lang !== 'ar') applyLang(lang);
             else {
                 const cfg = LANGS[lang];
@@ -1368,45 +1355,10 @@
             });
         }
         
-        // First-time user gesture hints
-        function addGestureHints() {
-            if (window.innerWidth >= 768) return;
-            
-            // Add subtle bounce animation to FABs on first load
-            const fabs = document.querySelectorAll('.md\\:hidden .pointer-events-auto button');
-            fabs.forEach((fab, index) => {
-                setTimeout(() => {
-                    fab.style.animation = 'bounce 1s ease-in-out';
-                    setTimeout(() => {
-                        fab.style.animation = '';
-                    }, 1000);
-                }, index * 200);
-            });
-        }
-        
-        // Add CSS animation keyframes
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes bounce {
-                0%, 20%, 53%, 80%, 100% { transform: translateY(0) scale(1); }
-                40%, 43% { transform: translateY(-8px) scale(1.05); }
-                70% { transform: translateY(-4px) scale(1.02); }
-                90% { transform: translateY(-2px) scale(1.01); }
-            }
-        `;
-        document.head.appendChild(style);
-        
         // Initialize discovery tooltips on page load
         document.addEventListener('DOMContentLoaded', () => {
             initializeDiscoveryTooltips();
             updateWishlistCountFAB();
-            
-            // Add gesture hints for first-time visitors
-            const hasVisitedBefore = localStorage.getItem('has_visited_before');
-            if (!hasVisitedBefore) {
-                setTimeout(addGestureHints, 1000);
-                localStorage.setItem('has_visited_before', 'true');
-            }
         });
         
         // Update FAB count when wishlist changes
@@ -1422,37 +1374,6 @@
         };
     </script>
     
-    <!-- Lazy Loading for Manufacturer Logos -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Lazy loading for manufacturer logos
-            const lazyImages = document.querySelectorAll('img.lazy-load');
-            
-            if ('IntersectionObserver' in window) {
-                const imageObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            img.src = img.src; // Trigger load
-                            img.classList.remove('lazy-load');
-                            observer.unobserve(img);
-                        }
-                    });
-                });
-                
-                lazyImages.forEach(img => {
-                    imageObserver.observe(img);
-                });
-            } else {
-                // Fallback for older browsers
-                lazyImages.forEach(img => {
-                    img.src = img.src;
-                    img.classList.remove('lazy-load');
-                });
-            }
-        });
-    </script>
-
     <!-- ── Auction Countdown Engine ─────────────────────────────────────── -->
     <script>
     (function () {
