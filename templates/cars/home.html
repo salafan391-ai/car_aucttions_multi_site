@@ -53,6 +53,11 @@
 {% block title %}الرئيسية - {{ site_name|default:"سيارات" }}{% endblock %}
 
 {% block extra_head %}
+{% if site_hero_images %}
+<link rel="preload" as="image" href="{{ site_hero_images.0.image.url }}" fetchpriority="high">
+{% elif site_hero_image %}
+<link rel="preload" as="image" href="{{ site_hero_image }}" fetchpriority="high">
+{% endif %}
 <style>
     .scrollbar-hide {
         -ms-overflow-style: none;  /* Internet Explorer 10+ */
@@ -102,12 +107,12 @@
 
         <!-- Prev / Next Arrows -->
         {% if site_hero_images|length > 1 %}
-        <button onclick="heroSlide(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition">
+        <button onclick="heroSlide(-1)" aria-label="الصورة السابقة" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
         </button>
-        <button onclick="heroSlide(1)" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition">
+        <button onclick="heroSlide(1)" aria-label="الصورة التالية" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full p-2 transition">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -117,6 +122,7 @@
         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
             {% for hero_img in site_hero_images %}
             <button onclick="heroGoTo({{ forloop.counter0 }})"
+                    aria-label="الانتقال إلى الصورة {{ forloop.counter }}"
                     class="hero-dot w-2.5 h-2.5 rounded-full transition-all duration-300 {% if forloop.first %}bg-white scale-125{% else %}bg-white/50{% endif %}">
             </button>
             {% endfor %}
@@ -133,7 +139,7 @@
         <div class="text-center mb-8 sm:mb-12">
             <div class="max-w-2xl mx-auto flex items-center justify-center gap-4 mb-4">
             {% if site_logo %}
-            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 rounded-2xl w-auto z-40">
+            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 rounded-2xl w-auto z-40" width="96" height="96" fetchpriority="high" loading="eager">
             {% endif %}
             <div class="group bg-brand/20 rounded-lg p-4 border border-brand">
                 <h1 class="text-4xl sm:text-5xl md:text-6xl text-brand font-bold text-shadow-2xl bg-clip-text text-transparent drop-shadow-2xl group-hover:from-brand group-hover:via-white group-hover:to-brand transition-all duration-500 transform group-hover:scale-105">
@@ -201,7 +207,7 @@
                             >
                                 {% if m.logo %}
                                 <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img src="{{ m.logo }}" alt="{{ m.name_ar|default:m.name }}" class="w-full h-full object-contain lazy-load" loading="lazy">
+                                    <img src="{{ m.logo }}" alt="{{ m.name_ar|default:m.name }}" class="w-full h-full object-contain" loading="lazy" width="48" height="48">
                                 </div>
                                 {% else %}
                                 <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gradient-to-br from-brand to-brand-light flex items-center justify-center">
@@ -486,7 +492,7 @@
         {% for m in manufacturers %}
         <a href="{% url 'car_list' %}?manufacturer={{ m.id }}" class="flex-shrink-0 w-16 sm:w-20 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md p-2 sm:p-3 text-center transition group">
             {% if m.logo %}
-            <img src="{{ m.logo }}" alt="{{ m.name }}" class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain lazy-load" loading="lazy">
+            <img src="{{ m.logo }}" alt="{{ m.name }}" class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 object-contain" loading="lazy" width="40" height="40">
             {% else %}
             <div class="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-xs sm:text-sm">
                 {{ m.name|first }}
@@ -537,8 +543,9 @@
         <a href="{% url 'car_detail' car.slug %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" >
-                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy">
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" {% if forloop.first %}fetchpriority="high" loading="eager"{% else %}loading="lazy"{% endif %}>
+                {% elif car.images %}
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -551,6 +558,7 @@
                 </div>
                 <!-- Wishlist Button -->
                 <button onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist({{ car.id }});" 
+                        aria-label="إضافة إلى قائمة الأمنيات"
                         class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors z-20"
                         data-car-id="{{ car.id }}" style="pointer-events: auto;">
                     <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -610,9 +618,9 @@
         <a href="{% url 'car_detail' car.slug %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy">
+                <img src="{{ car.image }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy">
                 {% elif car.images and car.images|length > 0 %}
-                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy">
+                <img src="{{ car.images.0 }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -630,6 +638,7 @@
                 </div>
                 <!-- Wishlist Button -->
                 <button onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist({{ car.id }});" 
+                        aria-label="إضافة إلى قائمة الأمنيات"
                         class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors z-20"
                         data-car-id="{{ car.id }}" style="pointer-events: auto;">
                     <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -699,9 +708,9 @@
         <a href="{% url 'site_car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block border-2 border-transparent hover:border-brand/20">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.gallery.first %}
-                <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" onclick="openLightbox('{{ car.gallery.first.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.gallery.first.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

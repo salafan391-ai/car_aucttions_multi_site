@@ -64,8 +64,19 @@
     }
     </script>
     {% endblock %}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts: preconnect + non-blocking load (saves ~2 s render-block) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <!-- Preload the font CSS so it's discovered early but doesn't block render -->
+    <link rel="preload" as="style"
+          href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap">
+    </noscript>
     {% tailwind_css %}
     <script>
         tailwind.config = {
@@ -88,8 +99,8 @@
             --color-accent: {{ accent_color|default:'#3b82f6' }};
             --color-body-bg: {{ body_bg_color|default:'#ffffff' }};
         }
-        body { font-family: 'Tajawal', sans-serif; background-color: var(--color-body-bg); }
-        html[lang="en"] body, html[lang="ko"] body { font-family: 'Inter', 'Tajawal', sans-serif; }
+        body { font-family: 'Tajawal', Arial, sans-serif; background-color: var(--color-body-bg); }
+        html[lang="en"] body, html[lang="ko"] body { font-family: 'Tajawal', Arial, sans-serif; }
         .car-card:hover { transform: translateY(-4px); }
         .car-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .hero-gradient { background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 50%, #0f0f23 100%); }
@@ -463,7 +474,7 @@
             <div class="flex justify-between items-center h-16">
                 <a href="{% url 'home' %}" class="flex items-center gap-2">
                     {% if site_logo %}
-                    <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-12 w-auto rounded-full">
+                    <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-12 w-auto rounded-full" width="48" height="48" fetchpriority="high">
                     {% else %}
                     <div class="w-12 h-12 bg-brand rounded-full flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
