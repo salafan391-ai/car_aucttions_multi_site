@@ -1,7 +1,46 @@
 from django import template
+from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 from cars.utils import OPTION_TRANSLATIONS, address_ar, car_models_dict, fuel_types_dict, transmission_types_dict, colors_dict
 
 register = template.Library()
+
+
+def _resize_encar_url(url, width, height):
+    """
+    Rewrite encar.com CDN impolicy params to the requested dimensions.
+    Falls back to the original URL for non-encar images.
+    """
+    if not url or 'encar.com' not in url:
+        return url
+    parsed = urlparse(url)
+    # Replace impolicy dimensions — keep other params intact
+    qs = parse_qs(parsed.query, keep_blank_values=True)
+    qs['impolicy'] = ['heightRate']
+    qs['rh'] = [str(height)]
+    qs['cw'] = [str(width)]
+    qs['ch'] = [str(height)]
+    qs['cg'] = ['Center']
+    new_query = urlencode({k: v[0] for k, v in qs.items()})
+    return urlunparse(parsed._replace(query=new_query))
+
+
+@register.filter
+def img_thumb(url):
+    """Resize to card thumbnail — 600×450 (4:3, 2× for retina mobile)."""
+    return _resize_encar_url(url, 600, 450)
+
+
+@register.filter
+def img_small(url):
+    """Resize to small card — 400×300 (home page cards)."""
+    return _resize_encar_url(url, 400, 300)
+
+
+@register.filter
+def img_full(url):
+    """Full-res for detail/lightbox — 1200×900."""
+    return _resize_encar_url(url, 1200, 900)
+
 
 
 
