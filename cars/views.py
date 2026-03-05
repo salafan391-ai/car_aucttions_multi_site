@@ -441,7 +441,7 @@ def car_list(request):
                 'seat_colors': list(CarSeatColor.objects.filter(id__in=_scolor_ids).order_by('name')),
                 'auction_names': _anames,
             }
-            cache.set(_static_cache_key, static_filters, 60 * 30)
+            cache.set(_static_cache_key, static_filters, 60 * 60)  # 60 min — changes only on import
 
             # --- popular manufacturers: count from Python, no extra DB query ---
             from collections import Counter
@@ -549,7 +549,7 @@ def car_list(request):
                 'seat_colors': list(CarSeatColor.objects.filter(id__in=_scolor_ids).order_by('name')),
                 'auction_names': [],
             }
-            cache.set(_static_cache_key, static_filters, 60 * 30)
+            cache.set(_static_cache_key, static_filters, 60 * 60)  # 60 min — changes only on import
 
     years         = static_filters['years']
     body_types    = static_filters['body_types']
