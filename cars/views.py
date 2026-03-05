@@ -213,8 +213,8 @@ def car_list(request):
         ApiCar.objects.select_related(
             'manufacturer', 'model', 'badge', 'color', 'body', 'category'
         ).only(
-            'id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
-            'status', 'lot_number', 'vin', 'fuel', 'transmission',
+            'id', 'title', 'slug', 'image', 'images', 'price', 'year', 'mileage',
+            'status', 'lot_number', 'vin', 'fuel', 'transmission', 'address',
             'auction_date', 'auction_name', 'condition', 'created_at',
             'manufacturer__id', 'manufacturer__name', 'manufacturer__name_ar',
             'manufacturer__logo',
@@ -597,7 +597,7 @@ def expired_auctions(request):
     ).filter(category__name='auction', auction_date__lt=now).only(
         'id', 'title', 'slug', 'image', 'price', 'year', 'mileage',
         'status', 'lot_number', 'auction_date', 'auction_name', 'created_at',
-        'manufacturer__id', 'manufacturer__name',
+        'manufacturer__id', 'manufacturer__name', 'manufacturer__name_ar',
         'model__id', 'model__name',
         'badge__id', 'badge__name',
         'color__id', 'color__name',
