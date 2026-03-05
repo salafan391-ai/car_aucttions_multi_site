@@ -71,14 +71,17 @@ class Tenant(TenantMixin):
         return self.name
 
     def save(self, *args, **kwargs):
-        if self.logo and hasattr(self.logo, 'file'):
-            self.logo = optimize_image(self.logo, max_width=400, max_height=400, quality=85)
-        if self.favicon and hasattr(self.favicon, 'file'):
-            self.favicon = optimize_image(self.favicon, max_width=64, max_height=64, quality=90)
-        if self.hero_image and hasattr(self.hero_image, 'file'):
-            self.hero_image = optimize_image(self.hero_image, max_width=1920, max_height=1080, quality=82)
-        if self.contact_person_photo and hasattr(self.contact_person_photo, 'file'):
-            self.contact_person_photo = optimize_image(self.contact_person_photo, max_width=400, max_height=400, quality=85)
+        # Only run image optimization on new uploads (not on programmatic field updates)
+        update_fields = kwargs.get('update_fields')
+        if not update_fields:
+            if self.logo and hasattr(self.logo, 'file'):
+                self.logo = optimize_image(self.logo, max_width=400, max_height=400, quality=85)
+            if self.favicon and hasattr(self.favicon, 'file'):
+                self.favicon = optimize_image(self.favicon, max_width=64, max_height=64, quality=90)
+            if self.hero_image and hasattr(self.hero_image, 'file'):
+                self.hero_image = optimize_image(self.hero_image, max_width=1920, max_height=1080, quality=82)
+            if self.contact_person_photo and hasattr(self.contact_person_photo, 'file'):
+                self.contact_person_photo = optimize_image(self.contact_person_photo, max_width=400, max_height=400, quality=85)
         super().save(*args, **kwargs)
 
 

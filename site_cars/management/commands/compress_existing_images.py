@@ -213,7 +213,11 @@ class Command(BaseCommand):
                         try:
                             field_file.delete(save=False)
                             setattr(obj, field_name, cf)
-                            obj.save(update_fields=[field_name])
+                            # Use QuerySet.update() to bypass model save() overrides
+                            # (avoids TenantMixin.save() re-creating schemas for Tenant)
+                            Model.objects.filter(pk=obj.pk).update(
+                                **{field_name: getattr(obj, field_name)}
+                            )
                         except Exception as e:
                             totals['errors'] += 1
                             self.stdout.write(self.style.ERROR(f'     ERROR saving: {e}'))
