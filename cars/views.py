@@ -478,39 +478,36 @@ def car_list(request):
 
     static_filters = cache.get(_static_cache_key)
     if static_filters is None:
+        # ── Single pass: pull all filter columns in one query, derive in Python ──
+        # Avoids 7 separate full-table scans (one per filter dimension).
+        _rows = list(
+            _base_qs.values(
+                'year', 'body_id', 'fuel', 'transmission',
+                'seat_count', 'color_id', 'seat_color_id',
+            )
+        )
+
+        _years      = sorted({r['year'] for r in _rows if r['year']}, reverse=True)
+        _body_ids   = {r['body_id'] for r in _rows if r['body_id']}
+        _fuels      = sorted({r['fuel'] for r in _rows if r['fuel']})[:15]
+        _trans      = sorted({r['transmission'] for r in _rows if r['transmission']})
+        _seats      = sorted({r['seat_count'] for r in _rows if r['seat_count']})
+        _color_ids  = {r['color_id'] for r in _rows if r['color_id']}
+        _scolor_ids = {r['seat_color_id'] for r in _rows if r['seat_color_id']}
+
         static_filters = {
-            'years': list(
-                _base_qs.values_list('year', flat=True).distinct().order_by('-year')
-            ),
+            'years': _years,
             'body_types': list(
-                BodyType.objects.filter(
-                    id__in=_base_qs.values_list('body_id', flat=True).distinct()
-                ).order_by('name')
+                BodyType.objects.filter(id__in=_body_ids).order_by('name')
             ),
-            'fuels': list(
-                _base_qs.values_list('fuel', flat=True)
-                .exclude(fuel__isnull=True).exclude(fuel='')
-                .distinct().order_by('fuel')[:15]
-            ),
-            'transmissions': list(
-                _base_qs.values_list('transmission', flat=True)
-                .exclude(transmission__isnull=True).exclude(transmission='')
-                .distinct().order_by('transmission')
-            ),
-            'seat_counts': list(
-                _base_qs.values_list('seat_count', flat=True)
-                .exclude(seat_count__isnull=True).exclude(seat_count='')
-                .distinct().order_by('seat_count')
-            ),
+            'fuels': _fuels,
+            'transmissions': _trans,
+            'seat_counts': _seats,
             'colors': list(
-                CarColor.objects.filter(
-                    id__in=_base_qs.values_list('color_id', flat=True).distinct()
-                ).order_by('name')
+                CarColor.objects.filter(id__in=_color_ids).order_by('name')
             ),
             'seat_colors': list(
-                CarSeatColor.objects.filter(
-                    id__in=_base_qs.values_list('seat_color_id', flat=True).distinct()
-                ).order_by('name')
+                CarSeatColor.objects.filter(id__in=_scolor_ids).order_by('name')
             ),
             'auction_names': list(
                 ApiCar.objects.filter(category__name='auction')
@@ -564,11 +561,16 @@ def car_list(request):
             )
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
-        _pop_mfr_key = "car_list:popular_manufacturers"
+        _pop_mfr_key = f"car_list:popular_manufacturers:{schema}"
         popular_manufacturers = cache.get(_pop_mfr_key)
         if popular_manufacturers is None:
             popular_manufacturers = list(
-                Manufacturer.objects.annotate(car_count=Count('apicar')).order_by('-car_count')
+                Manufacturer.objects.annotate(
+                    car_count=Count(
+                        'apicar',
+                        filter=~Q(apicar__category__name='auction', apicar__auction_date__lt=now),
+                    )
+                ).order_by('-car_count')
             )
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     context = {
