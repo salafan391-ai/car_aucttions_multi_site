@@ -4,17 +4,18 @@ Management command to retroactively compress existing uploaded images.
 Works with S3/CloudFront storage (reads image, compresses in-memory, writes back).
 
 Usage on Heroku:
-    # Dry run first — see what would be compressed (safe, no changes):
-    heroku run python manage.py compress_existing_images --schema=<tenant_schema>
+    # Dry run for a tenant (safe, no changes):
+    heroku run "python manage.py compress_existing_images --schema=<tenant_schema>"
 
-    # Then apply for a specific tenant:
-    heroku run python manage.py compress_existing_images --schema=<tenant_schema> --apply
+    # Apply for a specific tenant:
+    heroku run "python manage.py compress_existing_images --schema=<tenant_schema> --apply"
 
-    # Apply for Tenant/TenantHeroImage (public schema):
-    heroku run python manage.py compress_existing_images --schema=public --apply
+    # Run for ALL tenants at once:
+    heroku run "python manage.py compress_existing_images --all-tenants --apply"
 
-    # Single model only:
-    heroku run python manage.py compress_existing_images --schema=<tenant_schema> --apply --model sitecar
+Schema routing (automatic):
+    - Tenant / TenantHeroImage  -> always saved in public schema
+    - SiteCar / SiteCarImage / PostImage -> saved in the given tenant schema
 """
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
@@ -23,18 +24,22 @@ from PIL import Image
 from io import BytesIO
 
 
-# (model_label, app_label, model_name, [(field_name, max_w, max_h, quality), ...])
-IMAGE_TARGETS = [
-    ('SiteCar',         'site_cars', 'SiteCar',        [('image',  1200, 900, 85)]),
-    ('SiteCarImage',    'site_cars', 'SiteCarImage',    [('image',  1200, 900, 85)]),
-    ('PostImage',       'cars',      'PostImage',       [('image',  1200, 900, 85)]),
-    ('Tenant',          'tenants',   'Tenant',          [
+# Tenant-schema models (SiteCar, SiteCarImage, PostImage)
+TENANT_TARGETS = [
+    ('SiteCar',      'site_cars', 'SiteCar',     [('image', 1200, 900, 85)]),
+    ('SiteCarImage', 'site_cars', 'SiteCarImage', [('image', 1200, 900, 85)]),
+    ('PostImage',    'cars',      'PostImage',    [('image', 1200, 900, 85)]),
+]
+
+# Public-schema models (Tenant, TenantHeroImage)
+PUBLIC_TARGETS = [
+    ('Tenant', 'tenants', 'Tenant', [
         ('logo',                  400,  400, 85),
         ('favicon',                64,   64, 90),
         ('hero_image',           1920, 1080, 82),
         ('contact_person_photo',  400,  400, 85),
     ]),
-    ('TenantHeroImage', 'tenants',   'TenantHeroImage', [('image', 1920, 1080, 82)]),
+    ('TenantHeroImage', 'tenants', 'TenantHeroImage', [('image', 1920, 1080, 82)]),
 ]
 
 
@@ -76,8 +81,7 @@ def _compress(field_file, max_width, max_height, quality):
     img.save(out, format='JPEG', quality=quality, optimize=True)
     new_kb = out.tell() / 1024
 
-    # Skip if the result is not meaningfully smaller (covers already-optimal JPEGs
-    # that Pillow can't compress further, even after a resize)
+    # Skip if result is not at least 5% smaller (avoids bloating already-optimal files)
     if new_kb >= old_kb * 0.95:
         return None, old_kb, new_kb, "already optimal"
 
@@ -97,49 +101,87 @@ class Command(BaseCommand):
             help='Actually rewrite images. Without this flag it is a safe dry run.',
         )
         parser.add_argument(
+            '--schema',
+            type=str,
+            default=None,
+            help='Tenant schema name to process (e.g. "hassan-trading"). Also processes public-schema models.',
+        )
+        parser.add_argument(
+            '--all-tenants',
+            action='store_true',
+            default=False,
+            help='Process all tenant schemas automatically.',
+        )
+        parser.add_argument(
             '--model',
             type=str,
             default=None,
             help='Only process one model: sitecar | sitecarimage | postimage | tenant | tenantheroimage',
         )
-        parser.add_argument(
-            '--schema',
-            type=str,
-            default=None,
-            help='django-tenants: set DB schema before querying (e.g. "public" or a tenant schema name)',
-        )
 
     def handle(self, *args, **options):
-        apply  = options['apply']
-        only   = options['model'].lower() if options['model'] else None
-        schema = options['schema']
-
-        if schema:
-            connection.set_schema(schema)
-            self.stdout.write(self.style.WARNING(f'Schema set to: {schema}'))
-
-        total_saved_kb  = 0
-        total_processed = 0
-        total_skipped   = 0
-        total_errors    = 0
+        apply       = options['apply']
+        schema      = options['schema']
+        all_tenants = options['all_tenants']
+        only        = options['model'].lower() if options['model'] else None
 
         mode_label = 'APPLY' if apply else 'DRY RUN'
         self.stdout.write(self.style.WARNING(f'\n{mode_label} -- compress_existing_images\n'))
 
+        if all_tenants:
+            from django.apps import apps
+            Tenant = apps.get_model('tenants', 'Tenant')
+            connection.set_schema_to_public()
+            schemas = list(Tenant.objects.values_list('schema_name', flat=True).exclude(schema_name='public'))
+        elif schema:
+            schemas = [schema]
+        else:
+            self.stdout.write(self.style.ERROR('Provide --schema=<name> or --all-tenants'))
+            return
+
+        totals = {'processed': 0, 'skipped': 0, 'errors': 0, 'saved_kb': 0}
+
+        # ── 1. Public-schema models (Tenant, TenantHeroImage) ──────────────────
+        connection.set_schema_to_public()
+        self.stdout.write(self.style.WARNING('[ public schema ]'))
+        self._process_targets(PUBLIC_TARGETS, only, apply, totals)
+
+        # ── 2. Per-tenant models (SiteCar, SiteCarImage, PostImage) ────────────
+        for s in schemas:
+            self.stdout.write(self.style.WARNING(f'\n[ tenant schema: {s} ]'))
+            connection.set_schema(s)
+            self._process_targets(TENANT_TARGETS, only, apply, totals)
+
+        # Reset to public when done
+        connection.set_schema_to_public()
+
+        self.stdout.write('')
+        self.stdout.write(self.style.SUCCESS(
+            f'Done.  processed={totals["processed"]}  skipped={totals["skipped"]}  '
+            f'errors={totals["errors"]}  '
+            f'{"saved" if apply else "would save"}={totals["saved_kb"]:.0f} KB '
+            f'({totals["saved_kb"] / 1024:.1f} MB)'
+        ))
+        if not apply:
+            self.stdout.write(self.style.WARNING(
+                'Dry run complete. Re-run with --apply to rewrite the images.'
+            ))
+
+    def _process_targets(self, targets, only, apply, totals):
         from django.apps import apps
 
-        for model_label, app_label, model_name, fields in IMAGE_TARGETS:
+        for model_label, app_label, model_name, fields in targets:
             if only and model_label.lower() != only:
                 continue
 
-            self.stdout.write(self.style.HTTP_INFO(f'>> {model_label}'))
+            self.stdout.write(self.style.HTTP_INFO(f'  >> {model_label}'))
 
             try:
                 Model = apps.get_model(app_label, model_name)
                 count = Model.objects.count()
-                self.stdout.write(f'  {count} records found')
+                self.stdout.write(f'     {count} records found')
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'  Skipping -- cannot query: {e}'))
+                self.stdout.write(self.style.ERROR(f'     Skipping -- cannot query: {e}'))
                 continue
 
             for obj in Model.objects.iterator():
@@ -151,18 +193,18 @@ class Command(BaseCommand):
                     cf, old_kb, new_kb, skip_reason = _compress(field_file, max_w, max_h, quality)
 
                     if skip_reason:
-                        total_skipped += 1
+                        totals['skipped'] += 1
                         self.stdout.write(
-                            f'  SKIP   {field_file.name} -- {skip_reason} ({old_kb:.0f} KB)'
+                            f'     SKIP   {field_file.name} -- {skip_reason} ({old_kb:.0f} KB)'
                         )
                         continue
 
                     saved_kb = old_kb - new_kb
-                    total_saved_kb += saved_kb
-                    total_processed += 1
+                    totals['saved_kb'] += saved_kb
+                    totals['processed'] += 1
 
                     self.stdout.write(
-                        f'  {"WRITE " if apply else "WOULD "} {field_file.name} '
+                        f'     {"WRITE " if apply else "WOULD "} {field_file.name} '
                         f'{old_kb:.0f} KB -> {new_kb:.0f} KB  '
                         f'(save {saved_kb:.0f} KB, {saved_kb / old_kb * 100:.0f}%)'
                     )
@@ -173,17 +215,6 @@ class Command(BaseCommand):
                             setattr(obj, field_name, cf)
                             obj.save(update_fields=[field_name])
                         except Exception as e:
-                            total_errors += 1
-                            self.stdout.write(self.style.ERROR(f'    ERROR saving: {e}'))
+                            totals['errors'] += 1
+                            self.stdout.write(self.style.ERROR(f'     ERROR saving: {e}'))
 
-        self.stdout.write('')
-        self.stdout.write(self.style.SUCCESS(
-            f'Done.  processed={total_processed}  skipped={total_skipped}  '
-            f'errors={total_errors}  '
-            f'{"saved" if apply else "would save"}={total_saved_kb:.0f} KB '
-            f'({total_saved_kb / 1024:.1f} MB)'
-        ))
-        if not apply:
-            self.stdout.write(self.style.WARNING(
-                'Dry run complete. Re-run with --apply to rewrite the images.'
-            ))
