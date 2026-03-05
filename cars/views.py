@@ -116,45 +116,48 @@ def home(request):
             )[:12]
         )
 
-        # ── ALL counts in ONE query ──
+        # ── Single pass: collect all IDs + counts in ONE query ──
+        # Pull manufacturer_id, body_id, model_id, year, category name in one scan
+        # so we avoid 3 separate full-table passes.
         from django.db.models import Count as _Count
-        agg = ApiCar.objects.exclude(
+        _base_filter = ApiCar.objects.exclude(
             category__name='auction', auction_date__lt=now
-        ).aggregate(
-            total=_Count('id'),
-            auction_count=_Count('id', filter=Q(category__name='auction')),
-            cars_count=_Count('id', filter=~Q(category__name='auction')),
-            total_manufacturers=_Count('manufacturer_id', distinct=True),
-            total_models=_Count('model_id', distinct=True),
+        )
+        _rows = list(
+            _base_filter.values(
+                'manufacturer_id', 'body_id', 'model_id', 'year',
+                'category__name',
+            )
         )
 
-        # Manufacturers – use flat VALUES list to avoid a correlated subquery
-        _active_mfr_ids = list(
-            ApiCar.objects.exclude(
-                category__name='auction', auction_date__lt=now
-            ).values_list('manufacturer_id', flat=True).distinct()
-        )
+        # Aggregate from Python — zero extra DB round-trips
+        _total = len(_rows)
+        _auction_count = sum(1 for r in _rows if r['category__name'] == 'auction')
+        _cars_count = _total - _auction_count
+        _mfr_ids_set = {r['manufacturer_id'] for r in _rows if r['manufacturer_id']}
+        _body_ids_set = {r['body_id'] for r in _rows if r['body_id']}
+        _model_ids_set = {r['model_id'] for r in _rows if r['model_id']}
+        _years_set = sorted({r['year'] for r in _rows if r['year']}, reverse=True)[:20]
+
+        agg = {
+            'total': _total,
+            'auction_count': _auction_count,
+            'cars_count': _cars_count,
+            'total_manufacturers': len(_mfr_ids_set),
+            'total_models': len(_model_ids_set),
+        }
+
         manufacturers = list(
-            Manufacturer.objects.filter(id__in=_active_mfr_ids)
+            Manufacturer.objects.filter(id__in=_mfr_ids_set)
             .annotate(car_count=Count('apicar'))
             .order_by('-car_count')[:20]
         )
 
-        # Body types – simple filter
-        _active_body_ids = list(
-            ApiCar.objects.exclude(
-                category__name='auction', auction_date__lt=now
-            ).values_list('body_id', flat=True).distinct()
-        )
         body_types = list(
-            BodyType.objects.filter(id__in=_active_body_ids).order_by('name')[:15]
+            BodyType.objects.filter(id__in=_body_ids_set).order_by('name')[:15]
         )
 
-        # Years – cheap distinct
-        years = list(
-            ApiCar.objects.values_list('year', flat=True)
-            .distinct().order_by('-year')[:20]
-        )
+        years = _years_set
 
         # Tenant site cars
         site_cars = []
@@ -165,6 +168,7 @@ def home(request):
                 SiteCar.objects.only(
                     'id', 'title', 'image', 'manufacturer', 'model',
                     'year', 'price', 'status', 'is_featured', 'mileage',
+                    'transmission',
                 ).prefetch_related('gallery').order_by('-created_at')[:8]
             )
 
