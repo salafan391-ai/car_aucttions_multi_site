@@ -76,8 +76,9 @@ def _compress(field_file, max_width, max_height, quality):
     img.save(out, format='JPEG', quality=quality, optimize=True)
     new_kb = out.tell() / 1024
 
-    # Skip if no resize needed AND compression gain is negligible (< 5%)
-    if not needs_resize and new_kb >= old_kb * 0.95:
+    # Skip if the result is not meaningfully smaller (covers already-optimal JPEGs
+    # that Pillow can't compress further, even after a resize)
+    if new_kb >= old_kb * 0.95:
         return None, old_kb, new_kb, "already optimal"
 
     out.seek(0)
