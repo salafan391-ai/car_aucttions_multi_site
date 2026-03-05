@@ -211,13 +211,16 @@ class Command(BaseCommand):
 
                     if apply:
                         try:
+                            # 1. Delete old file from S3
                             field_file.delete(save=False)
-                            setattr(obj, field_name, cf)
-                            # Use QuerySet.update() to bypass model save() overrides
-                            # (avoids TenantMixin.save() re-creating schemas for Tenant)
-                            Model.objects.filter(pk=obj.pk).update(
-                                **{field_name: getattr(obj, field_name)}
-                            )
+                            # 2. Save new file to S3 via the field's storage backend
+                            #    and get back the actual stored filename
+                            field_obj = getattr(obj, field_name)
+                            new_name = field_obj.field.generate_filename(obj, cf.name)
+                            saved_name = field_obj.storage.save(new_name, cf)
+                            # 3. Update DB with the new filename — bypass save() overrides
+                            Model.objects.filter(pk=obj.pk).update(**{field_name: saved_name})
+                            self.stdout.write(f'     -> saved as: {saved_name}')
                         except Exception as e:
                             totals['errors'] += 1
                             self.stdout.write(self.style.ERROR(f'     ERROR saving: {e}'))
