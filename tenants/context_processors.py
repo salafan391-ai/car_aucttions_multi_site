@@ -52,7 +52,7 @@ def tenant_branding(request):
         "site_name": tenant.name or "سيارات",
         "site_logo": _file_url(getattr(tenant, 'logo', None)),
         "site_favicon": _file_url(getattr(tenant, 'favicon', None)),
-        "site_hero_image": _file_url(getattr(tenant, 'hero_image', None)),
+    "site_hero_image": _file_url(getattr(tenant, 'hero_image', None)),
         "site_hero_images": hero_images,
         "primary_color": tenant.primary_color or "#2563eb",
         "secondary_color": tenant.secondary_color or "#1e3a8a",
@@ -85,6 +85,7 @@ def tenant_branding(request):
         "site_tiktok": tenant.tiktok or "",
         "site_snapchat": tenant.snapchat or "",
         "site_youtube": tenant.youtube or "",
+    "site_telegram": (tenant.telegram if getattr(tenant, 'telegram', None) else (f"https://t.me/{getattr(tenant, 'telegram_username', '').lstrip('@')}" if getattr(tenant, 'telegram_username', None) else "")),
         # Multiple phone numbers
         "phone_numbers": phone_numbers,
         "primary_phone": primary_phone,

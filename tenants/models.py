@@ -54,6 +54,9 @@ class Tenant(TenantMixin):
     tiktok = models.URLField(max_length=255, blank=True, null=True, verbose_name="تيك توك")
     snapchat = models.URLField(max_length=255, blank=True, null=True, verbose_name="سناب شات")
     youtube = models.URLField(max_length=255, blank=True, null=True, verbose_name="يوتيوب")
+    # Telegram: allow either a full URL (https://t.me/...) or a username (without @)
+    telegram = models.URLField(max_length=255, blank=True, null=True, verbose_name="تيليجرام (رابط)")
+    telegram_username = models.CharField(max_length=64, blank=True, null=True, verbose_name="تيليجرام (اسم المستخدم)", help_text="ادخل اسم المستخدم بدون @ — سيُحوّل تلقائياً إلى رابط t.me/username")
 
     # SMTP Email Settings
     email_host = models.CharField(max_length=255, blank=True, default='smtp.gmail.com', verbose_name="SMTP Host")
