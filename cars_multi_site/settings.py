@@ -61,6 +61,9 @@ TAILWIND_APP_NAME = "theme"
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
+
 MIDDLEWARE = [
     "tenants.middleware.QueryStringGuardMiddleware",
     "django_tenants.middleware.main.TenantMainMiddleware",
@@ -75,6 +78,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if DEBUG:
+    # Insert after GZipMiddleware (index 7 = after gzip at index 6)
+    MIDDLEWARE.insert(7, "debug_toolbar.middleware.DebugToolbarMiddleware")
+    INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
 ROOT_URLCONF = "cars_multi_site.urls"
 
