@@ -11,10 +11,17 @@ def format_whatsapp_number(phone_number):
     """
     if not phone_number:
         return ""
-    
-    # Remove spaces, dashes, parentheses, and plus signs
-    formatted = re.sub(r'[\s\-\(\)\+]', '', phone_number)
-    return formatted
+    # Normalize and keep only ASCII digits (strip out whitespace, punctuation,
+    # plus signs and any invisible/control characters like Unicode bidi marks).
+    # WhatsApp expects numbers as digits with country code (no + sign), e.g. 9665...
+    try:
+        # Convert to string (defensive) and remove all non-digit characters
+        s = str(phone_number)
+        formatted = re.sub(r'[^0-9]', '', s)
+        return formatted
+    except Exception:
+        # Fallback: original naive cleanup
+        return re.sub(r'[\s\-\(\)\+]', '', str(phone_number))
 
 @register.filter
 def whatsapp_encode_text(text):
