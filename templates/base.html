@@ -1214,6 +1214,7 @@
         function showCurrencyLanguageMenu() {
             // Create a simple modal for currency/language selection
             const modal = document.createElement('div');
+            modal.id = 'cl-modal';
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
             modal.innerHTML = `
                 <div class="bg-white rounded-xl p-6 max-w-sm w-full">
@@ -1222,22 +1223,22 @@
                     <div class="mb-6">
                         <h4 class="text-sm font-medium text-gray-700 mb-2">اللغة</h4>
                         <div class="flex gap-2">
-                            <button onclick="setLanguage('ar'); this.parentElement.parentElement.parentElement.remove();" class="flex-1 py-2 px-3 bg-brand text-white rounded-lg text-sm">العربية</button>
-                            <button onclick="setLanguage('en'); this.parentElement.parentElement.parentElement.remove();" class="flex-1 py-2 px-3 bg-gray-200 text-gray-700 rounded-lg text-sm">English</button>
+                            <button onclick="setLang('ar'); document.getElementById('cl-modal').remove();" class="flex-1 py-2 px-3 bg-brand text-white rounded-lg text-sm">العربية</button>
+                            <button onclick="setLang('en'); document.getElementById('cl-modal').remove();" class="flex-1 py-2 px-3 bg-gray-200 text-gray-700 rounded-lg text-sm">English</button>
                         </div>
                     </div>
                     
                     <div class="mb-6">
                         <h4 class="text-sm font-medium text-gray-700 mb-2">العملة</h4>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="setCurrency('KRW'); this.parentElement.parentElement.parentElement.remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">₩ KRW</button>
-                            <button onclick="setCurrency('USD'); this.parentElement.parentElement.parentElement.remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">$ USD</button>
-                            <button onclick="setCurrency('SAR'); this.parentElement.parentElement.parentElement.remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">﷼ SAR</button>
-                            <button onclick="setCurrency('AED'); this.parentElement.parentElement.parentElement.remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">د.إ AED</button>
+                            <button onclick="setCurrency('KRW'); document.getElementById('cl-modal').remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">₩ KRW</button>
+                            <button onclick="setCurrency('USD'); document.getElementById('cl-modal').remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">$ USD</button>
+                            <button onclick="setCurrency('SAR'); document.getElementById('cl-modal').remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">﷼ SAR</button>
+                            <button onclick="setCurrency('AED'); document.getElementById('cl-modal').remove();" class="py-2 px-3 bg-gray-100 rounded-lg text-sm">د.إ AED</button>
                         </div>
                     </div>
                     
-                    <button onclick="this.parentElement.parentElement.remove()" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg text-sm">إغلاق</button>
+                    <button onclick="document.getElementById('cl-modal').remove();" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg text-sm">إغلاق</button>
                 </div>
             `;
             document.body.appendChild(modal);
