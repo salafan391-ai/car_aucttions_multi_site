@@ -98,9 +98,9 @@
       animation: fade-up .5s ease both;
     }
     .logo-wrap img {
-      height: clamp(140px, 30vw, 280px);
+      height: clamp(180px, 40vw, 280px);
       width: auto;
-      max-width: 80vw;
+      max-width: 85vw;
       object-fit: contain;
       filter: drop-shadow(0 8px 24px rgba(0,0,0,.3));
     }
@@ -319,7 +319,7 @@
         <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
       {% else %}
         <!-- Default SVG car icon when no logo uploaded -->
-        <div style="width:clamp(140px,30vw,280px);height:clamp(140px,30vw,280px);border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+        <div style="width:clamp(180px,40vw,280px);height:clamp(180px,40vw,280px);border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
           <svg width="48" height="48" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
           </svg>
