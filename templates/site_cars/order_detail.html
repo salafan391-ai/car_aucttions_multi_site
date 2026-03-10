@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}طلب #{{ order.pk }} - {{ site_name|default:"سيارات" }}{% endblock %}
 
@@ -86,7 +87,7 @@
         <div class="lg:col-span-1">
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden sticky top-24">
                 {% if order.car.image %}
-                <img src="{{ order.car.image }}" alt="{{ order.car.title }}" class="w-full aspect-[4/3] object-cover">
+                <img src="{{ order.car.image|https_url }}" alt="{{ order.car.title }}" class="w-full aspect-[4/3] object-cover">
                 {% else %}
                 <div class="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center text-gray-300">
                     <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

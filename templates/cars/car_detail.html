@@ -7,11 +7,11 @@
 {% block og_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
 {% block og_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
 {% block og_type %}product{% endblock %}
-{% block og_image %}{% if car.image %}{{ car.image }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
+{% block og_image %}{% if car.image %}{{ car.image|https_url }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
 
 {% block twitter_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
 {% block twitter_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
-{% block twitter_image %}{% if car.image %}{{ car.image }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
+{% block twitter_image %}{% if car.image %}{{ car.image|https_url }}{% else %}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
 
 {% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}{% endblock %}
 
@@ -39,7 +39,7 @@
         }
     },
     "image": [
-        {% if car.image %}"{{ car.image }}"{% endif %}
+        {% if car.image %}"{{ car.image|https_url }}"{% endif %}
         {% for image in car.images.all %}
         {% if forloop.counter0 > 0 or not car.image %},
         "{{ request.build_absolute_uri }}{{ image.image.url }}"{% endif %}
@@ -85,7 +85,7 @@
                     <!-- Main Image -->
                     {% if car.image %}
                     <div class="slider-image active w-full h-full">
-                        <img src="{{ car.image }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
+                        <img src="{{ car.image|https_url }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endif %}
                     
@@ -93,7 +93,7 @@
                     {% if car.images %}
                     {% for img in car.images %}
                     <div class="slider-image {% if not car.image and forloop.first %}active{% endif %} w-full h-full {% if car.image or not forloop.first %}hidden{% endif %}">
-                        <img src="{{ img }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
+                        <img src="{{ img|https_url }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endfor %}
                     {% endif %}
@@ -140,17 +140,17 @@
             <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
                 {% if car.image %}
                 <button onclick="goToSlide(0)" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
-                    <img src="{{ car.image }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover" loading="lazy">
+                    <img src="{{ car.image|https_url }}" alt="{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover" loading="lazy">
                 </button>
                 {% endif %}
                 {% for img in car.images %}
                 {% if car.image %}
                 <button onclick="goToSlide({{ forloop.counter }})" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
-                    <img src="{{ img }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                    <img src="{{ img|https_url }}" alt="" class="w-full h-full object-cover" loading="lazy">
                 </button>
                 {% else %}
                 <button onclick="goToSlide({{ forloop.counter0 }})" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
-                    <img src="{{ img }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                    <img src="{{ img|https_url }}" alt="" class="w-full h-full object-cover" loading="lazy">
                 </button>
                 {% endif %}
                 {% endfor %}

@@ -12,7 +12,7 @@ def optimize_image(image_field, max_width=1920, max_height=1080, quality=85):
     Optimize an uploaded image by:
     1. Resizing to max dimensions while maintaining aspect ratio
     2. Compressing with specified quality
-    3. Converting to RGB if needed
+    3. Preserving transparency (PNG) when the source image has an alpha channel
     
     Args:
         image_field: Django UploadedFile object
@@ -26,34 +26,54 @@ def optimize_image(image_field, max_width=1920, max_height=1080, quality=85):
     try:
         # Open the image
         img = Image.open(image_field)
-        
-        # Convert RGBA to RGB if needed (for JPEG)
-        if img.mode in ('RGBA', 'LA', 'P'):
-            background = Image.new('RGB', img.size, (255, 255, 255))
+
+        # Detect whether the image has transparency
+        has_alpha = img.mode in ('RGBA', 'LA', 'P')
+
+        if has_alpha:
+            # Keep transparency — save as PNG
             if img.mode == 'P':
                 img = img.convert('RGBA')
-            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-            img = background
-        
-        # Resize if needed
-        if img.width > max_width or img.height > max_height:
-            img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
-        
-        # Save to BytesIO
-        output = BytesIO()
-        img_format = 'JPEG'
-        img.save(output, format=img_format, quality=quality, optimize=True)
-        output.seek(0)
-        
-        # Create InMemoryUploadedFile
-        return InMemoryUploadedFile(
-            output,
-            'ImageField',
-            f"{image_field.name.split('.')[0]}.jpg",
-            'image/jpeg',
-            sys.getsizeof(output),
-            None
-        )
+            elif img.mode == 'LA':
+                img = img.convert('RGBA')
+
+            # Resize if needed
+            if img.width > max_width or img.height > max_height:
+                img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+
+            output = BytesIO()
+            img.save(output, format='PNG', optimize=True)
+            output.seek(0)
+
+            return InMemoryUploadedFile(
+                output,
+                'ImageField',
+                f"{image_field.name.split('.')[0]}.png",
+                'image/png',
+                sys.getsizeof(output),
+                None
+            )
+        else:
+            # No transparency — convert to RGB and save as JPEG
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            # Resize if needed
+            if img.width > max_width or img.height > max_height:
+                img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+
+            output = BytesIO()
+            img.save(output, format='JPEG', quality=quality, optimize=True)
+            output.seek(0)
+
+            return InMemoryUploadedFile(
+                output,
+                'ImageField',
+                f"{image_field.name.split('.')[0]}.jpg",
+                'image/jpeg',
+                sys.getsizeof(output),
+                None
+            )
     except Exception as e:
         # If optimization fails, return original
         print(f"Image optimization failed: {e}")

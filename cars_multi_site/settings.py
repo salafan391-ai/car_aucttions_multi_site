@@ -167,11 +167,7 @@ if _REDIS_URL:
 else:
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "unique-snowflake",
-            "OPTIONS": {
-                "MAX_ENTRIES": 500,
-            },
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
         }
     }
 

@@ -98,11 +98,11 @@
       animation: fade-up .5s ease both;
     }
     .logo-wrap img {
-      height: 88px;
+      height: 600px;
       width: auto;
-      border-radius: 20px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 20px 60px rgba(0,0,0,.5);
       object-fit: contain;
+      mix-blend-mode: screen;
+      filter: drop-shadow(0 8px 24px rgba(0,0,0,.3));
     }
     .logo-wordmark {
       font-size: clamp(2rem, 6vw, 3.5rem);
@@ -122,6 +122,26 @@
       max-width: 32ch;
       line-height: 1.6;
       animation: fade-up .55s .1s ease both;
+    }
+
+    /* ─── Typewriter ─── */
+    .typewriter-1,
+    .typewriter-2 {
+      display: block;
+      min-height: 1.6em;
+      color: rgba(255,255,255,.6);
+    }
+    .tw-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: rgba(255,255,255,.6);
+      margin-inline-start: 2px;
+      vertical-align: middle;
+      animation: blink .75s step-end infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
     }
 
     /* ─── Cards row ─── */
@@ -302,17 +322,19 @@
         <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
       {% else %}
         <!-- Default SVG car icon when no logo uploaded -->
-        <div style="width:88px;height:88px;border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+        <div style="width:200px;height:200px;border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
           <svg width="48" height="48" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
           </svg>
         </div>
       {% endif %}
 
-      <span class="logo-wordmark">{{ site_name|default:"سيارات" }}</span>
       <p class="logo-tagline">
         {% if site_tagline %}{{ site_tagline }}
-        {% else %}أفضل منصة لشراء السيارات وتصديرها{% endif %}
+        {% else %}
+          <span class="typewriter-1"></span>
+          <span class="typewriter-2"></span>
+        {% endif %}
       </p>
     </div>
 
@@ -382,6 +404,48 @@
     </div><!-- /cards -->
 
   </main>
+
+  <script>
+    (function () {
+      const lines = [
+        { el: document.querySelector('.typewriter-1'), text: 'أفضل منصة لشراء السيارات وتصديرها' },
+        { el: document.querySelector('.typewriter-2'), text: 'إلى المملكة العربية السعودية وجميع أنحاء العالم' },
+      ];
+
+      // Build an array of Unicode-aware characters (handles Arabic multi-byte correctly)
+      function getChars(str) {
+        return [...str];  // spread uses Unicode code points
+      }
+
+      function typeLine(el, text, delay, onDone) {
+        if (!el) return onDone && onDone();
+        const chars = getChars(text);
+        el.textContent = '';
+        const cursor = document.createElement('span');
+        cursor.className = 'tw-cursor';
+        el.appendChild(cursor);
+
+        let i = 0;
+        setTimeout(function tick() {
+          if (i < chars.length) {
+            el.insertBefore(document.createTextNode(chars[i]), cursor);
+            i++;
+            setTimeout(tick, 45);   // ms per character — adjust to taste
+          } else {
+            // remove cursor from line 1 when done, keep on line 2
+            if (onDone) {
+              cursor.remove();
+              onDone();
+            }
+          }
+        }, delay);
+      }
+
+      typeLine(lines[0].el, lines[0].text, 700, function () {
+        typeLine(lines[1].el, lines[1].text, 200, null);
+      });
+    })();
+  </script>
 
 </body>
 </html>

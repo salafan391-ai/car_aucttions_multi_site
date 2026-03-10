@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}طلب سيارة - {{ car.title }}{% endblock %}
 
@@ -18,7 +19,7 @@
         <!-- Car Summary -->
         <div class="flex items-center gap-4 p-6 border-b border-gray-100">
             {% if car.image %}
-            <img src="{{ car.image }}" alt="{{ car.title }}" class="w-24 h-20 object-cover rounded-xl">
+            <img src="{{ car.image|https_url }}" alt="{{ car.title }}" class="w-24 h-20 object-cover rounded-xl">
             {% else %}
             <div class="w-24 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-gray-300">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">

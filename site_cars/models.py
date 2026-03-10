@@ -39,7 +39,7 @@ class SiteCar(models.Model):
         return f"{self.manufacturer} {self.model} {self.year}"
 
     def save(self, *args, **kwargs):
-        if self.image and hasattr(self.image, 'file'):
+        if self.image and getattr(self.image, '_file', None) is not None:
             self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)
         super().save(*args, **kwargs)
 
@@ -60,7 +60,7 @@ class SiteCarImage(models.Model):
         return f"صورة - {self.car}"
 
     def save(self, *args, **kwargs):
-        if self.image and hasattr(self.image, 'file'):
+        if self.image and getattr(self.image, '_file', None) is not None:
             self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)
         super().save(*args, **kwargs)
 

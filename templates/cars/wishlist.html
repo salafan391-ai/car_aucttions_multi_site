@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
+{% load custom_filters %}
 
 {% block title %}قائمة الأمنيات | {% endblock %}
 
@@ -24,7 +25,7 @@
                 <!-- Image Container -->
                 <div class="relative aspect-[4/3] overflow-hidden bg-gray-50">
                     {% if item.car.image %}
-                        <img src="{{ item.car.image }}" alt="{{ item.car.title }}" 
+                        <img src="{{ item.car.image|https_url }}" alt="{{ item.car.title }}" 
                              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     {% else %}
                         <div class="w-full h-full flex items-center justify-center bg-gray-100">

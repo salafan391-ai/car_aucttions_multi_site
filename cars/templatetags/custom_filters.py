@@ -5,11 +5,20 @@ from cars.utils import OPTION_TRANSLATIONS, address_ar, car_models_dict, fuel_ty
 register = template.Library()
 
 
+def _force_https(url):
+    """Upgrade http:// to https:// to prevent mixed-content browser blocks."""
+    if url and url.startswith('http://'):
+        return 'https://' + url[7:]
+    return url
+
+
 def _resize_encar_url(url, width, height):
     """
     Rewrite encar.com CDN impolicy params to the requested dimensions.
-    Falls back to the original URL for non-encar images.
+    Always returns https:// to avoid mixed-content browser blocks.
+    Falls back to the (https-upgraded) original URL for non-encar images.
     """
+    url = _force_https(url)
     if not url or 'encar.com' not in url:
         return url
     parsed = urlparse(url)
@@ -40,6 +49,12 @@ def img_small(url):
 def img_full(url):
     """Full-res for detail/lightbox — 1200×900."""
     return _resize_encar_url(url, 1200, 900)
+
+
+@register.filter
+def https_url(url):
+    """Upgrade any http:// image URL to https:// to prevent mixed-content blocks."""
+    return _force_https(url)
 
 
 

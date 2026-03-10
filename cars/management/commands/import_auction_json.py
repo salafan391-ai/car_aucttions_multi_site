@@ -1,5 +1,9 @@
 import json
+import os
 from datetime import datetime
+
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -15,12 +19,58 @@ from cars.models import (
     BodyType,
 )
 
+# ─── Cloudflare R2 Credentials ────────────────────────────────────────────────
+R2_ACCOUNT_ID     = os.environ.get("R2_ACCOUNT_ID",         "your_cloudflare_account_id")
+R2_BUCKET         = os.environ.get("R2_BUCKET",             "your-bucket-name")
+R2_ACCESS_KEY_ID  = os.environ.get("R2_ACCESS_KEY_ID",      "your_r2_access_key_id")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "your_r2_secret_access_key")
+# ──────────────────────────────────────────────────────────────────────────────
+
 
 class Command(BaseCommand):
-    help = "Import auction cars from a JSON file into ApiCar (category=auction)"
+    help = (
+        "Import auction cars from a JSON file (local path or Cloudflare R2 object key) "
+        "into ApiCar (category=auction)"
+    )
 
     def add_arguments(self, parser):
-        parser.add_argument("json_file", type=str, help="Path to the JSON file")
+        parser.add_argument(
+            "json_file",
+            type=str,
+            help=(
+                "Local path to a JSON file  OR  an R2 object key (e.g. 'auctions/2026-03-10.json'). "
+                "When an R2 key is given you must also supply --r2-bucket (or set R2_BUCKET env var)."
+            ),
+        )
+        parser.add_argument(
+            "--r2",
+            action="store_true",
+            help="Fetch the JSON from Cloudflare R2 instead of the local filesystem.",
+        )
+        parser.add_argument(
+            "--r2-bucket",
+            type=str,
+            default=os.environ.get("R2_BUCKET", R2_BUCKET),
+            help="R2 bucket name (or set R2_BUCKET env var).",
+        )
+        parser.add_argument(
+            "--r2-account-id",
+            type=str,
+            default=os.environ.get("R2_ACCOUNT_ID", R2_ACCOUNT_ID),
+            help="Cloudflare Account ID (or set R2_ACCOUNT_ID env var).",
+        )
+        parser.add_argument(
+            "--r2-access-key",
+            type=str,
+            default=os.environ.get("R2_ACCESS_KEY_ID", R2_ACCESS_KEY_ID),
+            help="R2 Access Key ID (or set R2_ACCESS_KEY_ID env var).",
+        )
+        parser.add_argument(
+            "--r2-secret-key",
+            type=str,
+            default=os.environ.get("R2_SECRET_ACCESS_KEY", R2_SECRET_ACCESS_KEY),
+            help="R2 Secret Access Key (or set R2_SECRET_ACCESS_KEY env var).",
+        )
         parser.add_argument(
             "--dry-run",
             action="store_true",
@@ -55,17 +105,63 @@ class Command(BaseCommand):
                 continue
         return None
 
-    def handle(self, *args, **options):
-        json_path = options["json_file"]
-        dry_run = options.get("dry_run", False)
+    def _load_from_r2(self, options):
+        """Download the JSON object from Cloudflare R2 and return parsed data."""
+        account_id = options["r2_account_id"]
+        access_key = options["r2_access_key"]
+        secret_key = options["r2_secret_key"]
+        bucket = options["r2_bucket"]
+        key = options["json_file"]
+
+        missing = [name for name, val in [
+            ("--r2-account-id / R2_ACCOUNT_ID", account_id),
+            ("--r2-access-key / R2_ACCESS_KEY_ID", access_key),
+            ("--r2-secret-key / R2_SECRET_ACCESS_KEY", secret_key),
+            ("--r2-bucket / R2_BUCKET", bucket),
+        ] if not val]
+        if missing:
+            raise CommandError(
+                "Missing R2 credentials / config:\n  " + "\n  ".join(missing)
+            )
+
+        endpoint_url = f"https://{account_id}.r2.cloudflarestorage.com"
+        self.stdout.write(f"Fetching s3://{bucket}/{key} from R2 …")
 
         try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except FileNotFoundError:
-            raise CommandError(f"File not found: {json_path}")
+            s3 = boto3.client(
+                "s3",
+                endpoint_url=endpoint_url,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name="auto",
+            )
+            response = s3.get_object(Bucket=bucket, Key=key)
+            raw = response["Body"].read()
+        except ClientError as e:
+            raise CommandError(f"R2 ClientError: {e}")
+        except BotoCoreError as e:
+            raise CommandError(f"R2 BotoCoreError: {e}")
+
+        try:
+            return json.loads(raw.decode("utf-8"))
         except json.JSONDecodeError as e:
-            raise CommandError(f"Invalid JSON: {e}")
+            raise CommandError(f"Invalid JSON from R2: {e}")
+
+    def handle(self, *args, **options):
+        dry_run = options.get("dry_run", False)
+
+        # ── Load data ──────────────────────────────────────────────────────────
+        if options["r2"]:
+            data = self._load_from_r2(options)
+        else:
+            json_path = options["json_file"]
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except FileNotFoundError:
+                raise CommandError(f"File not found: {json_path}")
+            except json.JSONDecodeError as e:
+                raise CommandError(f"Invalid JSON: {e}")
 
         if not isinstance(data, list):
             raise CommandError("JSON must be a list of car objects")

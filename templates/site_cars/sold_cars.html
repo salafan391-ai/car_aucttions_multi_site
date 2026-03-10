@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}السيارات المباعة - {{ site_name|default:"سيارات" }}{% endblock %}
 
@@ -16,7 +17,7 @@
         <a href="{% url 'car_detail' sold.car.slug %}" class="car-card bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if sold.car.image %}
-                <img src="{{ sold.car.image }}" alt="{{ sold.car.title }}" class="w-full h-full object-cover" loading="lazy">
+                <img src="{{ sold.car.image|https_url }}" alt="{{ sold.car.title }}" class="w-full h-full object-cover" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

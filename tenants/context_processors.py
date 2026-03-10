@@ -77,7 +77,7 @@ def tenant_branding(request):
         "site_working_hours_en": tenant.working_hours_en or "",
         # Contact person
         "contact_person_name": tenant.contact_person_name or "",
-        "contact_person_photo": tenant.contact_person_photo.url if tenant.contact_person_photo else "",
+        "contact_person_photo": _file_url(getattr(tenant, 'contact_person_photo', None)),
         # Social media
         "site_instagram": tenant.instagram or "",
         "site_twitter": tenant.twitter or "",

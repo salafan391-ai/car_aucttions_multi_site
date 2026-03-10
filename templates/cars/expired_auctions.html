@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize safe_query %}
+{% load humanize safe_query custom_filters %}
 
 {% block title %}مزادات منتهية - {{ site_name|default:"سيارات" }}{% endblock %}
 
@@ -49,7 +49,7 @@
         <a href="{% url 'car_detail' car.slug %}" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden block transition-all duration-300 border border-gray-100 hover:border-gray-200 opacity-80 hover:opacity-100">
             <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if car.image %}
-                <img src="{{ car.image }}" alt="{{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 grayscale-[30%] group-hover:grayscale-0" loading="lazy">
+                <img src="{{ car.image|https_url }}" alt="{{ car.manufacturer.name }} {{ car.model.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 grayscale-[30%] group-hover:grayscale-0" loading="lazy">
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center text-gray-300">
                     <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
