@@ -98,8 +98,9 @@
       animation: fade-up .5s ease both;
     }
     .logo-wrap img {
-      height: 600px;
+      height: clamp(140px, 30vw, 280px);
       width: auto;
+      max-width: 80vw;
       object-fit: contain;
       mix-blend-mode: screen;
       filter: drop-shadow(0 8px 24px rgba(0,0,0,.3));
@@ -148,20 +149,17 @@
     .cards {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
+      gap: 1rem;
       width: 100%;
       max-width: 640px;
       animation: fade-up .6s .2s ease both;
-    }
-    @media (max-width: 400px) {
-      .cards { grid-template-columns: 1fr; max-width: 320px; }
     }
 
     .card {
       position: relative;
       overflow: hidden;
-      border-radius: 24px;
-      padding: 2rem 1.5rem;
+      border-radius: 20px;
+      padding: clamp(1rem, 4vw, 2rem) clamp(.75rem, 3vw, 1.5rem);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -322,7 +320,7 @@
         <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
       {% else %}
         <!-- Default SVG car icon when no logo uploaded -->
-        <div style="width:200px;height:200px;border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+        <div style="width:clamp(140px,30vw,280px);height:clamp(140px,30vw,280px);border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
           <svg width="48" height="48" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
           </svg>
@@ -413,14 +411,13 @@
       ];
 
       // Build an array of Unicode-aware characters (handles Arabic multi-byte correctly)
-      function getChars(str) {
-        return [...str];  // spread uses Unicode code points
-      }
 
       function typeLine(el, text, delay, onDone) {
         if (!el) return onDone && onDone();
-        const chars = getChars(text);
+        const chars = [...text];  // Unicode-aware spread
         el.textContent = '';
+        el.setAttribute('dir', 'rtl');
+
         const cursor = document.createElement('span');
         cursor.className = 'tw-cursor';
         el.appendChild(cursor);
@@ -428,11 +425,13 @@
         let i = 0;
         setTimeout(function tick() {
           if (i < chars.length) {
-            el.insertBefore(document.createTextNode(chars[i]), cursor);
+            // Set the full string so far as a text node before the cursor
+            cursor.previousSibling
+              ? cursor.previousSibling.nodeValue = chars.slice(0, i + 1).join('')
+              : el.insertBefore(document.createTextNode(chars.slice(0, i + 1).join('')), cursor);
             i++;
-            setTimeout(tick, 45);   // ms per character — adjust to taste
+            setTimeout(tick, 45);
           } else {
-            // remove cursor from line 1 when done, keep on line 2
             if (onDone) {
               cursor.remove();
               onDone();
