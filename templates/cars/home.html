@@ -138,9 +138,13 @@
     <!-- Hero Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-8 sm:mb-12">
-            <div class="max-w-2xl mx-auto flex items-center justify-center gap-4 mb-4">
+            <div class="max-w-2xl mx-auto flex items-center justify-center mb-6">
             {% if site_logo %}
-            <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-24 rounded-2xl w-auto z-40" width="96" height="96" fetchpriority="high" loading="eager">
+            <img src="{{ site_logo }}"
+                 alt="{{ site_name }}"
+                 class="w-auto z-40"
+                 style="height: clamp(100px, 20vw, 200px); max-width: 80vw; object-fit: contain; filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5));"
+                 fetchpriority="high" loading="eager">
             {% endif %}
             </div>
             <p class="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto drop-shadow-lg bg-gradient-to-r from-white/80 via-brand-light/60 to-white/80 bg-clip-text text-transparent" style="text-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.3), 0 2px 4px rgba(0,0,0,0.2);">
