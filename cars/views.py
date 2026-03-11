@@ -141,6 +141,7 @@ def home(request):
         _cars_count    = _total - _auction_count
 
         _mfr_ids_set  = set(_base_filter.values_list('manufacturer_id', flat=True).distinct())
+        print(f"_mfr_ids_set: {_mfr_ids_set}")
         _body_ids_set = set(_base_filter.values_list('body_id',         flat=True).distinct())
         _years_set    = list(
             _base_filter.order_by('-year')
@@ -424,6 +425,7 @@ def car_list(request):
 
             # --- static filter dimensions (DISTINCT queries — no full row scan) ---
             _years      = list(_auction_qs.order_by('-year').values_list('year', flat=True).distinct()[:30])
+            print(f"_auction years: {_years}")
             _body_ids   = set(_auction_qs.values_list('body_id', flat=True).distinct())
             _fuels      = sorted(v for v in _auction_qs.values_list('fuel', flat=True).distinct() if v)[:15]
             _trans      = sorted(v for v in _auction_qs.values_list('transmission', flat=True).distinct() if v)

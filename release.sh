@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
-# Heroku/Railway release command — retries migrate_schemas up to 5 times with backoff.
-# The release dyno network route to RDS is sometimes not ready for a few seconds.
+# Release command for Heroku (and Railway via startCommand).
+# During Railway's Docker BUILD phase DATABASE_URL is not available —
+# we detect this and skip migrations entirely so the build succeeds.
 set -e
+
+if [ -z "$DATABASE_URL" ]; then
+    echo "==> No DATABASE_URL found (build phase) — skipping migrations."
+    echo "==> collectstatic only"
+    python manage.py collectstatic --noinput
+    exit 0
+fi
 
 echo "==> collectstatic"
 python manage.py collectstatic --noinput
