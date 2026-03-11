@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # This script is used by Railway cron service.
 # Set the Railway cron service startCommand to: bash cron_import.sh
-# Set Railway cron schedule to: 0 3 * * *   (daily at 3am UTC = 6am Riyadh time)
+# Set Railway cron schedule to: 30 2 * * *   (daily at 2:30am UTC = 5:30am Riyadh time)
 
 set -e
 
