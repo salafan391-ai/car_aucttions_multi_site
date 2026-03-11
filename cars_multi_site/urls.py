@@ -28,6 +28,10 @@ handler404 = 'cars_multi_site.urls.custom_404'
 
 
 def custom_404(request, exception=None):
+    # Short-circuit well-known bot/browser probes — no template, no DB queries.
+    path = request.path_info
+    if path.startswith('/.well-known/') or path in ('/favicon.ico', '/apple-touch-icon.png'):
+        return HttpResponse('', status=404, content_type='text/plain')
     template = loader.get_template('404.html')
     return HttpResponseNotFound(template.render(request=request))
 
@@ -81,6 +85,9 @@ def robots_txt(request):
 
 
 urlpatterns = [
+    # ── Instant 404 for browser/bot probe paths — no DB, no template ──
+    path(".well-known/<path:subpath>", lambda req, subpath: HttpResponse('', status=404, content_type='text/plain')),
+    path("favicon.ico", lambda req: HttpResponse('', status=404, content_type='text/plain')),
     path("robots.txt", robots_txt),
     path("admin/", admin.site.urls),
     path("settings/", site_settings, name="site_settings"),
