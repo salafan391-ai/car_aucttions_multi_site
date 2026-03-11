@@ -244,6 +244,22 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 TENANT_MODEL = "tenants.Tenant"
 TENANT_DOMAIN_MODEL = "tenants.Domain"
 
+# ── CSRF / HTTPS proxy (Railway + Cloudflare sit in front as HTTPS proxies) ──
+# Tell Django to trust the X-Forwarded-Proto header set by the proxy
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Allow CSRF cookies from all tenant domains on both http and https
+_CSRF_DOMAINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    "https://omarfleet0.com,https://www.omarfleet0.com,"
+    "https://trade-bull.com,https://www.trade-bull.com,"
+    "https://desert-korea-auto.com,https://www.desert-korea-auto.com,"
+    "https://hassan-trading.com,https://www.hassan-trading.com,"
+    "https://s-koreatrading.com,https://www.s-koreatrading.com,"
+    "https://web-production-788d9.up.railway.app",
+)
+CSRF_TRUSTED_ORIGINS = [d.strip() for d in _CSRF_DOMAINS.split(",") if d.strip()]
+
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
