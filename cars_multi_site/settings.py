@@ -128,14 +128,13 @@ DATABASES = {
 # Override with DATABASE_URL if set (Heroku)
 if os.environ.get("DATABASE_URL"):
     db_from_env = dj_database_url.config(
-        conn_max_age=60,        # Short TTL — Heroku kills idle connections ~5 min
-        conn_health_checks=True,
+        conn_max_age=0,         # No persistent connections — safest on Heroku (avoids stale socket 500s)
         ssl_require=True
     )
     db_from_env["ENGINE"] = "django_tenants.postgresql_backend"
     db_from_env["OPTIONS"] = {
-        "connect_timeout": 3,   # Fail fast instead of hanging 10s
-        "options": "-c statement_timeout=8000",  # 8s query timeout (under Heroku's 30s router limit)
+        "connect_timeout": 5,
+        "options": "-c statement_timeout=8000",  # 8s query timeout
     }
     DATABASES["default"] = db_from_env
 
