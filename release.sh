@@ -1,18 +1,31 @@
 #!/usr/bin/env bash
-# Release command for Heroku (and Railway via startCommand).
-# During Railway's Docker BUILD phase DATABASE_URL is not available —
-# we detect this and skip migrations entirely so the build succeeds.
+# Release command for Heroku (runtime) and Railway (startCommand, runtime).
+# During Railway's Docker BUILD phase the internal DB hostname cannot be resolved.
+# We detect this with a DNS lookup and skip migrations if DB is unreachable.
 set -e
-
-if [ -z "$DATABASE_URL" ]; then
-    echo "==> No DATABASE_URL found (build phase) — skipping migrations."
-    echo "==> collectstatic only"
-    python manage.py collectstatic --noinput
-    exit 0
-fi
 
 echo "==> collectstatic"
 python manage.py collectstatic --noinput
+
+# Extract DB host from DATABASE_URL for connectivity check
+DB_HOST=$(python -c "
+import os, urllib.parse
+url = os.environ.get('DATABASE_URL', '')
+if url:
+    h = urllib.parse.urlparse(url).hostname or ''
+    print(h)
+")
+
+if [ -z "$DB_HOST" ]; then
+    echo "==> No DATABASE_URL set — skipping migrations."
+    exit 0
+fi
+
+# Try to resolve the DB hostname — fails silently during Docker build
+if ! getent hosts "$DB_HOST" > /dev/null 2>&1; then
+    echo "==> Cannot resolve DB host '$DB_HOST' (build phase) — skipping migrations."
+    exit 0
+fi
 
 MAX=5
 WAIT=5
