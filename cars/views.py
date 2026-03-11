@@ -414,32 +414,24 @@ def car_list(request):
 
         # If ANY of the three auction caches is cold, rebuild all from one scan
         if manufacturers is None or static_filters is None or popular_manufacturers is None:
-            _rows = list(
-                ApiCar.objects.filter(category__name='auction')
-                .exclude(auction_date__lt=now)
-                .values(
-                    'manufacturer_id', 'year', 'body_id', 'fuel',
-                    'transmission', 'seat_count', 'color_id',
-                    'seat_color_id', 'auction_name',
-                )
-            )
+            _auction_qs = ApiCar.objects.filter(category__name='auction').exclude(auction_date__lt=now)
 
             # --- manufacturers sidebar list ---
-            _mfr_ids = {r['manufacturer_id'] for r in _rows if r['manufacturer_id']}
+            _mfr_ids = set(_auction_qs.values_list('manufacturer_id', flat=True).distinct())
             manufacturers = list(
                 Manufacturer.objects.filter(id__in=_mfr_ids).order_by('name')
             )
             cache.set(_auction_mfr_key, manufacturers, 60 * 15)
 
-            # --- static filter dimensions ---
-            _years      = sorted({r['year'] for r in _rows if r['year']}, reverse=True)
-            _body_ids   = {r['body_id'] for r in _rows if r['body_id']}
-            _fuels      = sorted({r['fuel'] for r in _rows if r['fuel']})[:15]
-            _trans      = sorted({r['transmission'] for r in _rows if r['transmission']})
-            _seats      = sorted({r['seat_count'] for r in _rows if r['seat_count']})
-            _color_ids  = {r['color_id'] for r in _rows if r['color_id']}
-            _scolor_ids = {r['seat_color_id'] for r in _rows if r['seat_color_id']}
-            _anames     = sorted({r['auction_name'] for r in _rows if r['auction_name']})
+            # --- static filter dimensions (DISTINCT queries — no full row scan) ---
+            _years      = list(_auction_qs.order_by('-year').values_list('year', flat=True).distinct()[:30])
+            _body_ids   = set(_auction_qs.values_list('body_id', flat=True).distinct())
+            _fuels      = sorted(v for v in _auction_qs.values_list('fuel', flat=True).distinct() if v)[:15]
+            _trans      = sorted(v for v in _auction_qs.values_list('transmission', flat=True).distinct() if v)
+            _seats      = sorted(v for v in _auction_qs.values_list('seat_count', flat=True).distinct() if v)
+            _color_ids  = set(_auction_qs.values_list('color_id', flat=True).distinct())
+            _scolor_ids = set(_auction_qs.values_list('seat_color_id', flat=True).distinct())
+            _anames     = sorted(v for v in _auction_qs.values_list('auction_name', flat=True).distinct() if v)
 
             static_filters = {
                 'years': _years,
@@ -453,18 +445,15 @@ def car_list(request):
             }
             cache.set(_static_cache_key, static_filters, 60 * 60)  # 60 min — changes only on import
 
-            # --- popular manufacturers: count from Python, no extra DB query ---
-            from collections import Counter
-            _mfr_counts = Counter(r['manufacturer_id'] for r in _rows if r['manufacturer_id'])
-            _mfr_map = {m.id: m for m in manufacturers}
-            popular_manufacturers = sorted(
-                [m for m in manufacturers if m.id in _mfr_counts],
-                key=lambda m: _mfr_counts[m.id],
-                reverse=True,
+            # --- popular manufacturers: use DB annotate for counts ---
+            popular_manufacturers = list(
+                Manufacturer.objects.filter(id__in=_mfr_ids)
+                .annotate(car_count=Count(
+                    'apicar',
+                    filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now),
+                ))
+                .order_by('-car_count')
             )
-            # Attach car_count attribute so templates can use it
-            for m in popular_manufacturers:
-                m.car_count = _mfr_counts[m.id]
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
         _mfr_cache_key = "car_list:manufacturers_all"
@@ -536,19 +525,13 @@ def car_list(request):
 
         static_filters = cache.get(_static_cache_key)
         if static_filters is None:
-            _rows = list(
-                _base_qs.values(
-                    'year', 'body_id', 'fuel', 'transmission',
-                    'seat_count', 'color_id', 'seat_color_id',
-                )
-            )
-            _years      = sorted({r['year'] for r in _rows if r['year']}, reverse=True)
-            _body_ids   = {r['body_id'] for r in _rows if r['body_id']}
-            _fuels      = sorted({r['fuel'] for r in _rows if r['fuel']})[:15]
-            _trans      = sorted({r['transmission'] for r in _rows if r['transmission']})
-            _seats      = sorted({r['seat_count'] for r in _rows if r['seat_count']})
-            _color_ids  = {r['color_id'] for r in _rows if r['color_id']}
-            _scolor_ids = {r['seat_color_id'] for r in _rows if r['seat_color_id']}
+            _years      = list(_base_qs.order_by('-year').values_list('year', flat=True).distinct()[:30])
+            _body_ids   = set(_base_qs.values_list('body_id', flat=True).distinct())
+            _fuels      = sorted(v for v in _base_qs.values_list('fuel', flat=True).distinct() if v)[:15]
+            _trans      = sorted(v for v in _base_qs.values_list('transmission', flat=True).distinct() if v)
+            _seats      = sorted(v for v in _base_qs.values_list('seat_count', flat=True).distinct() if v)
+            _color_ids  = set(_base_qs.values_list('color_id', flat=True).distinct())
+            _scolor_ids = set(_base_qs.values_list('seat_color_id', flat=True).distinct())
             static_filters = {
                 'years': _years,
                 'body_types': list(BodyType.objects.filter(id__in=_body_ids).order_by('name')),
