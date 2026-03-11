@@ -140,6 +140,38 @@
         [data-theme="dark"] .divide-gray-200 > * + * { border-color: var(--color-border) !important; }
         [data-theme="dark"] .hover\:bg-gray-50:hover,
         [data-theme="dark"] .hover\:bg-gray-100:hover { background-color: #2d3f55 !important; }
+        [data-theme="dark"] #mobile-menu { background-color: var(--color-card-bg) !important; }
+        [data-theme="dark"] #mobile-menu button { color: var(--color-text) !important; }
+        [data-theme="dark"] #mobile-menu .bg-gray-100 { background-color: #1e293b !important; }
+
+        /* ── Dark theme: hero filter panel option cards ── */
+        [data-theme="dark"] #hero-search-filters .manufacturer-option,
+        [data-theme="dark"] #hero-search-filters .year-from-option,
+        [data-theme="dark"] #hero-search-filters .year-to-option,
+        [data-theme="dark"] #hero-search-filters .model-option {
+            background-color: #1e293b !important;
+            border-color: rgba(255,255,255,0.15) !important;
+        }
+        [data-theme="dark"] #hero-search-filters .manufacturer-option:hover,
+        [data-theme="dark"] #hero-search-filters .year-from-option:hover,
+        [data-theme="dark"] #hero-search-filters .year-to-option:hover,
+        [data-theme="dark"] #hero-search-filters .model-option:hover {
+            background-color: #2d3f55 !important;
+            border-color: rgba(255,255,255,0.4) !important;
+        }
+        [data-theme="dark"] #hero-search-filters .manufacturer-option .text-gray-800,
+        [data-theme="dark"] #hero-search-filters .manufacturer-option .text-gray-500,
+        [data-theme="dark"] #hero-search-filters .year-from-option,
+        [data-theme="dark"] #hero-search-filters .year-to-option,
+        [data-theme="dark"] #hero-search-filters .model-option {
+            color: #e2e8f0 !important;
+        }
+        [data-theme="dark"] #hero-search-filters .manufacturer-option .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        [data-theme="dark"] #hero-search-filters .bg-gray-100 {
+            background-color: #1e293b !important;
+        }
 
         /* ── Light theme (default — no overrides needed) ── */
         [data-theme="light"] {}
@@ -248,7 +280,15 @@
             border-top: 2px solid var(--desert-camel) !important;
         }
         [data-theme="desert"] #mobile-menu a,
-        [data-theme="desert"] #mobile-menu span { color: #f5deb3 !important; }
+        [data-theme="desert"] #mobile-menu span,
+        [data-theme="desert"] #mobile-menu button { color: #f5deb3 !important; }
+        [data-theme="desert"] #mobile-menu .bg-gray-100 {
+            background-color: rgba(200,134,10,0.2) !important;
+            border: 1px solid rgba(200,134,10,0.3) !important;
+        }
+        [data-theme="desert"] #mobile-menu .text-gray-800 { color: #f5deb3 !important; }
+        [data-theme="desert"] #mobile-menu .border-gray-100 { border-color: rgba(200,134,10,0.3) !important; }
+        [data-theme="desert"] #mobile-menu .hover\:bg-gray-100:hover { background-color: rgba(200,134,10,0.15) !important; }
 
         /* ── Cards / White containers ── */
         [data-theme="desert"] .bg-white {
@@ -550,10 +590,10 @@
                 <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تواصل معنا</a>
                 <!-- Mobile Lang/Currency -->
                 <div class="flex items-center gap-2 py-2 px-3 border-t border-gray-100 mt-2">
-                    <button onclick="cycleLang()" id="mobile-lang-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium">
+                    <button onclick="cycleLang()" id="mobile-lang-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium text-gray-800">
                         <span id="mobile-lang-flag">🇸🇦</span> <span id="mobile-lang-label">العربية</span>
                     </button>
-                    <button onclick="cycleCurrency()" id="mobile-currency-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium">
+                    <button onclick="cycleCurrency()" id="mobile-currency-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium text-gray-800">
                         <span id="mobile-currency-label">₩ KRW</span>
                     </button>
                 </div>
