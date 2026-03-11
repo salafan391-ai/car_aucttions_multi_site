@@ -389,6 +389,13 @@
               شارك في المزادات
             {% endif %}
           </div>
+          {% if auction_names %}
+          <div style="margin-top:.5rem; display:flex; flex-wrap:wrap; gap:.3rem;">
+            {% for name in auction_names %}
+              <span style="font-size:.65rem; font-weight:600; padding:.15rem .45rem; border-radius:99px; background:rgba(245,158,11,.15); color:#fbbf24; border:1px solid rgba(245,158,11,.3);">{{ name }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
         </div>
 
         <div class="card-arrow">

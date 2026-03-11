@@ -57,6 +57,17 @@ def landing(request):
     context = {
         'cars_count': agg['cars_count'],
         'auction_count': agg['auction_count'],
+        'auction_names': list(
+            ApiCar.objects.filter(
+                category__name='auction',
+                status='available',
+                auction_date__gte=now,
+                auction_name__isnull=False,
+            )
+            .exclude(auction_name='')
+            .values_list('auction_name', flat=True)
+            .distinct()[:5]
+        ),
     }
 
     response = render(request, 'cars/landing.html', context)
