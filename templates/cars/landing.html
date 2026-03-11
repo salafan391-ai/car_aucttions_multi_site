@@ -226,6 +226,7 @@
       font-weight: 700;
       color: #fff;
       line-height: 1.3;
+      transition: opacity .25s ease;
     }
     .card-sub {
       font-size: .8rem;
@@ -234,6 +235,9 @@
       display: flex;
       align-items: center;
       gap: .35rem;
+    }
+    .card-sub-text {
+      transition: opacity .25s ease;
     }
     .card-badge {
       display: inline-flex;
@@ -327,11 +331,8 @@
       {% endif %}
 
       <p class="logo-tagline">
-        {% if site_tagline %}{{ site_tagline }}
-        {% else %}
-          <span class="typewriter-1"></span>
-          <span class="typewriter-2"></span>
-        {% endif %}
+        <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}></span>
+        <span class="typewriter-2"></span>
       </p>
     </div>
 
@@ -348,13 +349,19 @@
         </div>
 
         <div>
-          <div class="card-label">للبيع المباشر</div>
+          <div class="card-label"
+               data-ar="للبيع المباشر"
+               data-en="Direct Sale">للبيع المباشر</div>
           <div class="card-sub">
             {% if cars_count %}
               <span class="card-badge">{{ cars_count }}</span>
-              سيارة متاحة
+              <span class="card-sub-text"
+                    data-ar="سيارة متاحة"
+                    data-en="cars available">سيارة متاحة</span>
             {% else %}
-              استعرض الكتالوج
+              <span class="card-sub-text"
+                    data-ar="استعرض الكتالوج"
+                    data-en="Browse Catalog">استعرض الكتالوج</span>
             {% endif %}
           </div>
         </div>
@@ -380,13 +387,19 @@
         </div>
 
         <div>
-          <div class="card-label">سيارات المزاد</div>
+          <div class="card-label"
+               data-ar="سيارات المزاد"
+               data-en="Auction Cars">سيارات المزاد</div>
           <div class="card-sub">
             {% if auction_count %}
               <span class="card-badge">{{ auction_count }}</span>
-              مزاد نشط
+              <span class="card-sub-text"
+                    data-ar="مزاد نشط"
+                    data-en="active auctions">مزاد نشط</span>
             {% else %}
-              شارك في المزادات
+              <span class="card-sub-text"
+                    data-ar="شارك في المزادات"
+                    data-en="Join the Auctions">شارك في المزادات</span>
             {% endif %}
           </div>
           {% if auction_names %}
@@ -411,44 +424,112 @@
 
   <script>
     (function () {
-      const lines = [
-        { el: document.querySelector('.typewriter-1'), text: 'أفضل منصة لشراء السيارات وتصديرها' },
-        { el: document.querySelector('.typewriter-2'), text: 'إلى المملكة العربية السعودية وجميع أنحاء العالم' },
+      const el1 = document.querySelector('.typewriter-1');
+      const el2 = document.querySelector('.typewriter-2');
+      if (!el1 || !el2) return;
+
+      const SPEED = 45;
+      const ERASE = 22;
+      const HOLD  = 2400;
+
+      const rounds = [
+        {
+          line1: el1.dataset.ar || 'أفضل منصة لشراء السيارات وتصديرها',
+          line2: el1.dataset.ar ? '' : 'إلى المملكة العربية السعودية وجميع أنحاء العالم',
+          dir:   'rtl',
+        },
+        {
+          line1: 'The Best Platform to Buy & Export Cars',
+          line2: el1.dataset.ar ? '' : 'To Saudi Arabia and Around the World',
+          dir:   'ltr',
+        },
       ];
 
-      // Build an array of Unicode-aware characters (handles Arabic multi-byte correctly)
-
-      function typeLine(el, text, delay, onDone) {
-        if (!el) return onDone && onDone();
-        const chars = [...text];  // Unicode-aware spread
+      function typeLine(el, text, dir, speed, onDone) {
+        const chars = [...text];
+        el.setAttribute('dir', dir);
         el.textContent = '';
-        el.setAttribute('dir', 'rtl');
 
         const cursor = document.createElement('span');
         cursor.className = 'tw-cursor';
         el.appendChild(cursor);
 
         let i = 0;
-        setTimeout(function tick() {
+        function tick() {
           if (i < chars.length) {
-            // Set the full string so far as a text node before the cursor
             cursor.previousSibling
               ? cursor.previousSibling.nodeValue = chars.slice(0, i + 1).join('')
               : el.insertBefore(document.createTextNode(chars.slice(0, i + 1).join('')), cursor);
             i++;
-            setTimeout(tick, 45);
+            setTimeout(tick, speed);
           } else {
-            if (onDone) {
-              cursor.remove();
-              onDone();
-            }
+            cursor.remove();
+            if (onDone) onDone();
           }
-        }, delay);
+        }
+        tick();
       }
 
-      typeLine(lines[0].el, lines[0].text, 700, function () {
-        typeLine(lines[1].el, lines[1].text, 200, null);
-      });
+      function eraseLine(el, onDone) {
+        const chars = [...el.textContent];
+        let i = chars.length;
+        function tick() {
+          if (i >= 0) {
+            el.textContent = chars.slice(0, i).join('');
+            i--;
+            setTimeout(tick, ERASE);
+          } else if (onDone) {
+            onDone();
+          }
+        }
+        tick();
+      }
+
+      let round = 0;
+
+      // Card bilingual elements
+      const cardLabels   = document.querySelectorAll('.card-label');
+      const cardSubTexts = document.querySelectorAll('.card-sub-text');
+
+      function flipCards(dir) {
+        const attr = dir === 'rtl' ? 'ar' : 'en';
+        const els = Array.from(cardLabels).concat(Array.from(cardSubTexts));
+        // fade out
+        els.forEach(function (el) { el.style.opacity = '0'; });
+        setTimeout(function () {
+          cardLabels.forEach(function (el) {
+            const txt = el.dataset[attr];
+            if (txt) el.textContent = txt;
+            el.setAttribute('dir', dir);
+          });
+          cardSubTexts.forEach(function (el) {
+            const txt = el.dataset[attr];
+            if (txt) el.textContent = txt;
+            el.setAttribute('dir', dir);
+          });
+          // fade back in
+          els.forEach(function (el) { el.style.opacity = ''; });
+        }, 250);
+      }
+
+      function runRound() {
+        const { line1, line2, dir } = rounds[round % rounds.length];
+        flipCards(dir);
+        round++;
+        typeLine(el1, line1, dir, SPEED, function () {
+          typeLine(el2, line2, dir, SPEED, function () {
+            setTimeout(function () {
+              eraseLine(el2, function () {
+                eraseLine(el1, function () {
+                  setTimeout(runRound, 300);
+                });
+              });
+            }, HOLD);
+          });
+        });
+      }
+
+      setTimeout(runRound, 700);
     })();
   </script>
 

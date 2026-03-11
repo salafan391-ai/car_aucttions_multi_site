@@ -149,7 +149,7 @@
             </div>
             <p class="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto drop-shadow-lg bg-gradient-to-r from-white/80 via-brand-light/60 to-white/80 bg-clip-text text-transparent" style="text-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.3), 0 2px 4px rgba(0,0,0,0.2);">
                 {% if site_tagline %}
-                  <span id="hero-typewriter">{{ site_tagline }}</span>
+                  <span id="hero-typewriter" data-ar="{{ site_tagline }}"></span>
                 {% else %}
                   <span id="hero-typewriter"></span>
                 {% endif %}
@@ -1239,16 +1239,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const el = document.getElementById('hero-typewriter');
   if (!el) return;
 
-  // If site_tagline is set, text is already in the element — type it out
-  const fullText = el.textContent.trim() ||
-    'أفضل منصة لشراء السيارات وتصديرها إلي المملكة العربية السعودية وجميع أنحاء العالم';
+  const arText = el.dataset.ar || 'أفضل منصة لشراء السيارات وتصديرها';
+  const enText = el.dataset.en || 'The Best Platform to Buy & Export Cars';
 
   el.textContent = '';
   el.setAttribute('dir', 'rtl');
-  el.style.borderLeft = '2px solid rgba(255,255,255,.5)';
-  el.style.display = 'inline';
 
-  // blinking cursor via CSS class
   const style = document.createElement('style');
   style.textContent = `
     #hero-typewriter { border-left: 2px solid rgba(255,255,255,.5); padding-inline-start: 2px; }
@@ -1257,20 +1253,57 @@ document.addEventListener('DOMContentLoaded', function() {
     #hero-typewriter.done   { border-left: none; }
   `;
   document.head.appendChild(style);
-  el.classList.add('typing');
 
-  let i = 0;
-  function tick() {
-    if (i < fullText.length) {
-      el.textContent = fullText.slice(0, i + 1);
-      i++;
-      setTimeout(tick, 45);
-    } else {
-      el.classList.remove('typing');
-      el.classList.add('done');
+  const SPEED   = 45;   // ms per character
+  const HOLD    = 2200; // ms to hold after finishing
+  const ERASE   = 25;   // ms per character erase
+
+  function type(text, dir, onDone) {
+    const chars = [...text];
+    el.setAttribute('dir', dir);
+    el.classList.add('typing');
+    el.classList.remove('done');
+    let i = 0;
+    function tick() {
+      if (i <= chars.length) {
+        el.textContent = chars.slice(0, i).join('');
+        i++;
+        setTimeout(tick, SPEED);
+      } else {
+        setTimeout(onDone, HOLD);
+      }
     }
+    tick();
   }
-  setTimeout(tick, 600);
+
+  function erase(onDone) {
+    const chars = [...el.textContent];
+    let i = chars.length;
+    function tick() {
+      if (i >= 0) {
+        el.textContent = chars.slice(0, i).join('');
+        i--;
+        setTimeout(tick, ERASE);
+      } else {
+        onDone();
+      }
+    }
+    tick();
+  }
+
+  function loop() {
+    type(arText, 'rtl', function () {
+      erase(function () {
+        type(enText, 'ltr', function () {
+          erase(function () {
+            setTimeout(loop, 400);
+          });
+        });
+      });
+    });
+  }
+
+  setTimeout(loop, 600);
 })();
 </script>
 
