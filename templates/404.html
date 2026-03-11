@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}الصفحة غير موجودة - {{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<section class="min-h-[70vh] flex items-center justify-center px-4 py-16">
+    <div class="text-center max-w-lg mx-auto">
+
+        <!-- Big car illustration -->
+        <div class="relative inline-block mb-8">
+            <!-- 404 number behind the car -->
+            <div class="text-[120px] sm:text-[160px] font-black leading-none select-none"
+                 style="color: var(--color-primary, #7c3aed); opacity: 0.08;">
+                404
+            </div>
+            <!-- Car SVG overlay -->
+            <div class="absolute inset-0 flex items-center justify-center">
+                <svg viewBox="0 0 200 100" class="w-48 sm:w-64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <rect x="20" y="45" width="160" height="35" rx="8"
+                          fill="var(--color-primary, #7c3aed)" opacity="0.15"/>
+                    <!-- Cabin -->
+                    <path d="M55 45 L75 20 L130 20 L150 45 Z"
+                          fill="var(--color-primary, #7c3aed)" opacity="0.2"/>
+                    <!-- Windows -->
+                    <path d="M80 43 L90 26 L115 26 L125 43 Z"
+                          fill="var(--color-primary, #7c3aed)" opacity="0.4" rx="2"/>
+                    <!-- Wheels -->
+                    <circle cx="60"  cy="80" r="16" fill="var(--color-primary, #7c3aed)" opacity="0.25"/>
+                    <circle cx="60"  cy="80" r="9"  fill="white" opacity="0.9"/>
+                    <circle cx="60"  cy="80" r="4"  fill="var(--color-primary, #7c3aed)" opacity="0.5"/>
+                    <circle cx="140" cy="80" r="16" fill="var(--color-primary, #7c3aed)" opacity="0.25"/>
+                    <circle cx="140" cy="80" r="9"  fill="white" opacity="0.9"/>
+                    <circle cx="140" cy="80" r="4"  fill="var(--color-primary, #7c3aed)" opacity="0.5"/>
+                    <!-- Headlight -->
+                    <ellipse cx="175" cy="58" rx="7" ry="5"
+                             fill="var(--color-primary, #7c3aed)" opacity="0.5"/>
+                    <!-- Tail light -->
+                    <ellipse cx="25" cy="58" rx="7" ry="5"
+                             fill="#ef4444" opacity="0.5"/>
+                    <!-- Road dashes -->
+                    <rect x="0"   y="97" width="30" height="3" rx="1.5" fill="var(--color-primary, #7c3aed)" opacity="0.2"/>
+                    <rect x="45"  y="97" width="30" height="3" rx="1.5" fill="var(--color-primary, #7c3aed)" opacity="0.2"/>
+                    <rect x="90"  y="97" width="30" height="3" rx="1.5" fill="var(--color-primary, #7c3aed)" opacity="0.2"/>
+                    <rect x="135" y="97" width="30" height="3" rx="1.5" fill="var(--color-primary, #7c3aed)" opacity="0.2"/>
+                    <rect x="175" y="97" width="25" height="3" rx="1.5" fill="var(--color-primary, #7c3aed)" opacity="0.2"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Message -->
+        <h1 class="text-2xl sm:text-3xl font-black text-gray-900 mb-3">
+            هذه السيارة لم تعد متاحة
+        </h1>
+        <p class="text-gray-500 text-base sm:text-lg mb-8 leading-relaxed">
+            قد تكون هذه السيارة بيعت أو أُزيلت من المنصة.<br>
+            تصفّح سياراتنا المتاحة للعثور على بديل مناسب.
+        </p>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a href="{% url 'car_list' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-brand text-white font-bold rounded-xl hover:opacity-90 transition shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                استعرض السيارات
+            </a>
+            <a href="{% url 'home' %}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                الرئيسية
+            </a>
+        </div>
+
+        <!-- Small 404 label -->
+        <p class="mt-10 text-xs text-gray-300 tracking-widest uppercase">خطأ 404 — الصفحة غير موجودة</p>
+
+    </div>
+</section>
+{% endblock %}

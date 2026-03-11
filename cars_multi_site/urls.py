@@ -19,8 +19,17 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
+from django.template import loader
 from tenants.views import site_settings
+
+
+handler404 = 'cars_multi_site.urls.custom_404'
+
+
+def custom_404(request, exception=None):
+    template = loader.get_template('404.html')
+    return HttpResponseNotFound(template.render(request=request))
 
 
 def robots_txt(request):
