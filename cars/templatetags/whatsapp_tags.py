@@ -34,6 +34,49 @@ def whatsapp_encode_text(text):
     return quote(text, safe='')
 
 @register.simple_tag(takes_context=True)
+def whatsapp_order_message(context, car, site_name=""):
+    """
+    Generate a WhatsApp order-intent message (stronger than an inquiry).
+    """
+    message_parts = ["مرحباً، أرغب في طلب شراء السيارة التالية:"]
+    message_parts.append("")
+
+    car_name = f"{getattr(car.manufacturer, 'name_ar', None) or car.manufacturer.name} {car.model.name} {car.year}"
+    message_parts.append(car_name)
+
+    if hasattr(car, 'price') and car.price:
+        message_parts.append(f"السعر: {car.price:,.0f} ريال")
+
+    if hasattr(car, 'entry') and car.entry:
+        message_parts.append(f"رقم الإعلان: {car.entry}")
+
+    try:
+        from django.urls import reverse
+        request = context.get('request')
+        if car.slug:
+            path = reverse('car_detail', kwargs={'slug': car.slug})
+        else:
+            path = reverse('car_detail_by_pk', kwargs={'pk': car.pk})
+        if request:
+            car_url = request.build_absolute_uri(path)
+        else:
+            car_url = path
+        message_parts.append("")
+        message_parts.append(f"رابط السيارة: {car_url}")
+    except Exception:
+        pass
+
+    message_parts.append("")
+    message_parts.append("أرجو التواصل لإتمام عملية الشراء.")
+
+    if site_name:
+        message_parts.append(f"شكراً - {site_name}")
+
+    full_message = "\n".join(message_parts)
+    return quote(full_message, safe='')
+
+
+@register.simple_tag(takes_context=True)
 def whatsapp_car_message(context, car, site_name=""):
     """
     Generate a properly formatted WhatsApp message for a car inquiry,

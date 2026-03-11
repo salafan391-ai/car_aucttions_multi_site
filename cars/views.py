@@ -797,6 +797,17 @@ def car_detail(request, slug):
         'avg_rating': avg_rating,
         'user_rating': user_rating,
         'pending_ratings': pending_ratings,
+        'similar_cars': (
+            ApiCar.objects
+            .filter(
+                manufacturer=car.manufacturer,
+                category=car.category,
+                status='available',
+            )
+            .exclude(pk=car.pk)
+            .select_related('manufacturer', 'model')
+            .order_by('-created_at')[:10]
+        ),
         'inspection_legend': [
             ('P',   'وكالة'),
             ('A',   'وكالة'),
