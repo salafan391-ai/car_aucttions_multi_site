@@ -133,8 +133,8 @@ if os.environ.get("DATABASE_URL"):
     )
     db_from_env["ENGINE"] = "django_tenants.postgresql_backend"
     db_from_env["OPTIONS"] = {
-        "connect_timeout": 5,
-        "options": "-c statement_timeout=8000",  # 8s query timeout
+        "connect_timeout": 30,  # Long enough for release/migration dyno; web requests protected by Heroku's 30s router
+        "options": "-c statement_timeout=8000",  # 8s query timeout for web requests
     }
     DATABASES["default"] = db_from_env
 
