@@ -71,7 +71,7 @@ def landing(request):
     }
 
     response = render(request, 'cars/landing.html', context)
-    cache.set(html_cache_key, response.content, 60 * 10)  # 10 min
+    cache.set(html_cache_key, response.content, 60 * 30)  # 30 min
     return response
 
 
@@ -127,35 +127,34 @@ def home(request):
             )[:12]
         )
 
-        # ── Single pass: collect all IDs + counts in ONE query ──
-        # Pull manufacturer_id, body_id, model_id, year, category name in one scan
-        # so we avoid 3 separate full-table passes.
+        # ── Fast aggregation: use DB-side COUNT/DISTINCT instead of full table scan ──
         from django.db.models import Count as _Count
         _base_filter = ApiCar.objects.exclude(
             category__name='auction', auction_date__lt=now
         )
-        _rows = list(
-            _base_filter.values(
-                'manufacturer_id', 'body_id', 'model_id', 'year',
-                'category__name',
-            )
-        )
 
-        # Aggregate from Python — zero extra DB round-trips
-        _total = len(_rows)
-        _auction_count = sum(1 for r in _rows if r['category__name'] == 'auction')
-        _cars_count = _total - _auction_count
-        _mfr_ids_set = {r['manufacturer_id'] for r in _rows if r['manufacturer_id']}
-        _body_ids_set = {r['body_id'] for r in _rows if r['body_id']}
-        _model_ids_set = {r['model_id'] for r in _rows if r['model_id']}
-        _years_set = sorted({r['year'] for r in _rows if r['year']}, reverse=True)[:20]
+        _agg = _base_filter.aggregate(
+            total=_Count('id'),
+            auction_count=_Count('id', filter=Q(category__name='auction')),
+        )
+        _total         = _agg['total']
+        _auction_count = _agg['auction_count']
+        _cars_count    = _total - _auction_count
+
+        _mfr_ids_set  = set(_base_filter.values_list('manufacturer_id', flat=True).distinct())
+        _body_ids_set = set(_base_filter.values_list('body_id',         flat=True).distinct())
+        _years_set    = list(
+            _base_filter.order_by('-year')
+            .values_list('year', flat=True)
+            .distinct()[:20]
+        )
 
         agg = {
             'total': _total,
             'auction_count': _auction_count,
             'cars_count': _cars_count,
             'total_manufacturers': len(_mfr_ids_set),
-            'total_models': len(_model_ids_set),
+            'total_models': _base_filter.values('model_id').distinct().count(),
         }
 
         manufacturers = list(
@@ -211,10 +210,10 @@ def home(request):
             'latest_post': latest_post,
             'year': datetime.now().year,
         }
-        cache.set(ctx_cache_key, context, 60 * 5)  # 5 minutes
+        cache.set(ctx_cache_key, context, 60 * 15)  # 15 minutes
 
     response = render(request, 'cars/home.html', context)
-    cache.set(html_cache_key, response.content, 60 * 5)  # 5 minutes
+    cache.set(html_cache_key, response.content, 60 * 30)  # 30 minutes
     return response
 
 
