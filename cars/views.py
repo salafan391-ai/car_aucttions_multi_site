@@ -75,7 +75,6 @@ def landing(request):
     return response
 
 
-@ensure_csrf_cookie
 @cache_control(public=True, max_age=180)
 def home(request):
     now = timezone.now()

@@ -128,13 +128,14 @@ DATABASES = {
 # Override with DATABASE_URL if set (Heroku)
 if os.environ.get("DATABASE_URL"):
     db_from_env = dj_database_url.config(
-        conn_max_age=0,         # No persistent connections — safest on Heroku (avoids stale socket 500s)
+        conn_max_age=60,        # Reuse connections for up to 60s — saves 150-400ms SSL handshake per request
         ssl_require=True
     )
     db_from_env["ENGINE"] = "django_tenants.postgresql_backend"
+    db_from_env["CONN_HEALTH_CHECKS"] = True   # Test connection before reuse — prevents stale-socket 500s
     db_from_env["OPTIONS"] = {
-        "connect_timeout": 30,  # Long enough for release/migration dyno; web requests protected by Heroku's 30s router
-        "options": "-c statement_timeout=25000",  # 25s — covers migrations; web requests fail fast via Heroku's router
+        "connect_timeout": 10,  # Web requests: fail fast if DB unreachable (release.sh handles longer waits)
+        "options": "-c statement_timeout=25000",
     }
     DATABASES["default"] = db_from_env
 
@@ -203,7 +204,7 @@ TIME_ZONE = "Asia/Riyadh"
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
