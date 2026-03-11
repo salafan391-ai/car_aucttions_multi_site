@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Heroku release command — retries migrate_schemas up to 5 times with backoff.
+# Heroku/Railway release command — retries migrate_schemas up to 5 times with backoff.
 # The release dyno network route to RDS is sometimes not ready for a few seconds.
-# Uses a longer connect_timeout than web dynos (which are already running).
 set -e
+
+echo "==> collectstatic"
+python manage.py collectstatic --noinput
 
 MAX=5
 WAIT=5
