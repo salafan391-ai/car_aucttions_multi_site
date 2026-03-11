@@ -447,6 +447,7 @@ class Command(BaseCommand):
                     if not dry_run:
                         upd_objs.append(ApiCar(
                             id=existing_id,
+                            car_id=ln[:20],
                             title=fields["title"],
                             image=fields["image"],
                             images=fields["images"],
@@ -476,6 +477,7 @@ class Command(BaseCommand):
                     created += 1
                     if not dry_run:
                         new_objs.append(ApiCar(
+                            car_id=ln[:20],
                             title=fields["title"],
                             image=fields["image"],
                             images=fields["images"],
@@ -506,7 +508,7 @@ class Command(BaseCommand):
                 return
 
             update_fields = [
-                'title','image','images','manufacturer','vin','lot_number','model','year','badge',
+                'car_id','title','image','images','manufacturer','vin','lot_number','model','year','badge',
                 'color','seat_color','transmission','engine','body','power','price','mileage',
                 'drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
             ]

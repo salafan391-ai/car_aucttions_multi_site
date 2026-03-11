@@ -14,3 +14,9 @@ python manage.py import_encar_fast \
     --progress-every 2000
 
 echo "==> [$(date -u)] Import complete for $TODAY"
+
+# Clear stale cache so all tenants see fresh data immediately
+if [ -n "$REDIS_URL" ]; then
+    echo "==> Clearing cache..."
+    python manage.py shell -c "from django.core.cache import cache; cache.clear(); print('Cache cleared.')"
+fi
