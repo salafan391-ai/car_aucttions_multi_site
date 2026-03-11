@@ -92,6 +92,6 @@ def tenant_branding(request):
         "sales_phones": sales_phones,
         "whatsapp_phones": whatsapp_phones,
     }
-    # Cache for 10 minutes — tenant branding rarely changes
-    cache.set(_cache_key, result, 60 * 10)
+    # Cache for 30 minutes — tenant branding never changes between deploys
+    cache.set(_cache_key, result, 60 * 30)
     return result

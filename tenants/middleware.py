@@ -120,6 +120,9 @@ class TenantPublicSchemaMiddleware:
     After TenantMainMiddleware sets the schema, this middleware
     appends 'public' to the search_path so shared apps (like cars)
     are visible from all tenant schemas.
+
+    Optimized: tracks whether the path is already set on this connection
+    object to avoid redundant DB round-trips on every request.
     """
 
     def __init__(self, get_response):
@@ -128,9 +131,13 @@ class TenantPublicSchemaMiddleware:
     def __call__(self, request):
         tenant = getattr(connection, "tenant", None)
         if tenant and tenant.schema_name != "public":
-            cursor = connection.cursor()
-            cursor.execute("SHOW search_path")
-            current = cursor.fetchone()[0]
-            if "public" not in current:
-                cursor.execute(f"SET search_path TO {current}, public")
+            # Use a flag on the connection object itself — reset automatically
+            # when conn_max_age expires and a new connection is opened.
+            if not getattr(connection, "_public_appended", False):
+                with connection.cursor() as cursor:
+                    cursor.execute("SHOW search_path")
+                    current = cursor.fetchone()[0]
+                    if "public" not in current:
+                        cursor.execute(f"SET search_path TO {current}, public")
+                connection._public_appended = True
         return self.get_response(request)
