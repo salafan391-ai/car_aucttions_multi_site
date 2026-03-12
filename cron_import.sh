@@ -15,12 +15,23 @@ python manage.py import_encar_fast \
 
 echo "==> [$(date -u)] Import complete for $TODAY"
 
-# Populate Arabic names and logos for any new manufacturers created during import
-echo "==> Setting manufacturer Arabic names..."
-python manage.py set_manufacturer_arabic
+# Fill in Arabic names / logos only for manufacturers that are still missing them
+python manage.py shell -c "
+from cars.models import Manufacturer
+missing_ar = Manufacturer.objects.filter(name_ar__isnull=True).count()
+missing_logo = Manufacturer.objects.filter(logo__isnull=True).count()
+print(f'Manufacturers missing Arabic: {missing_ar}, missing logo: {missing_logo}')
+" | tee /tmp/mfr_check.txt
 
-echo "==> Setting manufacturer logos..."
-python manage.py set_manufacturer_logos
+if grep -q "missing Arabic: [^0]" /tmp/mfr_check.txt; then
+    echo "==> Setting manufacturer Arabic names..."
+    python manage.py set_manufacturer_arabic
+fi
+
+if grep -q "missing logo: [^0]" /tmp/mfr_check.txt; then
+    echo "==> Setting manufacturer logos..."
+    python manage.py set_manufacturer_logos
+fi
 
 # Clear stale cache so all tenants see fresh data immediately
 if [ -n "$REDIS_URL" ]; then
