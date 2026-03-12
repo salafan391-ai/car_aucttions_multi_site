@@ -15,6 +15,13 @@ python manage.py import_encar_fast \
 
 echo "==> [$(date -u)] Import complete for $TODAY"
 
+# Populate Arabic names and logos for any new manufacturers created during import
+echo "==> Setting manufacturer Arabic names..."
+python manage.py set_manufacturer_arabic
+
+echo "==> Setting manufacturer logos..."
+python manage.py set_manufacturer_logos
+
 # Clear stale cache so all tenants see fresh data immediately
 if [ -n "$REDIS_URL" ]; then
     echo "==> Clearing cache..."
