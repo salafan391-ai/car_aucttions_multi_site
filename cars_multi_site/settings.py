@@ -145,6 +145,7 @@ DATABASE_ROUTERS = (
 
 # Caching Configuration
 _REDIS_URL = os.environ.get("REDIS_URL")
+print(f"[settings] REDIS_URL={'SET (' + _REDIS_URL[:30] + '...)' if _REDIS_URL else 'NOT SET — using DummyCache'}")
 
 if _REDIS_URL:
     CACHES = {
