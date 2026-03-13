@@ -1,8 +1,13 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from . import api_views
 
 urlpatterns = [
+    # Public JSON API (for external websites)
+    path('api/car/<str:lot_number>/', api_views.api_car_by_lot, name='api_car_by_lot'),
+    path('api/car/slug/<slug:slug>/', api_views.api_car_by_slug, name='api_car_by_slug'),
+
     path('', views.landing, name='landing'),
     path('home/', views.home, name='home'),
     path('cars/', views.car_list, name='car_list'),
