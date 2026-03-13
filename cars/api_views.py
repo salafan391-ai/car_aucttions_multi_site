@@ -25,7 +25,7 @@ def _cors(response):
     return response
 
 
-def _car_to_dict(car):
+def _car_to_dict(car, request=None):
     """Serialize a car to a JSON-safe dict."""
     images = car.images or []
     if isinstance(images, str):
@@ -34,9 +34,18 @@ def _car_to_dict(car):
         except Exception:
             images = [images] if images else []
 
+    # Build absolute URL to car detail page
+    car_url = None
+    if car.slug:
+        if request:
+            car_url = request.build_absolute_uri(f"/cars/{car.slug}/")
+        else:
+            car_url = f"/cars/{car.slug}/"
+
     return {
         "id": car.id,
         "slug": car.slug,
+        "url": car_url,
         "lot_number": car.lot_number,
         "title": car.title,
         "year": car.year,
@@ -92,7 +101,7 @@ def api_car_by_lot(request, lot_number):
             car = ApiCar.objects.select_related(
                 'manufacturer', 'model', 'badge', 'color', 'category'
             ).get(lot_number=lot_number)
-            data = _car_to_dict(car)
+            data = _car_to_dict(car, request)
             cache.set(cache_key, data, 60 * 60)  # cache 1 hour
         except ApiCar.DoesNotExist:
             return _cors(JsonResponse({"error": "Car not found"}, status=404))
@@ -112,7 +121,7 @@ def api_car_by_slug(request, slug):
             car = ApiCar.objects.select_related(
                 'manufacturer', 'model', 'badge', 'color', 'category'
             ).get(slug=slug)
-            data = _car_to_dict(car)
+            data = _car_to_dict(car, request)
             cache.set(cache_key, data, 60 * 60)  # cache 1 hour
         except ApiCar.DoesNotExist:
             return _cors(JsonResponse({"error": "Car not found"}, status=404))
