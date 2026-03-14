@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load whatsapp_tags %}
 
 {% block title %}{{ car.title }} - {{ site_name|default:"سيارات" }}{% endblock %}
 
@@ -23,12 +24,12 @@
                     {% with all_images=car.gallery.all %}
                     {% if car.image %}
                     <div class="slider-image active w-full h-full">
-                        <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover">
+                        <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endif %}
                     {% for img in all_images %}
                     <div class="slider-image {% if not car.image and forloop.first %}active{% endif %} w-full h-full {% if car.image or not forloop.first %}hidden{% endif %}">
-                        <img src="{{ img.image.url }}" alt="{{ img.caption|default:car.title }}" class="w-full h-full object-cover">
+                        <img src="{{ img.image.url }}" alt="{{ img.caption|default:car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endfor %}
                     {% endwith %}
@@ -156,6 +157,21 @@
                 <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ car.description }}</p>
             </div>
             {% endif %}
+
+            {% if car.inspection_image %}
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    تقرير الفحص
+                </h2>
+                <a href="{{ car.inspection_image.url }}" target="_blank" class="block group">
+                    <img src="{{ car.inspection_image.url }}" alt="تقرير الفحص الفني" class="w-full rounded-xl border border-gray-200 object-contain max-h-[500px] group-hover:opacity-90 transition cursor-zoom-in">
+                    <p class="text-xs text-center text-gray-400 mt-2">اضغط لعرض الصورة كاملة</p>
+                </a>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Sidebar -->
@@ -177,7 +193,7 @@
 
                 <div class="border-t border-gray-100 pt-4 mb-4">
                     <div class="text-sm text-gray-500 mb-1">السعر</div>
-                    <div class="text-3xl font-extrabold text-brand">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
+                    <div class="text-3xl font-extrabold text-brand" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
                 </div>
 
                 <div class="space-y-3 text-sm border-t border-gray-100 pt-4 mb-6">
@@ -203,9 +219,37 @@
                     {% endif %}
                 </div>
 
+                {% if contact_person_name or contact_person_photo %}
+                <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                    {% if contact_person_photo %}
+                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center text-brand font-bold text-lg">{{ contact_person_name|first }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="font-bold text-sm text-gray-900">{{ contact_person_name }}</div>
+                        <div class="text-xs text-gray-500">مسؤول المبيعات</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if site_whatsapp or whatsapp_phones %}
+                {% with wa_number=site_whatsapp|default:whatsapp_phones.0.phone_number %}
+                <a href="https://wa.me/{{ wa_number|format_whatsapp_number }}?text={{ car.title|whatsapp_encode_text }}%20-%20{{ car.year }}%20-%20{{ car.price|floatformat:0 }}%20%E2%82%A9%0A{{ request.build_absolute_uri }}"
+                   target="_blank"
+                   class="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition mb-3">
+                    <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
+                    </svg>
+                    تواصل عبر واتساب
+                </a>
+                {% endwith %}
+                {% else %}
                 <a href="{% url 'contact' %}" class="block w-full text-center bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition mb-3">
                     تواصل معنا
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -288,5 +332,115 @@ function handleSwipe() {
 
 // Initialize
 updateSlider();
+
+// ═══════════ LIGHTBOX ═══════════
+var currentImageIndex = 0;
+var allImages = [];
+
+function openLightbox(imgEl) {
+    allImages = Array.from(
+        document.querySelectorAll('#image-slider .slider-image img')
+    ).map(function(img) { return img.src; });
+
+    var clickedSrc = imgEl.src;
+    currentImageIndex = allImages.indexOf(clickedSrc);
+    if (currentImageIndex < 0) currentImageIndex = 0;
+
+    document.getElementById('lightbox-image').src = allImages[currentImageIndex];
+    document.getElementById('lightbox-counter').textContent = (currentImageIndex + 1) + ' / ' + allImages.length;
+    document.getElementById('lightbox-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    updateLightboxNavButtons();
+}
+
+function updateLightboxImage() {
+    document.getElementById('lightbox-image').src = allImages[currentImageIndex];
+    document.getElementById('lightbox-counter').textContent = (currentImageIndex + 1) + ' / ' + allImages.length;
+}
+
+function nextLightboxImage() {
+    if (currentImageIndex < allImages.length - 1) {
+        currentImageIndex++;
+        updateLightboxImage();
+        updateLightboxNavButtons();
+    }
+}
+
+function prevLightboxImage() {
+    if (currentImageIndex > 0) {
+        currentImageIndex--;
+        updateLightboxImage();
+        updateLightboxNavButtons();
+    }
+}
+
+function updateLightboxNavButtons() {
+    var prevBtn = document.getElementById('lightbox-prev');
+    var nextBtn = document.getElementById('lightbox-next');
+    var counter = document.getElementById('lightbox-counter');
+    if (allImages.length <= 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        counter.style.display = 'none';
+    } else {
+        prevBtn.style.display = 'flex';
+        nextBtn.style.display = 'flex';
+        counter.style.display = 'block';
+        prevBtn.style.opacity = currentImageIndex > 0 ? '1' : '0.4';
+        nextBtn.style.opacity = currentImageIndex < allImages.length - 1 ? '1' : '0.4';
+    }
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('lightbox-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeLightbox();
+    });
+});
+
+document.addEventListener('keydown', function(e) {
+    var modal = document.getElementById('lightbox-modal');
+    var isOpen = modal && modal.style.display !== 'none';
+    if (isOpen) {
+        if (e.key === 'Escape') { closeLightbox(); e.stopPropagation(); }
+        else if (e.key === 'ArrowLeft') { prevLightboxImage(); e.stopPropagation(); }
+        else if (e.key === 'ArrowRight') { nextLightboxImage(); e.stopPropagation(); }
+    }
+});
 </script>
+
+<!-- Lightbox Modal -->
+<div id="lightbox-modal" class="hidden fixed inset-0 bg-black bg-opacity-95 z-50 p-4" style="display:none;">
+    <!-- Top bar: counter + close -->
+    <div class="flex items-center justify-between mb-3">
+        <div id="lightbox-counter" class="text-white text-sm font-medium px-3 py-1 bg-white/10 rounded-full"></div>
+        <button onclick="closeLightbox()" class="text-white hover:text-gray-300 p-2">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    <!-- Main area: prev + image + next -->
+    <div class="flex items-center justify-center gap-4 h-[80vh]">
+        <button id="lightbox-prev" onclick="prevLightboxImage()" class="shrink-0 w-14 h-14 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        <div class="flex-1 flex items-center justify-center h-full">
+            <img id="lightbox-image" src="" alt="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+        </div>
+        <button id="lightbox-next" onclick="nextLightboxImage()" class="shrink-0 w-14 h-14 bg-white/20 hover:bg-white/40 rounded-full flex items-center justify-center text-white transition">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </div>
+    <div class="text-center mt-3 text-white/40 text-xs">اضغط ESC للإغلاق · استخدم ← → للتنقل</div>
+</div>
+
 {% endblock %}

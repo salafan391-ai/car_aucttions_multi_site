@@ -40,9 +40,9 @@
                 </div>
                 <div class="flex justify-between items-center">
                     <div>
-                        <span class="text-red-500 font-extrabold text-lg">{{ sold.sale_price|floatformat:0 }} ₩</span>
+                        <span class="text-red-500 font-extrabold text-lg" data-price-krw="{{ sold.sale_price }}">{{ sold.sale_price|floatformat:0 }} <span class="text-xs">₩</span></span>
                         {% if sold.original_price %}
-                        <span class="text-xs text-gray-400 line-through mr-2">{{ sold.original_price|floatformat:0 }} ₩</span>
+                        <span class="text-xs text-gray-400 line-through mr-2" data-price-krw="{{ sold.original_price }}">{{ sold.original_price|floatformat:0 }} <span class="text-[9px]">₩</span></span>
                         {% endif %}
                     </div>
                 </div>

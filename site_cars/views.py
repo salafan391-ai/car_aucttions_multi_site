@@ -133,6 +133,11 @@ def site_car_add(request):
             car.image = optimize_image(request.FILES['image'])
             car.save()
         
+        # Handle inspection image
+        if 'inspection_image' in request.FILES:
+            car.inspection_image = optimize_image(request.FILES['inspection_image'])
+            car.save()
+        
         # Handle gallery images with batch optimization
         gallery_images = request.FILES.getlist('gallery')
         if gallery_images:
@@ -181,6 +186,10 @@ def site_car_edit(request, pk):
         # Handle main image with optimization
         if 'image' in request.FILES:
             car.image = optimize_image(request.FILES['image'])
+        
+        # Handle inspection image
+        if 'inspection_image' in request.FILES:
+            car.inspection_image = optimize_image(request.FILES['inspection_image'])
         
         car.save()
         

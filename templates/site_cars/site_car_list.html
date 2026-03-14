@@ -71,7 +71,7 @@
                         {% endif %}
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-brand font-extrabold text-lg">{{ car.price|floatformat:0 }} ₩</span>
+                        <span class="text-brand font-extrabold text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-xs">₩</span></span>
                         <div class="flex gap-1">
                             {% if car.transmission %}
                             <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{{ car.transmission }}</span>

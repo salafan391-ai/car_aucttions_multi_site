@@ -34,7 +34,7 @@
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-gray-500 mb-1">السعر المعروض</div>
-                        <div class="font-bold text-brand text-lg">{{ order.offer_price|floatformat:0 }} ₩</div>
+                        <div class="font-bold text-brand text-lg" data-price-krw="{{ order.offer_price }}">{{ order.offer_price|floatformat:0 }} <span class="text-sm">₩</span></div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-gray-500 mb-1">تاريخ الطلب</div>
@@ -69,7 +69,7 @@
                             <div class="text-xs text-gray-500">{{ bill.date|date:"Y/m/d" }} {% if bill.receipt_number %} &bull; إيصال: {{ bill.receipt_number }}{% endif %}</div>
                         </div>
                         <div class="text-left">
-                            <div class="font-bold">{{ bill.price|floatformat:0 }} ₩</div>
+                            <div class="font-bold" data-price-krw="{{ bill.price }}">{{ bill.price|floatformat:0 }} <span class="text-[9px]">₩</span></div>
                             {% if bill.is_paid %}
                             <span class="text-xs text-green-600 font-medium">مدفوعة</span>
                             {% else %}
@@ -101,7 +101,7 @@
                         {{ order.car.year }} &bull; {{ order.car.manufacturer.name }} &bull; {{ order.car.mileage|floatformat:0 }} كم
                     </div>
                     <div class="text-sm text-gray-500 mb-1">السعر المعلن</div>
-                    <div class="font-extrabold text-lg text-gray-900 mb-4">{{ order.car.price|floatformat:0 }} ₩</div>
+                    <div class="font-extrabold text-lg text-gray-900 mb-4" data-price-krw="{{ order.car.price }}">{{ order.car.price|floatformat:0 }} <span class="text-sm">₩</span></div>
                     <a href="{% url 'car_detail' order.car.slug %}" class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl transition text-sm">
                         عرض السيارة
                     </a>

@@ -52,7 +52,7 @@
                     <div class="flex flex-wrap items-center gap-4 text-sm mt-3">
                         <div>
                             <span class="text-gray-500">السعر المعروض:</span>
-                            <span class="font-bold text-brand">{{ order.offer_price|floatformat:0 }} ₩</span>
+                            <span class="font-bold text-brand" data-price-krw="{{ order.offer_price }}">{{ order.offer_price|floatformat:0 }} <span class="text-[9px]">₩</span></span>
                         </div>
                         <div>
                             <span class="text-gray-500">التاريخ:</span>

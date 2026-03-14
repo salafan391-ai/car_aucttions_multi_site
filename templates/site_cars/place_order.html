@@ -36,7 +36,7 @@
                     <span>&bull;</span>
                     <span>{{ car.mileage|floatformat:0 }} كم</span>
                 </div>
-                <div class="text-brand font-extrabold text-lg mt-1">{{ car.price|floatformat:0 }} ₩</div>
+                <div class="text-brand font-extrabold text-lg mt-1" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-xs">₩</span></div>
             </div>
         </div>
 
@@ -49,7 +49,7 @@
                 <input type="number" name="offer_price" id="offer_price" value="{{ car.price }}"
                        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition"
                        placeholder="أدخل السعر المعروض" required>
-                <p class="text-xs text-gray-400 mt-1">السعر المعلن: {{ car.price|floatformat:0 }} ₩</p>
+                <p class="text-xs text-gray-400 mt-1">السعر المعلن: <span data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px]">₩</span></span></p>
             </div>
 
             <div>

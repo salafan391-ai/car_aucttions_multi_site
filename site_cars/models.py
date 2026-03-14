@@ -27,6 +27,7 @@ class SiteCar(models.Model):
     drive_wheel = models.CharField(max_length=100, blank=True, null=True, verbose_name="نظام الدفع")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name="الحالة")
     is_featured = models.BooleanField(default=False, verbose_name="مميزة")
+    inspection_image = models.ImageField(upload_to='site_cars/inspections/', blank=True, null=True, verbose_name="صورة الفحص")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -41,6 +42,8 @@ class SiteCar(models.Model):
     def save(self, *args, **kwargs):
         if self.image and getattr(self.image, '_file', None) is not None:
             self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)
+        if self.inspection_image and getattr(self.inspection_image, '_file', None) is not None:
+            self.inspection_image = optimize_image(self.inspection_image, max_width=1200, max_height=900, quality=85)
         super().save(*args, **kwargs)
 
 
