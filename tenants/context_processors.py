@@ -91,6 +91,11 @@ def tenant_branding(request):
         "primary_phone": primary_phone,
         "sales_phones": sales_phones,
         "whatsapp_phones": whatsapp_phones,
+        # Currency rates (per 1 KRW)
+        "rate_usd": float(getattr(tenant, 'rate_usd', 0.00067)),
+        "rate_sar": float(getattr(tenant, 'rate_sar', 0.00250)),
+        "rate_aed": float(getattr(tenant, 'rate_aed', 0.00272)),
+        "rate_eur": float(getattr(tenant, 'rate_eur', 0.00069)),
     }
     # Cache for 30 minutes — tenant branding never changes between deploys
     cache.set(_cache_key, result, 60 * 30)

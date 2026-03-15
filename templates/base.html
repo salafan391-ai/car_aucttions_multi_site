@@ -1079,10 +1079,10 @@
         // ═══════════ CURRENCY SYSTEM ═══════════
         const CURRENCIES = {
             KRW: { symbol: '₩', label: '₩ KRW', rate: 1 },
-            USD: { symbol: '$', label: '$ USD', rate: 0.00074 },
-            SAR: { symbol: '﷼', label: '﷼ SAR', rate: 0.00278 },
-            AED: { symbol: 'د.إ', label: 'د.إ AED', rate: 0.00272 },
-            EUR: { symbol: '€', label: '€ EUR', rate: 0.00069 },
+            USD: { symbol: '$', label: '$ USD', rate: {{ rate_usd|default:"0.00067" }} },
+            SAR: { symbol: '﷼', label: '﷼ SAR', rate: {{ rate_sar|default:"0.00250" }} },
+            AED: { symbol: 'د.إ', label: 'د.إ AED', rate: {{ rate_aed|default:"0.00272" }} },
+            EUR: { symbol: '€', label: '€ EUR', rate: {{ rate_eur|default:"0.00069" }} },
         };
         const CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
 

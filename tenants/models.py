@@ -66,6 +66,12 @@ class Tenant(TenantMixin):
     email_use_tls = models.BooleanField(default=True, verbose_name="Use TLS")
     email_from_name = models.CharField(max_length=100, blank=True, verbose_name="From Name")
 
+    # Currency Exchange Rates (per 1 KRW)
+    rate_usd = models.DecimalField(max_digits=10, decimal_places=6, default=0.00067, verbose_name="سعر الدولار USD")
+    rate_sar = models.DecimalField(max_digits=10, decimal_places=6, default=0.00250, verbose_name="سعر الريال SAR")
+    rate_aed = models.DecimalField(max_digits=10, decimal_places=6, default=0.00272, verbose_name="سعر الدرهم AED")
+    rate_eur = models.DecimalField(max_digits=10, decimal_places=6, default=0.00069, verbose_name="سعر اليورو EUR")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     auto_create_schema = True

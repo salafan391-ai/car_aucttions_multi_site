@@ -86,7 +86,16 @@ def site_settings(request):
             tenant.email_password = request.POST.get('email_password')
         tenant.email_use_tls = 'email_use_tls' in request.POST
         tenant.email_from_name = request.POST.get('email_from_name', tenant.email_from_name)
-        
+
+        # Update currency exchange rates
+        for field in ('rate_usd', 'rate_sar', 'rate_aed', 'rate_eur'):
+            val = request.POST.get(field, '').strip()
+            if val:
+                try:
+                    setattr(tenant, field, float(val))
+                except ValueError:
+                    pass
+
         tenant.save()
         
         # Handle multiple phone numbers
@@ -169,6 +178,10 @@ def site_settings(request):
             )
 
         messages.success(request, 'تم حفظ الإعدادات بنجاح!')
+        # Bust tenant branding cache so new rates take effect immediately
+        from django.core.cache import cache as _cache
+        _schema = getattr(connection, 'schema_name', 'public')
+        _cache.delete(f"tenant_branding:{_schema}")
         return redirect('site_settings')
     
     context = {
