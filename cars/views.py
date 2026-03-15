@@ -54,9 +54,44 @@ def landing(request):
         auction_count=Count('id', filter=Q(category__name='auction')),
     )
 
+    next_auction = (
+        ApiCar.objects.filter(
+            category__name='auction',
+            status='available',
+            auction_date__gte=now,
+        )
+        .order_by('auction_date')
+        .values_list('auction_date', flat=True)
+        .first()
+    )
+
+    WEEKDAYS_AR = {
+        0: 'الاثنين',
+        1: 'الثلاثاء',
+        2: 'الأربعاء',
+        3: 'الخميس',
+        4: 'الجمعة',
+        5: 'السبت',
+        6: 'الأحد',
+    }
+    WEEKDAYS_EN = {
+        0: 'Monday',
+        1: 'Tuesday',
+        2: 'Wednesday',
+        3: 'Thursday',
+        4: 'Friday',
+        5: 'Saturday',
+        6: 'Sunday',
+    }
+    next_auction_day_ar = WEEKDAYS_AR[next_auction.weekday()] if next_auction else None
+    next_auction_day_en = WEEKDAYS_EN[next_auction.weekday()] if next_auction else None
+
     context = {
         'cars_count': agg['cars_count'],
         'auction_count': agg['auction_count'],
+        'next_auction_date': next_auction,
+        'next_auction_day_ar': next_auction_day_ar,
+        'next_auction_day_en': next_auction_day_en,
         'auction_names': list(
             ApiCar.objects.filter(
                 category__name='auction',

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -103,6 +103,13 @@
       max-width: 85vw;
       object-fit: contain;
       filter: drop-shadow(0 8px 24px rgba(0,0,0,.3));
+    }
+    @media (max-width: 640px) {
+      .logo-wrap img {
+        height: auto;
+        width: 92vw;
+        max-width: 92vw;
+      }
     }
     .logo-wordmark {
       font-size: clamp(2rem, 6vw, 3.5rem);
@@ -351,7 +358,7 @@
         <div>
           <div class="card-label"
                data-ar="للبيع المباشر"
-               data-en="Direct Sale">للبيع المباشر</div>
+               data-en="Direct Sale">المعارض الكورية</div>
           <div class="card-sub">
             {% if cars_count %}
               <span class="card-badge">{{ cars_count }}</span>
@@ -393,9 +400,15 @@
           <div class="card-sub">
             {% if auction_count %}
               <span class="card-badge">{{ auction_count }}</span>
-              <span class="card-sub-text"
-                    data-ar="مزاد نشط"
-                    data-en="active auctions">مزاد نشط</span>
+              {% if next_auction_date %}
+                <span class="card-sub-text"
+                      data-ar="مزاد {{ next_auction_day_ar }}"
+                      data-en="Auction {{ next_auction_day_en }}">مزاد {{ next_auction_day_ar }}</span>
+              {% else %}
+                <span class="card-sub-text"
+                      data-ar="مزاد نشط"
+                      data-en="active auctions">مزاد نشط</span>
+              {% endif %}
             {% else %}
               <span class="card-sub-text"
                     data-ar="شارك في المزادات"

@@ -88,6 +88,14 @@
         border-color: var(--color-primary);
         box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
     }
+
+    @media (max-width: 640px) {
+        .hero-logo {
+            width: 92vw !important;
+            max-width: 92vw !important;
+            height: auto !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -142,7 +150,7 @@
             {% if site_logo %}
             <img src="{{ site_logo }}"
                  alt="{{ site_name }}"
-                 class="w-auto z-40"
+                 class="hero-logo w-auto z-40"
                  style="height: clamp(180px, 40vw, 280px); max-width: 85vw; object-fit: contain; filter: drop-shadow(0 8px 32px rgba(0,0,0,0.5));"
                  fetchpriority="high" loading="eager">
             {% endif %}
