@@ -68,8 +68,18 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1.25rem;
-      gap: 2.5rem;
+      padding: 1.25rem 1.25rem;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 640px) {
+      .stage {
+        justify-content: flex-start;
+        padding-top: max(1.5rem, env(safe-area-inset-top));
+        gap: 1rem;
+        overflow: hidden;
+        max-height: 100dvh;
+      }
     }
 
     /* ─── Hero image backdrop (if tenant has one) ─── */
@@ -107,6 +117,7 @@
     @media (max-width: 640px) {
       .logo-wrap img {
         height: auto;
+        max-height: 38vh;
         width: 92vw;
         max-width: 92vw;
       }
@@ -161,6 +172,12 @@
       animation: fade-up .6s .2s ease both;
     }
 
+    @media (max-width: 640px) {
+      .cards {
+        gap: .65rem;
+      }
+    }
+
     .card {
       position: relative;
       overflow: hidden;
@@ -182,6 +199,12 @@
                   box-shadow .2s cubic-bezier(.22,1,.36,1),
                   border-color .2s;
       will-change: transform;
+    }
+    @media (max-width: 640px) {
+      .card {
+        padding: .85rem .75rem;
+        gap: .5rem;
+      }
     }
     .card:hover {
       transform: translateY(-6px) scale(1.02);
