@@ -247,7 +247,19 @@
         }
 
         /* ── Navbar ── */
-        [data-theme="desert"] nav {
+        nav#main-nav {
+            transition: background-color .3s ease, backdrop-filter .3s ease, box-shadow .3s ease;
+        }
+        nav#main-nav.nav-scrolled {
+            background-color: rgba(255,255,255,0.6) !important;
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: 0 2px 20px rgba(0,0,0,.08) !important;
+        }
+        [data-theme="dark"] nav#main-nav.nav-scrolled {
+            background-color: rgba(15,15,25,0.6) !important;
+        }
+        [data-theme="desert"] nav#main-nav {
             background: linear-gradient(135deg, var(--desert-saddle) 0%, #5c3412 60%, var(--desert-night) 100%) !important;
             border-bottom: 3px solid var(--desert-camel) !important;
             box-shadow: 0 4px 24px rgba(122,74,30,0.35) !important;
@@ -495,23 +507,21 @@
 <body class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
 
     <!-- Navbar -->
-    <nav class="shadow-sm sticky top-0 z-50">
+    <nav id="main-nav" class="shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <a href="{% url 'home' %}" class="flex items-center gap-2">
                     {% if site_logo %}
-                    <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-12 w-auto rounded-full" width="48" height="48" fetchpriority="high">
+                    <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-22 w-auto rounded-full" width="56" height="56" fetchpriority="high">
                     {% else %}
-                    <div class="w-12 h-12 bg-brand rounded-full flex items-center justify-center">
+                    <div class="w-22 h-22 bg-brand rounded-full flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h-4m4 0h4a1 1 0 001-1v-5a1 1 0 00-.3-.7l-4-4A1 1 0 0016 5h-3"/>
                         </svg>
                     </div>
                     {% endif %}
-                    <div class="group">
-                    <span class="text-sm font-bold text-brand group-hover:text-brand">{{ site_name|default:"سيارات" }}</span>
-                    </div>
+
                 </a>
 
                 <div class="hidden md:flex items-center gap-8">
@@ -1120,6 +1130,21 @@
             if (currency !== 'SAR') applyCurrency(currency);
             else applyCurrency('SAR');
         });
+
+        // ── Navbar scroll transparency ──
+        (function () {
+            const nav = document.getElementById('main-nav');
+            if (!nav) return;
+            function onScroll() {
+                if (window.scrollY > 10) {
+                    nav.classList.add('nav-scrolled');
+                } else {
+                    nav.classList.remove('nav-scrolled');
+                }
+            }
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll(); // run once on load
+        })();
 
         // Wishlist count functionality with caching
         let wishlistCountCache = null;

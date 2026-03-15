@@ -23,11 +23,11 @@
     }
 
     html, body {
-      height: 100%;
+      min-height: 100%;
       font-family: 'Tajawal', sans-serif;
       background: #0a0a0f;
       color: #fff;
-      overflow: hidden; /* prevent scroll on landing */
+      overflow-y: auto;
     }
 
     /* ─── Animated gradient background ─── */
@@ -76,9 +76,8 @@
       .stage {
         justify-content: flex-start;
         padding-top: max(1.5rem, env(safe-area-inset-top));
+        padding-bottom: 2rem;
         gap: 1rem;
-        overflow: hidden;
-        max-height: 100dvh;
       }
     }
 
@@ -111,7 +110,6 @@
     @media (max-width: 640px) {
       .logo-wrap img {
         height: auto;
-        max-height: 38vh;
         width: 92vw;
         max-width: 92vw;
       }
@@ -165,10 +163,50 @@
       max-width: 640px;
       animation: fade-up .6s .2s ease both;
     }
+    .cards.has-three {
+      grid-template-columns: 1fr 1fr 1fr;
+      max-width: 780px;
+    }
 
     @media (max-width: 640px) {
       .cards {
-        gap: .65rem;
+        gap: .5rem;
+      }
+      .cards.has-three {
+        grid-template-columns: 1fr 1fr 1fr;
+        max-width: 100%;
+      }
+      .cards.has-three .card {
+        padding: .7rem .5rem;
+        gap: .35rem;
+        border-radius: 14px;
+      }
+      .cards.has-three .card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+      }
+      .cards.has-three .card-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+      .cards.has-three .card-label {
+        font-size: .82rem;
+      }
+      .cards.has-three .card-sub {
+        font-size: .68rem;
+      }
+      .cards.has-three .card-badge {
+        font-size: .6rem;
+        padding: .1rem .35rem;
+      }
+      .cards.has-three .card-arrow {
+        width: 24px;
+        height: 24px;
+      }
+      .cards.has-three .card-arrow svg {
+        width: 11px;
+        height: 11px;
       }
     }
 
@@ -210,6 +248,7 @@
     /* coloured glow per card */
     .card-cars   { --glow: var(--p); }
     .card-auction { --glow: #f59e0b; }
+    .card-site   { --glow: #10b981; }
 
     .card::before {
       content: '';
@@ -344,14 +383,18 @@
     <!-- Logo + name + tagline -->
     <div class="logo-wrap">
       {% if site_logo %}
-        <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+        <a href="{% url 'home' %}" style="display:inline-block;">
+          <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+        </a>
       {% else %}
         <!-- Default SVG car icon when no logo uploaded -->
-        <div style="width:clamp(180px,40vw,280px);height:clamp(180px,40vw,280px);border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
-          <svg width="48" height="48" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
-          </svg>
-        </div>
+        <a href="{% url 'home' %}" style="display:inline-block;">
+          <div style="width:clamp(180px,40vw,280px);height:clamp(180px,40vw,280px);border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+            <svg width="48" height="48" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+            </svg>
+          </div>
+        </a>
       {% endif %}
 
       <p class="logo-tagline">
@@ -361,7 +404,7 @@
     </div>
 
     <!-- Two CTA cards -->
-    <div class="cards">
+    <div class="cards{% if site_cars_count %} has-three{% endif %}">
 
       <!-- Card 1: Cars -->
       <a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
@@ -447,6 +490,39 @@
           </svg>
         </div>
       </a>
+
+      {% if site_cars_count %}
+      <!-- Card 3: Site Owner Cars -->
+      <a href="{% url 'site_car_list' %}" class="card card-site">
+        <div class="card-icon">
+          <!-- store / showroom icon -->
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 21V12h6v9"/>
+          </svg>
+        </div>
+
+        <div>
+          <div class="card-label"
+               data-ar="البيع المباشر"
+               data-en="Direct Sales">البيع المباشر</div>
+          <div class="card-sub">
+            <span class="card-badge">{{ site_cars_count }}</span>
+            <span class="card-sub-text"
+                  data-ar="سيارات البيع المباشر"
+                  data-en="Direct Sales Cars">سيارات البيع المباشر</span>
+          </div>
+        </div>
+        
+        <div class="card-arrow">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </div>
+      </a>
+      {% endif %}
 
     </div><!-- /cards -->
 

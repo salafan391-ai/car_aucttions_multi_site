@@ -105,6 +105,13 @@ def landing(request):
         ),
     }
 
+    # Add site cars count if app is installed
+    try:
+        from site_cars.models import SiteCar
+        context['site_cars_count'] = SiteCar.objects.filter(status='available').count()
+    except Exception:
+        context['site_cars_count'] = 0
+
     response = render(request, 'cars/landing.html', context)
     cache.set(html_cache_key, response.content, 60 * 30)  # 30 min
     return response
