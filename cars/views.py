@@ -41,10 +41,6 @@ def _exclude_expired_auctions(qs):
 def landing(request):
     """Ultra-fast opening page – logo + two CTA cards."""
     schema = getattr(connection, 'schema_name', 'public')
-    html_cache_key = f"landing_html:{schema}"
-    cached_html = cache.get(html_cache_key)
-    if cached_html:
-        return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
 
     now = timezone.now()
     agg = ApiCar.objects.exclude(
@@ -86,12 +82,26 @@ def landing(request):
     next_auction_day_ar = WEEKDAYS_AR[next_auction.weekday()] if next_auction else None
     next_auction_day_en = WEEKDAYS_EN[next_auction.weekday()] if next_auction else None
 
+    # Get site cars count
+    try:
+        from site_cars.models import SiteCar
+        site_cars_count = SiteCar.objects.filter(status='available').count()
+    except Exception:
+        site_cars_count = 0
+
+    # Cache key includes site_cars presence so 3-card layout is cached separately
+    html_cache_key = f"landing_html:{schema}:sc{1 if site_cars_count else 0}"
+    cached_html = cache.get(html_cache_key)
+    if cached_html:
+        return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
+
     context = {
         'cars_count': agg['cars_count'],
         'auction_count': agg['auction_count'],
         'next_auction_date': next_auction,
         'next_auction_day_ar': next_auction_day_ar,
         'next_auction_day_en': next_auction_day_en,
+        'site_cars_count': site_cars_count,
         'auction_names': list(
             ApiCar.objects.filter(
                 category__name='auction',
@@ -104,13 +114,6 @@ def landing(request):
             .distinct()[:5]
         ),
     }
-
-    # Add site cars count if app is installed
-    try:
-        from site_cars.models import SiteCar
-        context['site_cars_count'] = SiteCar.objects.filter(status='available').count()
-    except Exception:
-        context['site_cars_count'] = 0
 
     response = render(request, 'cars/landing.html', context)
     cache.set(html_cache_key, response.content, 60 * 30)  # 30 min
@@ -611,6 +614,17 @@ def car_list(request):
     count_cars = tab_counts['count_cars']
     count_auction = tab_counts['count_auction']
 
+    # Site cars count for the showroom tab — cached 10 min
+    _site_cars_tab_key = f"car_list:site_cars_count:{schema}"
+    site_cars_count = cache.get(_site_cars_tab_key)
+    if site_cars_count is None:
+        try:
+            from site_cars.models import SiteCar
+            site_cars_count = SiteCar.objects.filter(status='available').count()
+        except Exception:
+            site_cars_count = 0
+        cache.set(_site_cars_tab_key, site_cars_count, 60 * 10)
+
     # Popular manufacturers – auction path already set above; non-auction handled here
     if car_type != 'auction':
         _pop_mfr_key = f"car_list:popular_manufacturers:{schema}"
@@ -644,6 +658,7 @@ def car_list(request):
         'count_all': count_all,
         'count_cars': count_cars,
         'count_auction': count_auction,
+        'site_cars_count': site_cars_count,
         'selected_year_from': request.GET.get('year_from', ''),
         'selected_year_to': request.GET.get('year_to', ''),
     }

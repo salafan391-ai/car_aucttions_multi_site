@@ -105,6 +105,13 @@
                 مزادات
                 <span class="{% if request.GET.car_type == 'auction' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_auction|intcomma }}</span>
             </a>
+            {% if site_cars_count %}
+            <a href="{% url 'site_car_list' %}" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:bg-gray-50">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21V12h6v9"/></svg>
+                سياراتنا 
+                <span class="bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ site_cars_count|intcomma }}</span>
+            </a>
+            {% endif %}
         </div>
         <div class="text-xs sm:text-sm text-gray-500">
             <span class="font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span> نتيجة
