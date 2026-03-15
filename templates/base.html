@@ -560,7 +560,7 @@
                     </div>
                     <div class="relative" id="currency-dropdown">
                         <button type="button" onclick="document.getElementById('currency-menu').classList.toggle('hidden')" class="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
-                            <span id="currency-label">₩ KRW</span>
+                            <span id="currency-label">﷼ SAR</span>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <div id="currency-menu" class="hidden absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[120px] z-50">
@@ -594,7 +594,7 @@
                         <span id="mobile-lang-flag">🇸🇦</span> <span id="mobile-lang-label">العربية</span>
                     </button>
                     <button onclick="cycleCurrency()" id="mobile-currency-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium text-gray-800">
-                        <span id="mobile-currency-label">₩ KRW</span>
+                        <span id="mobile-currency-label">﷼ SAR</span>
                     </button>
                 </div>
                 <div class="border-t border-gray-100 pt-2 mt-2">
@@ -637,10 +637,8 @@
     <div class="md:hidden fixed bottom-4 left-4 right-4 z-40 flex justify-between items-center pointer-events-none">
         <!-- Left side: Currency & Language -->
         <div class="flex flex-col gap-2 pointer-events-auto">
-            <button onclick="showCurrencyLanguageMenu()" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand hover:bg-gray-50 transition-all hover:scale-110">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
-                </svg>
+            <button onclick="showCurrencyLanguageMenu()" class="h-10 px-3 bg-white rounded-full shadow-lg flex items-center justify-center text-brand hover:bg-gray-50 transition-all hover:scale-105 text-xs font-bold">
+                <span class="bilingual" data-lang-ar="تحويل العملة" data-lang-en="Currency">تحويل العملة</span>
             </button>
         </div>
         
@@ -1085,7 +1083,7 @@
         }
 
         function cycleCurrency() {
-            const cur = localStorage.getItem('site_currency') || 'KRW';
+            const cur = localStorage.getItem('site_currency') || 'SAR';
             const idx = (CURRENCY_ORDER.indexOf(cur) + 1) % CURRENCY_ORDER.length;
             setCurrency(CURRENCY_ORDER[idx]);
         }
@@ -1108,7 +1106,7 @@
         // ═══════════ INIT ON LOAD ═══════════
         document.addEventListener('DOMContentLoaded', function() {
             const lang = localStorage.getItem('site_lang') || 'ar';
-            const currency = localStorage.getItem('site_currency') || 'KRW';
+            const currency = localStorage.getItem('site_currency') || 'SAR';
             // Only run heavy DOM scan if non-default language is active
             if (lang !== 'ar') applyLang(lang);
             else {
@@ -1119,12 +1117,8 @@
                 setEl('mobile-lang-flag', cfg.flag);
                 setEl('mobile-lang-label', cfg.label);
             }
-            if (currency !== 'KRW') applyCurrency(currency);
-            else {
-                const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-                setEl('currency-label', CURRENCIES.KRW.label);
-                setEl('mobile-currency-label', CURRENCIES.KRW.label);
-            }
+            if (currency !== 'SAR') applyCurrency(currency);
+            else applyCurrency('SAR');
         });
 
         // Wishlist count functionality with caching
