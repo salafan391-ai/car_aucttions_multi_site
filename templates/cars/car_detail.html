@@ -165,7 +165,7 @@
                     تقرير الفحص
                 </h2>
                 <div class="rounded-xl overflow-hidden border border-gray-100">
-                {{ car.inspection_image|safe }} 
+                <img src="{{ car.inspection_image }}" alt="Inspection Image" class="w-full h-full object-cover" loading="lazy">
                 </div>
                 <!-- Inspection Legend -->
                 <div class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
