@@ -1,7 +1,30 @@
 from django.contrib import admin
+from django.contrib import messages
 from django.db import connection
 from django.utils.html import format_html
-from .models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Wishlist, Post, PostImage, PostLike, PostComment, Category, CarRequest, Contact
+from .models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Wishlist, Post, PostImage, PostLike, PostComment, Category, CarRequest, Contact, ApiCar
+
+
+@admin.register(ApiCar)
+class ApiCarAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'manufacturer', 'year', 'price', 'auction_date', 'created_at')
+    list_filter = ('category', 'manufacturer', 'year')
+    search_fields = ('title', 'manufacturer__name')
+    actions = ['delete_by_category_auction', 'delete_by_category_car']
+
+    def delete_by_category_auction(self, request, queryset):
+        qs = ApiCar.objects.filter(category__name='auction')
+        count = qs.count()
+        qs.delete()
+        self.message_user(request, f'تم حذف {count} سيارة من فئة "مزاد".', messages.SUCCESS)
+    delete_by_category_auction.short_description = '🗑️ حذف جميع سيارات فئة: مزاد (auction)'
+
+    def delete_by_category_car(self, request, queryset):
+        qs = ApiCar.objects.filter(category__name='car')
+        count = qs.count()
+        qs.delete()
+        self.message_user(request, f'تم حذف {count} سيارة من فئة "سيارة".', messages.SUCCESS)
+    delete_by_category_car.short_description = '🗑️ حذف جميع سيارات فئة: سيارة (car)'
 
 class PostImageInline(admin.TabularInline):
     model = PostImage
@@ -159,5 +182,12 @@ class ContactAdmin(admin.ModelAdmin):
     message_preview.short_description = 'الرسالة'
 
 
-admin.site.register(Category)
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'car_count')
+
+    def car_count(self, obj):
+        return ApiCar.objects.filter(category=obj).count()
+    car_count.short_description = 'عدد السيارات'
+
 admin.site.register(CarColor)
