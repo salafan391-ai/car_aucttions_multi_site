@@ -5,6 +5,12 @@ from django.utils.html import format_html
 from .models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Wishlist, Post, PostImage, PostLike, PostComment, Category, CarRequest, Contact, ApiCar
 
 
+try:
+    admin.site.unregister(ApiCar)
+except admin.sites.NotRegistered:
+    pass
+
+
 @admin.register(ApiCar)
 class ApiCarAdmin(admin.ModelAdmin):
     list_display = ('title', 'category', 'manufacturer', 'year', 'price', 'auction_date', 'created_at')
