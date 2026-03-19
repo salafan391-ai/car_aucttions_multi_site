@@ -48,17 +48,25 @@ def tenant_branding(request):
         except Exception:
             return ""
 
+    # Eid theme overrides
+    eid_colors = {
+        "primary_color": "#FFD700",  # Gold
+        "secondary_color": "#009688", # Teal
+        "accent_color": "#fffbe6",   # Light gold/white
+        "body_bg_color": "#fffbe6",  # Light gold/white
+    }
+    theme = getattr(tenant, 'theme', 'light') or 'light'
     result = {
         "site_name": tenant.name or "سيارات",
         "site_logo": _file_url(getattr(tenant, 'logo', None)),
         "site_favicon": _file_url(getattr(tenant, 'favicon', None)),
-    "site_hero_image": _file_url(getattr(tenant, 'hero_image', None)),
+        "site_hero_image": _file_url(getattr(tenant, 'hero_image', None)),
         "site_hero_images": hero_images,
-        "primary_color": tenant.primary_color or "#2563eb",
-        "secondary_color": tenant.secondary_color or "#1e3a8a",
-        "accent_color": tenant.accent_color or "#3b82f6",
-        "body_bg_color": getattr(tenant, 'body_bg_color', None) or "#ffffff",
-        "site_theme": getattr(tenant, 'theme', 'light') or 'light',
+        "primary_color": eid_colors["primary_color"] if theme == "eid" else tenant.primary_color or "#2563eb",
+        "secondary_color": eid_colors["secondary_color"] if theme == "eid" else tenant.secondary_color or "#1e3a8a",
+        "accent_color": eid_colors["accent_color"] if theme == "eid" else tenant.accent_color or "#3b82f6",
+        "body_bg_color": eid_colors["body_bg_color"] if theme == "eid" else getattr(tenant, 'body_bg_color', None) or "#ffffff",
+        "site_theme": theme,
         "footer_text": tenant.footer_text or "",
         "footer_text_en": tenant.footer_text_en or "",
         # Business info
@@ -91,11 +99,13 @@ def tenant_branding(request):
         "primary_phone": primary_phone,
         "sales_phones": sales_phones,
         "whatsapp_phones": whatsapp_phones,
-        # Currency rates (per 1 KRW)
-        "rate_usd": float(getattr(tenant, 'rate_usd', 0.00067)),
-        "rate_sar": float(getattr(tenant, 'rate_sar', 0.00250)),
-        "rate_aed": float(getattr(tenant, 'rate_aed', 0.00272)),
-        "rate_eur": float(getattr(tenant, 'rate_eur', 0.00069)),
+    # Currency rates (per 1 KRW)
+    "rate_usd": float(getattr(tenant, 'rate_usd', 0.00067)),
+    "rate_sar": float(getattr(tenant, 'rate_sar', 0.00250)),
+    "rate_aed": float(getattr(tenant, 'rate_aed', 0.00272)),
+    "rate_eur": float(getattr(tenant, 'rate_eur', 0.00069)),
+    # Eid overlays flag
+    "eid_is_active": getattr(tenant, 'eid_is_active', False),
     }
     # Cache for 30 minutes — tenant branding never changes between deploys
     cache.set(_cache_key, result, 60 * 30)

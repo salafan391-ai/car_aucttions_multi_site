@@ -2,6 +2,43 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+  <style>
+    @keyframes balloon-float {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-40px); }
+    }
+    .eid-balloons {
+      position: fixed;
+      left: 0; right: 0; top: 0; height: 220px;
+      z-index: 3;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      gap: 2vw;
+      animation: balloon-float 3s ease-in-out infinite alternate;
+    }
+    .eid-balloon-img {
+      width: 120px; height: 180px;
+      opacity: 0.85;
+    }
+    .eid-mubarak {
+      position: fixed;
+      left: 0; right: 0; top: 60px;
+      z-index: 4;
+      text-align: center;
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #FFD700;
+      text-shadow: 0 2px 16px #fffbe6, 0 1px 8px #009688;
+      font-family: 'Tajawal', sans-serif;
+      letter-spacing: 0.05em;
+      animation: eid-mubarak-fade 2.5s ease-in-out infinite alternate;
+    }
+    @keyframes eid-mubarak-fade {
+      0% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+  </style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ site_name|default:"سيارات" }}</title>
@@ -29,6 +66,20 @@
       color: #fff;
       overflow-y: auto;
     }
+{% if eid_is_active %}
+    body {
+      background: linear-gradient(135deg, #fffbe6 0%, #FFD700 100%);
+      color: #009688;
+    }
+    .eid-overlay {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      background: url('{% static "images/eid-crescent-stars.svg" %}') center/cover no-repeat;
+      opacity: 0.18;
+    }
+    {% endif %}
 
     /* ─── Animated gradient background ─── */
     .bg-canvas {
@@ -368,6 +419,14 @@
   </style>
 </head>
 <body>
+{% if eid_is_active %}
+  <div class="eid-balloons">
+    <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" alt="Eid Balloons">
+    <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="transform: scaleX(-1);" alt="Eid Balloons">
+  </div>
+  <div class="eid-mubarak">عيد مبارك</div>
+  <div class="eid-overlay"></div>
+{% endif %}
 
   <!-- Background layers -->
   <div class="bg-canvas" aria-hidden="true"></div>

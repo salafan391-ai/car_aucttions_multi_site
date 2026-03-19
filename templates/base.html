@@ -505,7 +505,26 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
-
+        {% if eid_is_active %}
+        <!-- Eid Balloons Overlay -->
+        <div class="eid-balloons" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;left:5vw;top:10vh;width:120px;animation:balloon-float 3s ease-in-out infinite alternate;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;right:5vw;top:12vh;width:120px;transform:scaleX(-1);animation:balloon-float 2.7s ease-in-out infinite alternate;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;left:20vw;top:18vh;width:80px;animation:balloon-float 2.2s ease-in-out infinite alternate;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;right:20vw;top:20vh;width:80px;transform:scaleX(-1);animation:balloon-float 2.5s ease-in-out infinite alternate;">
+                <div class="eid-mubarak" style="position:absolute;top:22vh;left:50%;transform:translateX(-50%);font-size:2.5rem;font-weight:bold;color:#FFD700;text-shadow:0 2px 8px #009688,0 0 16px #fffbe6;animation:eid-mubarak-fade 2.5s ease-in-out infinite alternate;">عيد مبارك</div>
+        </div>
+        <style>
+        @keyframes balloon-float {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-32px); }
+        }
+        @keyframes eid-mubarak-fade {
+            0% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        </style>
+        {% endif %}
     <!-- Navbar -->
     <nav id="main-nav" class="shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

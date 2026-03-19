@@ -13,6 +13,7 @@ class Tenant(TenantMixin):
         ('dark',   'داكن (Dark)'),
         ('desert', '🐪 صحراوي عربي (Desert Arabia)'),
         ('custom', 'مخصص (Custom Colors)'),
+        ('eid',    '🎉 عيد (Eid Theme)'),
     ]
     theme = models.CharField(
         max_length=10,
@@ -73,6 +74,7 @@ class Tenant(TenantMixin):
     rate_eur = models.DecimalField(max_digits=10, decimal_places=6, default=0.00069, verbose_name="سعر اليورو EUR")
 
     created_at = models.DateTimeField(auto_now_add=True)
+    eid_is_active = models.BooleanField(default=False, verbose_name="تفعيل زينة العيد", help_text="عند التفعيل تظهر زينة العيد (بالونات ونصوص متحركة) في جميع صفحات الموقع.")
 
     auto_create_schema = True
 
