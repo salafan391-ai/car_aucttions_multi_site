@@ -175,6 +175,7 @@ class Command(BaseCommand):
         manu_cache = {}
         model_cache = {}
         color_cache = {}
+        badge_cache = {}
 
         created = 0
         updated = 0
@@ -209,6 +210,15 @@ class Command(BaseCommand):
             car_model = model_cache[model_key]
 
             # Badge — auction cars don't have badge, use model name as badge
+            badge_name = (item.get("badge") or item.get("grade") or model_name)[:100]
+            badge_key = (badge_name, car_model.id)
+            if badge_key not in badge_cache:
+                badge_cache[badge_key] = self._safe_get_or_create(
+                    CarBadge.objects,
+                    name=badge_name,
+                    model=car_model,
+                )
+            badge = badge_cache[badge_key]
            
             # Color
             color_name = item.get("color_en") or item.get("color") or "Unknown"
@@ -254,6 +264,7 @@ class Command(BaseCommand):
                 "auction_name": auction_name[:100] if auction_name else "",
                 "lot_number": car_id,
                 "model": car_model,
+                "badge": badge,
                 "year": year,
                 "color": color,
                 "transmission": transmission[:100] if transmission else "",
