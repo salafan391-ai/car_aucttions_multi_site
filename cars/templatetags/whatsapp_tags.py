@@ -4,6 +4,28 @@ from urllib.parse import quote
 
 register = template.Library()
 
+
+@register.filter
+def krw_to_sar(value, rate):
+    """Convert a price stored in KRW to SAR using the provided rate and
+    return a formatted string with thousands separators and no decimals.
+
+    Usage in templates:
+        {{ car.price|krw_to_sar:rate_sar }}
+    where `rate_sar` is exposed by the tenant context processor (SAR per 1 KRW).
+    """
+    try:
+        if value is None:
+            return ""
+        v = float(value)
+        r = float(rate) if rate is not None else 0.00250
+        sar = v * r
+        # Format with comma as thousands separator, no decimal places
+        return "{:,.0f}".format(sar)
+    except Exception:
+        # On any error, return an empty string to avoid breaking templates
+        return ""
+
 @register.filter
 def format_whatsapp_number(phone_number):
     """
@@ -45,7 +67,23 @@ def whatsapp_order_message(context, car, site_name=""):
     message_parts.append(car_name)
 
     if hasattr(car, 'price') and car.price:
-        message_parts.append(f"السعر: {car.price:,.0f} ريال")
+        # Convert stored price (KRW) to SAR using tenant rate (rate_sar is per 1 KRW)
+        rate_sar = None
+        try:
+            rate_sar = float(context.get('rate_sar'))
+        except Exception:
+            rate_sar = None
+        if rate_sar is None:
+            # fallback: try to read from request.tenant or use a sensible default
+            try:
+                req = context.get('request')
+                tenant = getattr(req, 'tenant', None)
+                rate_sar = float(getattr(tenant, 'rate_sar', 0.00250)) if tenant is not None else 0.00250
+            except Exception:
+                rate_sar = 0.00250
+
+        sar_price = (car.price or 0) * rate_sar
+        message_parts.append(f"السعر: {sar_price:,.0f} ريال")
 
     if hasattr(car, 'entry') and car.entry:
         message_parts.append(f"رقم الإعلان: {car.entry}")
@@ -91,7 +129,22 @@ def whatsapp_car_message(context, car, site_name=""):
 
     # Price if available
     if hasattr(car, 'price') and car.price:
-        message_parts.append(f"السعر: {car.price:,.0f} ريال")
+        # Convert stored price (KRW) to SAR using tenant rate (rate_sar is per 1 KRW)
+        rate_sar = None
+        try:
+            rate_sar = float(context.get('rate_sar'))
+        except Exception:
+            rate_sar = None
+        if rate_sar is None:
+            try:
+                req = context.get('request')
+                tenant = getattr(req, 'tenant', None)
+                rate_sar = float(getattr(tenant, 'rate_sar', 0.00250)) if tenant is not None else 0.00250
+            except Exception:
+                rate_sar = 0.00250
+
+        sar_price = (car.price or 0) * rate_sar
+        message_parts.append(f"السعر: {sar_price:,.0f} ريال")
 
     if hasattr(car, 'entry') and car.entry:
         message_parts.append(f"رقم الإعلان: {car.entry}")
