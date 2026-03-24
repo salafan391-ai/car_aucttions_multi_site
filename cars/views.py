@@ -1,6 +1,9 @@
 from datetime import datetime, date
 import hashlib
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.core.paginator import Paginator
 from django.contrib import messages
@@ -20,6 +23,20 @@ from django.db import connection
 
 from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment, PostImage
 from .utils import car_models_dict
+from .export_service import start_export, process_webhook_payload
+
+
+def _build_webhook_url(request):
+    """
+    Return the absolute URL for the ofleet webhook endpoint.
+    Prefers settings.WEBHOOK_BASE_URL (set in Railway env vars) so ofleet
+    can reach us even when the request originates from localhost.
+    """
+    from django.conf import settings as _s
+    base = getattr(_s, 'WEBHOOK_BASE_URL', '').rstrip('/')
+    if base:
+        return f"{base}/webhook/ofleet/"
+    return request.build_absolute_uri('/webhook/ofleet/')
 
 
 def _is_public_schema():
@@ -261,6 +278,239 @@ def home(request):
     response = render(request, 'cars/home.html', context)
     cache.set(html_cache_key, response.content, 60 * 30)  # 30 minutes
     return response
+
+
+def export_auction_pdf(request):
+    """
+    Staff-only — triggered from the frontend car list PDF button.
+    Submits the job to ofleet (which calls our webhook when done), then redirects immediately.
+    The finished PDF appears in the panel / admin under «تصديرات PDF».
+    """
+    if not request.user.is_staff:
+        return HttpResponse("غير مصرح.", status=403)
+
+    auction_name = request.GET.get('auction_name', '').strip()
+    if not auction_name:
+        messages.error(request, "يرجى تحديد اسم المزاد.")
+        return redirect(request.META.get('HTTP_REFERER', '/cars/'))
+
+    entries = list(
+        ApiCar.objects.filter(auction_name=auction_name)
+        .exclude(entry__isnull=True).exclude(entry='')
+        .values_list('entry', flat=True)
+    )
+    if not entries:
+        messages.error(request, f"لا توجد سيارات بقيم entry في المزاد «{auction_name}».")
+        return redirect(request.META.get('HTTP_REFERER', '/cars/'))
+
+    from .models import PdfExport
+    schema = getattr(connection, 'schema_name', '')
+
+    # Build the absolute webhook URL so ofleet can call us back
+    webhook_url = _build_webhook_url(request)
+
+    try:
+        _token, _job_id = start_export(entries, auction_name, webhook_url)
+    except ValueError as e:
+        messages.error(request, f"خطأ في الإعدادات: {e}")
+        return redirect(request.META.get('HTTP_REFERER', '/cars/'))
+    except Exception as e:
+        messages.error(request, f"فشل بدء التصدير: {e}")
+        return redirect(request.META.get('HTTP_REFERER', '/cars/'))
+
+    PdfExport.objects.create(
+        auction_name=auction_name,
+        schema_name=schema,
+        entry_count=len(entries),
+        status=PdfExport.STATUS_PENDING,
+    )
+
+    messages.success(
+        request,
+        f"تم إرسال طلب تصدير PDF للمزاد «{auction_name}». "
+        f"ستجد الملف جاهزاً في لوحة التحكم تحت «تصديرات PDF» خلال لحظات."
+    )
+    return redirect(request.META.get('HTTP_REFERER', '/cars/?car_type=auction'))
+
+
+def pdf_export_panel(request):
+    """
+    Dedicated staff-only panel for managing PDF exports.
+
+    GET  (no ?auction)   — landing: list of exports + auction picker.
+    GET  (?auction=name) — car picker: shows all cars in that auction for selection.
+    POST (action=export) — launches export for the checked car entries only.
+    """
+    from .models import PdfExport
+
+    if not request.user.is_staff:
+        return HttpResponse("غير مصرح.", status=403)
+
+    schema = getattr(connection, 'schema_name', '')
+
+    # ── POST: launch export for selected entries ─────────────────────────
+    if request.method == 'POST':
+        auction_name = request.POST.get('auction_name', '').strip()
+        selected_ids = request.POST.getlist('car_ids')  # list of ApiCar PKs
+
+        if not auction_name:
+            messages.error(request, "اسم المزاد مفقود.")
+            return redirect('pdf_export_panel')
+
+        if not selected_ids:
+            messages.error(request, "لم تحدد أي سيارة.")
+            return redirect(f"{request.path}?auction={auction_name}")
+
+        # Fetch entries only for the checked cars
+        entries = list(
+            ApiCar.objects.filter(pk__in=selected_ids, auction_name=auction_name)
+            .exclude(entry__isnull=True).exclude(entry='')
+            .values_list('entry', flat=True)
+        )
+        if not entries:
+            messages.error(request, "السيارات المحددة لا تحتوي على قيم entry صالحة.")
+            return redirect(f"{request.path}?auction={auction_name}")
+
+        # Build the absolute webhook URL so ofleet can call us back
+        webhook_url = _build_webhook_url(request)
+
+        try:
+            _token, _job_id = start_export(entries, auction_name, webhook_url)
+        except ValueError as e:
+            messages.error(request, f"خطأ في الإعدادات: {e}")
+            return redirect(f"{request.path}?auction={auction_name}")
+        except Exception as e:
+            messages.error(request, f"فشل بدء التصدير: {e}")
+            return redirect(f"{request.path}?auction={auction_name}")
+
+        PdfExport.objects.create(
+            auction_name=auction_name,
+            schema_name=schema,
+            entry_count=len(entries),
+            status=PdfExport.STATUS_PENDING,
+        )
+
+        messages.success(
+            request,
+            f"✅ تم إرسال طلب التصدير للمزاد «{auction_name}» "
+            f"({len(entries)} سيارة من أصل {len(selected_ids)} محددة). "
+            f"الملف سيظهر جاهزاً خلال لحظات."
+        )
+        return redirect('pdf_export_panel')
+
+    # ── GET ?auction=name → car picker step ──────────────────────────────
+    auction_name = request.GET.get('auction', '').strip()
+    if auction_name:
+        cars_qs = (
+            ApiCar.objects
+            .filter(auction_name=auction_name)
+            .select_related('manufacturer', 'model')
+            .order_by('manufacturer__name', 'year')
+        )
+        exports = PdfExport.objects.all().order_by('-created_at')
+        has_pending = exports.filter(status=PdfExport.STATUS_PENDING).exists()
+        return render(request, 'cars/pdf_export_panel.html', {
+            'step': 'pick',
+            'auction_name': auction_name,
+            'cars': cars_qs,
+            'exports': exports,
+            'has_pending': has_pending,
+            'STATUS_PENDING':  PdfExport.STATUS_PENDING,
+            'STATUS_COMPLETE': PdfExport.STATUS_COMPLETE,
+            'STATUS_FAILED':   PdfExport.STATUS_FAILED,
+        })
+
+    # ── GET (landing) → auction picker + export history ──────────────────
+    available_auctions = (
+        ApiCar.objects
+        .exclude(auction_name__isnull=True).exclude(auction_name='')
+        .values('auction_name')
+        .annotate(total=Count('pk'), with_entry=Count('entry'))
+        .order_by('auction_name')
+    )
+
+    exports = PdfExport.objects.all().order_by('-created_at')
+    has_pending = exports.filter(status=PdfExport.STATUS_PENDING).exists()
+
+    return render(request, 'cars/pdf_export_panel.html', {
+        'step': 'choose',
+        'available_auctions': available_auctions,
+        'exports': exports,
+        'has_pending': has_pending,
+        'STATUS_PENDING':  PdfExport.STATUS_PENDING,
+        'STATUS_COMPLETE': PdfExport.STATUS_COMPLETE,
+        'STATUS_FAILED':   PdfExport.STATUS_FAILED,
+    })
+
+
+def pdf_export_delete(request, pk):
+    """Delete a single PdfExport record (staff only, POST)."""
+    from .models import PdfExport
+    if not request.user.is_staff:
+        return HttpResponse("غير مصرح.", status=403)
+    if request.method == 'POST':
+        obj = get_object_or_404(PdfExport, pk=pk)
+        if obj.pdf_file:
+            obj.pdf_file.delete(save=False)
+        obj.delete()
+        messages.success(request, "تم حذف سجل التصدير.")
+    return redirect('pdf_export_panel')
+
+
+from django.views.decorators.csrf import csrf_exempt  # noqa: E402 (already imported above, safe)
+
+@csrf_exempt
+def ofleet_webhook(request):
+    """
+    Receives the completion callback from ofleet0.com.
+
+    ofleet POSTs here when an export job finishes. The payload:
+        {
+            "job_id": 146,
+            "status": "done",          # or "failed"
+            "files": [
+                {"label": "Hyundai", "download_url": "https://ofleet0.com/..."}
+            ],
+            "error_msg": null
+        }
+
+    We find the matching pending PdfExport record and call process_webhook_payload
+    to download the PDFs and update the DB.
+    """
+    import json as _json
+    from .models import PdfExport
+
+    logger.info(
+        "ofleet_webhook called: method=%s body=%s",
+        request.method,
+        request.body[:500] if request.body else b'',
+    )
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=405)
+
+    try:
+        data = _json.loads(request.body)
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    schema = getattr(connection, 'schema_name', '')
+    logger.info("ofleet_webhook: schema=%s data=%s", schema, data)
+
+    # Find the most recent pending record for this schema to link files to it
+    parent = (
+        PdfExport.objects
+        .filter(schema_name=schema, status=PdfExport.STATUS_PENDING)
+        .order_by('-created_at')
+        .first()
+    )
+    parent_id = parent.pk if parent else None
+
+    process_webhook_payload(data, schema_name=schema, parent_export_id=parent_id)
+
+    return JsonResponse({'ok': True})
+
+
 
 
 @ensure_csrf_cookie

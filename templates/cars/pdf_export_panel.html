@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}لوحة تصدير PDF — {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8 px-4" dir="rtl">
+<div class="max-w-6xl mx-auto space-y-6">
+
+  {# ── Header ────────────────────────────────────────────────────────────── #}
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">📄 لوحة تصدير PDF</h1>
+      <p class="text-sm text-gray-500 mt-1">اختر المزاد ثم حدد السيارات التي تريد تصديرها</p>
+    </div>
+    <div class="flex items-center gap-3">
+      {% if step == 'pick' %}
+        <a href="{% url 'pdf_export_panel' %}"
+           class="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">
+          ← العودة لاختيار المزاد
+        </a>
+      {% else %}
+        <a href="/cars/?car_type=auction"
+           class="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1">
+          ← العودة للمزادات
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Django messages ──────────────────────────────────────────────────── #}
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="rounded-xl px-4 py-3 text-sm font-medium
+        {% if msg.tags == 'success' %}bg-green-50 text-green-800 border border-green-200
+        {% elif msg.tags == 'error'   %}bg-red-50   text-red-800   border border-red-200
+        {% else %}bg-yellow-50 text-yellow-800 border border-yellow-200{% endif %}">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {# ══════════════════════════════════════════════════════════════════════ #}
+  {# STEP 1 — Choose an auction                                            #}
+  {# ══════════════════════════════════════════════════════════════════════ #}
+  {% if step == 'choose' %}
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4">🏁 اختر مزاداً للبدء</h2>
+    {% if available_auctions %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {% for a in available_auctions %}
+          <a href="{% url 'pdf_export_panel' %}?auction={{ a.auction_name|urlencode }}"
+             class="flex items-center justify-between gap-3 rounded-xl border border-gray-200
+                    hover:border-blue-400 hover:bg-blue-50 p-4 transition group cursor-pointer">
+            <div>
+              <p class="font-semibold text-gray-800 group-hover:text-blue-700">
+                {{ a.auction_name }}
+              </p>
+              <p class="text-xs text-gray-400 mt-0.5">
+                {{ a.total }} سيارة
+                {% if a.with_entry != a.total %}
+                  · {{ a.with_entry }} لديها entry
+                {% endif %}
+              </p>
+            </div>
+            <span class="text-blue-400 group-hover:text-blue-600 text-xl">←</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-gray-400">لا توجد مزادات في قاعدة البيانات.</p>
+    {% endif %}
+  </div>
+
+  {# ══════════════════════════════════════════════════════════════════════ #}
+  {# STEP 2 — Pick cars inside the chosen auction                          #}
+  {# ══════════════════════════════════════════════════════════════════════ #}
+  {% elif step == 'pick' %}
+
+  <form method="post" id="pick-form">
+    {% csrf_token %}
+    <input type="hidden" name="auction_name" value="{{ auction_name }}">
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
+      {# Toolbar #}
+      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50">
+        <h2 class="font-semibold text-gray-700">
+          🚗 {{ auction_name }}
+          <span class="text-sm font-normal text-gray-400 mr-1">({{ cars|length }} سيارة)</span>
+        </h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <input type="text" id="car-search" placeholder="بحث بالماركة أو الموديل…"
+                 class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-52
+                        focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <button type="button" onclick="selectAll(true)"
+                  class="text-xs px-3 py-1.5 rounded-lg border border-gray-300
+                         hover:bg-gray-100 text-gray-600 transition">تحديد الكل</button>
+          <button type="button" onclick="selectAll(false)"
+                  class="text-xs px-3 py-1.5 rounded-lg border border-gray-300
+                         hover:bg-gray-100 text-gray-600 transition">إلغاء الكل</button>
+          <button type="submit"
+                  class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white
+                         text-sm font-semibold px-5 py-1.5 rounded-lg transition">
+            <span id="selected-count">0</span> سيارة — تصدير PDF 📤
+          </button>
+        </div>
+      </div>
+
+      {# Cars table #}
+      {% if cars %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-right" id="cars-table">
+          <thead class="bg-gray-50 text-gray-500 text-xs border-b border-gray-200">
+            <tr>
+              <th class="px-4 py-3 w-10">
+                <input type="checkbox" id="check-all"
+                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                       onchange="selectAll(this.checked)">
+              </th>
+              <th class="px-4 py-3">السيارة</th>
+              <th class="px-4 py-3">السنة</th>
+              <th class="px-4 py-3">Lot #</th>
+              <th class="px-4 py-3">Entry</th>
+              <th class="px-4 py-3">الحالة</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for car in cars %}
+            <tr class="hover:bg-blue-50/30 transition car-row"
+                data-search="{{ car.manufacturer.name|lower }} {{ car.model.name|lower }}">
+              <td class="px-4 py-3">
+                <input type="checkbox" name="car_ids" value="{{ car.pk }}"
+                       class="car-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                       {% if car.entry %}checked{% endif %}
+                       onchange="updateCount()">
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  {% if car.image %}
+                    <img src="{{ car.image }}" alt=""
+                         class="w-14 h-10 object-cover rounded-lg shrink-0 bg-gray-100"
+                         onerror="this.style.display='none'">
+                  {% else %}
+                    <div class="w-14 h-10 bg-gray-100 rounded-lg shrink-0 flex items-center
+                                justify-center text-gray-300 text-lg">🚗</div>
+                  {% endif %}
+                  <div>
+                    <p class="font-medium text-gray-800">
+                      {{ car.manufacturer.name }} {{ car.model.name }}
+                    </p>
+                    <p class="text-xs text-gray-400">{{ car.title }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-gray-600">{{ car.year }}</td>
+              <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ car.lot_number }}</td>
+              <td class="px-4 py-3">
+                {% if car.entry %}
+                  <span class="font-mono text-xs bg-blue-50 text-blue-700 px-2 py-0.5
+                               rounded-full border border-blue-200">{{ car.entry }}</span>
+                {% else %}
+                  <span class="text-xs text-gray-300 italic">— لا يوجد</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                {% if car.status == 'available' %}
+                  <span class="text-xs text-green-700 bg-green-50 px-2 py-0.5
+                               rounded-full border border-green-200">متاح</span>
+                {% elif car.status == 'sold' %}
+                  <span class="text-xs text-red-700 bg-red-50 px-2 py-0.5
+                               rounded-full border border-red-200">مباع</span>
+                {% else %}
+                  <span class="text-xs text-yellow-700 bg-yellow-50 px-2 py-0.5
+                               rounded-full border border-yellow-200">{{ car.status }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                {% if car.slug %}
+                  <a href="{% url 'car_detail' car.slug %}" target="_blank"
+                     class="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700
+                            border border-blue-200 hover:border-blue-400 rounded-lg px-2 py-1 transition"
+                     title="عرض تفاصيل السيارة">
+                    ↗ تفاصيل
+                  </a>
+                {% else %}
+                  <a href="{% url 'car_detail_by_pk' car.pk %}" target="_blank"
+                     class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600
+                            border border-gray-200 hover:border-blue-300 rounded-lg px-2 py-1 transition"
+                     title="عرض تفاصيل السيارة">
+                    ↗ تفاصيل
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center py-16 text-gray-400">
+          <span class="text-5xl mb-3">🏜️</span>
+          <p class="text-sm">لا توجد سيارات في هذا المزاد.</p>
+        </div>
+      {% endif %}
+
+      {# Sticky footer #}
+      <div class="sticky bottom-0 z-10 bg-white border-t border-gray-200
+                  flex items-center justify-between gap-4 px-5 py-3">
+        <p class="text-sm text-gray-500">
+          تم تحديد <strong id="selected-count-footer">0</strong> سيارة
+          <span id="no-entry-warn" class="text-red-500 text-xs hidden mr-2">
+            ⚠️ بعض السيارات المحددة لا تملك entry وسيتم تجاهلها
+          </span>
+        </p>
+        <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold
+                       text-sm px-6 py-2 rounded-lg transition">
+          📤 تصدير المحدد
+        </button>
+      </div>
+    </div>
+  </form>
+
+  {% endif %}{# /step #}
+
+  {# ── Export history (shown on both steps) ────────────────────────────── #}
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-700">📋 سجل التصديرات</h2>
+      {% if has_pending %}
+        <span class="flex items-center gap-2 text-xs text-amber-700 bg-amber-50
+                     border border-amber-200 rounded-full px-3 py-1">
+          <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+          {% if step == 'choose' %}
+            جارٍ المعالجة — يتجدد كل 10 ثوانٍ
+          {% else %}
+            جارٍ المعالجة — <a href="{% url 'pdf_export_panel' %}" class="underline hover:text-amber-900">تحقق من الحالة</a>
+          {% endif %}
+        </span>
+      {% endif %}
+    </div>
+    {% if exports %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-right">
+        <thead class="bg-gray-50 text-gray-500 text-xs border-b border-gray-100">
+          <tr>
+            <th class="px-5 py-3">المزاد</th>
+            <th class="px-5 py-3">الماركة</th>
+            <th class="px-5 py-3">السيارات</th>
+            <th class="px-5 py-3">الحالة</th>
+            <th class="px-5 py-3">التاريخ</th>
+            <th class="px-5 py-3 text-center">تحميل / حذف</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for exp in exports %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-5 py-3 font-medium text-gray-800">{{ exp.auction_name }}</td>
+            <td class="px-5 py-3 text-gray-600">{{ exp.make_name|default:"—" }}</td>
+            <td class="px-5 py-3 text-gray-500">{{ exp.entry_count }}</td>
+            <td class="px-5 py-3">
+              {% if exp.status == STATUS_PENDING %}
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1
+                             bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                  جاري الإعداد
+                </span>
+              {% elif exp.status == STATUS_COMPLETE %}
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1
+                             bg-green-50 text-green-700 border border-green-200 text-xs font-semibold">
+                  ✅ جاهز
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1
+                             bg-red-50 text-red-700 border border-red-200 text-xs font-semibold"
+                      title="{{ exp.error_detail }}">
+                  ❌ فشل
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">
+              {{ exp.created_at|date:"Y/m/d H:i" }}
+            </td>
+            <td class="px-5 py-3">
+              <div class="flex items-center justify-center gap-2">
+                {% if exp.status == STATUS_COMPLETE and exp.pdf_file %}
+                  <a href="{{ exp.pdf_file.url }}" target="_blank"
+                     class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700
+                            text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                    ⬇ تحميل
+                  </a>
+                {% elif exp.status == STATUS_FAILED %}
+                  <span class="text-xs text-red-400 max-w-40 truncate"
+                        title="{{ exp.error_detail }}">{{ exp.error_detail|truncatechars:35 }}</span>
+                {% else %}
+                  <span class="text-xs text-gray-400 italic">قيد الإعداد…</span>
+                {% endif %}
+                <form method="post" action="{% url 'pdf_export_delete' exp.pk %}"
+                      onsubmit="return confirm('حذف هذا السجل؟')">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="text-gray-300 hover:text-red-500 transition text-xl leading-none"
+                          title="حذف">×</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="flex flex-col items-center justify-center py-12 text-gray-400">
+        <span class="text-4xl mb-2">📭</span>
+        <p class="text-sm">لا توجد تصديرات بعد.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>{# /max-w #}
+</div>{# /page #}
+
+<script>
+{% if has_pending and step == 'choose' %}setTimeout(() => location.reload(), 10000);{% endif %}
+
+{% if step == 'pick' %}
+const noEntryPks = new Set([{% for car in cars %}{% if not car.entry %}{{ car.pk }},{% endif %}{% endfor %}]);
+
+function updateCount() {
+  const checked = document.querySelectorAll('.car-checkbox:checked');
+  const n = checked.length;
+  document.getElementById('selected-count').textContent = n;
+  document.getElementById('selected-count-footer').textContent = n;
+  let hasNoEntry = false;
+  checked.forEach(cb => { if (noEntryPks.has(parseInt(cb.value))) hasNoEntry = true; });
+  document.getElementById('no-entry-warn').classList.toggle('hidden', !hasNoEntry);
+  const all = document.querySelectorAll('.car-checkbox');
+  document.getElementById('check-all').indeterminate = n > 0 && n < all.length;
+  document.getElementById('check-all').checked = n === all.length;
+}
+
+function selectAll(state) {
+  document.querySelectorAll('.car-checkbox').forEach(cb => {
+    const row = cb.closest('.car-row');
+    if (!row || row.style.display !== 'none') cb.checked = state;
+  });
+  document.getElementById('check-all').checked = state;
+  document.getElementById('check-all').indeterminate = false;
+  updateCount();
+}
+
+document.getElementById('car-search').addEventListener('input', function () {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.car-row').forEach(row => {
+    row.style.display = (row.dataset.search || '').includes(q) ? '' : 'none';
+  });
+});
+
+document.getElementById('pick-form').addEventListener('submit', function (e) {
+  if (!document.querySelectorAll('.car-checkbox:checked').length) {
+    e.preventDefault();
+    alert('يرجى تحديد سيارة واحدة على الأقل.');
+  }
+});
+
+updateCount();
+{% endif %}
+</script>
+{% endblock %}

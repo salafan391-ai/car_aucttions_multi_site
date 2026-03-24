@@ -29,6 +29,13 @@ DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.localhost").split(",")
 
+# Base URL used to build the ofleet webhook callback URL.
+# Set this in your Railway env vars to your production domain,
+# e.g. WEBHOOK_BASE_URL=https://ofleet0.yoursite.com
+# If not set, the webhook URL is built from the incoming request (works in production,
+# but NOT when running locally since ofleet can't reach 127.0.0.1).
+WEBHOOK_BASE_URL = os.environ.get("WEBHOOK_BASE_URL", "")
+
 
 # Application definition
 
@@ -313,3 +320,8 @@ else:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         }
     }
+
+# ── ofleet PDF Export API ─────────────────────────────────────────────────
+OFLEET_API_BASE  = os.environ.get("OFLEET_API_BASE",  "https://ofleet0.com")
+OFLEET_USERNAME  = os.environ.get("OFLEET_USERNAME",  "")
+OFLEET_PASSWORD  = os.environ.get("OFLEET_PASSWORD",  "")
