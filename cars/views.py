@@ -2,6 +2,7 @@ from datetime import datetime, date
 import hashlib
 import json
 import logging
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -422,18 +423,121 @@ def pdf_export_panel(request):
     # ── GET ?auction=name → car picker step ──────────────────────────────
     auction_name = request.GET.get('auction', '').strip()
     if auction_name:
-        cars_qs = (
+        # Base queryset for this auction (2021+)
+        base_qs = (
             ApiCar.objects
-            .filter(auction_name=auction_name)
+            .filter(auction_name=auction_name, year__gte=2021)
             .select_related('manufacturer', 'model')
-            .order_by('manufacturer__name', 'year')
         )
-        exports = PdfExport.objects.all().order_by('-created_at')
+
+        # --- Build filter option lists (from the full unfiltered base) ---
+        filter_makes = (
+            base_qs.order_by('manufacturer__name')
+            .values_list('manufacturer__name', flat=True)
+            .distinct()
+        )
+        filter_years = (
+            base_qs.order_by('year')
+            .values_list('year', flat=True)
+            .distinct()
+        )
+        filter_fuels = (
+            base_qs
+            .exclude(fuel__isnull=True).exclude(fuel='')
+            .order_by('fuel')
+            .values_list('fuel', flat=True)
+            .distinct()
+        )
+
+        # Build make→models map for JS-driven model dropdown
+        # { "Toyota": ["Camry", "Corolla", ...], ... }
+        make_models_qs = (
+            base_qs
+            .order_by('manufacturer__name', 'model__name')
+            .values_list('manufacturer__name', 'model__name')
+            .distinct()
+        )
+        make_models_map = {}
+        for make, model in make_models_qs:
+            make_models_map.setdefault(make, [])
+            if model not in make_models_map[make]:
+                make_models_map[make].append(model)
+
+        # --- All auctions for the switcher dropdown ---
+        all_auctions = (
+            ApiCar.objects
+            .exclude(auction_name__isnull=True).exclude(auction_name='')
+            .values_list('auction_name', flat=True)
+            .distinct()
+            .order_by('auction_name')
+        )
+
+        # --- Parse active filters from GET params ---
+        f_make      = request.GET.get('make', '').strip()
+        f_model     = request.GET.get('model', '').strip()
+        f_year_min  = request.GET.get('year_min', '').strip()
+        f_year_max  = request.GET.get('year_max', '').strip()
+        f_status    = request.GET.get('status', '').strip()
+        f_fuels     = request.GET.getlist('fuel')  # multi-select list
+
+        # --- Apply filters ---
+        cars_qs = base_qs
+        if f_make:
+            cars_qs = cars_qs.filter(manufacturer__name=f_make)
+        if f_model:
+            cars_qs = cars_qs.filter(model__name=f_model)
+        if f_year_min:
+            try:
+                cars_qs = cars_qs.filter(year__gte=int(f_year_min))
+            except ValueError:
+                pass
+        if f_year_max:
+            try:
+                cars_qs = cars_qs.filter(year__lte=int(f_year_max))
+            except ValueError:
+                pass
+        if f_status:
+            cars_qs = cars_qs.filter(status=f_status)
+        if f_fuels:
+            cars_qs = cars_qs.filter(fuel__in=f_fuels)
+
+        cars_qs = cars_qs.order_by('manufacturer__name', 'year')
+
+        paginator   = Paginator(cars_qs, 24)
+        page_number = request.GET.get('page', 1)
+        page_obj    = paginator.get_page(page_number)
+        exports     = PdfExport.objects.all().order_by('-created_at')
         has_pending = exports.filter(status=PdfExport.STATUS_PENDING).exists()
+
+        # Build a query-string fragment that preserves all filters (for pagination links)
+        active_filters = {k: v for k, v in {
+            'make': f_make, 'model': f_model,
+            'year_min': f_year_min, 'year_max': f_year_max,
+            'status': f_status,
+        }.items() if v}
+        filter_qs_str = urlencode(active_filters)
+        if f_fuels:
+            filter_qs_str += ('&' if filter_qs_str else '') + '&'.join(f'fuel={v}' for v in f_fuels)
+        filter_qs = ('&' + filter_qs_str) if filter_qs_str else ''
+
         return render(request, 'cars/pdf_export_panel.html', {
             'step': 'pick',
             'auction_name': auction_name,
-            'cars': cars_qs,
+            'all_auctions': list(all_auctions),
+            'cars': page_obj,
+            'page_obj': page_obj,
+            'filter_makes': list(filter_makes),
+            'filter_years': list(filter_years),
+            'filter_fuels': list(filter_fuels),
+            'make_models_map_json': json.dumps(make_models_map),
+            'f_make': f_make,
+            'f_model': f_model,
+            'f_year_min': f_year_min,
+            'f_year_max': f_year_max,
+            'f_status': f_status,
+            'f_fuels': f_fuels,
+            'filter_qs': filter_qs,
+            'active_filter_count': len(active_filters) + (1 if f_fuels else 0),
             'exports': exports,
             'has_pending': has_pending,
             'STATUS_PENDING':  PdfExport.STATUS_PENDING,

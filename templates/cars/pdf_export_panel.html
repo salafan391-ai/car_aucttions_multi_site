@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static custom_filters %}
 
 {% block title %}لوحة تصدير PDF — {{ block.super }}{% endblock %}
 
@@ -46,13 +46,29 @@
   {% if step == 'choose' %}
 
   <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-    <h2 class="text-lg font-semibold text-gray-700 mb-4">🏁 اختر مزاداً للبدء</h2>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <h2 class="text-lg font-semibold text-gray-700">🏁 اختر مزاداً للبدء</h2>
+      {% if available_auctions %}
+        <div class="relative">
+          <input type="text" id="auction-search"
+                 placeholder="ابحث عن مزاد…"
+                 autocomplete="off"
+                 class="border border-gray-300 rounded-lg pl-3 pr-9 py-1.5 text-sm w-56
+                        focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+               fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
     {% if available_auctions %}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="auction-grid">
         {% for a in available_auctions %}
           <a href="{% url 'pdf_export_panel' %}?auction={{ a.auction_name|urlencode }}"
-             class="flex items-center justify-between gap-3 rounded-xl border border-gray-200
-                    hover:border-blue-400 hover:bg-blue-50 p-4 transition group cursor-pointer">
+             class="auction-card flex items-center justify-between gap-3 rounded-xl border border-gray-200
+                    hover:border-blue-400 hover:bg-blue-50 p-4 transition group cursor-pointer"
+             data-name="{{ a.auction_name|lower }}">
             <div>
               <p class="font-semibold text-gray-800 group-hover:text-blue-700">
                 {{ a.auction_name }}
@@ -68,6 +84,9 @@
           </a>
         {% endfor %}
       </div>
+      <p id="auction-no-results" class="hidden text-sm text-gray-400 mt-4">
+        لا توجد مزادات تطابق البحث.
+      </p>
     {% else %}
       <p class="text-sm text-gray-400">لا توجد مزادات في قاعدة البيانات.</p>
     {% endif %}
@@ -78,6 +97,141 @@
   {# ══════════════════════════════════════════════════════════════════════ #}
   {% elif step == 'pick' %}
 
+  {# ── Filter bar (GET form — does NOT submit car selections) ───────────── #}
+  <form method="get" action="" id="filter-form"
+        class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+
+    <div class="flex flex-wrap items-end gap-3">
+
+      {# Auction switcher #}
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">المزاد</label>
+        <select name="auction"
+                onchange="this.form.submit()"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-48
+                       font-semibold text-gray-700">
+          {% for a in all_auctions %}
+            <option value="{{ a }}" {% if a == auction_name %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# Divider #}
+      <div class="self-stretch w-px bg-gray-200 mx-1"></div>
+
+      {# Maker #}
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">الماركة</label>
+        <select name="make" id="filter-make"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-36">
+          <option value="">— الكل —</option>
+          {% for m in filter_makes %}
+            <option value="{{ m }}" {% if f_make == m %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# Model — options filtered by selected make via JS #}
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">الموديل</label>
+        <select name="model" id="filter-model"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-36">
+          <option value="">— الكل —</option>
+          {# Options populated by JS; server pre-selects the active model #}
+          {% if f_model %}
+            <option value="{{ f_model }}" selected>{{ f_model }}</option>
+          {% endif %}
+        </select>
+      </div>
+
+      {# Fuel — multi-select pills #}
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">الوقود</label>
+        <div class="flex flex-wrap gap-1.5 pt-0.5">
+          {% for f in filter_fuels %}
+            <label class="flex items-center gap-1 cursor-pointer px-2.5 py-1 rounded-full border text-xs font-medium transition-colors
+                          {% if f in f_fuels %}bg-blue-600 text-white border-blue-600{% else %}border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600{% endif %}">
+              <input type="checkbox" name="fuel" value="{{ f }}"
+                     class="sr-only"
+                     {% if f in f_fuels %}checked{% endif %}
+                     onchange="this.closest('form').submit()">
+              {{ f }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# Year min #}
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">السنة من</label>
+        <select name="year_min"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-24">
+          <option value="">— الكل —</option>
+          {% for y in filter_years %}
+            <option value="{{ y }}" {% if f_year_min == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# Year max #}
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">إلى</label>
+        <select name="year_max"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-24">
+          <option value="">— الكل —</option>
+          {% for y in filter_years %}
+            <option value="{{ y }}" {% if f_year_max == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# Status #}
+      <div class="flex flex-col gap-1">
+        <label class="text-xs text-gray-500 font-medium">الحالة</label>
+        <select name="status"
+                class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-28">
+          <option value="">— الكل —</option>
+          <option value="available" {% if f_status == 'available' %}selected{% endif %}>متاح</option>
+          <option value="sold"      {% if f_status == 'sold'      %}selected{% endif %}>مباع</option>
+          <option value="pending"   {% if f_status == 'pending'   %}selected{% endif %}>قيد الانتظار</option>
+        </select>
+      </div>
+
+      {# Live text search (client-side, no submit) #}
+      <div class="flex flex-col gap-1 flex-1 min-w-40">
+        <label class="text-xs text-gray-500 font-medium">بحث سريع</label>
+        <input type="text" id="car-search" placeholder="اكتب ماركة أو موديل…"
+               autocomplete="off"
+               class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full
+                      focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </div>
+
+      {# Apply / Reset #}
+      <div class="flex items-end gap-2 pb-0.5">
+        <button type="submit"
+                class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white
+                       text-sm font-semibold rounded-lg transition">
+          🔍 تطبيق
+        </button>
+        {% if active_filter_count %}
+          <a href="?auction={{ auction_name }}"
+             class="px-4 py-1.5 text-sm rounded-lg border border-red-300
+                    text-red-600 hover:bg-red-50 transition">
+            ✕ مسح ({{ active_filter_count }})
+          </a>
+        {% endif %}
+      </div>
+
+    </div>
+  </form>
+
+  {# ── Car pick form (POST) ─────────────────────────────────────────────── #}
   <form method="post" id="pick-form">
     {% csrf_token %}
     <input type="hidden" name="auction_name" value="{{ auction_name }}">
@@ -85,15 +239,21 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 
       {# Toolbar #}
-      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50">
-        <h2 class="font-semibold text-gray-700">
+      <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-3
+                  border-b border-gray-100 bg-gray-50">
+        <h2 class="font-semibold text-gray-700 text-sm">
           🚗 {{ auction_name }}
-          <span class="text-sm font-normal text-gray-400 mr-1">({{ cars|length }} سيارة)</span>
+          <span class="font-normal text-gray-400">
+            — {{ page_obj.paginator.count }} سيارة
+            {% if active_filter_count %}
+              <span class="inline-block bg-blue-100 text-blue-700 text-xs
+                           rounded-full px-2 py-0.5 mr-1">
+                {{ active_filter_count }} فلتر مفعّل
+              </span>
+            {% endif %}
+          </span>
         </h2>
-        <div class="flex flex-wrap items-center gap-2">
-          <input type="text" id="car-search" placeholder="بحث بالماركة أو الموديل…"
-                 class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-52
-                        focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <div class="flex items-center gap-2">
           <button type="button" onclick="selectAll(true)"
                   class="text-xs px-3 py-1.5 rounded-lg border border-gray-300
                          hover:bg-gray-100 text-gray-600 transition">تحديد الكل</button>
@@ -101,119 +261,161 @@
                   class="text-xs px-3 py-1.5 rounded-lg border border-gray-300
                          hover:bg-gray-100 text-gray-600 transition">إلغاء الكل</button>
           <button type="submit"
-                  class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white
-                         text-sm font-semibold px-5 py-1.5 rounded-lg transition">
-            <span id="selected-count">0</span> سيارة — تصدير PDF 📤
+                  class="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white
+                         text-xs font-semibold px-4 py-1.5 rounded-lg transition">
+            📤 تصدير <span id="selected-count" class="font-bold">0</span>
           </button>
         </div>
       </div>
 
-      {# Cars table #}
+      {# Car cards grid #}
       {% if cars %}
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-right" id="cars-table">
-          <thead class="bg-gray-50 text-gray-500 text-xs border-b border-gray-200">
-            <tr>
-              <th class="px-4 py-3 w-10">
-                <input type="checkbox" id="check-all"
-                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-400"
-                       onchange="selectAll(this.checked)">
-              </th>
-              <th class="px-4 py-3">السيارة</th>
-              <th class="px-4 py-3">السنة</th>
-              <th class="px-4 py-3">Lot #</th>
-              <th class="px-4 py-3">Entry</th>
-              <th class="px-4 py-3">الحالة</th>
-              <th class="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for car in cars %}
-            <tr class="hover:bg-blue-50/30 transition car-row"
-                data-search="{{ car.manufacturer.name|lower }} {{ car.model.name|lower }}">
-              <td class="px-4 py-3">
-                <input type="checkbox" name="car_ids" value="{{ car.pk }}"
-                       class="car-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-400"
-                       {% if car.entry %}checked{% endif %}
-                       onchange="updateCount()">
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  {% if car.image %}
-                    <img src="{{ car.image }}" alt=""
-                         class="w-14 h-10 object-cover rounded-lg shrink-0 bg-gray-100"
-                         onerror="this.style.display='none'">
-                  {% else %}
-                    <div class="w-14 h-10 bg-gray-100 rounded-lg shrink-0 flex items-center
-                                justify-center text-gray-300 text-lg">🚗</div>
-                  {% endif %}
-                  <div>
-                    <p class="font-medium text-gray-800">
-                      {{ car.manufacturer.name }} {{ car.model.name }}
-                    </p>
-                    <p class="text-xs text-gray-400">{{ car.title }}</p>
-                  </div>
-                </div>
-              </td>
-              <td class="px-4 py-3 text-gray-600">{{ car.year }}</td>
-              <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ car.lot_number }}</td>
-              <td class="px-4 py-3">
-                {% if car.entry %}
-                  <span class="font-mono text-xs bg-blue-50 text-blue-700 px-2 py-0.5
-                               rounded-full border border-blue-200">{{ car.entry }}</span>
-                {% else %}
-                  <span class="text-xs text-gray-300 italic">— لا يوجد</span>
-                {% endif %}
-              </td>
-              <td class="px-4 py-3">
-                {% if car.status == 'available' %}
-                  <span class="text-xs text-green-700 bg-green-50 px-2 py-0.5
-                               rounded-full border border-green-200">متاح</span>
-                {% elif car.status == 'sold' %}
-                  <span class="text-xs text-red-700 bg-red-50 px-2 py-0.5
-                               rounded-full border border-red-200">مباع</span>
-                {% else %}
-                  <span class="text-xs text-yellow-700 bg-yellow-50 px-2 py-0.5
-                               rounded-full border border-yellow-200">{{ car.status }}</span>
-                {% endif %}
-              </td>
-              <td class="px-4 py-3">
-                {% if car.slug %}
-                  <a href="{% url 'car_detail' car.slug %}" target="_blank"
-                     class="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700
-                            border border-blue-200 hover:border-blue-400 rounded-lg px-2 py-1 transition"
-                     title="عرض تفاصيل السيارة">
-                    ↗ تفاصيل
-                  </a>
-                {% else %}
-                  <a href="{% url 'car_detail_by_pk' car.pk %}" target="_blank"
-                     class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-600
-                            border border-gray-200 hover:border-blue-300 rounded-lg px-2 py-1 transition"
-                     title="عرض تفاصيل السيارة">
-                    ↗ تفاصيل
-                  </a>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3"
+           id="cars-grid">
+        {% for car in cars %}
+        <label class="car-card relative cursor-pointer rounded-xl border-2 border-transparent
+                      hover:border-blue-400 transition-all select-none bg-gray-50
+                      hover:bg-blue-50/40 overflow-hidden flex flex-col"
+               data-search="{{ car.manufacturer.name|lower }} {{ car.model.name|lower }} {{ car.year }}">
+
+          {# Checkbox (hidden, drives form) #}
+          <input type="checkbox" name="car_ids" value="{{ car.pk }}"
+                 class="car-checkbox sr-only"
+                 {% if car.entry %}checked{% endif %}
+                 onchange="onCardChange(this)">
+
+          {# Checkmark badge #}
+          <span class="check-badge absolute top-2 right-2 z-10 w-5 h-5 rounded-full
+                       border-2 border-white shadow flex items-center justify-center
+                       text-xs bg-gray-200 text-transparent transition-all">✓</span>
+
+          {# Detail link badge (top-left) #}
+          {% if car.slug %}
+            <a href="{% url 'car_detail' car.slug %}" target="_blank"
+               class="absolute top-2 left-2 z-10 bg-black/50 hover:bg-black/70 text-white
+                      text-xs px-1.5 py-0.5 rounded-md transition leading-tight"
+               onclick="event.stopPropagation()" title="فتح صفحة التفاصيل">↗</a>
+          {% else %}
+            <a href="{% url 'car_detail_by_pk' car.pk %}" target="_blank"
+               class="absolute top-2 left-2 z-10 bg-black/50 hover:bg-black/70 text-white
+                      text-xs px-1.5 py-0.5 rounded-md transition leading-tight"
+               onclick="event.stopPropagation()" title="فتح صفحة التفاصيل">↗</a>
+          {% endif %}
+
+          {# Image #}
+          {% if car.image %}
+            <img src="{{ car.image|https_url }}" alt="{{ car.manufacturer.name }}"
+                 class="w-full h-28 object-cover bg-gray-100"
+                 loading="lazy"
+                 onerror="this.outerHTML='<div class=\'w-full h-28 bg-gray-200 flex items-center justify-center text-3xl\'>🚗</div>'">
+          {% elif car.images %}
+            <img src="{{ car.images.0|https_url }}" alt="{{ car.manufacturer.name }}"
+                 class="w-full h-28 object-cover bg-gray-100"
+                 loading="lazy"
+                 onerror="this.outerHTML='<div class=\'w-full h-28 bg-gray-200 flex items-center justify-center text-3xl\'>🚗</div>'">
+          {% else %}
+            <div class="w-full h-28 bg-gray-200 flex items-center justify-center text-3xl">🚗</div>
+          {% endif %}
+
+          {# Card body #}
+          <div class="p-2 flex flex-col gap-0.5 flex-1">
+            <p class="text-xs font-semibold text-gray-800 leading-tight line-clamp-2">
+              {{ car.manufacturer.name }} {{ car.model.name }}
+            </p>
+            <p class="text-xs text-gray-500">{{ car.year }}</p>
+
+            <div class="mt-1 flex flex-wrap items-center gap-1">
+              {# Entry badge #}
+              {% if car.entry %}
+                <span class="font-mono text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5
+                             rounded-full border border-blue-200 truncate max-w-full">
+                  {{ car.entry }}
+                </span>
+              {% else %}
+                <span class="text-xs text-gray-300 italic">لا entry</span>
+              {% endif %}
+
+              {# Status badge #}
+              {% if car.status == 'available' %}
+                <span class="text-xs bg-green-50 text-green-700 px-1.5 py-0.5
+                             rounded-full border border-green-200">متاح</span>
+              {% elif car.status == 'sold' %}
+                <span class="text-xs bg-red-50 text-red-700 px-1.5 py-0.5
+                             rounded-full border border-red-200">مباع</span>
+              {% elif car.status == 'pending' %}
+                <span class="text-xs bg-yellow-50 text-yellow-700 px-1.5 py-0.5
+                             rounded-full border border-yellow-200">انتظار</span>
+              {% endif %}
+            </div>
+
+            {# Detail link — text row at bottom #}
+            <div class="mt-auto pt-1 border-t border-gray-100">
+              {% if car.slug %}
+                <a href="{% url 'car_detail' car.slug %}" target="_blank"
+                   class="inline-flex items-center gap-1 text-xs text-blue-500
+                          hover:text-blue-700 hover:underline transition"
+                   onclick="event.stopPropagation()">↗ تفاصيل السيارة</a>
+              {% else %}
+                <a href="{% url 'car_detail_by_pk' car.pk %}" target="_blank"
+                   class="inline-flex items-center gap-1 text-xs text-blue-500
+                          hover:text-blue-700 hover:underline transition"
+                   onclick="event.stopPropagation()">↗ تفاصيل السيارة</a>
+              {% endif %}
+            </div>
+          </div>
+        </label>
+        {% endfor %}
       </div>
+
+      {# Pagination — preserves all active filters #}
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="flex items-center justify-center flex-wrap gap-1 px-5 py-4
+                  border-t border-gray-100 bg-gray-50">
+        {% if page_obj.has_previous %}
+          <a href="?auction={{ auction_name }}&page={{ page_obj.previous_page_number }}{{ filter_qs }}"
+             class="px-3 py-1.5 text-sm rounded-lg border border-gray-300
+                    hover:bg-gray-100 transition">‹ السابق</a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <span class="px-3 py-1.5 text-sm rounded-lg bg-blue-600
+                         text-white font-semibold">{{ num }}</span>
+          {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+            <a href="?auction={{ auction_name }}&page={{ num }}{{ filter_qs }}"
+               class="px-3 py-1.5 text-sm rounded-lg border border-gray-300
+                      hover:bg-gray-100 transition">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <a href="?auction={{ auction_name }}&page={{ page_obj.next_page_number }}{{ filter_qs }}"
+             class="px-3 py-1.5 text-sm rounded-lg border border-gray-300
+                    hover:bg-gray-100 transition">التالي ›</a>
+        {% endif %}
+
+        <span class="text-xs text-gray-400 mr-2">
+          صفحة {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+      </div>
+      {% endif %}
+
       {% else %}
         <div class="flex flex-col items-center justify-center py-16 text-gray-400">
           <span class="text-5xl mb-3">🏜️</span>
-          <p class="text-sm">لا توجد سيارات في هذا المزاد.</p>
+          <p class="text-sm">لا توجد سيارات تطابق الفلاتر المختارة.</p>
+          {% if active_filter_count %}
+            <a href="?auction={{ auction_name }}"
+               class="mt-3 text-sm text-blue-500 hover:underline">← مسح الفلاتر</a>
+          {% endif %}
         </div>
       {% endif %}
 
       {# Sticky footer #}
       <div class="sticky bottom-0 z-10 bg-white border-t border-gray-200
-                  flex items-center justify-between gap-4 px-5 py-3">
+                  flex items-center justify-between gap-4 px-5 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
         <p class="text-sm text-gray-500">
           تم تحديد <strong id="selected-count-footer">0</strong> سيارة
-          <span id="no-entry-warn" class="text-red-500 text-xs hidden mr-2">
-            ⚠️ بعض السيارات المحددة لا تملك entry وسيتم تجاهلها
-          </span>
         </p>
         <button type="submit"
                 class="bg-blue-600 hover:bg-blue-700 text-white font-semibold
@@ -324,41 +526,105 @@
 </div>{# /page #}
 
 <script>
-{% if has_pending and step == 'choose' %}setTimeout(() => location.reload(), 10000);{% endif %}
+{% if step == 'choose' %}
+const auctionSearch = document.getElementById('auction-search');
+if (auctionSearch) {
+  auctionSearch.addEventListener('input', function () {
+    const q = this.value.toLowerCase().trim();
+    let visible = 0;
+    document.querySelectorAll('.auction-card').forEach(card => {
+      const match = !q || (card.dataset.name || '').includes(q);
+      card.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    const noResults = document.getElementById('auction-no-results');
+    if (noResults) noResults.classList.toggle('hidden', visible > 0);
+  });
+  auctionSearch.focus();
+}
+{% endif %}
 
 {% if step == 'pick' %}
-const noEntryPks = new Set([{% for car in cars %}{% if not car.entry %}{{ car.pk }},{% endif %}{% endfor %}]);
+/* ── Make → Model dependency ─────────────────────────────────────────── */
+const makeModelsMap = {{ make_models_map_json|safe }};
+const filterMake    = document.getElementById('filter-make');
+const filterModel   = document.getElementById('filter-model');
+const activeModel   = "{{ f_model|escapejs }}";
 
-function updateCount() {
-  const checked = document.querySelectorAll('.car-checkbox:checked');
-  const n = checked.length;
-  document.getElementById('selected-count').textContent = n;
-  document.getElementById('selected-count-footer').textContent = n;
-  let hasNoEntry = false;
-  checked.forEach(cb => { if (noEntryPks.has(parseInt(cb.value))) hasNoEntry = true; });
-  document.getElementById('no-entry-warn').classList.toggle('hidden', !hasNoEntry);
-  const all = document.querySelectorAll('.car-checkbox');
-  document.getElementById('check-all').indeterminate = n > 0 && n < all.length;
-  document.getElementById('check-all').checked = n === all.length;
+function populateModels(selectedMake, preselectModel) {
+  const models = selectedMake ? (makeModelsMap[selectedMake] || []) : [];
+  filterModel.innerHTML = '<option value="">— الكل —</option>';
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    if (m === preselectModel) opt.selected = true;
+    filterModel.appendChild(opt);
+  });
+  filterModel.disabled = models.length === 0;
 }
 
-function selectAll(state) {
-  document.querySelectorAll('.car-checkbox').forEach(cb => {
-    const row = cb.closest('.car-row');
-    if (!row || row.style.display !== 'none') cb.checked = state;
-  });
-  document.getElementById('check-all').checked = state;
-  document.getElementById('check-all').indeterminate = false;
+// Init on page load with current make/model selections
+populateModels(filterMake.value, activeModel);
+
+// When make changes: repopulate models, clear model selection, auto-submit
+filterMake.addEventListener('change', function () {
+  populateModels(this.value, '');
+  filterModel.value = '';
+  this.closest('form').submit();
+});
+
+/* ── Visual state of a card ──────────────────────────────────────────── */
+function refreshCardStyle(card) {
+  const cb    = card.querySelector('.car-checkbox');
+  const badge = card.querySelector('.check-badge');
+  if (cb.checked) {
+    card.classList.add('border-blue-500', 'bg-blue-50/60', 'shadow-md');
+    card.classList.remove('border-transparent', 'bg-gray-50');
+    badge.classList.add('bg-blue-600', 'text-white');
+    badge.classList.remove('bg-gray-200', 'text-transparent');
+  } else {
+    card.classList.remove('border-blue-500', 'bg-blue-50/60', 'shadow-md');
+    card.classList.add('border-transparent', 'bg-gray-50');
+    badge.classList.remove('bg-blue-600', 'text-white');
+    badge.classList.add('bg-gray-200', 'text-transparent');
+  }
+}
+
+/* ── Update counters ─────────────────────────────────────────────────── */
+function updateCount() {
+  const n = document.querySelectorAll('.car-checkbox:checked').length;
+  document.getElementById('selected-count').textContent = n;
+  document.getElementById('selected-count-footer').textContent = n;
+}
+
+/* ── Card toggle callback ────────────────────────────────────────────── */
+function onCardChange(cb) {
+  refreshCardStyle(cb.closest('.car-card'));
   updateCount();
 }
 
+/* ── Select all / none (visible cards only) ──────────────────────────── */
+function selectAll(state) {
+  document.querySelectorAll('.car-card').forEach(card => {
+    if (card.style.display === 'none') return;
+    const cb = card.querySelector('.car-checkbox');
+    cb.checked = state;
+    refreshCardStyle(card);
+  });
+  updateCount();
+}
+
+/* ── Live text search (client-side, hides cards instantly) ───────────── */
 document.getElementById('car-search').addEventListener('input', function () {
-  const q = this.value.toLowerCase();
-  document.querySelectorAll('.car-row').forEach(row => {
-    row.style.display = (row.dataset.search || '').includes(q) ? '' : 'none';
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.car-card').forEach(card => {
+    const match = !q || (card.dataset.search || '').includes(q);
+    card.style.display = match ? '' : 'none';
   });
 });
 
+/* ── Guard: must select at least one car ─────────────────────────────── */
 document.getElementById('pick-form').addEventListener('submit', function (e) {
   if (!document.querySelectorAll('.car-checkbox:checked').length) {
     e.preventDefault();
@@ -366,6 +632,8 @@ document.getElementById('pick-form').addEventListener('submit', function (e) {
   }
 });
 
+/* ── Init on load ────────────────────────────────────────────────────── */
+document.querySelectorAll('.car-card').forEach(refreshCardStyle);
 updateCount();
 {% endif %}
 </script>

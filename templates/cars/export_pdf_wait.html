@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}جارٍ إعداد PDF…{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+  <div class="text-center max-w-md px-6 py-12">
+
+    <!-- Spinner -->
+    <div id="spinner" class="mx-auto mb-6 w-16 h-16 rounded-full border-4 border-brand border-t-transparent animate-spin"></div>
+
+    <!-- Success icon (hidden until done) -->
+    <div id="done-icon" style="display:none" class="mx-auto mb-6 w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+      <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+
+    <!-- Error icon (hidden until error) -->
+    <div id="error-icon" style="display:none" class="mx-auto mb-6 w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+      <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </div>
+
+    <h2 class="text-xl font-bold text-gray-800 mb-2">
+      جارٍ إعداد ملف PDF
+    </h2>
+    <p id="status-text" class="text-gray-500 text-sm mb-6">
+      المزاد: <span class="font-semibold text-gray-700">{{ auction_name }}</span><br>
+      يتم الآن إنشاء الملف — سيبدأ التحميل تلقائياً عند الانتهاء…
+    </p>
+
+    <a id="back-link" href="/cars/?car_type=auction"
+       class="text-brand text-sm underline hover:no-underline">
+      العودة إلى قائمة السيارات
+    </a>
+  </div>
+</div>
+
+<script>
+  const STATUS_URL  = '/cars/export-pdf/status/';
+  const DOWNLOAD_URL = '/cars/export-pdf/download/';
+  const BACK_URL    = '/cars/?car_type=auction';
+  let attempts = 0;
+  const MAX_ATTEMPTS = 90; // 3 minutes at 2-second intervals
+
+  function poll() {
+    fetch(STATUS_URL, {credentials: 'same-origin'})
+      .then(r => r.json())
+      .then(data => {
+        attempts++;
+
+        if (data.status === 'complete') {
+          // Show success, trigger download
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('done-icon').style.display = 'flex';
+          document.getElementById('status-text').innerHTML =
+            'تم إعداد الملف! <br><span class="text-green-600 font-semibold">جارٍ تحميل PDF…</span>';
+          window.location.href = DOWNLOAD_URL;
+          return;
+        }
+
+        if (data.status === 'failed') {
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('error-icon').style.display = 'flex';
+          document.getElementById('status-text').innerHTML =
+            '<span class="text-red-600">فشل إنشاء الملف: ' + (data.detail || '') + '</span>';
+          return;
+        }
+
+        if (attempts >= MAX_ATTEMPTS) {
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('error-icon').style.display = 'flex';
+          document.getElementById('status-text').innerHTML =
+            '<span class="text-red-600">انتهت مهلة الانتظار. يرجى المحاولة مجدداً.</span>';
+          return;
+        }
+
+        // Still pending — poll again in 2 seconds
+        setTimeout(poll, 2000);
+      })
+      .catch(() => {
+        setTimeout(poll, 3000); // retry on network error
+      });
+  }
+
+  // Start polling after a short delay
+  setTimeout(poll, 1500);
+</script>
+{% endblock %}
