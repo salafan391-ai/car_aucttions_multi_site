@@ -681,7 +681,7 @@
             </div>
             <div class="p-2.5 sm:p-4">
                 <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px] group-hover:text-brand transition-colors">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-400 mb-2 sm:mb-3 truncate">
                     <p>{{ car.badge.name }}</p>
@@ -841,6 +841,11 @@ const manuSelect = document.getElementById('manufacturer-select');
 const modelSelect = document.getElementById('model-select');
 const badgeSelect = document.getElementById('badge-select');
 
+// Current car_type from the page ("auction", "cars", or empty for all)
+const CURRENT_CAR_TYPE = '{{ request.GET.car_type|default:"" }}';
+// Current language (e.g., 'ar' or 'en') — used to request localized names
+const CURRENT_LANG = '{{ request.LANGUAGE_CODE|default:"en" }}';
+
 // Sidebar equivalents
 const sbManuSelect  = document.getElementById('sb-manufacturer');
 const sbModelSelect = document.getElementById('sb-model');
@@ -850,7 +855,7 @@ function loadBadgesFor(modelId, badgeEl, selectedBadgeId = null) {
     if (!badgeEl) return;
     badgeEl.innerHTML = '<option value="">الكل</option>';
     if (!modelId) return;
-    fetch(`{% url 'api_badges_by_model' %}?model_id=${modelId}`)
+    fetch(`{% url 'api_badges_by_model' %}?model_id=${modelId}${CURRENT_CAR_TYPE ? '&car_type=' + CURRENT_CAR_TYPE : ''}${CURRENT_LANG ? '&lang=' + CURRENT_LANG : ''}`)
         .then(r => r.json())
         .then(badges => {
             badges.forEach(b => {
@@ -872,7 +877,7 @@ function loadModels(manuId, modelSelectEl, onDone) {
     if (!modelSelectEl) return;
     modelSelectEl.innerHTML = '<option value="">جميع الموديلات</option>';
     if (!manuId) { if (onDone) onDone([]); return; }
-    fetch(`{% url 'api_models_by_manufacturer' %}?manufacturer_id=${manuId}`)
+    fetch(`{% url 'api_models_by_manufacturer' %}?manufacturer_id=${manuId}${CURRENT_CAR_TYPE ? '&car_type=' + CURRENT_CAR_TYPE : ''}${CURRENT_LANG ? '&lang=' + CURRENT_LANG : ''}`)
         .then(r => r.json())
         .then(models => {
             models.forEach(m => {

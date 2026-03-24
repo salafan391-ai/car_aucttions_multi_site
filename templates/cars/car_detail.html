@@ -72,7 +72,7 @@
         <span>/</span>
         <a href="{% url 'car_list' %}" class="text-brand-hover transition">السيارات</a>
         <span>/</span>
-        <span class="text-gray-800"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}</span>
+        <span class="text-gray-800"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span></span>
     </nav>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -195,7 +195,7 @@
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">الموديل</div>
-                        <div class="font-bold text-sm">{{ car.model.name }}</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">سنة الصنع</div>
@@ -462,7 +462,7 @@
         <!-- Sidebar -->
         <div class="lg:col-span-1">
             <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
-                <h1 class="text-xl font-bold text-gray-900 mb-2"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}</h1>
+                <h1 class="text-xl font-bold text-gray-900 mb-2"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span></h1>
 
                 {% if car.status == 'sold' %}
                 <span class="inline-block bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full mb-4">تم البيع</span>

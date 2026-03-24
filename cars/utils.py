@@ -6,12 +6,18 @@ from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 car_damage_codes = {
-    "X": "استبدال",          # 교환
-    "W": "صاج / لحام",       # 판금/용접
-    "C": "صدأ / تآكل",       # 부식
-    "A": "خدش",              # 흠집
-    "U": "نتوء / تعرج",      # 요철
-    "T": "ضرر / تلف"         # 손상
+  # The inspection feed uses short markers (e.g. XX, W, P, R, M, X)
+  # Add Arabic labels for each marker (keep Korean comments for reference).
+  "XX": "استبدال",           # 교환
+  "X": "تحتاج إلى استبدال",    # 교환 필요
+  "W": "صاج / لحام",        # 판금/용접/꺾임
+  "P": "دهان",              # 도장
+  "R": "يحتاج إصلاح",       # 수리필요
+  "M": "تعديل",             # 조정
+  "C": "صدأ / تآكل",        # 부식
+  "A": "خدش",               # 흠집
+  "U": "نتوء / تعرج",       # 요철
+  "T": "ضرر / تلف"          # 손상
 }
 
 generations_ar = {

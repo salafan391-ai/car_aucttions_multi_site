@@ -28,6 +28,7 @@ class Manufacturer(models.Model):
 
 class CarModel(models.Model):
     name = models.CharField(max_length=100)
+    name_ar = models.CharField(max_length=100, null=True, blank=True, verbose_name="الاسم بالعربي")
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE)
     
     def __str__(self):

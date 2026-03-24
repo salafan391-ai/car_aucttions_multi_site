@@ -197,3 +197,7 @@ class CategoryAdmin(admin.ModelAdmin):
     car_count.short_description = 'عدد السيارات'
 
 admin.site.register(CarColor)
+
+
+
+admin.site.register(CarModel)

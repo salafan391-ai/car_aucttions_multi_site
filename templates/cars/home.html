@@ -626,7 +626,7 @@
             </div>
             <div class="p-2.5 sm:p-4">
                 <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base group-hover:text-brand transition-colors">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
@@ -706,7 +706,7 @@
             </div>
             <div class="p-2.5 sm:p-4">
                 <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base group-hover:text-brand transition-colors">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model }}
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
@@ -784,7 +784,9 @@
                 {% endif %}
             </div>
             <div class="p-2.5 sm:p-4">
-                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base">{{ car.manufacturer }} {{ car.model }}</h3>
+                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer }}" data-lang-en="{{ car.manufacturer }}">{{ car.manufacturer }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model }}">{{ car.model|translate_model }}</span>
+                </h3>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span>{{ car.year }}</span>
                     <span>&bull;</span>
@@ -961,6 +963,31 @@ function scrollElement(elementId, direction) {
     }
 
     // Year selection
+    function updateYearOptionStates() {
+        const fromVal = selectedData.yearFrom ? parseInt(selectedData.yearFrom) : null;
+        const toVal   = selectedData.yearTo   ? parseInt(selectedData.yearTo)   : null;
+
+        // Hide "year-to" options that are LESS than the selected year_from
+        document.querySelectorAll('.year-to-option').forEach(opt => {
+            const y = parseInt(opt.dataset.year);
+            if (fromVal !== null && y < fromVal) {
+                opt.classList.add('hidden');
+            } else {
+                opt.classList.remove('hidden');
+            }
+        });
+
+        // Hide "year-from" options that are GREATER than the selected year_to
+        document.querySelectorAll('.year-from-option').forEach(opt => {
+            const y = parseInt(opt.dataset.year);
+            if (toVal !== null && y > toVal) {
+                opt.classList.add('hidden');
+            } else {
+                opt.classList.remove('hidden');
+            }
+        });
+    }
+
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('year-from-option')) {
             document.querySelectorAll('.year-from-option').forEach(opt => 
@@ -968,6 +995,16 @@ function scrollElement(elementId, direction) {
             e.target.classList.add('border-brand', 'bg-white', 'scale-105');
             selectedData.yearFrom = e.target.dataset.year;
             hiddenInputs.yearFrom.value = selectedData.yearFrom;
+
+            // If a year_to was already picked that is now invalid, clear it
+            if (selectedData.yearTo && parseInt(selectedData.yearTo) < parseInt(selectedData.yearFrom)) {
+                selectedData.yearTo = null;
+                hiddenInputs.yearTo.value = '';
+                document.querySelectorAll('.year-to-option').forEach(opt =>
+                    opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
+            }
+
+            updateYearOptionStates();
             updateSelectionSummary();
             updateSearchButton();
         }
@@ -978,6 +1015,16 @@ function scrollElement(elementId, direction) {
             e.target.classList.add('border-brand', 'bg-white', 'scale-105');
             selectedData.yearTo = e.target.dataset.year;
             hiddenInputs.yearTo.value = selectedData.yearTo;
+
+            // If a year_from was already picked that is now invalid, clear it
+            if (selectedData.yearFrom && parseInt(selectedData.yearFrom) > parseInt(selectedData.yearTo)) {
+                selectedData.yearFrom = null;
+                hiddenInputs.yearFrom.value = '';
+                document.querySelectorAll('.year-from-option').forEach(opt =>
+                    opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
+            }
+
+            updateYearOptionStates();
             updateSelectionSummary();
             updateSearchButton();
         }
@@ -987,7 +1034,9 @@ function scrollElement(elementId, direction) {
     function loadModels(manufacturerId) {
         modelGrid.innerHTML = '<div class="col-span-full text-center text-white/80 py-4">جاري التحميل...</div>';
         
-        fetch('{% url "api_models_by_manufacturer" %}?manufacturer_id=' + manufacturerId)
+    const HOME_CAR_TYPE = '{{ request.GET.car_type|default:"" }}';
+    const HOME_LANG = '{{ request.LANGUAGE_CODE|default:"en" }}';
+    fetch('{% url "api_models_by_manufacturer" %}?manufacturer_id=' + manufacturerId + (HOME_CAR_TYPE ? '&car_type=' + HOME_CAR_TYPE : '') + (HOME_LANG ? '&lang=' + HOME_LANG : ''))
             .then(r => {
                 if (!r.ok) {
                     throw new Error(`HTTP error! status: ${r.status}`);

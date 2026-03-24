@@ -82,7 +82,18 @@ def ar_address(value):
 
 @register.filter(name='translate_model')
 def translate_model(value):
-    return car_models_dict.get(value, value)
+    """
+    Accepts either a CarModel instance or a plain string model name.
+    Returns the Arabic translation from car_models_dict, or the English
+    name if no translation exists.
+    """
+    # If value is a model object, extract the name string first.
+    name = getattr(value, 'name', value)
+    # Prefer an explicit name_ar attribute set dynamically in views.
+    name_ar = getattr(value, 'name_ar', None)
+    if name_ar:
+        return name_ar
+    return car_models_dict.get(name, name)
 
 
 @register.filter(name='translate_fuel')
