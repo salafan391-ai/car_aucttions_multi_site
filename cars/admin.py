@@ -54,12 +54,18 @@ class ApiCarAdmin(admin.ModelAdmin):
 
         auction_name, entries = next(iter(entries_by_auction.items()))
 
-        # Build the webhook URL — ofleet POSTs here when the job is done.
-        # Prefers settings.WEBHOOK_BASE_URL (Railway env var) over the request host
-        # so the URL is reachable from ofleet's servers, not just localhost.
+        # Build the webhook URL for this specific tenant.
+        # Using the tenant's own primary domain ensures django-tenants activates
+        # the correct schema when ofleet calls the webhook back.
         from django.conf import settings as _s
         _base = getattr(_s, 'WEBHOOK_BASE_URL', '').rstrip('/')
-        webhook_url = f"{_base}/webhook/ofleet/" if _base else request.build_absolute_uri('/webhook/ofleet/')
+        if not _base:
+            try:
+                _domain = connection.tenant.get_primary_domain()
+                _base = f"https://{_domain.domain}"
+            except Exception:
+                _base = request.build_absolute_uri('/').rstrip('/')
+        webhook_url = f"{_base}/webhook/ofleet/"
 
         # 2. Submit the job to ofleet (fast — just auth + POST, no polling)
         try:

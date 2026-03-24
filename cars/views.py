@@ -28,14 +28,35 @@ from .export_service import start_export, process_webhook_payload
 
 def _build_webhook_url(request):
     """
-    Return the absolute URL for the ofleet webhook endpoint.
-    Prefers settings.WEBHOOK_BASE_URL (set in Railway env vars) so ofleet
-    can reach us even when the request originates from localhost.
+    Return the absolute webhook URL for the CURRENT tenant.
+
+    Priority:
+      1. settings.WEBHOOK_BASE_URL  (global override, e.g. for local tunnels)
+      2. The tenant's primary domain from the DB  ← correct for multi-tenant
+      3. request.build_absolute_uri fallback
+
+    Using the tenant's own domain means django-tenants will automatically
+    activate the right schema when ofleet calls the webhook back.
     """
     from django.conf import settings as _s
+
+    # 1. Global override (useful for ngrok / local dev tunnels)
     base = getattr(_s, 'WEBHOOK_BASE_URL', '').rstrip('/')
     if base:
         return f"{base}/webhook/ofleet/"
+
+    # 2. Tenant's primary domain (works correctly for every tenant in production)
+    try:
+        tenant = getattr(connection, 'tenant', None)
+        if tenant:
+            domain_obj = tenant.get_primary_domain()
+            if domain_obj:
+                scheme = 'https'
+                return f"{scheme}://{domain_obj.domain}/webhook/ofleet/"
+    except Exception:
+        pass
+
+    # 3. Fallback to request host
     return request.build_absolute_uri('/webhook/ofleet/')
 
 
