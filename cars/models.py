@@ -339,3 +339,32 @@ class PostComment(models.Model):
     def __str__(self):
         return f"{self.user.username} on {self.post.title}"
 
+
+class PdfExport(models.Model):
+    STATUS_PENDING   = 'pending'
+    STATUS_COMPLETE  = 'complete'
+    STATUS_FAILED    = 'failed'
+    STATUS_CHOICES = [
+        (STATUS_PENDING,  'جاري الإعداد'),
+        (STATUS_COMPLETE, 'جاهز للتحميل'),
+        (STATUS_FAILED,   'فشل'),
+    ]
+
+    auction_name = models.CharField(max_length=200, verbose_name="اسم المزاد")
+    make_name    = models.CharField(max_length=200, blank=True, verbose_name="الماركة")
+    schema_name  = models.CharField(max_length=100, blank=True, verbose_name="الموقع (schema)")
+    status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
+    pdf_file     = models.FileField(upload_to='auction_pdfs/', null=True, blank=True, verbose_name="ملف PDF")
+    error_detail = models.TextField(blank=True, verbose_name="سبب الخطأ")
+    entry_count  = models.IntegerField(default=0, verbose_name="عدد السيارات")
+    created_at   = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "تصدير PDF"
+        verbose_name_plural = "تصديرات PDF"
+
+    def __str__(self):
+        make = f" — {self.make_name}" if self.make_name else ""
+        return f"{self.auction_name}{make} — {self.get_status_display()} ({self.created_at:%Y-%m-%d %H:%M})"
+

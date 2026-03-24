@@ -76,6 +76,15 @@ class Tenant(TenantMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     eid_is_active = models.BooleanField(default=False, verbose_name="تفعيل زينة العيد", help_text="عند التفعيل تظهر زينة العيد (بالونات ونصوص متحركة) في جميع صفحات الموقع.")
 
+    # ofleet PDF Export API credentials (per-tenant)
+    ofleet_username     = models.CharField(max_length=150, blank=True, verbose_name="ofleet اسم المستخدم", help_text="اسم المستخدم لـ API تصدير PDF من ofleet0.com")
+    ofleet_password     = models.CharField(max_length=255, blank=True, verbose_name="ofleet كلمة المرور", help_text="كلمة المرور لـ API تصدير PDF من ofleet0.com")
+    ofleet_split_by_make = models.BooleanField(
+        default=True,
+        verbose_name="تقسيم PDF حسب الماركة",
+        help_text="عند التفعيل: يتم إنشاء ملف PDF منفصل لكل ماركة. عند الإيقاف: ملف PDF واحد يشمل جميع السيارات.",
+    )
+
     auto_create_schema = True
 
     def __str__(self):

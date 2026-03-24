@@ -2,11 +2,7 @@ from django.contrib import admin
 from django_tenants.admin import TenantAdminMixin
 from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage
 
-from cars.models import ApiCar,CarImage,Manufacturer,BodyType
-
-@admin.register(ApiCar)
-class ApiCarAdmin(admin.ModelAdmin):
-    search_fields = ("manufacturer__name", "model__name", "car_id", "lot_number", "vin")
+from cars.models import CarImage, Manufacturer, BodyType
 
 admin.site.register(CarImage)
 admin.site.register(Manufacturer)
@@ -41,6 +37,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
         ("Contact Person", {"fields": ("contact_person_name", "contact_person_photo")}),
         ("Social Media", {"fields": ("instagram", "twitter", "facebook", "tiktok", "snapchat", "youtube"), "classes": ("collapse",)}),
         ("Email SMTP Settings", {"fields": ("email_host", "email_port", "email_username", "email_password", "email_use_tls", "email_from_name"), "classes": ("collapse",)}),
+        ("ofleet PDF Export API", {"fields": ("ofleet_username", "ofleet_password", "ofleet_split_by_make"), "classes": ("collapse",), "description": "بيانات تسجيل الدخول الخاصة بهذا الموقع لـ API تصدير PDF من ofleet0.com"}),
     )
 
 
