@@ -586,6 +586,16 @@ class Command(BaseCommand):
                 # only exist in tenant schemas, not in the public schema where
                 # this management command runs.
                 with connection.cursor() as cursor:
+                    # First, remove wishlist references to avoid FK violation
+                    cursor.execute(
+                        """
+                        DELETE FROM cars_wishlist
+                        WHERE car_id IN (
+                            SELECT id FROM cars_apicar WHERE lot_number = ANY(%s)
+                        )
+                        """,
+                        [b],
+                    )
                     cursor.execute(
                         "DELETE FROM cars_apicar WHERE lot_number = ANY(%s) RETURNING id",
                         [b],
