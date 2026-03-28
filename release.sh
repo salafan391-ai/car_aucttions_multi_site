@@ -32,11 +32,15 @@ WAIT=5
 
 for i in $(seq 1 $MAX); do
     echo "==> migrate_schemas attempt $i/$MAX"
-    PGCONNECT_TIMEOUT=30 python manage.py migrate_schemas --noinput && exit 0
+    PGCONNECT_TIMEOUT=30 python manage.py migrate_schemas --noinput && break
     echo "    failed — waiting ${WAIT}s before retry..."
     sleep $WAIT
     WAIT=$((WAIT * 2))
+    if [ $i -eq $MAX ]; then
+        echo "==> All $MAX attempts failed — aborting release."
+        exit 1
+    fi
 done
 
-echo "==> All $MAX attempts failed — aborting release."
-exit 1
+echo "==> setup_public_tenant"
+python manage.py setup_public_tenant
