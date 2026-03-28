@@ -27,7 +27,14 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-d!o0+huz$w^paapq#w6n3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,.localhost,.up.railway.app").split(",")
+_allowed_hosts_env = os.environ.get("ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = (
+    [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
+    if _allowed_hosts_env
+    else ["localhost", "127.0.0.1", ".localhost"]
+)
+# Always allow Railway domains
+ALLOWED_HOSTS += [".up.railway.app", "web-production-91b20.up.railway.app"]
 
 # Base URL used to build the ofleet webhook callback URL.
 # Set this in your Railway env vars to your production domain,
