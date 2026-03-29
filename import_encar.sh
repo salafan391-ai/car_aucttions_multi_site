@@ -16,3 +16,11 @@ SECRET_KEY="f2lDbrwpRVfSzLpIbCRPfZp7j399a6rwly5oUnoac3cZPQwrsjQEHyKvzli8ZQCPwzU"
 DEBUG=True \
 ALLOWED_HOSTS="*" \
 .venv/bin/python manage.py import_encar_fast --date "$DATE" --progress "$@"
+
+echo ""
+echo "=== Running lease car check (post-import cleanup) ==="
+DATABASE_URL="postgresql://postgres:gBxXJaMReZkNXJRzsbUmZjfZqWwqRGsM@turntable.proxy.rlwy.net:39566/railway" \
+SECRET_KEY="f2lDbrwpRVfSzLpIbCRPfZp7j399a6rwly5oUnoac3cZPQwrsjQEHyKvzli8ZQCPwzU" \
+DEBUG=True \
+ALLOWED_HOSTS="*" \
+.venv/bin/python manage.py check_lease_cars
