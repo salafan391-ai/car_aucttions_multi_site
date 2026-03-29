@@ -33,6 +33,16 @@ if grep -q "missing logo: [^0]" /tmp/mfr_check.txt; then
     python manage.py set_manufacturer_logos
 fi
 
+# Remove lease cars imported today (cannot be resold/exported)
+echo "==> [$(date -u)] Running lease car check..."
+python manage.py check_lease_cars
+echo "==> [$(date -u)] Lease check complete."
+
+# Remove cars no longer listed on Encar (404)
+echo "==> [$(date -u)] Running availability check..."
+python manage.py check_encar_availability --workers 20 --batch-size 100 --timeout 7
+echo "==> [$(date -u)] Availability check complete."
+
 # Clear stale cache so all tenants see fresh data immediately
 if [ -n "$REDIS_URL" ]; then
     echo "==> Clearing cache..."
