@@ -26,15 +26,16 @@ from django_tenants.utils import schema_context, get_public_schema_name
 
 from cars.models import ApiCar
 
-_ENCAR_URL = "https://api.encar.com/v1/readside/inspection/vehicle/{lot}"
+_ENCAR_URL = "https://api.encar.com/v1/readside/clean-encar/vehicle/{lot}"
 _HEADERS = {
     "accept": "*/*",
+    "accept-language": "en-US,en;q=0.9",
     "origin": "https://fem.encar.com",
     "referer": "https://fem.encar.com/",
     "user-agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
+        "Chrome/146.0.0.0 Safari/537.36"
     ),
 }
 

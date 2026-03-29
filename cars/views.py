@@ -1817,7 +1817,7 @@ def car_availability_check(request, lot_number):
       null  → network error or unexpected response
     """
     try:
-        url = f"https://api.encar.com/v1/readside/inspection/vehicle/{lot_number}"
+        url = f"https://api.encar.com/v1/readside/clean-encar/vehicle/{lot_number}"
         req = urllib.request.Request(url, headers={
             'accept': '*/*',
             'origin': 'https://fem.encar.com',
