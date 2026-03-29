@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 from urllib.parse import urlencode
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -1805,3 +1806,33 @@ def manufacturer_logo(request, manufacturer_id):
         # Log error but don't break the page
         print(f"Error serving logo for manufacturer {manufacturer_id}: {str(e)}")
         return HttpResponse('', status=404)
+
+
+def car_availability_check(request, lot_number):
+    """
+    Proxy Encar API to check whether a car lot is still available.
+    Returns JSON: { available: true|false|null }
+      true  → HTTP 200 from Encar  → still listed
+      false → HTTP 404 from Encar  → sold / removed
+      null  → network error or unexpected response
+    """
+    try:
+        url = f"https://api.encar.com/v1/readside/inspection/vehicle/{lot_number}"
+        req = urllib.request.Request(url, headers={
+            'accept': '*/*',
+            'origin': 'https://fem.encar.com',
+            'referer': 'https://fem.encar.com/',
+            'user-agent': (
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                'AppleWebKit/537.36 (KHTML, like Gecko) '
+                'Chrome/124.0.0.0 Safari/537.36'
+            ),
+        })
+        try:
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                available = resp.status == 200
+        except urllib.error.HTTPError as http_err:
+            available = False if http_err.code == 404 else None
+        return JsonResponse({'available': available})
+    except Exception:
+        return JsonResponse({'available': None})

@@ -472,6 +472,52 @@
                 <span class="inline-block bg-brand-light text-brand text-sm font-bold px-3 py-1 rounded-full mb-4">متاح</span>
                 {% endif %}
 
+                {% if car.lot_number %}
+                <!-- Encar Live Availability -->
+                <div id="encar-badge-wrap" class="mb-4">
+                    <div id="encar-badge-loading" class="flex items-center gap-2">
+                        <div class="h-7 w-36 rounded-full bg-gray-100 animate-pulse"></div>
+                    </div>
+                    <div id="encar-badge-available" class="hidden">
+                        <span class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-700 text-sm font-bold px-3 py-1.5 rounded-full shadow-sm">
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                            </span>
+                            متاح على إنكار
+                        </span>
+                    </div>
+                    <div id="encar-badge-sold" class="hidden">
+                        <span class="inline-flex items-center gap-1.5 bg-red-50 border border-red-300 text-red-700 text-sm font-bold px-3 py-1.5 rounded-full shadow-sm">
+                            <svg class="w-3.5 h-3.5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            غير متاح على إنكار
+                        </span>
+                    </div>
+                </div>
+                <script>
+                (function () {
+                    var lotNumber = "{{ car.lot_number|escapejs }}";
+                    var url = "{% url 'car_availability_check' car.lot_number %}";
+                    fetch(url, { method: 'GET' })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            document.getElementById('encar-badge-loading').classList.add('hidden');
+                            if (data.available === true) {
+                                document.getElementById('encar-badge-available').classList.remove('hidden');
+                            } else if (data.available === false) {
+                                document.getElementById('encar-badge-sold').classList.remove('hidden');
+                            }
+                            // null → hide entirely (network error)
+                        })
+                        .catch(function() {
+                            document.getElementById('encar-badge-loading').classList.add('hidden');
+                        });
+                })();
+                </script>
+                {% endif %}
+
                 <div class="border-t border-gray-100 pt-4 mb-4">
                     <div class="text-sm text-gray-500 mb-1">السعر</div>
                     <div class="text-brand font-extrabold text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
