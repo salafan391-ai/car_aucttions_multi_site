@@ -1209,6 +1209,57 @@ def api_badges_by_model(request):
     cache.set(_cache_key, badges, 60 * 30)  # 30 minutes
     return JsonResponse(badges, safe=False)
 
+
+def _get_similar_cars(car, count=6):
+    """
+    Return up to `count` similar cars matching make + model + badge + year.
+    Falls back gracefully if not enough exact matches:
+      1. make + model + badge + year        (exact)
+      2. make + model + badge               (any year)
+      3. make + model                       (any badge/year)
+      4. make only                          (fill remaining slots)
+    """
+    base_qs = (
+        ApiCar.objects
+        .filter(manufacturer=car.manufacturer, status='available')
+        .exclude(pk=car.pk)
+        .select_related('manufacturer', 'model', 'badge')
+        .order_by('-year', '-created_at')
+    )
+
+    results = []
+    seen_ids = set()
+
+    def _add(qs, limit):
+        for c in qs[:limit]:
+            if c.pk not in seen_ids:
+                seen_ids.add(c.pk)
+                results.append(c)
+
+    remaining = count
+
+    # 1 — exact: same model + badge + year
+    if car.model_id and car.badge_id and car.year:
+        _add(base_qs.filter(model=car.model, badge=car.badge, year=car.year), remaining)
+        remaining = count - len(results)
+
+    # 2 — same model + badge, any year
+    if remaining and car.model_id and car.badge_id:
+        _add(base_qs.filter(model=car.model, badge=car.badge).exclude(pk__in=seen_ids), remaining)
+        remaining = count - len(results)
+
+    # 3 — same model, any badge/year
+    if remaining and car.model_id:
+        _add(base_qs.filter(model=car.model).exclude(pk__in=seen_ids), remaining)
+        remaining = count - len(results)
+
+    # 4 — same make only (fill remaining slots)
+    if remaining:
+        _add(base_qs.exclude(pk__in=seen_ids), remaining)
+
+    return results
+
+
 def car_detail_by_pk(request, pk):
     """Legacy numeric-ID URL — redirect permanently to the slug URL."""
     car = get_object_or_404(ApiCar, pk=pk)
@@ -1261,17 +1312,7 @@ def car_detail(request, slug):
         'avg_rating': avg_rating,
         'user_rating': user_rating,
         'pending_ratings': pending_ratings,
-        'similar_cars': (
-            ApiCar.objects
-            .filter(
-                manufacturer=car.manufacturer,
-                category=car.category,
-                status='available',
-            )
-            .exclude(pk=car.pk)
-            .select_related('manufacturer', 'model')
-            .order_by('-created_at')[:10]
-        ),
+        'similar_cars': _get_similar_cars(car),
         'inspection_legend': [
             ('P',   'وكالة'),
             ('A',   'وكالة'),
