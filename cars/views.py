@@ -1849,6 +1849,616 @@ def manufacturer_logo(request, manufacturer_id):
         return HttpResponse('', status=404)
 
 
+def car_report(request, lot_number):
+    """
+    Generate a dynamic inspection report for a car from the database.
+    Mirrors the logic of report_from_csv.py but reads from ApiCar instead of CSV.
+    """
+    # ── lookup car ────────────────────────────────────────────────────────────
+    car = get_object_or_404(ApiCar, lot_number=lot_number)
+    vid = lot_number
+
+    # ── static / CDN blueprint image URLs ─────────────────────────────────────
+    BASE_IMG = "https://ci.encar.com"
+    SEDAN_IMG = "/static/images/car_sedan.png"
+    TRUCK_IMG = "/static/images/car_truck.png"
+
+    # ── part positions for damage badges ──────────────────────────────────────
+    PART_POSITIONS = {
+        "P011": (50, 14), "P021": (17, 27), "P022": (83, 27),
+        "P031": (17, 41), "P032": (83, 41), "P033": (17, 54),
+        "P034": (83, 54), "P041": (50, 87), "P051": (50, 19),
+        "P061": (17, 67), "P062": (83, 67), "P081": (17, 61),
+        "P082": (83, 61), "P091": (50, 22), "P111": (17, 45),
+        "P112": (83, 45), "P121": (17, 32), "P122": (83, 32),
+        "P123": (17, 65), "P124": (83, 65), "P131": (11, 36),
+        "P132": (89, 36), "P133": (11, 63), "P134": (89, 63),
+        "P141": (17, 36), "P142": (17, 50), "P144": (83, 36),
+        "P151": (50, 30), "P171": (50, 82), "P181": (50, 90),
+    }
+    STATUS_LABEL = {
+        "X": "Exchange (Replacement)", "W": "Sheet Metal / Welding",
+        "C": "Corrosion / Rust", "A": "Scratches",
+        "U": "Uneven Surface", "T": "Impairment",
+    }
+    RANK_LABEL = {"RANK_ONE": "Rank 1", "RANK_TWO": "Rank 2"}
+    INNER_STATUS = {
+        "1":  ("ok",  "Normal / طبيعي"),    "2":  ("ok",  "Adequate / مناسب"),
+        "3":  ("ok",  "None / لا يوجد"),    "4":  ("bad", "Minor Leak / تسرب طفيف"),
+        "5":  ("bad", "Leak / تسرب"),        "6":  ("bad", "Minor Oil Leak / تسرب زيت طفيف"),
+        "7":  ("bad", "Oil Leak / تسرب زيت"), "8": ("bad", "Low / منخفض"),
+        "9":  ("bad", "Excess / زائد"),      "10": ("bad", "Fault / عطل"),
+        "11": ("bad", "Present / موجود"),
+    }
+    SECTION_LABEL = {
+        "S00": ("Self-diagnosis", "التشخيص الذاتي"),
+        "S01": ("Engine",         "المحرك"),
+        "S02": ("Transmission",   "ناقل الحركة"),
+        "S03": ("Power Transfer", "نقل القوة"),
+        "S04": ("Steering",       "التوجيه"),
+        "S05": ("Brakes",         "الفرامل"),
+        "S06": ("Electrical",     "الكهرباء"),
+        "S07": ("Fuel System",    "نظام الوقود"),
+    }
+    OPTION_NAMES = {
+        "001": ("ABS", "نظام منع انغلاق المكابح"),
+        "003": ("Airbag (Driver)", "وسادة هوائية (السائق)"),
+        "004": ("Airbag (Passenger)", "وسادة هوائية (الراكب)"),
+        "005": ("Side Airbag", "وسادة هوائية جانبية"),
+        "006": ("Curtain Airbag", "وسادة هوائية ستائرية"),
+        "007": ("Knee Airbag", "وسادة هوائية للركبة"),
+        "009": ("Lane Keeping Assist", "مساعد الحفاظ على المسار"),
+        "010": ("Blind Spot Monitor", "مراقبة النقطة العمياء"),
+        "011": ("Rear Cross-Traffic Alert", "تنبيه حركة المرور الخلفية"),
+        "012": ("Forward Collision Warning", "تحذير الاصطدام الأمامي"),
+        "013": ("Autonomous Emergency Braking", "الفرمل الطارئ التلقائي"),
+        "014": ("ESC (Stability Control)", "نظام التحكم في الثبات"),
+        "015": ("Traction Control", "التحكم في الجر"),
+        "017": ("Tire Pressure Monitoring", "مراقبة ضغط الإطارات"),
+        "019": ("Parking Sensors (Front)", "حساسات الركن (أمامية)"),
+        "020": ("Parking Sensors (Rear)", "حساسات الركن (خلفية)"),
+        "021": ("Around View Monitor", "كاميرا 360 درجة"),
+        "022": ("Backup Camera", "كاميرا الرجوع للخلف"),
+        "023": ("Cruise Control", "مثبت السرعة"),
+        "024": ("Adaptive Cruise Control", "مثبت السرعة التكيفي"),
+        "025": ("Auto Parking", "الركن التلقائي"),
+        "026": ("Power Trunk", "صندوق خلفي كهربائي"),
+        "027": ("Smart Key / Keyless Entry", "مفتاح ذكي / دخول بدون مفتاح"),
+        "029": ("Push-Button Start", "تشغيل بضغطة زر"),
+        "030": ("Sunroof", "فتحة سقف"),
+        "031": ("Panoramic Sunroof", "فتحة سقف بانورامية"),
+        "034": ("Electric Parking Brake", "فرامل انتظار كهربائية"),
+        "035": ("Auto Hold", "تثبيت تلقائي"),
+        "036": ("Electric Folding Mirrors", "مرايا طي كهربائية"),
+        "037": ("Heated Mirrors", "مرايا مُدفَّأة"),
+        "039": ("Power Seats (Driver)", "مقعد كهربائي (السائق)"),
+        "040": ("Power Seats (Passenger)", "مقعد كهربائي (الراكب)"),
+        "041": ("Heated Seats (Front)", "مقاعد دافئة (أمامية)"),
+        "042": ("Heated Seats (Rear)", "مقاعد دافئة (خلفية)"),
+        "043": ("Ventilated Seats (Front)", "مقاعد مُهوَّأة (أمامية)"),
+        "044": ("Ventilated Seats (Rear)", "مقاعد مُهوَّأة (خلفية)"),
+        "045": ("Massage Seats", "مقاعد مساج"),
+        "046": ("Heated Steering Wheel", "مقود مُدفَّأ"),
+        "049": ("Head-Up Display", "شاشة عرض أمامية"),
+        "051": ("Dual-Zone Climate Control", "تحكم مناخي ثنائي المنطقة"),
+        "052": ("Rear Climate Control", "تحكم مناخي خلفي"),
+        "055": ("Navigation System", "نظام الملاحة"),
+        "056": ("Apple CarPlay / Android Auto", "Apple CarPlay / Android Auto"),
+        "057": ("Bluetooth", "بلوتوث"),
+        "059": ("Wireless Charging", "شحن لاسلكي"),
+        "060": ("Premium Audio", "صوت فاخر"),
+        "063": ("Digital Instrument Cluster", "عداد رقمي"),
+        "065": ("LED Headlights", "مصابيح LED أمامية"),
+        "066": ("LED Daytime Running Lights", "مصابيح LED نهارية"),
+        "067": ("LED Taillights", "مصابيح LED خلفية"),
+        "068": ("Auto Headlights", "مصابيح تلقائية"),
+        "069": ("Adaptive Headlights", "مصابيح تكيفية"),
+        "070": ("Fog Lights", "مصابيح الضباب"),
+        "071": ("Alloy Wheels", "جنوط سبائك"),
+        "072": ('18" Wheels', "جنوط 18 بوصة"),
+        "073": ('19" Wheels', "جنوط 19 بوصة"),
+        "074": ('20"+ Wheels', "جنوط 20 بوصة أو أكبر"),
+        "081": ("Leather Seats", "مقاعد جلدية"),
+        "082": ("Leather Interior", "داخلية جلدية"),
+        "084": ("3rd Row Seating", "مقاعد الصف الثالث"),
+        "085": ("Folding Rear Seats", "مقاعد خلفية قابلة للطي"),
+        "088": ("Tinted Windows", "زجاج ملون"),
+        "092": ("AWD / 4WD", "دفع رباعي"),
+        "094": ("Sport Mode", "وضع الرياضة"),
+        "099": ("Turbocharger", "تيربو"),
+        "10004": ("Black Box (Dashcam)", "كاميرا لوحة القيادة"),
+        "10006": ("PPF (Paint Protection Film)", "فيلم حماية الطلاء"),
+        "10007": ("Ceramic Coating", "طلاء سيراميك"),
+    }
+
+    # ── helpers ────────────────────────────────────────────────────────────────
+    def fmt_date(s):
+        if s and len(str(s)) == 8 and str(s).isdigit():
+            s = str(s)
+            return f"{s[:4]}-{s[4:6]}-{s[6:]}"
+        return s or "—"
+
+    def check_chip(val, true_class="ok", false_class="bad", true_label="Normal", false_label="Yes"):
+        if val:
+            return f'<span class="chip {true_class}">{true_label}</span>'
+        return f'<span class="chip {false_class}">{false_label}</span>'
+
+    def extract_inners(inners):
+        sections = []
+        for section in inners:
+            sec_code = section.get("type", {}).get("code", "")
+            sec_en, sec_ar = SECTION_LABEL.get(sec_code, (section.get("type", {}).get("title", sec_code), ""))
+            rows = []
+            def walk(children):
+                for child in children:
+                    st = child.get("statusType")
+                    if st and st.get("code"):
+                        cls, lbl = INNER_STATUS.get(str(st["code"]), ("", st.get("title", "")))
+                        rows.append((child.get("type", {}).get("title", ""), cls, lbl))
+                    if child.get("children"):
+                        walk(child["children"])
+            walk(section.get("children", []))
+            if rows:
+                sections.append((sec_en, sec_ar, rows))
+        return sections
+
+    def build_outer_badges_and_table(outers):
+        outer_badge_divs = []
+        structural_badge_divs = []
+        table_rows = []
+        for item in outers:
+            code = item.get("type", {}).get("code", "")
+            name = item.get("type", {}).get("title", code)
+            statuses = item.get("statusTypes", [])
+            attrs = item.get("attributes", [])
+            rank = attrs[0] if attrs else ""
+            is_structural = code.startswith("P1")
+            for st in statuses:
+                sc = st["code"]
+                tip = f"{name} · {STATUS_LABEL.get(sc, sc)}"
+                pos = PART_POSITIONS.get(code)
+                if pos:
+                    left, top = pos
+                    badge_html = (
+                        f'<div class="badge {sc}" style="left:{left}%;top:{top}%" '
+                        f'data-tip="{tip}">{sc}</div>'
+                    )
+                    if is_structural:
+                        structural_badge_divs.append(badge_html)
+                    else:
+                        outer_badge_divs.append(badge_html)
+                rank_lbl = RANK_LABEL.get(rank, rank)
+                rank_cls = "rank-1" if rank == "RANK_ONE" else "rank-2"
+                table_rows.append(f"""
+        <tr>
+          <td>{name}</td>
+          <td><span class="lb {sc}" style="display:inline-flex">{sc}</span>&nbsp; {STATUS_LABEL.get(sc, sc)}</td>
+          <td><span class="rank-badge {rank_cls}">{rank_lbl}</span></td>
+          <td>{code}</td>
+        </tr>""")
+        return outer_badge_divs, structural_badge_divs, table_rows
+
+    # ── extract data from DB fields ───────────────────────────────────────────
+    mark         = car.manufacturer.name if car.manufacturer else ""
+    model_name   = car.model.name if car.model else ""
+    badge_name   = car.badge.name if car.badge else ""
+    year         = car.year or ""
+    color        = car.color.name if car.color else ""
+    price        = car.price or 0
+    mileage      = car.mileage or 0
+    engine_type  = car.fuel or ""
+    trans_type   = car.transmission or ""
+    body_type    = car.body.name if car.body else ""
+    address      = car.address or ""
+    try:
+        displacement = int(car.engine.replace("cc", "").replace(",", "").strip()) if car.engine else 0
+    except (ValueError, AttributeError):
+        displacement = 0
+
+    extra        = car.extra_features or {}
+    options_raw  = car.options or {}
+    images_raw   = car.images or []
+
+    title    = f"{mark} {model_name}"
+    sub_parts = [p for p in [badge_name, str(year), f"ID {vid}"] if p]
+    subtitle = " · ".join(sub_parts)
+
+    # ── photos ────────────────────────────────────────────────────────────────
+    import json as _json
+    def _photo_entry(p):
+        if isinstance(p, str):
+            return {"code": "", "type": "OUTER", "url": p}
+        return {"code": p.get("code", ""), "type": p.get("type", "OUTER"), "url": BASE_IMG + p.get("path", "")}
+    photo_js = _json.dumps([_photo_entry(p) for p in images_raw])
+    if images_raw:
+        first = images_raw[0]
+        first_photo_url = first if isinstance(first, str) else BASE_IMG + first.get("path", "")
+    else:
+        first_photo_url = ""
+
+    # ── options ───────────────────────────────────────────────────────────────
+    all_opt_codes = (
+        list(options_raw.get("standard", []))
+        + list(options_raw.get("choice", []))
+        + list(options_raw.get("etc", []))
+    )
+    named_opts   = [OPTION_NAMES[c] for c in all_opt_codes if c in OPTION_NAMES]
+    unknown_opts = [c for c in all_opt_codes if c not in OPTION_NAMES]
+    options_html = "".join(
+        f'<span class="opt-tag"><span class="opt-en">{en}</span><span class="opt-ar">{ar}</span></span>'
+        for en, ar in named_opts
+    )
+    if unknown_opts:
+        options_html += "".join(f'<span class="opt-tag opt-unknown">Code {c}</span>' for c in unknown_opts)
+    if not options_html:
+        options_html = '<span style="color:#bbb;font-size:12px">No options data available</span>'
+
+    # ── inspection data ────────────────────────────────────────────────────────
+    master      = extra.get("master", {})
+    detail      = (master.get("detail") or {})
+    outers_data = extra.get("outers", [])
+    inners_data = extra.get("inners", [])
+
+    record_no  = detail.get("recordNo", "—")
+    issue_date = fmt_date(detail.get("issueDate"))
+    valid_end  = fmt_date(detail.get("validityEndDate"))
+    first_reg  = fmt_date(detail.get("firstRegistrationDate"))
+    vin        = car.vin or detail.get("vin", "—")
+    insp_km    = detail.get("mileage") or mileage
+    co         = detail.get("coout", "—")
+    hc         = detail.get("hcout", "—")
+    engine_ok  = detail.get("engineCheck", "N") == "Y"
+    trans_ok   = detail.get("trnsCheck",   "N") == "Y"
+    waterlog   = detail.get("waterlog", False)
+    tuning     = detail.get("tuning", False)
+    simple_rep = master.get("simpleRepair", False)
+    accident   = master.get("accdient", False)
+    usage_types = detail.get("usageChangeTypes", [])
+    usage_str  = ", ".join(u.get("title", "") for u in usage_types) if usage_types else "None"
+    guarantee_type = detail.get("guarantyType") or {}
+    guarantee  = guarantee_type.get("title", "—") if isinstance(guarantee_type, dict) else "—"
+
+    # ── outer panel badges & table ─────────────────────────────────────────────
+    outer_badge_divs, structural_badge_divs, table_rows = build_outer_badges_and_table(outers_data)
+    outer_badges_html      = "\n          ".join(outer_badge_divs)
+    structural_badges_html = "\n          ".join(structural_badge_divs)
+    damage_count = sum(len(i.get("statusTypes", [])) for i in outers_data)
+    table_rows_html = "".join(table_rows) if table_rows else (
+        '<tr><td colspan="4" style="color:#aaa;text-align:center">No outer panel damage recorded</td></tr>'
+    )
+
+    # ── inner mechanical checklist ─────────────────────────────────────────────
+    inner_sections = extract_inners(inners_data)
+    inner_html_parts = []
+    for sec_en, sec_ar, rows in inner_sections:
+        rows_html = "".join(
+            f'<div class="check-row"><span class="lbl">{name}</span>'
+            f'<span class="chip {cls}">{lbl}</span></div>'
+            for name, cls, lbl in rows
+        )
+        inner_html_parts.append(
+            f'<div class="inner-section">'
+            f'<div class="inner-section-title">{sec_en}'
+            f' <span dir="rtl" style="font-weight:400;color:#bbb;font-size:10px">/ {sec_ar}</span></div>'
+            f'<div class="checklist">{rows_html}</div>'
+            f'</div>'
+        )
+    inner_html = "\n".join(inner_html_parts) if inner_html_parts else (
+        '<p style="color:#aaa;padding:20px;text-align:center">No mechanical inspection data available</p>'
+    )
+
+    legend_html = (
+        '<div class="legend">'
+        '<div class="leg"><span class="lb X">X</span> Exchange / Replacement</div>'
+        '<div class="leg"><span class="lb W">W</span> Sheet Metal / Welding</div>'
+        '<div class="leg"><span class="lb C">C</span> Corrosion / Rust</div>'
+        '<div class="leg"><span class="lb A">A</span> Scratches</div>'
+        '<div class="leg"><span class="lb U">U</span> Uneven Surface</div>'
+        '<div class="leg"><span class="lb T">T</span> Impairment</div>'
+        '</div>'
+    )
+
+    # ── render HTML ────────────────────────────────────────────────────────────
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{title} – Encar Report</title>
+  <style>
+    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    :root {{
+      --blue:   #1e88e5;
+      --red:    #e53935;
+      --orange: #fb8c00;
+      --green:  #43a047;
+      --bg:     #f0f2f5;
+      --card:   #fff;
+      --radius: 12px;
+    }}
+    body {{ background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; color: #222; min-height: 100vh; }}
+    nav {{ position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 24px; }}
+    .nav-brand {{ font-size: 15px; font-weight: 700; color: #111; padding: 16px 0; margin-right: 32px; letter-spacing: -.3px; }}
+    .nav-brand span {{ color: var(--blue); }}
+    .tab {{ padding: 18px 20px; font-size: 13.5px; font-weight: 500; color: #888; cursor: pointer; border-bottom: 3px solid transparent; user-select: none; transition: color .2s, border-color .2s; }}
+    .tab.active {{ color: #111; border-color: #111; }}
+    .tab:hover:not(.active) {{ color: #444; }}
+    .page {{ display: none; padding: 28px 24px 60px; max-width: 900px; margin: 0 auto; }}
+    .page.active {{ display: block; }}
+    .section-title {{ font-size: 11.5px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: #999; margin: 28px 0 10px; }}
+    .section-title:first-child {{ margin-top: 0; }}
+    .card {{ background: var(--card); border-radius: var(--radius); box-shadow: 0 1px 6px #0001, 0 2px 16px #0001; overflow: hidden; margin-bottom: 18px; }}
+    .hero {{ display: flex; gap: 20px; padding: 20px; }}
+    .hero-photo {{ width: 200px; height: 140px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: #eee; }}
+    .hero-info {{ flex: 1; }}
+    .hero-info h1 {{ font-size: 20px; font-weight: 700; line-height: 1.3; }}
+    .hero-info .sub {{ font-size: 12.5px; color: #888; margin-top: 3px; }}
+    .hero-price {{ font-size: 28px; font-weight: 800; color: var(--blue); margin-top: 12px; }}
+    .hero-price span {{ font-size: 14px; color: #999; font-weight: 400; }}
+    .tag-row {{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }}
+    .tag {{ padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; background: #f0f2f5; color: #555; }}
+    .tag.accent {{ background: #e3f0fd; color: var(--blue); }}
+    .spec-grid {{ display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid #f2f2f2; }}
+    .spec-cell {{ padding: 14px 18px; border-right: 1px solid #f2f2f2; }}
+    .spec-cell:nth-child(3n) {{ border-right: none; }}
+    .spec-cell .label {{ font-size: 10.5px; color: #aaa; text-transform: uppercase; letter-spacing: .5px; }}
+    .spec-cell .value {{ font-size: 14px; font-weight: 600; margin-top: 3px; }}
+    .history-row {{ display: grid; grid-template-columns: repeat(4,1fr); padding: 18px 20px; gap: 8px; }}
+    .hist-item {{ text-align: center; }}
+    .hist-item .h-val {{ font-size: 26px; font-weight: 800; }}
+    .hist-item .h-val.danger {{ color: var(--red); }}
+    .hist-item .h-val.ok    {{ color: var(--green); }}
+    .hist-item .h-lab  {{ font-size: 11px; color: #aaa; margin-top: 2px; }}
+    .checklist {{ display: grid; grid-template-columns: 1fr 1fr; }}
+    .check-row {{ display: flex; align-items: center; justify-content: space-between; padding: 9px 18px; border-bottom: 1px solid #f8f8f8; font-size: 12.5px; }}
+    .check-row:nth-child(odd) {{ border-right: 1px solid #f8f8f8; }}
+    .check-row .lbl {{ color: #666; }}
+    .chip {{ padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }}
+    .chip.ok  {{ background: #e8f5e9; color: #2e7d32; }}
+    .chip.bad {{ background: #fce4e4; color: #c62828; }}
+    .gallery-tabs {{ display: flex; padding: 0 16px; border-bottom: 1px solid #f2f2f2; }}
+    .gtab {{ padding: 10px 14px; font-size: 12px; font-weight: 600; color: #aaa; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }}
+    .gtab.on {{ color: #111; border-color: #111; }}
+    .gallery {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 8px; padding: 16px; }}
+    .gallery img {{ width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 6px; background: #eee; cursor: zoom-in; transition: opacity .2s; }}
+    .gallery img:hover {{ opacity: .82; }}
+    #lb {{ display: none; position: fixed; inset: 0; z-index: 999; background: #000c; align-items: center; justify-content: center; }}
+    #lb.on {{ display: flex; }}
+    #lb img {{ max-width: 92vw; max-height: 88vh; border-radius: 8px; }}
+    #lb-close {{ position: absolute; top: 18px; right: 22px; font-size: 30px; color: #fff; cursor: pointer; }}
+    .diagram {{ position: relative; width: 100%; user-select: none; }}
+    .diagram img {{ width: 100%; display: block; }}
+    .badge {{ position: absolute; width: 5.5%; aspect-ratio: 1/1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5vw; font-weight: 800; color: #fff; transform: translate(-50%,-50%); box-shadow: 0 3px 8px #0004; cursor: default; transition: transform .15s, box-shadow .15s; }}
+    .badge:hover {{ transform: translate(-50%,-50%) scale(1.25); box-shadow: 0 5px 14px #0005; }}
+    .badge.X {{ background: var(--red); }}
+    .badge.W {{ background: var(--blue); }}
+    .badge.C {{ background: var(--orange); }}
+    .badge.A {{ background: #7cb9e8; }}
+    .badge.U {{ background: #6d7c47; }}
+    .badge.T {{ background: #9e9e9e; }}
+    .badge::after {{ content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%) scale(.9); background: #222; color: #fff; font-size: 11px; font-weight: 500; white-space: nowrap; padding: 5px 9px; border-radius: 5px; pointer-events: none; opacity: 0; transition: opacity .15s, transform .15s; }}
+    .badge:hover::after {{ opacity: 1; transform: translateX(-50%) scale(1); }}
+    .legend {{ display: flex; flex-wrap: wrap; gap: 16px; padding: 14px 20px; border-top: 1px solid #f5f5f5; }}
+    .leg {{ display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; }}
+    .lb {{ width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; flex-shrink: 0; }}
+    .lb.X {{ background: var(--red); }}
+    .lb.W {{ background: var(--blue); }}
+    .lb.C {{ background: var(--orange); }}
+    .lb.A {{ background: #7cb9e8; }}
+    .lb.U {{ background: #6d7c47; }}
+    .lb.T {{ background: #9e9e9e; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 12.5px; }}
+    th {{ background: #fafafa; padding: 9px 16px; text-align: left; color: #888; font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; border-bottom: 1px solid #f0f0f0; }}
+    td {{ padding: 10px 16px; border-bottom: 1px solid #f8f8f8; }}
+    tr:last-child td {{ border-bottom: none; }}
+    .rank-badge {{ display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10.5px; font-weight: 600; }}
+    .rank-1 {{ background: #fce4e4; color: #c62828; }}
+    .rank-2 {{ background: #fff3e0; color: #e65100; }}
+    .insp-header {{ padding: 16px 20px; border-bottom: 1px solid #f5f5f5; }}
+    .insp-header h3 {{ font-size: 14px; font-weight: 700; }}
+    .insp-header p  {{ font-size: 12px; color: #aaa; margin-top: 3px; }}
+    .insp-sub-title {{ font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #aaa; padding: 14px 20px 8px; border-top: 1px solid #f2f2f2; }}
+    .inner-section {{ border-bottom: 1px solid #f5f5f5; }}
+    .inner-section:last-child {{ border-bottom: none; }}
+    .inner-section-title {{ font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #aaa; padding: 10px 18px 6px; }}
+    .foot-note {{ font-size: 11px; color: #bbb; text-align: center; margin-top: 20px; }}
+    .options-wrap {{ display: flex; flex-wrap: wrap; gap: 7px; padding: 16px 18px; }}
+    .opt-tag {{ padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #f0f4ff; color: #1e4db7; border: 1px solid #d0dcff; display: flex; flex-direction: column; align-items: center; gap: 1px; }}
+    .opt-tag.opt-unknown {{ background: #f5f5f5; color: #999; border-color: #e0e0e0; }}
+    .opt-en {{ font-size: 11.5px; font-weight: 600; }}
+    .opt-ar {{ font-size: 10.5px; font-weight: 400; color: #4a6fa5; direction: rtl; }}
+    .bil {{ display: flex; flex-direction: column; line-height: 1.2; }}
+    .bil-en {{ font-size: 12.5px; color: #666; }}
+    .bil-ar {{ font-size: 11px; color: #aaa; direction: rtl; text-align: right; }}
+    .meta-row {{ display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 18px 14px; border-top: 1px solid #f5f5f5; }}
+    .meta-tag {{ font-size: 11px; color: #999; background: #f7f7f7; border-radius: 4px; padding: 2px 8px; }}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand"><span>Encar</span> Report</div>
+  <div class="tab active" onclick="switchPage('details',this)">Details &amp; Photos / <span dir="rtl" style="font-size:12px">التفاصيل والصور</span></div>
+  <div class="tab"        onclick="switchPage('inspection',this)">Inspection / <span dir="rtl" style="font-size:12px">الفحص</span></div>
+</nav>
+
+<!-- PAGE 1 -->
+<div id="page-details" class="page active">
+
+  <div class="section-title">Vehicle Overview</div>
+  <div class="card">
+    <div class="hero">
+      <img class="hero-photo" id="hero-img"
+           src="{first_photo_url}"
+           alt="{title}"
+           onerror="this.style.background='#ddd';this.removeAttribute('src')">
+      <div class="hero-info">
+        <h1>{title}</h1>
+        <div class="sub">{subtitle}</div>
+        <div class="hero-price">{"&#x20A9;{:,}".format(price) if price else "—"}<span>만원</span></div>
+        <div class="tag-row">
+          <span class="tag">{engine_type}</span>
+          <span class="tag">{trans_type}</span>
+          <span class="tag">{body_type}</span>
+          <span class="tag">{color}</span>
+        </div>
+      </div>
+    </div>
+    <div class="spec-grid">
+      <div class="spec-cell"><div class="label">Mileage / <span dir="rtl">المسافة</span></div><div class="value">{mileage:,} km</div></div>
+      <div class="spec-cell"><div class="label">Engine / <span dir="rtl">المحرك</span></div><div class="value">{f"{displacement:,} cc" if displacement else engine_type}</div></div>
+      <div class="spec-cell"><div class="label">First Reg. / <span dir="rtl">أول تسجيل</span></div><div class="value">{first_reg or year}</div></div>
+      <div class="spec-cell"><div class="label">Fuel / <span dir="rtl">الوقود</span></div><div class="value">{engine_type}</div></div>
+      <div class="spec-cell"><div class="label">Transmission / <span dir="rtl">ناقل الحركة</span></div><div class="value">{trans_type}</div></div>
+      <div class="spec-cell"><div class="label">Year / <span dir="rtl">الموديل</span></div><div class="value">{year}</div></div>
+    </div>
+    {"<div class='meta-row'><span class='meta-tag'>📍 " + address + "</span></div>" if address else ""}
+  </div>
+
+  <div class="section-title">Quick Check</div>
+  <div class="card">
+    <div class="checklist">
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Engine</span><span class="bil-ar">المحرك</span></span>{check_chip(engine_ok, true_label="Pass", false_label="Fail")}</div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Transmission</span><span class="bil-ar">ناقل الحركة</span></span>{check_chip(trans_ok, true_label="Pass", false_label="Fail")}</div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Accident record</span><span class="bil-ar">سجل الحوادث</span></span>{check_chip(not accident, false_class="ok", true_class="bad", true_label="None", false_label="Yes")}</div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Simple repair</span><span class="bil-ar">إصلاح بسيط</span></span>{check_chip(not simple_rep, false_class="ok", true_class="bad", true_label="None", false_label="Yes")}</div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Tuning</span><span class="bil-ar">تعديل</span></span>{check_chip(not tuning, false_class="ok", true_class="bad", true_label="None", false_label="Yes")}</div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Flood damage</span><span class="bil-ar">تضرر من الفيضان</span></span>{check_chip(not waterlog, false_class="ok", true_class="bad", true_label="None", false_label="Yes")}</div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Usage history</span><span class="bil-ar">تاريخ الاستخدام</span></span><span>{usage_str}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Guarantee</span><span class="bil-ar">الضمان</span></span><span>{guarantee}</span></div>
+    </div>
+  </div>
+
+  <div class="section-title">Options</div>
+  <div class="card">
+    <div class="options-wrap">
+      {options_html}
+    </div>
+  </div>
+
+  <div class="section-title">Photos</div>
+  <div class="card">
+    <div class="gallery-tabs">
+      <div class="gtab on" onclick="filterGallery('ALL',this)">All</div>
+      <div class="gtab"    onclick="filterGallery('OUTER',this)">Exterior</div>
+      <div class="gtab"    onclick="filterGallery('INNER',this)">Interior</div>
+      <div class="gtab"    onclick="filterGallery('OPTION',this)">Options</div>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <p class="foot-note">Source: DB · Vehicle {vid} · {title}</p>
+</div>
+
+
+<!-- PAGE 2 -->
+<div id="page-inspection" class="page">
+
+  <div class="section-title">Outer Panel Damage Map</div>
+  <div class="card">
+    <div class="insp-header">
+      <h3>Outer Panel — {damage_count} damage item{"s" if damage_count != 1 else ""} recorded</h3>
+      <p>Record {record_no} · Issued {issue_date} · Valid until {valid_end}</p>
+    </div>
+
+    <div class="insp-sub-title">Outer Panel / <span dir="rtl" style="font-weight:400">الهيكل الخارجي</span></div>
+    <div class="diagram">
+      <img src="{SEDAN_IMG}" alt="Outer panel blueprint">
+      {outer_badges_html}
+    </div>
+    {legend_html if outer_badge_divs else '<p style="color:#aaa;padding:20px;text-align:center">No outer body panel damage recorded</p>'}
+
+    <div class="insp-sub-title">Structural / <span dir="rtl" style="font-weight:400">الهيكل الهيكلي</span></div>
+    <div class="diagram">
+      <img src="{TRUCK_IMG}" alt="Structural blueprint">
+      {structural_badges_html}
+    </div>
+    {legend_html if structural_badge_divs else '<p style="color:#aaa;padding:20px;text-align:center">No structural / underbody damage recorded</p>'}
+
+    <div class="insp-sub-title">Mechanical / <span dir="rtl" style="font-weight:400">الفحص الميكانيكي</span></div>
+    {inner_html}
+  </div>
+
+  <div class="section-title">Damage Details</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Part</th><th>Status</th><th>Rank</th><th>Code</th></tr></thead>
+      <tbody>{table_rows_html}</tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Inspection Record</div>
+  <div class="card">
+    <div class="checklist">
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Record No.</span><span class="bil-ar">رقم السجل</span></span><span>{record_no}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Issue Date</span><span class="bil-ar">تاريخ الإصدار</span></span><span>{issue_date}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Valid Until</span><span class="bil-ar">صالح حتى</span></span><span>{valid_end}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">First Reg. Date</span><span class="bil-ar">تاريخ أول تسجيل</span></span><span>{first_reg}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">VIN</span><span class="bil-ar">رقم الهيكل</span></span><span style="font-size:11px">{vin}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Model Year</span><span class="bil-ar">سنة الصنع</span></span><span>{year}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Mileage at Inspection</span><span class="bil-ar">المسافة عند الفحص</span></span><span>{insp_km:,} km</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">CO Emission</span><span class="bil-ar">انبعاثات CO</span></span><span>{co}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">HC Emission</span><span class="bil-ar">انبعاثات HC</span></span><span>{hc}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Guarantee Type</span><span class="bil-ar">نوع الضمان</span></span><span>{guarantee}</span></div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Engine Check</span><span class="bil-ar">فحص المحرك</span></span>{check_chip(engine_ok, true_label="Pass", false_label="Fail")}</div>
+      <div class="check-row"><span class="lbl bil"><span class="bil-en">Transmission Check</span><span class="bil-ar">فحص ناقل الحركة</span></span>{check_chip(trans_ok, true_label="Pass", false_label="Fail")}</div>
+    </div>
+  </div>
+
+  <p class="foot-note">Hover badges to see part details · Source: DB · Vehicle {vid}</p>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lb" onclick="closeLb()">
+  <span id="lb-close">&times;</span>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<script>
+  function switchPage(id, el) {{
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    el.classList.add('active');
+  }}
+
+  const photos = {photo_js};
+  let currentFilter = 'ALL';
+
+  function filterGallery(type, el) {{
+    currentFilter = type;
+    document.querySelectorAll('.gtab').forEach(t => t.classList.remove('on'));
+    el.classList.add('on');
+    renderGallery();
+  }}
+
+  function renderGallery() {{
+    const list = currentFilter === 'ALL' ? photos : photos.filter(p => p.type === currentFilter);
+    document.getElementById('gallery').innerHTML = list.map(p =>
+      `<img src="${{p.url}}" alt="${{p.type}} ${{p.code}}"
+            loading="lazy" onerror="this.style.display='none'"
+            onclick="openLb('${{p.url}}')">`
+    ).join('');
+  }}
+
+  function openLb(src) {{
+    document.getElementById('lb-img').src = src;
+    document.getElementById('lb').classList.add('on');
+  }}
+  function closeLb() {{
+    document.getElementById('lb').classList.remove('on');
+    document.getElementById('lb-img').src = '';
+  }}
+  document.addEventListener('keydown', e => {{ if (e.key === 'Escape') closeLb(); }});
+
+  renderGallery();
+</script>
+</body>
+</html>"""
+
+    return HttpResponse(html, content_type="text/html; charset=utf-8")
+
+
 def car_availability_check(request, lot_number):
     """
     Proxy Encar API to check whether a car lot is still available.

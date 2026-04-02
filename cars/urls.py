@@ -13,6 +13,7 @@ urlpatterns = [
     path('cars/', views.car_list, name='car_list'),
     path('cars/export-pdf/', views.export_auction_pdf, name='export_auction_pdf'),
     path('cars/check-availability/<str:lot_number>/', views.car_availability_check, name='car_availability_check'),
+    path('cars/<str:lot_number>/report/', views.car_report, name='car_report'),
     path('pdf-exports/', views.pdf_export_panel, name='pdf_export_panel'),
     path('pdf-exports/delete/<int:pk>/', views.pdf_export_delete, name='pdf_export_delete'),
     path('webhook/ofleet/', views.ofleet_webhook, name='ofleet_webhook'),

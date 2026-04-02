@@ -641,6 +641,15 @@
                     </div>
                 </div>
 
+                {% if car.extra_features %}
+                <a href="{% url 'car_report' car.lot_number %}"
+                   target="_blank"
+                   class="mt-4 flex items-center justify-center gap-2 w-full text-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="bilingual" data-lang-ar="تقرير مفصل عن حالة المركبة" data-lang-en="Detailed Vehicle Condition Report">تقرير مفصل عن حالة المركبة</span>
+                </a>
+                {% endif %}
+
                 {% if car.category.name != 'auction' and request.user.is_superuser %}
                 <div class="mt-4 p-3 bg-red-600 border border-gray-200 rounded-lg text-center">
                     <a class="text-xs text-white mt-4 text-center" href="https://fem.encar.com/cars/detail/{{ car.lot_number }}">
