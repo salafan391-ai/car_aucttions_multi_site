@@ -1,4 +1,5 @@
 import csv
+import ast
 import io
 import itertools
 import json
@@ -29,6 +30,16 @@ class Command(BaseCommand):
 
     # ------------- CLI -------------
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--url",
+            type=str,
+            default=None,
+            help=(
+                "Direct URL to a public active_offer CSV (e.g. R2/S3 presigned URL). "
+                "When set, --host/--date/--username/--password are ignored and "
+                "--skip-removed is implied (no removed_offer.csv)."
+            ),
+        )
         parser.add_argument(
             "--date",
             type=str,
@@ -106,6 +117,11 @@ class Command(BaseCommand):
             default=3000,
             help="Batch size for removed deletions (default 3000)",
         )
+        parser.add_argument(
+            "--delete-stale",
+            action="store_true",
+            help="After importing the active CSV, delete any DB car whose lot_number was not in the CSV.",
+        )
 
     # ------------- helpers -------------
     def _utc_today(self) -> str:
@@ -118,12 +134,13 @@ class Command(BaseCommand):
             f"{base}/removed_offer.csv",
         )
 
-    def _download_csv_stream(self, url: str, username: str, password: str, byte_offset: int = 0) -> Optional[requests.Response]:
+    def _download_csv_stream(self, url: str, username: str = "", password: str = "", byte_offset: int = 0) -> Optional[requests.Response]:
         headers = {}
         if byte_offset > 0:
             headers["Range"] = f"bytes={byte_offset}-"
         try:
-            resp = requests.get(url, auth=(username, password), timeout=60, stream=True, headers=headers)
+            auth = (username, password) if username and password else None
+            resp = requests.get(url, auth=auth, timeout=60, stream=True, headers=headers)
             if resp.status_code == 404:
                 self.stdout.write(self.style.WARNING(f"CSV not found: {url}"))
                 resp.close()
@@ -149,28 +166,85 @@ class Command(BaseCommand):
         except Exception:
             return default
 
+    _ENCAR_IMAGE_BASE = "https://ci.encar.com"
+    _ENCAR_IMAGE_PARAMS = "?impolicy=heightRate&rh=653&cw=1160&ch=653&cg=Center"
+
     def _parse_json_safe(self, s: str):
         if not s:
             return None
         s = s.strip()
+        # Try standard JSON first
         try:
             return json.loads(s)
         except Exception:
-            if "," in s:
-                return [x.strip() for x in s.split(",") if x.strip()]
-            return s
+            pass
+        # Fallback: Python literal (single-quoted dicts/lists from new CSV format)
+        try:
+            return ast.literal_eval(s)
+        except Exception:
+            pass
+        if "," in s:
+            return [x.strip() for x in s.split(",") if x.strip()]
+        return s
+
+    def _image_path_to_url(self, path: str) -> str:
+        """Convert a relative Encar image path to a full CDN URL."""
+        path = path.lstrip("/")
+        return f"{self._ENCAR_IMAGE_BASE}/{path}{self._ENCAR_IMAGE_PARAMS}"
+
+    def _extract_images(self, images_field: str) -> tuple:
+        """
+        Parse the images field and return (first_image_url, all_image_urls_list).
+
+        New format: list of dicts  {'code': '001', 'path': '/carpicture08/...', 'type': 'OUTER'}
+          - types: OUTER (exterior), INNER (interior), OPTION (options), THUMBNAIL (skip — duplicates)
+          - sorted: OUTER → INNER → OPTION, then by numeric code within each group
+        Old format: list of plain URL strings — kept as-is.
+        """
+        if not images_field:
+            return None, None
+        parsed = self._parse_json_safe(images_field)
+        if not isinstance(parsed, list) or not parsed:
+            if isinstance(parsed, str):
+                return parsed, [parsed]
+            return None, None
+
+        _TYPE_ORDER = {"OUTER": 0, "INNER": 1, "OPTION": 2}
+
+        structured = []
+        plain_urls = []
+
+        for item in parsed:
+            if isinstance(item, dict):
+                img_type = item.get("type", "")
+                if img_type == "THUMBNAIL":
+                    continue  # skip — duplicates of real images
+                path = item.get("path", "")
+                if not path:
+                    continue
+                try:
+                    code_num = int(item.get("code", "999"))
+                except (ValueError, TypeError):
+                    code_num = 999
+                sort_key = (_TYPE_ORDER.get(img_type, 3), code_num)
+                url = self._image_path_to_url(path)
+                structured.append((sort_key, url))
+            elif isinstance(item, str) and item:
+                plain_urls.append(item)
+
+        if structured:
+            structured.sort(key=lambda x: x[0])
+            urls = [u for _, u in structured]
+            return urls[0], urls
+
+        if plain_urls:
+            return plain_urls[0], plain_urls
+
+        return None, None
 
     def _first_image(self, images_field: str) -> Optional[str]:
-        if not images_field:
-            return None
-        parsed = self._parse_json_safe(images_field)
-        if isinstance(parsed, list) and parsed:
-            return str(parsed[0])
-        if isinstance(parsed, str):
-            if "," in parsed:
-                return parsed.split(",")[0].strip()
-            return parsed
-        return None
+        first, _ = self._extract_images(images_field)
+        return first
 
     def _safe_get_or_create(self, manager, defaults=None, **kwargs):
         try:
@@ -246,7 +320,7 @@ class Command(BaseCommand):
         return manufacturer, model, badge, color, seat_color_obj, body_obj
 
     def _row_to_fields(self, row: Dict[str, str]) -> Dict[str, Any]:
-        norm = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
+        norm = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items() if k is not None}
 
         manufacturer_name = norm.get("mark") or "Unknown"
         model_name = norm.get("model") or "Unknown"
@@ -270,14 +344,7 @@ class Command(BaseCommand):
         address = norm.get("address") or ""
 
         raw_images = norm.get("images") or ""
-        parsed_images = self._parse_json_safe(raw_images)
-        images_list = None
-        if isinstance(parsed_images, list):
-            images_list = [str(x) for x in parsed_images if x]
-        elif isinstance(parsed_images, str):
-            if parsed_images:
-                images_list = [x.strip() for x in parsed_images.split(",") if x.strip()]
-        image = self._first_image(raw_images)
+        image, images_list = self._extract_images(raw_images)
 
         title = f"{manufacturer_name} {model_name} {badge_name} {year}".strip()
 
@@ -312,13 +379,8 @@ class Command(BaseCommand):
         }
 
     # ------------- processing -------------
-    def _iter_csv_stream(self, resp: requests.Response, url: str = "", username: str = "", password: str = "") -> Iterable[Dict[str, str]]:
-        """Stream-parse a pipe-delimited CSV, transparently reconnecting on network drops.
-
-        If `url`, `username`, and `password` are provided the iterator will attempt up to
-        5 reconnects using HTTP Range requests to resume from the byte offset where the
-        connection was lost.  Without those arguments it behaves exactly as before.
-        """
+    def _iter_csv_stream(self, resp: requests.Response, url: str = "", username: str = "", password: str = "", delimiter: str = "") -> Iterable[Dict[str, str]]:
+        """Stream-parse a CSV (auto-detects delimiter if not given), transparently reconnecting on network drops."""
         MAX_RETRIES = 5
         RETRY_WAIT  = 5  # seconds between reconnect attempts
 
@@ -330,6 +392,7 @@ class Command(BaseCommand):
         encoding  = resp.encoding or "utf-8"
         bytes_read = 0
         header_line: Optional[str] = None
+        detected_delimiter: Optional[str] = delimiter or None
         retries = 0
 
         current_resp = resp
@@ -353,19 +416,24 @@ class Command(BaseCommand):
                 line_iter = decoded_lines(raw_iter)
 
                 if header_line is None:
-                    # First time — let DictReader read the header normally
-                    reader = csv.DictReader(line_iter, delimiter='|')
+                    # First time — auto-detect delimiter from first line if not given
+                    first_line = next(line_iter, "")
+                    first_line = first_line.lstrip('\ufeff')  # strip UTF-8 BOM if present
+                    if not detected_delimiter:
+                        detected_delimiter = ',' if first_line.count(',') >= first_line.count('|') else '|'
+                    header_line = first_line
+                    reader = csv.DictReader(
+                        itertools.chain([first_line], line_iter),
+                        delimiter=detected_delimiter,
+                    )
                     for row in reader:
-                        if header_line is None:
-                            # Capture the raw pipe-delimited header after DictReader reads it
-                            header_line = '|'.join(reader.fieldnames or [])
                         yield row
                 else:
                     # After reconnect — server resumes from byte_offset (no header in stream).
                     # Prepend the saved header line so DictReader can parse field names.
                     reader = csv.DictReader(
                         itertools.chain([header_line], line_iter),
-                        delimiter='|',
+                        delimiter=detected_delimiter,
                     )
                     for row in reader:
                         yield row
@@ -395,10 +463,11 @@ class Command(BaseCommand):
                     raise RuntimeError(f"Could not reconnect to {url} after drop at byte {bytes_read}")
                 current_resp = new_resp
 
-    def _process_active_chunked(self, resp: requests.Response, *, url: str = "", username: str = "", password: str = "", chunk_size: int, batch_size: int, progress: bool = False, progress_every: int = 5000, max_rows: int = 0, dry_run: bool = False) -> Tuple[int, int]:
+    def _process_active_chunked(self, resp: requests.Response, *, url: str = "", username: str = "", password: str = "", chunk_size: int, batch_size: int, progress: bool = False, progress_every: int = 5000, max_rows: int = 0, dry_run: bool = False) -> Tuple[int, int, set]:
         created = 0
         updated = 0
         processed = 0
+        seen_lot_numbers: set = set()
 
         caches: Dict[str, Dict] = {}
         cache_reset_every = 50000  # rows after which we reset related caches to limit memory
@@ -413,10 +482,8 @@ class Command(BaseCommand):
             if not lot_numbers:
                 return
 
-            # Build a map of existing cars by lot_number -> id. Since lot_number is not unique,
-            # pick the first one by id to keep deterministic behavior. Use values() to avoid
-            # loading full model instances into memory.
-            existing_map: Dict[str, int] = {}
+            # Build a map of existing cars by lot_number -> {id}.
+            existing_map: Dict[str, dict] = {}
             for row in (
                 ApiCar.objects
                 .filter(lot_number__in=lot_numbers)
@@ -425,7 +492,7 @@ class Command(BaseCommand):
             ):
                 ln = row['lot_number']
                 if ln not in existing_map:
-                    existing_map[ln] = row['id']
+                    existing_map[ln] = row
 
             new_objs: List[ApiCar] = []
             upd_objs: List[ApiCar] = []
@@ -442,11 +509,10 @@ class Command(BaseCommand):
                     fields["body"],
                 )
                 if ln in existing_map:
-                    existing_id = existing_map[ln]
                     updated += 1
                     if not dry_run:
                         upd_objs.append(ApiCar(
-                            id=existing_id,
+                            id=existing_map[ln]["id"],
                             car_id=ln[:20],
                             title=fields["title"],
                             image=fields["image"],
@@ -513,7 +579,15 @@ class Command(BaseCommand):
                 'drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
             ]
 
-            # bulk_create in one transaction
+            # bulk_update existing cars
+            if upd_objs:
+                for i in range(0, len(upd_objs), batch_size):
+                    sub_batch = upd_objs[i : i + batch_size]
+                    with transaction.atomic():
+                        connection.cursor().execute("SET LOCAL statement_timeout = 0")
+                        ApiCar.objects.bulk_update(sub_batch, fields=update_fields, batch_size=len(sub_batch))
+
+            # bulk_create new cars
             if new_objs:
                 with transaction.atomic():
                     connection.cursor().execute("SET LOCAL statement_timeout = 0")
@@ -536,20 +610,12 @@ class Command(BaseCommand):
                         WHERE slug IS NULL OR slug = ''
                     """)
 
-            # bulk_update: each sub-batch in its own transaction + SET LOCAL so
-            # Heroku's 30s statement timeout never fires on a single UPDATE statement.
-            if upd_objs:
-                for i in range(0, len(upd_objs), batch_size):
-                    sub_batch = upd_objs[i : i + batch_size]
-                    with transaction.atomic():
-                        connection.cursor().execute("SET LOCAL statement_timeout = 0")
-                        ApiCar.objects.bulk_update(sub_batch, fields=update_fields, batch_size=len(sub_batch))
-
         for row in self._iter_csv_stream(resp, url=url, username=username, password=password):
             processed += 1
             fields = self._row_to_fields(row)
             if not fields["lot_number"]:
                 continue
+            seen_lot_numbers.add(fields["lot_number"])
             chunk_rows.append(fields)
 
             if len(chunk_rows) >= chunk_size:
@@ -566,7 +632,7 @@ class Command(BaseCommand):
         if chunk_rows:
             flush_chunk(chunk_rows)
 
-        return created, updated
+        return created, updated, seen_lot_numbers
 
     def _process_removed_chunked(self, resp: requests.Response, *, url: str = "", username: str = "", password: str = "", delete_batch_size: int, progress: bool = False, progress_every: int = 5000, max_rows: int = 0, dry_run: bool = False) -> int:
         removed = 0
@@ -622,14 +688,20 @@ class Command(BaseCommand):
         if batch:
             flush_delete(batch)
 
+        self.stdout.write(
+            f"Removed summary — CSV rows: {processed}, "
+            f"matched & deleted from DB: {removed}, "
+            f"not in DB (already gone): {processed - removed}"
+        )
         return removed
 
     # ------------- handle -------------
     def handle(self, *args, **options):
         date_str = options.get("date") or self._utc_today()
+        direct_url = options.get("url")
         host = options.get("host")
-        username = options.get("username")
-        password = options.get("password")
+        username = options.get("username") or ""
+        password = options.get("password") or ""
         skip_removed = options.get("skip_removed", False)
         dry_run = options.get("dry_run", False)
         progress = options.get("progress", False)
@@ -638,8 +710,124 @@ class Command(BaseCommand):
         chunk_size = options.get("chunk_size", 2000)
         batch_size = options.get("update_batch_size", 1000)
         delete_batch_size = options.get("delete_batch_size", 3000)
+        delete_stale = options.get("delete_stale", False)
 
-        # Validate required connection settings early to avoid AttributeError
+        def _delete_stale_cars(seen: set, dry_run: bool) -> int:
+            """Delete any ApiCar whose lot_number was not in the active CSV.
+
+            Uses a temporary table to avoid passing 100k+ values in a NOT IN
+            clause, which causes statement timeouts on Heroku Postgres.
+            """
+            if not seen:
+                self.stdout.write(self.style.WARNING("Skipping stale deletion — no lot numbers were collected."))
+                return 0
+            self.stdout.write(f"Deleting stale cars (not in CSV)... {len(seen):,} lot numbers seen in CSV.")
+
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    cursor.execute("SET LOCAL statement_timeout = 0")
+
+                    # Load all seen lot_numbers into a temp table for fast NOT EXISTS join
+                    cursor.execute("""
+                        CREATE TEMP TABLE _seen_lots (lot_number TEXT PRIMARY KEY)
+                        ON COMMIT DROP
+                    """)
+                    seen_list = list(seen)
+                    for i in range(0, len(seen_list), 10000):
+                        batch = seen_list[i:i + 10000]
+                        args = ",".join(cursor.mogrify("(%s)", [v]).decode() for v in batch)
+                        cursor.execute(f"INSERT INTO _seen_lots (lot_number) VALUES {args} ON CONFLICT DO NOTHING")
+
+                    # Only target Encar-imported cars (category IS NULL).
+                    # Auction cars and other categorised cars are managed separately.
+                    # Also exclude cars referenced by orders across all tenant schemas
+                    # to avoid cascading deletes that would destroy order history.
+                    from django_tenants.utils import get_tenant_model
+                    tenant_schemas = list(
+                        get_tenant_model().objects.exclude(schema_name="public")
+                        .values_list("schema_name", flat=True)
+                    )
+                    if tenant_schemas:
+                        order_union = " UNION ALL ".join(
+                            f"SELECT car_id FROM {s}.site_cars_siteorder WHERE car_id IS NOT NULL"
+                            for s in tenant_schemas
+                        )
+                        orders_subquery = f"SELECT DISTINCT car_id FROM ({order_union}) _orders"
+                    else:
+                        orders_subquery = "SELECT NULL WHERE FALSE"
+                    stale_filter = (
+                        "category_id IS NULL "
+                        "AND lot_number NOT IN (SELECT lot_number FROM _seen_lots) "
+                        f"AND id NOT IN ({orders_subquery})"
+                    )
+
+                    if dry_run:
+                        cursor.execute(f"SELECT COUNT(*) FROM cars_apicar WHERE {stale_filter}")
+                        count = cursor.fetchone()[0]
+                        self.stdout.write(f"[DRY-RUN] Would delete {count} stale Encar cars (auction/categorised cars are excluded).")
+                        return count
+
+                    # Delete wishlists first (FK), then the cars — batched to avoid long locks
+                    cursor.execute(f"""
+                        CREATE TEMP TABLE _stale_ids AS
+                        SELECT id FROM cars_apicar WHERE {stale_filter}
+                    """)
+                    cursor.execute("SELECT COUNT(*) FROM _stale_ids")
+                    total_stale = cursor.fetchone()[0]
+                    self.stdout.write(f"Found {total_stale:,} stale cars to delete.")
+
+                    deleted = 0
+                    while True:
+                        cursor.execute(f"""
+                            WITH batch AS (
+                                SELECT id FROM _stale_ids LIMIT {delete_batch_size}
+                            )
+                            DELETE FROM cars_wishlist WHERE car_id IN (SELECT id FROM batch)
+                        """)
+                        cursor.execute(f"""
+                            WITH batch AS (
+                                SELECT id FROM _stale_ids LIMIT {delete_batch_size}
+                            ),
+                            del AS (
+                                DELETE FROM cars_apicar WHERE id IN (SELECT id FROM batch) RETURNING id
+                            )
+                            DELETE FROM _stale_ids WHERE id IN (SELECT id FROM del)
+                        """)
+                        rows = cursor.rowcount
+                        if rows == 0:
+                            break
+                        deleted += rows
+                        self.stdout.write(f"  deleted {deleted:,} / {total_stale:,}...")
+
+            self.stdout.write(self.style.SUCCESS(f"Stale deletion done. Deleted: {deleted}"))
+            return deleted
+
+        # ── Direct URL mode ──────────────────────────────────────────────────
+        if direct_url:
+            self.stdout.write(f"Fetching active (direct URL): {direct_url}")
+            active_resp = self._download_csv_stream(direct_url)
+            if active_resp:
+                created, updated, seen = self._process_active_chunked(
+                    active_resp,
+                    url=direct_url,
+                    chunk_size=chunk_size,
+                    batch_size=batch_size,
+                    progress=progress,
+                    progress_every=progress_every,
+                    max_rows=max_rows,
+                    dry_run=dry_run,
+                )
+                active_resp.close()
+                stale_deleted = _delete_stale_cars(seen, dry_run) if delete_stale else 0
+                summary = f"Done (direct URL). Created: {created}, Updated: {updated}, Stale deleted: {stale_deleted}"
+                if dry_run:
+                    summary = "[DRY-RUN] " + summary
+                self.stdout.write(self.style.SUCCESS(summary))
+            else:
+                self.stdout.write(self.style.ERROR(f"Could not download: {direct_url}"))
+            return
+
+        # ── Autobase mode (original flow) ────────────────────────────────────
         missing = []
         if not host:
             missing.append("--host or ENCAR_HOST/ENCAR_AUTObASE_HOST")
@@ -651,8 +839,7 @@ class Command(BaseCommand):
             raise CommandError(
                 "Missing required parameters: "
                 + ", ".join(missing)
-                + "\nExample: python manage.py import_encar_fast --host https://autobase-berger.auto-parser.ru --username admin --password <pass> --date "
-                + date_str
+                + "\nTip: pass a public CSV with --url <https://...csv> to skip auth entirely."
             )
 
         active_url, removed_url = self._build_urls(host, date_str)
@@ -660,9 +847,10 @@ class Command(BaseCommand):
         active_resp = self._download_csv_stream(active_url, username, password)
 
         total_created = total_updated = total_removed = 0
+        seen_all: set = set()
 
         if active_resp:
-            created, updated = self._process_active_chunked(
+            created, updated, seen_all = self._process_active_chunked(
                 active_resp,
                 url=active_url,
                 username=username,
@@ -681,7 +869,9 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING("No active_offer.csv to process."))
 
-        if not skip_removed:
+        if delete_stale and seen_all:
+            total_removed += _delete_stale_cars(seen_all, dry_run)
+        elif not skip_removed:
             self.stdout.write(f"Fetching removed: {removed_url}")
             removed_resp = self._download_csv_stream(removed_url, username, password)
             if removed_resp:

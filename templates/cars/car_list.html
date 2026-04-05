@@ -321,9 +321,9 @@
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الشركة المصنعة</label>
                         <select name="manufacturer" id="manufacturer-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
-                            {% for m in manufacturers %}
-                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
-                            {% endfor %}
+                            {% for m in manufacturers %}{% if m.car_count %}
+                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }} ({{ m.car_count }})</option>
+                            {% endif %}{% endfor %}
                         </select>
                     </div>
                     <div>
@@ -331,7 +331,7 @@
                         <select name="model" id="model-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
                             {% for m in models %}
-                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m|translate_model }}</option>
+                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m|translate_model }} ({{ m.car_count }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -341,7 +341,7 @@
                         <select name="badge" id="badge-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
                             <option value="">الكل</option>
                             {% for b in badges %}
-                            <option value="{{ b.id }}" {% if request.GET.badge == b.id|stringformat:"d" %}selected{% endif %}>{{ b.name }}</option>
+                            <option value="{{ b.id }}" {% if request.GET.badge == b.id|stringformat:"d" %}selected{% endif %}>{{ b.name }} ({{ b.car_count }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -459,37 +459,114 @@
             <div class="p-4 space-y-5">
 
                 <!-- Manufacturer -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الشركة المصنعة</label>
-                    <select name="manufacturer" id="sb-manufacturer" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
-                        {% for m in manufacturers %}
-                        <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="relative" id="sb-make-wrap">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الشركة المصنعة</label>
+                    <button type="button" id="sb-make-btn" onclick="sbToggle('make')"
+                            class="w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-xl text-sm font-medium transition
+                                   {% if request.GET.manufacturer %}border-brand text-brand bg-blue-50{% else %}bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300{% endif %}">
+                        <span class="truncate">
+                            {% if request.GET.manufacturer %}{% for m in manufacturers %}{% if request.GET.manufacturer == m.id|stringformat:"d" %}
+                                <span class="flex items-center gap-1.5">{% if m.logo %}<img src="{{ m.logo }}" class="w-4 h-4 object-contain" loading="lazy" alt="">{% endif %}{{ m.name_ar|default:m.name }}</span>
+                            {% endif %}{% endfor %}{% else %}الكل{% endif %}
+                        </span>
+                        <svg class="w-4 h-4 shrink-0 transition-transform duration-200" id="sb-make-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="sb-make-menu" class="hidden absolute top-full mt-1.5 right-0 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
+                        <div class="px-2 pt-2 pb-1 border-b border-gray-100">
+                            <input type="text" id="sb-make-search" oninput="sbSearch('make',this.value)" placeholder="بحث..." autocomplete="off"
+                                   class="w-full px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 ring-brand focus:bg-white transition">
+                        </div>
+                        <div class="max-h-52 overflow-y-auto py-1" id="sb-make-list">
+                            <a data-label="الكل all" href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}"
+                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if not request.GET.manufacturer %}font-bold text-brand{% else %}text-gray-700{% endif %}">
+                                الكل{% if not request.GET.manufacturer %}<svg class="w-3.5 h-3.5 text-brand" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                            </a>
+                            {% for m in manufacturers %}{% if m.car_count %}
+                            <a data-label="{{ m.name_ar|default:m.name }} {{ m.name }}" href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}manufacturer={{ m.id }}"
+                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if request.GET.manufacturer == m.id|stringformat:'d' %}font-bold text-brand bg-blue-50{% else %}text-gray-700{% endif %}">
+                                <span class="flex items-center gap-2">{% if m.logo %}<img src="{{ m.logo }}" class="w-4 h-4 object-contain" loading="lazy" alt="">{% endif %}<span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span></span>
+                                <span class="text-xs text-gray-400 tabular-nums">{{ m.car_count }}</span>
+                            </a>
+                            {% endif %}{% endfor %}
+                            <p class="sb-empty hidden px-4 py-3 text-sm text-gray-400 text-center">لا توجد نتائج</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Model -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الموديل</label>
-                    <select name="model" id="sb-model" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
-                        {% for m in models %}
-                        <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m|translate_model }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="relative" id="sb-model-wrap">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الموديل</label>
+
+                    <button type="button" id="sb-model-btn" onclick="sbToggle('model')"
+                            class="w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-xl text-sm font-medium transition
+                                   {% if request.GET.model %}border-indigo-500 text-indigo-600 bg-indigo-50{% else %}bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300{% endif %}">
+                        <span class="truncate">
+                            {% if request.GET.model %}{% for m in models %}{% if request.GET.model == m.id|stringformat:"d" %}{{ m|translate_model }}{% endif %}{% endfor %}{% else %}الكل{% endif %}
+                        </span>
+                        <svg class="w-4 h-4 shrink-0 transition-transform duration-200" id="sb-model-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="sb-model-menu" class="hidden absolute top-full mt-1.5 right-0 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
+                        <div class="px-2 pt-2 pb-1 border-b border-gray-100">
+                            <input type="text" id="sb-model-search" oninput="sbSearch('model',this.value)" placeholder="بحث..." autocomplete="off"
+                                   class="w-full px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 ring-indigo-400 focus:bg-white transition">
+                        </div>
+                        <div class="max-h-52 overflow-y-auto py-1" id="sb-model-list">
+                            {% if models %}
+                            <a data-label="الكل all" href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}"
+                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if not request.GET.model %}font-bold text-indigo-600{% else %}text-gray-700{% endif %}">
+                                الكل{% if not request.GET.model %}<svg class="w-3.5 h-3.5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                            </a>
+                            {% for m in models %}
+                            <a data-label="{{ m|translate_model }} {{ m.name }}" href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}model={{ m.id }}"
+                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if request.GET.model == m.id|stringformat:'d' %}font-bold text-indigo-600 bg-indigo-50{% else %}text-gray-700{% endif %}">
+                                <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
+                                <span class="text-xs text-gray-400 tabular-nums">{{ m.car_count }}</span>
+                            </a>
+                            {% endfor %}
+                            <p class="sb-empty hidden px-4 py-3 text-sm text-gray-400 text-center">لا توجد نتائج</p>
+                            {% else %}
+                            <p class="px-4 py-3 text-sm text-gray-400 text-center">اختر الشركة أولاً</p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
 
                 {% if request.GET.car_type != 'auction' %}
                 <!-- Badge -->
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">تفاصيل الموديل</label>
-                    <select name="badge" id="sb-badge" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
-                        {% for b in badges %}
-                        <option value="{{ b.id }}" {% if request.GET.badge == b.id|stringformat:"d" %}selected{% endif %}>{{ b.name }}</option>
-                        {% endfor %}
-                    </select>
+                <div class="relative" id="sb-badge-wrap">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">تفاصيل الموديل</label>
+                    <button type="button" id="sb-badge-btn" onclick="sbToggle('badge')"
+                            class="w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-xl text-sm font-medium transition
+                                   {% if request.GET.badge %}border-purple-500 text-purple-600 bg-purple-50{% else %}bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300{% endif %}">
+                        <span class="truncate">
+                            {% if request.GET.badge %}{% for b in badges %}{% if request.GET.badge == b.id|stringformat:"d" %}{{ b.name }}{% endif %}{% endfor %}{% else %}الكل{% endif %}
+                        </span>
+                        <svg class="w-4 h-4 shrink-0 transition-transform duration-200" id="sb-badge-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="sb-badge-menu" class="hidden absolute top-full mt-1.5 right-0 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
+                        <div class="px-2 pt-2 pb-1 border-b border-gray-100">
+                            <input type="text" id="sb-badge-search" oninput="sbSearch('badge',this.value)" placeholder="بحث..." autocomplete="off"
+                                   class="w-full px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 ring-purple-400 focus:bg-white transition">
+                        </div>
+                        <div class="max-h-52 overflow-y-auto py-1" id="sb-badge-list">
+                            {% if badges %}
+                            <a data-label="الكل all" href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}"
+                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if not request.GET.badge %}font-bold text-purple-600{% else %}text-gray-700{% endif %}">
+                                الكل{% if not request.GET.badge %}<svg class="w-3.5 h-3.5 text-purple-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                            </a>
+                            {% for b in badges %}
+                            <a data-label="{{ b.name }}" href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}badge={{ b.id }}"
+                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if request.GET.badge == b.id|stringformat:'d' %}font-bold text-purple-600 bg-purple-50{% else %}text-gray-700{% endif %}">
+                                <span>{{ b.name }}</span>
+                                <span class="text-xs text-gray-400 tabular-nums">{{ b.car_count }}</span>
+                            </a>
+                            {% endfor %}
+                            <p class="sb-empty hidden px-4 py-3 text-sm text-gray-400 text-center">لا توجد نتائج</p>
+                            {% else %}
+                            <p class="px-4 py-3 text-sm text-gray-400 text-center">اختر الموديل أولاً</p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
                 {% endif %}
 
@@ -929,6 +1006,73 @@ if (sbManuSelect && sbModelSelect) {
         if (sbBadgeSelect) sbBadgeSelect.innerHTML = '<option value="">الكل</option>';
     });
 }
+
+// Sidebar make/model/badge dropdown menus
+(function () {
+    var sbMenus = ['make', 'model', 'badge'];
+
+    window.sbToggle = function (key) {
+        var menu = document.getElementById('sb-' + key + '-menu');
+        var chevron = document.getElementById('sb-' + key + '-chevron');
+        if (!menu) return;
+        var isOpen = !menu.classList.contains('hidden');
+        // close all first
+        sbMenus.forEach(function (k) {
+            var m = document.getElementById('sb-' + k + '-menu');
+            var c = document.getElementById('sb-' + k + '-chevron');
+            var s = document.getElementById('sb-' + k + '-search');
+            if (m) m.classList.add('hidden');
+            if (c) c.style.transform = '';
+            if (s) { s.value = ''; sbSearch(k, ''); }
+        });
+        if (!isOpen) {
+            menu.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+            // focus search input
+            var search = document.getElementById('sb-' + key + '-search');
+            if (search) setTimeout(function () { search.focus(); }, 50);
+        }
+    };
+
+    function normalizeAr(str) {
+        return str
+            .replace(/[أإآ]/g, 'ا')
+            .replace(/ة/g, 'ه')
+            .replace(/ى/g, 'ي')
+            .replace(/[\u064B-\u065F\u0670]/g, ''); // strip diacritics
+    }
+
+    window.sbSearch = function (key, query) {
+        var list = document.getElementById('sb-' + key + '-list');
+        if (!list) return;
+        var q = normalizeAr(query.trim().toLowerCase());
+        var items = list.querySelectorAll('a[data-label]');
+        items.forEach(function (a) {
+            var label = normalizeAr((a.getAttribute('data-label') || '').toLowerCase());
+            var text  = normalizeAr(a.textContent.toLowerCase());
+            a.style.display = (!q || label.includes(q) || text.includes(q)) ? '' : 'none';
+        });
+        var empty = list.querySelector('.sb-empty');
+        if (empty) {
+            var any = Array.from(items).some(function (a) { return a.style.display !== 'none'; });
+            empty.style.display = any ? 'none' : '';
+        }
+    };
+
+    document.addEventListener('click', function (e) {
+        sbMenus.forEach(function (k) {
+            var wrap = document.getElementById('sb-' + k + '-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                var m = document.getElementById('sb-' + k + '-menu');
+                var c = document.getElementById('sb-' + k + '-chevron');
+                var s = document.getElementById('sb-' + k + '-search');
+                if (m) m.classList.add('hidden');
+                if (c) c.style.transform = '';
+                if (s) { s.value = ''; sbSearch(k, ''); }
+            }
+        });
+    });
+})();
 
 // Wishlist functionality
 function toggleWishlist(carId) {

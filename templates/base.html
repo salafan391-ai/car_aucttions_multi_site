@@ -682,13 +682,6 @@
                 <span id="wishlist-count-fab" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
             </button>
             
-            <!-- Orders Button -->
-            <button onclick="window.location.href='{% url 'my_orders' %}'" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand hover:bg-brand/10 transition-all hover:scale-110 relative">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
-            </button>
-            
             <!-- Account/Profile Button -->
             <button onclick="showAccountMenu()" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-purple-500 hover:bg-purple-50 transition-all hover:scale-110 relative">
                 <div class="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold">{{ user.username|first|upper }}</div>
@@ -731,20 +724,7 @@
             <div class="absolute -bottom-2 right-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-gray-900"></div>
         </div>
 
-        <!-- Orders Tooltip -->
-        <div id="orders-tooltip" class="absolute bottom-32 right-4 bg-gray-900 text-white p-3 rounded-lg text-sm max-w-xs opacity-0 transition-opacity duration-300 pointer-events-none">
-            <div class="flex items-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"/>
-                </svg>
-                <span class="font-bold">طلباتي</span>
-            </div>
-            <p>تتبع طلباتك ومعاملاتك</p>
-            <div class="absolute -bottom-2 right-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-gray-900"></div>
-        </div>
-
-        <!-- Account Tooltip -->
+<!-- Account Tooltip -->
         <div id="account-tooltip" class="absolute bottom-44 right-4 bg-gray-900 text-white p-3 rounded-lg text-sm max-w-xs opacity-0 transition-opacity duration-300 pointer-events-none">
             <div class="flex items-center gap-2 mb-1">
                 <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1269,8 +1249,7 @@
             // Show wishlist tooltip after 3.5 seconds (if authenticated)
             {% if user.is_authenticated %}
             setTimeout(() => showTooltip('wishlist-tooltip'), 3500);
-            setTimeout(() => showTooltip('orders-tooltip'), 5000);
-            setTimeout(() => showTooltip('account-tooltip'), 6500);
+setTimeout(() => showTooltip('account-tooltip'), 6500);
             {% else %}
             // Show login tooltip after 3.5 seconds (if not authenticated)
             setTimeout(() => {

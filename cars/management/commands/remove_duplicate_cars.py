@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from core.models import ApiCar
+from cars.models import ApiCar
 from django.db.models import Count
 
 

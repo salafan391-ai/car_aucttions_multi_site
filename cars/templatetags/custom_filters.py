@@ -93,7 +93,7 @@ def translate_model(value):
     name_ar = getattr(value, 'name_ar', None)
     if name_ar:
         return name_ar
-    return car_models_dict.get(name, name)
+    return car_models_dict.get(name.lower(), name)
 
 
 @register.filter(name='translate_fuel')

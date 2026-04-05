@@ -841,7 +841,12 @@ def car_list(request):
             # --- manufacturers sidebar list ---
             _mfr_ids = set(_auction_qs.values_list('manufacturer_id', flat=True).distinct())
             manufacturers = list(
-                Manufacturer.objects.filter(id__in=_mfr_ids).order_by('name')
+                Manufacturer.objects.filter(id__in=_mfr_ids)
+                .annotate(car_count=Count(
+                    'apicar',
+                    filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now),
+                ))
+                .order_by('name')
             )
             cache.set(_auction_mfr_key, manufacturers, 60 * 15)
 
@@ -879,16 +884,24 @@ def car_list(request):
             )
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
-        _mfr_cache_key = "car_list:manufacturers_all"
+        _mfr_cache_key = f"car_list:manufacturers_{'cars' if car_type == 'cars' else 'all'}"
         manufacturers = cache.get(_mfr_cache_key)
         if manufacturers is None:
-            manufacturers = list(Manufacturer.objects.all().order_by('name'))
+            _mfr_count_filter = (
+                ~Q(apicar__category__name='auction')
+                if car_type == 'cars'
+                else ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
+            )
+            manufacturers = list(
+                Manufacturer.objects.annotate(car_count=Count('apicar', filter=_mfr_count_filter))
+                .order_by('name')
+            )
             cache.set(_mfr_cache_key, manufacturers, 60 * 15)
 
     # Only load models/badges when manufacturer/model is selected, scoped to car_type
     if manufacturer:
         if car_type == 'auction':
-            _models_cache_key = f"car_list:models_auction:{manufacturer}"
+            _models_cache_key = f"car_list:models_auction_cnt:{manufacturer}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
                 _auction_model_ids = list(
@@ -898,14 +911,18 @@ def car_list(request):
                     .values_list('model_id', flat=True).distinct()
                 )
                 models_qs = list(
-                    CarModel.objects.filter(id__in=_auction_model_ids).order_by('name')
+                    CarModel.objects.filter(id__in=_auction_model_ids)
+                    .annotate(car_count=Count(
+                        'apicar',
+                        filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer),
+                    ))
+                    .order_by('name')
                 )
-                # Attach Arabic translations from utils mapping when available
                 for m in models_qs:
-                    setattr(m, 'name_ar', car_models_dict.get(m.name))
+                    setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
                 cache.set(_models_cache_key, models_qs, 60 * 15)
         elif car_type == 'cars':
-            _models_cache_key = f"car_list:models_cars:{manufacturer}"
+            _models_cache_key = f"car_list:models_cars_cnt:{manufacturer}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
                 _cars_model_ids = list(
@@ -914,30 +931,48 @@ def car_list(request):
                     .values_list('model_id', flat=True).distinct()
                 )
                 models_qs = list(
-                    CarModel.objects.filter(id__in=_cars_model_ids).order_by('name')
+                    CarModel.objects.filter(id__in=_cars_model_ids)
+                    .annotate(car_count=Count(
+                        'apicar',
+                        filter=~Q(apicar__category__name='auction') & Q(apicar__manufacturer_id=manufacturer),
+                    ))
+                    .order_by('name')
                 )
-                # Attach Arabic translations from utils mapping when available
                 for m in models_qs:
-                    setattr(m, 'name_ar', car_models_dict.get(m.name))
+                    setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
                 cache.set(_models_cache_key, models_qs, 60 * 15)
         else:
-            _models_cache_key = f"car_list:models:{manufacturer}"
+            _models_cache_key = f"car_list:models_cnt:{manufacturer}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
-                models_qs = list(CarModel.objects.filter(manufacturer_id=manufacturer).order_by('name'))
+                models_qs = list(
+                    CarModel.objects.filter(manufacturer_id=manufacturer)
+                    .annotate(car_count=Count(
+                        'apicar',
+                        filter=~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer),
+                    ))
+                    .order_by('name')
+                )
                 for m in models_qs:
-                    setattr(m, 'name_ar', car_models_dict.get(m.name))
+                    setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
                 cache.set(_models_cache_key, models_qs, 60 * 15)
     else:
         models_qs = []
 
     model_param = request.GET.get('model')
     if model_param:
-        _badges_cache_key = f"car_list:badges:{model_param}"
+        _badges_cache_key = f"car_list:badges_cnt:{model_param}:{car_type or 'all'}"
         badges = cache.get(_badges_cache_key)
         if badges is None:
+            if car_type == 'auction':
+                _badge_filter = Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__model_id=model_param)
+            elif car_type == 'cars':
+                _badge_filter = ~Q(apicar__category__name='auction') & Q(apicar__model_id=model_param)
+            else:
+                _badge_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id=model_param)
             badges = list(
                 CarBadge.objects.filter(model_id=model_param)
+                .annotate(car_count=Count('apicar', filter=_badge_filter))
                 .distinct().order_by('name')
             )
             cache.set(_badges_cache_key, badges, 60 * 15)
@@ -1172,7 +1207,7 @@ def api_models_by_manufacturer(request):
             if lang and lang.startswith('ar'):
                 # Prefer an explicit name_ar attribute (may have been attached earlier),
                 # otherwise consult the repo mapping `car_models_dict` and finally fall back to m.name.
-                name_ar = getattr(m, 'name_ar', None) or car_models_dict.get(m.name)
+                name_ar = getattr(m, 'name_ar', None) or car_models_dict.get(m.name.lower())
                 display_name = name_ar if name_ar else m.name
             else:
                 display_name = m.name

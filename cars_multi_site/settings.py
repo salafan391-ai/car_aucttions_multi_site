@@ -332,3 +332,9 @@ else:
 OFLEET_API_BASE  = os.environ.get("OFLEET_API_BASE",  "https://ofleet0.com")
 OFLEET_USERNAME  = os.environ.get("OFLEET_USERNAME",  "")
 OFLEET_PASSWORD  = os.environ.get("OFLEET_PASSWORD",  "")
+
+
+
+R2_ACCOUNT_ID=os.environ.get("R2_ACCOUNT_ID", "")
+R2_ACCESS_KEY_ID=os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY=os.environ.get("R2_SECRET_ACCESS_KEY", "")

@@ -1024,7 +1024,15 @@ transmission_types_dict = {
     'Unknown': 'غير معروف'
 }
 car_models_dict = {
-    'Canival': 'كارنيفال',
+  "bongo":"بونغو",
+  "nexo": "نيكسو",
+  "venue": "فينو",
+  "santafe": "سانتا في",
+  "porter": "بورتر",
+  "porter ii": "بورتر 2",
+  "grand starex": "جراند ستاركس",
+  "casper": "كاسبر",
+    'Canival': 'كارنفال',
     'TL':'TL',
     'GV60':'GV60',
     'Opirus':'اوبريوس',
@@ -1270,6 +1278,8 @@ car_models_dict = {
     "Series-10":"الفئة العاشرة",
 }
 
+# Normalise keys to lowercase so lookups are case-insensitive
+car_models_dict = {k.lower(): v for k, v in car_models_dict.items()}
 
 
 address_ar = {
