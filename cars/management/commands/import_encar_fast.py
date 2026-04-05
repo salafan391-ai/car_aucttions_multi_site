@@ -666,7 +666,7 @@ class Command(BaseCommand):
                     for schema in tenant_schemas:
                         for table in ("site_cars_siterating", "site_cars_sitequestion", "site_cars_siteorder", "site_cars_sitesoldcar"):
                             cursor.execute(
-                                f"DELETE FROM {schema}.{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
+                                f'DELETE FROM "{schema}".{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))',
                                 [b],
                             )
                     cursor.execute(
@@ -773,7 +773,7 @@ class Command(BaseCommand):
                         cursor.execute(f"DELETE FROM cars_carimage WHERE car_id IN (SELECT id FROM cars_apicar WHERE {stale_filter})")
                         for schema in tenant_schemas:
                             for table in ("site_cars_siterating", "site_cars_sitequestion", "site_cars_siteorder", "site_cars_sitesoldcar"):
-                                cursor.execute(f"DELETE FROM {schema}.{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE {stale_filter})")
+                                cursor.execute(f'DELETE FROM "{schema}".{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE {stale_filter})')
                         cursor.execute(f"DELETE FROM cars_apicar WHERE {stale_filter}")
                         deleted = cursor.rowcount
                     else:
