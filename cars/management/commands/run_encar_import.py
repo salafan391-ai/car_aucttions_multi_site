@@ -1,5 +1,5 @@
 import csv
-import io
+import itertools
 import os
 
 import boto3
@@ -35,23 +35,14 @@ class Command(BaseCommand):
         try:
             resp = requests.get(url, stream=True, timeout=60)
             resp.encoding = "utf-8"
-            first_line = True
-            delimiter = ","
-            for raw_line in resp.iter_lines(decode_unicode=True):
-                if not raw_line:
-                    continue
-                if first_line:
-                    raw_line = raw_line.lstrip("\ufeff")
-                    delimiter = "," if raw_line.count(",") >= raw_line.count("|") else "|"
-                    header = raw_line
-                    first_line = False
-                    continue
-                # Fast parse: only extract the lot number column
-                reader = csv.DictReader(io.StringIO(header + "\n" + raw_line), delimiter=delimiter)
-                for row in reader:
-                    ln = (row.get("inner_id") or row.get("id") or "").strip()
-                    if ln:
-                        seen.add(ln)
+            lines = (line for line in resp.iter_lines(decode_unicode=True) if line)
+            header_line = next(lines, "").lstrip("\ufeff")
+            delimiter = "," if header_line.count(",") >= header_line.count("|") else "|"
+            reader = csv.DictReader(itertools.chain([header_line], lines), delimiter=delimiter)
+            for row in reader:
+                ln = (row.get("inner_id") or row.get("id") or "").strip()
+                if ln:
+                    seen.add(ln)
             resp.close()
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Failed to scan CSV: {e}"))
