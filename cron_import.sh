@@ -1,19 +1,15 @@
 #!/usr/bin/env bash
 # This script is used by Railway cron service.
 # Set the Railway cron service startCommand to: bash cron_import.sh
-# Set Railway cron schedule to: 30 2 * * *   (daily at 2:30am UTC = 5:30am Riyadh time)
+# Set Railway cron schedule to: 0 4 * * *   (daily at 4:00am UTC = 7:00am Riyadh time)
 
 set -e
 
-TODAY=$(date -u +%Y-%m-%d)
-echo "==> [$(date -u)] Starting daily Encar import for $TODAY"
+echo "==> [$(date -u)] Starting daily Encar import"
 
-python manage.py import_encar_fast \
-    --date "$TODAY" \
-    --progress \
-    --progress-every 2000
+python manage.py run_encar_import
 
-echo "==> [$(date -u)] Import complete for $TODAY"
+echo "==> [$(date -u)] Import complete"
 
 # Fill in Arabic names / logos only for manufacturers that are still missing them
 python manage.py shell -c "
@@ -32,16 +28,6 @@ if grep -q "missing logo: [^0]" /tmp/mfr_check.txt; then
     echo "==> Setting manufacturer logos..."
     python manage.py set_manufacturer_logos
 fi
-
-# Remove lease cars imported today (cannot be resold/exported)
-echo "==> [$(date -u)] Running lease car check..."
-python manage.py check_lease_cars
-echo "==> [$(date -u)] Lease check complete."
-
-# Remove cars no longer listed on Encar (404)
-echo "==> [$(date -u)] Running availability check..."
-python manage.py check_encar_availability --workers 20 --batch-size 100 --timeout 7
-echo "==> [$(date -u)] Availability check complete."
 
 # Clear stale cache so all tenants see fresh data immediately
 if [ -n "$REDIS_URL" ]; then
