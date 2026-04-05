@@ -1,11 +1,18 @@
+import csv
+import io
 import os
+
 import boto3
+import requests
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
+from django.db import connection
+
+from cars.models import ApiCar
 
 
 class Command(BaseCommand):
-    help = "Generate a presigned R2 URL for the Encar CSV and run import_encar_fast"
+    help = "Delete stale Encar cars first, then import fresh data from R2"
 
     def handle(self, *args, **options):
         s3 = boto3.client(
@@ -22,5 +29,91 @@ class Command(BaseCommand):
             ExpiresIn=3600,
         )
 
-        self.stdout.write("Presigned URL generated. Starting import...")
-        call_command("import_encar_fast", url=url, delete_stale=True, progress=True, progress_every=5000)
+        # ── Step 1: Quick pass to collect all lot numbers in the CSV ──────────
+        self.stdout.write("Scanning CSV for lot numbers...")
+        seen: set[str] = set()
+        try:
+            resp = requests.get(url, stream=True, timeout=60)
+            resp.encoding = "utf-8"
+            first_line = True
+            delimiter = ","
+            for raw_line in resp.iter_lines(decode_unicode=True):
+                if not raw_line:
+                    continue
+                if first_line:
+                    raw_line = raw_line.lstrip("\ufeff")
+                    delimiter = "," if raw_line.count(",") >= raw_line.count("|") else "|"
+                    header = raw_line
+                    first_line = False
+                    continue
+                # Fast parse: only extract the lot number column
+                reader = csv.DictReader(io.StringIO(header + "\n" + raw_line), delimiter=delimiter)
+                for row in reader:
+                    ln = (row.get("inner_id") or row.get("id") or "").strip()
+                    if ln:
+                        seen.add(ln)
+            resp.close()
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Failed to scan CSV: {e}"))
+            return
+
+        self.stdout.write(f"CSV contains {len(seen):,} lot numbers.")
+
+        # ── Step 2: Delete stale cars using Django ORM ────────────────────────
+        self.stdout.write("Finding stale cars...")
+        db_lots = set(
+            ApiCar.objects.filter(category__isnull=True).values_list("lot_number", flat=True)
+        )
+        stale = db_lots - seen
+        self.stdout.write(f"Deleting {len(stale):,} stale cars...")
+
+        # Find all tenant schemas dynamically
+        from django_tenants.utils import get_tenant_model
+        tenant_schemas = list(
+            get_tenant_model().objects
+            .exclude(schema_name="public")
+            .values_list("schema_name", flat=True)
+        )
+
+        CHUNK = 3000
+        stale_list = list(stale)
+        total_deleted = 0
+        with connection.cursor() as cursor:
+            for i in range(0, len(stale_list), CHUNK):
+                chunk = stale_list[i : i + CHUNK]
+
+                # Delete from public-schema tables first
+                cursor.execute(
+                    "DELETE FROM cars_wishlist WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
+                    [chunk],
+                )
+                cursor.execute(
+                    "DELETE FROM cars_carimage WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
+                    [chunk],
+                )
+
+                # Delete from all tenant-schema tables
+                for schema in tenant_schemas:
+                    for table in ("site_cars_siterating", "site_cars_sitequestion", "site_cars_siteorder", "site_cars_sitesoldcar"):
+                        cursor.execute(
+                            f"DELETE FROM {schema}.{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
+                            [chunk],
+                        )
+
+                cursor.execute(
+                    "DELETE FROM cars_apicar WHERE lot_number = ANY(%s)",
+                    [chunk],
+                )
+                total_deleted += cursor.rowcount
+
+        self.stdout.write(self.style.SUCCESS(f"Deleted {total_deleted:,} stale cars."))
+
+        # ── Step 3: Import fresh data ─────────────────────────────────────────
+        self.stdout.write("Starting import...")
+        call_command(
+            "import_encar_fast",
+            url=url,
+            delete_stale=False,
+            progress=True,
+            progress_every=5000,
+        )

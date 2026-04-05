@@ -233,9 +233,9 @@ class PostCommentAdmin(admin.ModelAdmin):
 
 @admin.register(Wishlist)
 class WishlistAdmin(admin.ModelAdmin):
-    list_display = ('user', 'car', 'created_at')
+    list_display = ('session_key', 'car', 'created_at')
     list_filter = ('created_at',)
-    search_fields = ('user__username', 'car__title')
+    search_fields = ('session_key', 'car__title')
 
 
 @admin.register(CarRequest)

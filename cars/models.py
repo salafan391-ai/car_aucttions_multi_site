@@ -63,18 +63,18 @@ class BodyType(models.Model):
         return self.name
 
 class Wishlist(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True)
+    session_key = models.CharField(max_length=40, db_index=True)
     car = models.ForeignKey('ApiCar', on_delete=models.CASCADE, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    
+
     class Meta:
-        unique_together = ['user', 'car']
+        unique_together = ['session_key', 'car']
         indexes = [
-            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['session_key', 'created_at']),
         ]
-    
+
     def __str__(self):
-        return f"{self.user.username} - {self.car.title}"
+        return f"{self.session_key} - {self.car.title}"
 
 class ApiCar(models.Model):
     STATUS_CHOICES = [

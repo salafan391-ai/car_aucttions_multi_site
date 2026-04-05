@@ -1494,28 +1494,27 @@ def contact(request):
 
 
 def toggle_wishlist(request, car_id):
-    """Toggle car in user's wishlist"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'يجب تسجيل الدخول أولاً', 'redirect': '/login/?next=' + request.META.get('HTTP_REFERER', '/')}, status=401)
-    
+    """Toggle car in user's wishlist (session-based, no login required)"""
+    if not request.session.session_key:
+        request.session.create()
+    session_key = request.session.session_key
+
     try:
         car = get_object_or_404(ApiCar, pk=car_id)
-        
+
         wishlist_item, created = Wishlist.objects.get_or_create(
-            user=request.user, 
-            car=car
+            session_key=session_key,
+            car=car,
         )
-        
+
         if not created:
-            # Item exists, so remove it
             wishlist_item.delete()
             in_wishlist = False
         else:
-            # Item was created
             in_wishlist = True
-        
+
         return JsonResponse({'in_wishlist': in_wishlist})
-        
+
     except Exception as e:
         print(f"Error in toggle_wishlist: {e}")
         import traceback
@@ -1523,27 +1522,28 @@ def toggle_wishlist(request, car_id):
         return JsonResponse({'error': f'حدث خطأ: {str(e)}'}, status=500)
 
 
-@login_required
 @ensure_csrf_cookie
 def wishlist(request):
-    """Show user's wishlist"""
+    """Show session wishlist"""
+    if not request.session.session_key:
+        request.session.create()
+    session_key = request.session.session_key
+
     wishlist_items = Wishlist.objects.filter(
-        user=request.user
+        session_key=session_key
     ).select_related('car', 'car__manufacturer', 'car__model').order_by('-created_at')
-    
-    # Filter out expired auctions
+
     valid_items = []
     for item in wishlist_items:
         if _exclude_expired_auctions(ApiCar.objects.filter(pk=item.car.pk)).exists():
             valid_items.append(item)
         else:
-            # Remove expired items from wishlist
             item.delete()
-    
+
     paginator = Paginator(valid_items, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'page_obj': page_obj,
         'wishlist_items': page_obj,
@@ -1553,18 +1553,19 @@ def wishlist(request):
 
 
 def wishlist_count(request):
-    """Get user's wishlist count"""
-    if not request.user.is_authenticated:
+    """Get session wishlist count"""
+    if not request.session.session_key:
         return JsonResponse({'count': 0})
 
-    cache_key = f"wishlist_count_{request.user.id}"
+    session_key = request.session.session_key
+    cache_key = f"wishlist_count_{session_key}"
     count = cache.get(cache_key)
     if count is not None:
         return JsonResponse({'count': count})
 
     try:
-        count = Wishlist.objects.filter(user_id=request.user.id).count()
-        cache.set(cache_key, count, 60)  # Cache for 60 seconds
+        count = Wishlist.objects.filter(session_key=session_key).count()
+        cache.set(cache_key, count, 60)
         return JsonResponse({'count': count})
     except Exception:
         return JsonResponse({'count': 0})

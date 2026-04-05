@@ -640,6 +640,13 @@ class Command(BaseCommand):
         batch: List[str] = []
         reader = self._iter_csv_stream(resp, url=url, username=username, password=password)
 
+        from django_tenants.utils import get_tenant_model
+        tenant_schemas = list(
+            get_tenant_model().objects
+            .exclude(schema_name="public")
+            .values_list("schema_name", flat=True)
+        )
+
         def flush_delete(b: List[str]):
             nonlocal removed
             if not b:
@@ -647,21 +654,21 @@ class Command(BaseCommand):
             if dry_run:
                 return
             with transaction.atomic():
-                # Use raw SQL DELETE to avoid Django's cascade collector, which
-                # tries to query related tables (e.g. site_cars_siteorder) that
-                # only exist in tenant schemas, not in the public schema where
-                # this management command runs.
                 with connection.cursor() as cursor:
-                    # First, remove wishlist references to avoid FK violation
                     cursor.execute(
-                        """
-                        DELETE FROM cars_wishlist
-                        WHERE car_id IN (
-                            SELECT id FROM cars_apicar WHERE lot_number = ANY(%s)
-                        )
-                        """,
+                        "DELETE FROM cars_wishlist WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
                         [b],
                     )
+                    cursor.execute(
+                        "DELETE FROM cars_carimage WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
+                        [b],
+                    )
+                    for schema in tenant_schemas:
+                        for table in ("site_cars_siterating", "site_cars_sitequestion", "site_cars_siteorder", "site_cars_sitesoldcar"):
+                            cursor.execute(
+                                f"DELETE FROM {schema}.{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
+                                [b],
+                            )
                     cursor.execute(
                         "DELETE FROM cars_apicar WHERE lot_number = ANY(%s) RETURNING id",
                         [b],
@@ -740,25 +747,9 @@ class Command(BaseCommand):
 
                     # Only target Encar-imported cars (category IS NULL).
                     # Auction cars and other categorised cars are managed separately.
-                    # Also exclude cars referenced by orders across all tenant schemas
-                    # to avoid cascading deletes that would destroy order history.
-                    from django_tenants.utils import get_tenant_model
-                    tenant_schemas = list(
-                        get_tenant_model().objects.exclude(schema_name="public")
-                        .values_list("schema_name", flat=True)
-                    )
-                    if tenant_schemas:
-                        order_union = " UNION ALL ".join(
-                            f"SELECT car_id FROM {s}.site_cars_siteorder WHERE car_id IS NOT NULL"
-                            for s in tenant_schemas
-                        )
-                        orders_subquery = f"SELECT DISTINCT car_id FROM ({order_union}) _orders"
-                    else:
-                        orders_subquery = "SELECT NULL WHERE FALSE"
                     stale_filter = (
                         "category_id IS NULL "
-                        "AND lot_number NOT IN (SELECT lot_number FROM _seen_lots) "
-                        f"AND id NOT IN ({orders_subquery})"
+                        "AND lot_number NOT IN (SELECT lot_number FROM _seen_lots)"
                     )
 
                     if dry_run:
@@ -767,37 +758,26 @@ class Command(BaseCommand):
                         self.stdout.write(f"[DRY-RUN] Would delete {count} stale Encar cars (auction/categorised cars are excluded).")
                         return count
 
-                    # Delete wishlists first (FK), then the cars — batched to avoid long locks
-                    cursor.execute(f"""
-                        CREATE TEMP TABLE _stale_ids AS
-                        SELECT id FROM cars_apicar WHERE {stale_filter}
-                    """)
-                    cursor.execute("SELECT COUNT(*) FROM _stale_ids")
+                    cursor.execute(f"SELECT COUNT(*) FROM cars_apicar WHERE {stale_filter}")
                     total_stale = cursor.fetchone()[0]
                     self.stdout.write(f"Found {total_stale:,} stale cars to delete.")
 
-                    deleted = 0
-                    while True:
-                        cursor.execute(f"""
-                            WITH batch AS (
-                                SELECT id FROM _stale_ids LIMIT {delete_batch_size}
-                            )
-                            DELETE FROM cars_wishlist WHERE car_id IN (SELECT id FROM batch)
-                        """)
-                        cursor.execute(f"""
-                            WITH batch AS (
-                                SELECT id FROM _stale_ids LIMIT {delete_batch_size}
-                            ),
-                            del AS (
-                                DELETE FROM cars_apicar WHERE id IN (SELECT id FROM batch) RETURNING id
-                            )
-                            DELETE FROM _stale_ids WHERE id IN (SELECT id FROM del)
-                        """)
-                        rows = cursor.rowcount
-                        if rows == 0:
-                            break
-                        deleted += rows
-                        self.stdout.write(f"  deleted {deleted:,} / {total_stale:,}...")
+                    if total_stale:
+                        from django_tenants.utils import get_tenant_model
+                        tenant_schemas = list(
+                            get_tenant_model().objects
+                            .exclude(schema_name="public")
+                            .values_list("schema_name", flat=True)
+                        )
+                        cursor.execute(f"DELETE FROM cars_wishlist WHERE car_id IN (SELECT id FROM cars_apicar WHERE {stale_filter})")
+                        cursor.execute(f"DELETE FROM cars_carimage WHERE car_id IN (SELECT id FROM cars_apicar WHERE {stale_filter})")
+                        for schema in tenant_schemas:
+                            for table in ("site_cars_siterating", "site_cars_sitequestion", "site_cars_siteorder", "site_cars_sitesoldcar"):
+                                cursor.execute(f"DELETE FROM {schema}.{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE {stale_filter})")
+                        cursor.execute(f"DELETE FROM cars_apicar WHERE {stale_filter}")
+                        deleted = cursor.rowcount
+                    else:
+                        deleted = 0
 
             self.stdout.write(self.style.SUCCESS(f"Stale deletion done. Deleted: {deleted}"))
             return deleted
