@@ -8,6 +8,45 @@ class Tenant(TenantMixin):
     logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True, verbose_name="الشعار")
     favicon = models.ImageField(upload_to='tenant_favicons/', blank=True, null=True, verbose_name="أيقونة الموقع")
     hero_image = models.ImageField(upload_to='tenant_hero/', blank=True, null=True, verbose_name="صورة الخلفية الرئيسية", help_text="صورة خلفية الصفحة الرئيسية")
+    LANDING_DESIGN_CHOICES = [
+        ('cosmos',  '🌌 Cosmos (Dark Animated)'),
+        ('minimal', '⚡ Minimal (Clean Light)'),
+        ('bold',    '🏆 Bold (Full Hero)'),
+        ('luxury',  '✨ Luxury (Gold Dark)'),
+        ('neon',    '🔮 Neon (Cyberpunk)'),
+        ('desert',  '🏜️ Desert (Arabic)'),
+        ('split',     '▌ Split (Hero Panel)'),
+        ('dashboard', '📊 Dashboard (Clean Stats)'),
+        ('cockpit',   '🎛️ Cockpit (Car Gauges)'),
+    ]
+    landing_is_active = models.BooleanField(
+        default=True,
+        verbose_name="تفعيل صفحة الدخول",
+        help_text="عند التعطيل يتم التوجيه مباشرة إلى الصفحة الرئيسية بدون صفحة الدخول",
+    )
+    landing_design = models.CharField(
+        max_length=10,
+        choices=LANDING_DESIGN_CHOICES,
+        default='cosmos',
+        verbose_name="تصميم صفحة الدخول",
+        help_text="اختر تصميم صفحة الدخول الرئيسية للموقع",
+    )
+
+    CAR_DISPLAY_CHOICES = [
+        ('classic', '🃏 Classic (بطاقات بيضاء)'),
+        ('dark',    '🌙 Dark (بطاقات داكنة)'),
+        ('minimal', '✦ Minimal (نظيف مسطح)'),
+        ('bold',    '🎨 Bold (صورة كاملة)'),
+        ('cockpit', '🎛️ Cockpit (لوحة القيادة)'),
+    ]
+    car_display = models.CharField(
+        max_length=10,
+        choices=CAR_DISPLAY_CHOICES,
+        default='classic',
+        verbose_name="ثيم بطاقات السيارات",
+        help_text="اختر التصميم البصري لبطاقات السيارات في صفحة القائمة",
+    )
+
     THEME_CHOICES = [
         ('light',  'فاتح (Light)'),
         ('dark',   'داكن (Dark)'),

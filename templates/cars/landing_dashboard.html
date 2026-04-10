@@ -1,0 +1,425 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_name|default:"سيارات" }}</title>
+  {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --p: {{ primary_color|default:"#2563eb" }};
+      --s: {{ secondary_color|default:"#1e3a8a" }};
+      --a: {{ accent_color|default:"#3b82f6" }};
+      --bg: #f4f5f7;
+      --surface: #ffffff;
+      --border: #e2e5ea;
+      --text: #111827;
+      --muted: #6b7280;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Tajawal', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    {% if site_hero_images or site_hero_image %}
+    body {
+      background-image: url('{% if site_hero_images %}{{ site_hero_images.0.image.url }}{% else %}{{ site_hero_image }}{% endif %}');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,.72);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .page { position: relative; z-index: 1; }
+    .topbar { background: rgba(255,255,255,.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .stat-card { background: rgba(255,255,255,.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    {% endif %}
+
+    /* ── Layout ── */
+    .page {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .topbar-logo img {
+      height: 42px;
+      width: auto;
+      max-width: 160px;
+      object-fit: contain;
+    }
+
+    .topbar-logo-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--p), var(--s));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .topbar-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      gap: 2.5rem;
+    }
+
+    /* ── Company name ── */
+    .company-name {
+      font-size: clamp(1.6rem, 5vw, 2.6rem);
+      font-weight: 800;
+      color: var(--text);
+      text-align: center;
+      letter-spacing: -.02em;
+    }
+
+    /* ── About text ── */
+    .about-text {
+      font-size: clamp(.9rem, 2.5vw, 1.05rem);
+      color: var(--muted);
+      text-align: center;
+      max-width: 52ch;
+      line-height: 1.7;
+      min-height: 1.7em;
+    }
+    .about-cursor {
+      display: inline-block;
+      width: 2px;
+      height: .9em;
+      background: var(--muted);
+      margin-inline-start: 2px;
+      vertical-align: middle;
+      animation: cur-blink .75s step-end infinite;
+    }
+    @keyframes cur-blink { 50% { opacity: 0; } }
+
+    /* ── Stats row ── */
+    .stats {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .9rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      min-width: 150px;
+    }
+
+    .stat-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .stat-dot-cars    { background: var(--p); }
+    .stat-dot-auction { background: #f59e0b; }
+    .stat-dot-site    { background: #10b981; }
+
+    .stat-num {
+      font-size: 1.6rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .stat-lbl {
+      font-size: .8rem;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: .15rem;
+    }
+
+    /* ── Action buttons ── */
+    .actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .85rem 2rem;
+      border-radius: 10px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity .15s, transform .15s, box-shadow .15s;
+    }
+    .btn:hover  { opacity: .9; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-cars {
+      background: var(--p);
+      color: #fff;
+    }
+
+    .btn-auction {
+      background: #f59e0b;
+      color: #fff;
+    }
+
+    .btn-site {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* ── Divider label ── */
+    .section-label {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 1rem;
+      text-align: center;
+      font-size: .75rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 480px) {
+      .topbar { padding: 0 1rem; }
+      .main   { padding: 2rem 1rem; gap: 2rem; }
+      .btn    { padding: .75rem 1.4rem; font-size: .95rem; }
+      .stat-card { min-width: 130px; padding: .75rem 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Top bar with logo -->
+  <header class="topbar">
+    <a href="{% url 'home' %}" class="topbar-logo">
+      {% if site_logo %}
+        <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}">
+      {% else %}
+        <div class="topbar-logo-icon">
+          <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+          </svg>
+        </div>
+        {% if site_name %}
+          <span class="topbar-name">{{ site_name }}</span>
+        {% endif %}
+      {% endif %}
+    </a>
+  </header>
+
+  <!-- Main dashboard area -->
+  <main class="main">
+
+    <!-- Company name -->
+    <h1 class="company-name">{{ site_name }}</h1>
+
+    <!-- About -->
+    {% if site_about %}
+    <p class="about-text" id="about-tw" data-text="{{ site_about }}"></p>
+    {% endif %}
+
+    <!-- Stats -->
+    <div class="stats">
+
+      {% if cars_count %}
+      <div class="stat-card">
+        <span class="stat-dot stat-dot-cars"></span>
+        <div>
+          <div class="stat-num" data-target="{{ cars_count }}">0</div>
+          <div class="stat-lbl">سيارة للبيع</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if auction_count %}
+      <div class="stat-card">
+        <span class="stat-dot stat-dot-auction"></span>
+        <div>
+          <div class="stat-num" data-target="{{ auction_count }}">0</div>
+          <div class="stat-lbl">سيارة مزاد{% if next_auction_day_ar %} · {{ next_auction_day_ar }}{% endif %}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if site_cars_count %}
+      <div class="stat-card">
+        <span class="stat-dot stat-dot-site"></span>
+        <div>
+          <div class="stat-num" data-target="{{ site_cars_count }}">0</div>
+          <div class="stat-lbl">بيع مباشر</div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Action buttons -->
+    <span class="section-label">اختر قسماً</span>
+
+    <div class="actions">
+
+      <a href="{% url 'car_list' %}?car_type=cars" class="btn btn-cars">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+        </svg>
+        السيارات
+      </a>
+
+      <a href="{% url 'car_list' %}?car_type=auction" class="btn btn-auction">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/>
+        </svg>
+        المزادات
+      </a>
+
+      {% if site_cars_count %}
+      <a href="{% url 'site_car_list' %}" class="btn btn-site">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 21V12h6v9"/>
+        </svg>
+        البيع المباشر
+      </a>
+      {% endif %}
+
+    </div>
+
+  </main>
+
+  <footer class="footer">{{ footer_text|default:site_name }}</footer>
+
+</div>
+
+<script>
+  (function () {
+    var els = document.querySelectorAll('.stat-num[data-target]');
+    var DURATION = 900; // ms
+
+    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function animateNum(el) {
+      var target = parseInt(el.dataset.target, 10);
+      if (!target) { el.textContent = target; return; }
+      var start = performance.now();
+      function tick(now) {
+        var elapsed = now - start;
+        var progress = Math.min(elapsed / DURATION, 1);
+        el.textContent = Math.round(easeOut(progress) * target);
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // Trigger when stat cards enter the viewport
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { animateNum(e.target); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.3 });
+      els.forEach(function (el) { io.observe(el); });
+    } else {
+      els.forEach(animateNum);
+    }
+
+    // ── About typewriter ──
+    var aboutEl = document.getElementById('about-tw');
+    if (aboutEl) {
+      var text   = aboutEl.dataset.text || '';
+      var chars  = [...text];
+      var SPEED  = 28; // ms per char
+      var cursor = document.createElement('span');
+      cursor.className = 'about-cursor';
+      aboutEl.appendChild(cursor);
+      var i = 0;
+      function typeChar() {
+        if (i < chars.length) {
+          cursor.insertAdjacentText('beforebegin', chars[i]);
+          i++;
+          setTimeout(typeChar, SPEED);
+        } else {
+          // keep cursor blinking for 1.5s then fade it out
+          setTimeout(function () {
+            cursor.style.transition = 'opacity .4s';
+            cursor.style.opacity = '0';
+            setTimeout(function () { cursor.remove(); }, 400);
+          }, 1500);
+        }
+      }
+      // small delay so it starts after the page settles
+      setTimeout(typeChar, 400);
+    }
+  })();
+</script>
+</body>
+</html>

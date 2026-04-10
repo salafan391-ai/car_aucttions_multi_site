@@ -1,0 +1,297 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_name|default:"سيارات" }}</title>
+  {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --p: {{ primary_color|default:"#2563eb" }};
+      --s: {{ secondary_color|default:"#1e3a8a" }};
+      --gold: #c9a84c;
+      --gold-light: #f0d080;
+      --gold-dim: rgba(201,168,76,.18);
+      --dark: #09090b;
+      --dark2: #111113;
+    }
+    html, body { min-height: 100%; font-family: 'Tajawal', sans-serif; background: var(--dark); color: #f5f0e8; overflow-y: auto; }
+
+    /* ── Background: dark with subtle radial gold glow ── */
+    .bg {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% -10%, rgba(201,168,76,.12), transparent),
+        radial-gradient(ellipse 40% 35% at 85% 90%, rgba(201,168,76,.07), transparent),
+        var(--dark);
+    }
+    /* fine grid lines */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(201,168,76,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+
+    /* ── Layout ── */
+    .stage {
+      position: relative; z-index: 10;
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 3rem 1.5rem; gap: 2rem;
+    }
+    @media (max-width: 640px) { .stage { justify-content: flex-start; padding-top: max(3rem, env(safe-area-inset-top)); gap: 1.5rem; } }
+
+    /* ── Gold top line ── */
+    .gold-line-top {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+      z-index: 100;
+    }
+
+    /* ── Logo ── */
+    .logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; animation: fade-in .6s ease both; }
+    .logo-wrap img {
+      height: clamp(130px, 28vw, 210px); width: auto; max-width: 78vw; object-fit: contain;
+      filter: drop-shadow(0 0 30px rgba(201,168,76,.25)) drop-shadow(0 4px 16px rgba(0,0,0,.7));
+    }
+    @media (max-width: 640px) { .logo-wrap img { height: auto; width: 68vw; max-width: 68vw; } }
+
+    /* ── Monogram fallback ── */
+    .monogram {
+      width: clamp(110px,24vw,170px); height: clamp(110px,24vw,170px);
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle, rgba(201,168,76,.1), transparent);
+      box-shadow: 0 0 40px rgba(201,168,76,.2), inset 0 0 20px rgba(201,168,76,.06);
+    }
+    .monogram svg { width: 44px; height: 44px; color: var(--gold); }
+
+    /* ── Brand name ── */
+    .brand-name {
+      font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
+      background: linear-gradient(135deg, #f0d080 0%, #c9a84c 40%, #f5e09a 70%, #a07830 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      text-shadow: none;
+    }
+
+    /* ── Tagline ── */
+    .tagline {
+      font-size: clamp(.82rem, 2.2vw, 1rem); color: rgba(240,208,128,.65); font-weight: 300;
+      letter-spacing: .18em; text-transform: uppercase; text-align: center; max-width: 38ch;
+      animation: fade-in .65s .1s ease both;
+    }
+    .typewriter-1, .typewriter-2 { display: block; min-height: 1.5em; }
+    .tw-cursor { display: inline-block; width: 1px; height: .85em; background: var(--gold); margin-inline-start: 2px; vertical-align: middle; animation: blink .75s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Gold divider ── */
+    .ornament {
+      display: flex; align-items: center; gap: 1rem; animation: fade-in .7s .15s ease both;
+    }
+    .ornament-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), var(--gold), var(--gold-dim), transparent); max-width: 120px; }
+    .ornament-diamond {
+      width: 8px; height: 8px; background: var(--gold); transform: rotate(45deg);
+      box-shadow: 0 0 10px rgba(201,168,76,.6);
+    }
+    .ornament-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--gold); opacity: .7; }
+
+    /* ── Cards ── */
+    .cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+      width: 100%; max-width: 560px;
+      animation: fade-in .75s .2s ease both;
+    }
+    .cards.has-three { grid-template-columns: 1fr 1fr 1fr; max-width: 740px; }
+    @media (max-width: 640px) { .cards { gap: .6rem; } .cards.has-three { grid-template-columns: 1fr 1fr 1fr; max-width: 100%; } }
+
+    .card {
+      position: relative; overflow: hidden;
+      border-radius: 4px;
+      padding: 1.4rem 1.2rem;
+      display: flex; flex-direction: column; align-items: flex-start; gap: .7rem;
+      cursor: pointer; text-decoration: none; color: #f5f0e8;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(201,168,76,.2);
+      transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s, border-color .25s;
+      will-change: transform;
+    }
+    /* corner accent */
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 28px; height: 28px;
+      border-top: 2px solid var(--gold); border-left: 2px solid var(--gold);
+      border-radius: 4px 0 0 0;
+      transition: width .25s, height .25s;
+    }
+    .card::after {
+      content: ''; position: absolute; bottom: 0; right: 0;
+      width: 28px; height: 28px;
+      border-bottom: 2px solid var(--gold); border-right: 2px solid var(--gold);
+      border-radius: 0 0 4px 0;
+      transition: width .25s, height .25s;
+    }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 20px rgba(201,168,76,.1); border-color: rgba(201,168,76,.45); }
+    .card:hover::before, .card:hover::after { width: 50px; height: 50px; }
+
+    .card-icon {
+      width: 44px; height: 44px; border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--gold-dim); border: 1px solid rgba(201,168,76,.3);
+    }
+    .card-icon svg { width: 22px; height: 22px; color: var(--gold); }
+
+    .card-label { font-size: 1rem; font-weight: 700; color: #f5f0e8; line-height: 1.3; transition: opacity .2s; }
+    .card-sub { font-size: .76rem; color: rgba(201,168,76,.7); display: flex; align-items: center; gap: .3rem; }
+    .card-sub-text { transition: opacity .2s; }
+    .card-badge {
+      display: inline-flex; align-items: center;
+      padding: .08rem .45rem; border-radius: 2px;
+      font-size: .66rem; font-weight: 700;
+      background: var(--gold-dim); color: var(--gold-light);
+      border: 1px solid rgba(201,168,76,.3);
+    }
+    .card-arrow {
+      margin-top: auto; align-self: flex-end;
+      width: 28px; height: 28px; border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--gold-dim); border: 1px solid rgba(201,168,76,.25);
+      transition: background .2s, transform .2s;
+    }
+    .card:hover .card-arrow { background: var(--gold); transform: translateX(-3px); }
+    .card:hover .card-arrow svg { color: var(--dark); }
+    .card-arrow svg { width: 13px; height: 13px; color: var(--gold); }
+
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="gold-line-top" aria-hidden="true"></div>
+
+  <main class="stage">
+    <div class="logo-wrap">
+      {% if site_logo %}
+        <a href="{% url 'home' %}" style="display:inline-block;">
+          <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+        </a>
+      {% else %}
+        <a href="{% url 'home' %}" style="display:inline-block;">
+          <div class="monogram">
+            <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+            </svg>
+          </div>
+        </a>
+        <div class="brand-name">{{ site_name|default:"سيارات" }}</div>
+      {% endif %}
+    </div>
+
+    <p class="tagline">
+      <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}></span>
+      <span class="typewriter-2"></span>
+    </p>
+
+    <div class="ornament">
+      <span class="ornament-dot"></span>
+      <span class="ornament-line"></span>
+      <span class="ornament-diamond"></span>
+      <span class="ornament-line"></span>
+      <span class="ornament-dot"></span>
+    </div>
+
+    <div class="cards{% if site_cars_count %} has-three{% endif %}">
+
+      <a href="{% url 'car_list' %}?car_type=cars" class="card">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-label" data-ar="المعارض الكورية" data-en="Direct Sale">المعارض الكورية</div>
+          <div class="card-sub">
+            {% if cars_count %}<span class="card-badge">{{ cars_count }}</span><span class="card-sub-text" data-ar="سيارة متاحة" data-en="cars available">سيارة متاحة</span>
+            {% else %}<span class="card-sub-text" data-ar="استعرض الكتالوج" data-en="Browse Catalog">استعرض الكتالوج</span>{% endif %}
+          </div>
+        </div>
+        <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+      </a>
+
+      <a href="{% url 'car_list' %}?car_type=auction" class="card">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-label" data-ar="سيارات المزاد" data-en="Auction Cars">سيارات المزاد</div>
+          <div class="card-sub">
+            {% if auction_count %}<span class="card-badge">{{ auction_count }}</span>
+              {% if next_auction_date %}<span class="card-sub-text" data-ar="مزاد {{ next_auction_day_ar }}" data-en="Auction {{ next_auction_day_en }}">مزاد {{ next_auction_day_ar }}</span>
+              {% else %}<span class="card-sub-text" data-ar="مزاد نشط" data-en="active auctions">مزاد نشط</span>{% endif %}
+            {% else %}<span class="card-sub-text" data-ar="شارك في المزادات" data-en="Join the Auctions">شارك في المزادات</span>{% endif %}
+          </div>
+          {% if auction_names %}
+          <div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.25rem;">
+            {% for name in auction_names %}<span style="font-size:.62rem;font-weight:600;padding:.1rem .4rem;border-radius:2px;background:var(--gold-dim);color:var(--gold-light);border:1px solid rgba(201,168,76,.25);">{{ name }}</span>{% endfor %}
+          </div>{% endif %}
+        </div>
+        <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+      </a>
+
+      {% if site_cars_count %}
+      <a href="{% url 'site_car_list' %}" class="card">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 21V12h6v9"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-label" data-ar="البيع المباشر" data-en="Direct Sales">البيع المباشر</div>
+          <div class="card-sub"><span class="card-badge">{{ site_cars_count }}</span><span class="card-sub-text" data-ar="سيارات البيع المباشر" data-en="Direct Sales Cars">سيارات البيع المباشر</span></div>
+        </div>
+        <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+      </a>
+      {% endif %}
+
+    </div>
+  </main>
+
+  <script>
+    (function(){
+      const el1=document.querySelector('.typewriter-1'),el2=document.querySelector('.typewriter-2');
+      if(!el1||!el2)return;
+      const SPEED=48,ERASE=24,HOLD=2500;
+      const rounds=[
+        {line1:el1.dataset.ar||'أفضل منصة لشراء السيارات وتصديرها',line2:el1.dataset.ar?'':'إلى المملكة العربية السعودية وجميع أنحاء العالم',dir:'rtl'},
+        {line1:'The Best Platform to Buy & Export Cars',line2:el1.dataset.ar?'':'To Saudi Arabia and Around the World',dir:'ltr'},
+      ];
+      function typeLine(el,text,dir,speed,cb){
+        const chars=[...text];el.setAttribute('dir',dir);el.textContent='';
+        const cur=document.createElement('span');cur.className='tw-cursor';el.appendChild(cur);
+        let i=0;(function tick(){if(i<chars.length){cur.previousSibling?cur.previousSibling.nodeValue=chars.slice(0,i+1).join(''):el.insertBefore(document.createTextNode(chars.slice(0,i+1).join('')),cur);i++;setTimeout(tick,speed);}else{cur.remove();if(cb)cb();}})();
+      }
+      function eraseLine(el,cb){const chars=[...el.textContent];let i=chars.length;(function tick(){if(i>=0){el.textContent=chars.slice(0,i).join('');i--;setTimeout(tick,ERASE);}else if(cb)cb();})();}
+      let round=0;
+      const labels=document.querySelectorAll('.card-label'),subs=document.querySelectorAll('.card-sub-text');
+      function flip(dir){const a=dir==='rtl'?'ar':'en';const all=[...labels,...subs];all.forEach(e=>e.style.opacity='0');setTimeout(()=>{all.forEach(e=>{const t=e.dataset[a];if(t){e.textContent=t;e.setAttribute('dir',dir);}e.style.opacity='';});},220);}
+      function run(){const{line1,line2,dir}=rounds[round++%rounds.length];flip(dir);typeLine(el1,line1,dir,SPEED,()=>typeLine(el2,line2,dir,SPEED,()=>setTimeout(()=>eraseLine(el2,()=>eraseLine(el1,()=>setTimeout(run,300))),HOLD)));}
+      setTimeout(run,700);
+    })();
+  </script>
+</body>
+</html>

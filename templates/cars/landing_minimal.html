@@ -1,0 +1,487 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_name|default:"سيارات" }}</title>
+  {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --p: {{ primary_color|default:"#2563eb" }};
+      --s: {{ secondary_color|default:"#1e3a8a" }};
+      --a: {{ accent_color|default:"#3b82f6" }};
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Tajawal', sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      overflow-y: auto;
+    }
+
+    /* ── Subtle dot pattern background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: radial-gradient(circle, rgba(0,0,0,.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    /* ── Top color bar ── */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--s), var(--p), var(--a));
+      z-index: 100;
+    }
+
+    /* ── Layout ── */
+    .stage {
+      position: relative;
+      z-index: 10;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      gap: 2rem;
+    }
+
+    @media (max-width: 640px) {
+      .stage {
+        justify-content: flex-start;
+        padding-top: max(3rem, env(safe-area-inset-top));
+        gap: 1.5rem;
+      }
+    }
+
+    /* ── Logo ── */
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      animation: fade-up .45s ease both;
+    }
+    .logo-wrap img {
+      height: clamp(120px, 28vw, 200px);
+      width: auto;
+      max-width: 80vw;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 16px rgba(0,0,0,.12));
+    }
+    @media (max-width: 640px) {
+      .logo-wrap img {
+        height: auto;
+        width: 72vw;
+        max-width: 72vw;
+      }
+    }
+
+    .site-name {
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--s);
+      text-align: center;
+    }
+
+    .logo-tagline {
+      font-size: clamp(.85rem, 2.5vw, 1.05rem);
+      color: #475569;
+      font-weight: 400;
+      text-align: center;
+      max-width: 36ch;
+      line-height: 1.65;
+      animation: fade-up .5s .08s ease both;
+    }
+
+    /* ── Typewriter ── */
+    .typewriter-1, .typewriter-2 {
+      display: block;
+      min-height: 1.65em;
+    }
+    .tw-cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--p);
+      margin-inline-start: 2px;
+      vertical-align: middle;
+      animation: blink .75s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      width: 100%;
+      max-width: 560px;
+      animation: fade-up .5s .12s ease both;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+    .divider span {
+      font-size: .75rem;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ── Cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      width: 100%;
+      max-width: 560px;
+      animation: fade-up .55s .16s ease both;
+    }
+    .cards.has-three {
+      grid-template-columns: 1fr 1fr 1fr;
+      max-width: 720px;
+    }
+
+    @media (max-width: 640px) {
+      .cards { gap: .6rem; }
+      .cards.has-three { grid-template-columns: 1fr 1fr 1fr; max-width: 100%; }
+      .cards.has-three .card { padding: .75rem .6rem; }
+    }
+
+    .card {
+      position: relative;
+      border-radius: 18px;
+      padding: 1.4rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .65rem;
+      cursor: pointer;
+      text-decoration: none;
+      color: #0f172a;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
+      transition: transform .2s cubic-bezier(.22,1,.36,1),
+                  box-shadow .2s cubic-bezier(.22,1,.36,1),
+                  border-color .2s;
+      will-change: transform;
+      overflow: hidden;
+    }
+    /* colored top border accent */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--card-accent);
+      border-radius: 18px 18px 0 0;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 32px rgba(0,0,0,.1), 0 2px 8px rgba(0,0,0,.06);
+      border-color: color-mix(in srgb, var(--card-accent) 30%, #e2e8f0);
+    }
+    .card:active { transform: translateY(-2px); }
+
+    .card-cars    { --card-accent: var(--p); }
+    .card-auction { --card-accent: #f59e0b; }
+    .card-site    { --card-accent: #10b981; }
+
+    .card-icon {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: color-mix(in srgb, var(--card-accent) 10%, #f8fafc);
+      border: 1px solid color-mix(in srgb, var(--card-accent) 20%, #e2e8f0);
+      flex-shrink: 0;
+    }
+    .card-icon svg { width: 22px; height: 22px; color: var(--card-accent); }
+
+    .card-label {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.3;
+      transition: opacity .2s;
+    }
+    .card-sub {
+      font-size: .78rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      flex-wrap: wrap;
+    }
+    .card-sub-text { transition: opacity .2s; }
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .1rem .5rem;
+      border-radius: 99px;
+      font-size: .68rem;
+      font-weight: 700;
+      background: color-mix(in srgb, var(--card-accent) 12%, #f8fafc);
+      color: color-mix(in srgb, var(--card-accent) 90%, #000);
+      border: 1px solid color-mix(in srgb, var(--card-accent) 25%, #e2e8f0);
+    }
+
+    .card-arrow {
+      margin-top: auto;
+      align-self: flex-end;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .card:hover .card-arrow {
+      background: var(--card-accent);
+      border-color: var(--card-accent);
+      transform: translateX(-3px);
+    }
+    .card:hover .card-arrow svg { color: #fff; }
+    .card-arrow svg { width: 13px; height: 13px; color: #94a3b8; }
+
+    /* ── Keyframes ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar"></div>
+
+  <main class="stage">
+
+    <div class="logo-wrap">
+      {% if site_logo %}
+        <a href="{% url 'home' %}" style="display:inline-block;">
+          <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+        </a>
+      {% else %}
+        <a href="{% url 'home' %}" style="display:inline-block;">
+          <div style="width:clamp(100px,24vw,160px);height:clamp(100px,24vw,160px);border-radius:20px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(0,0,0,.12);">
+            <svg width="44" height="44" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+            </svg>
+          </div>
+        </a>
+        <div class="site-name">{{ site_name|default:"سيارات" }}</div>
+      {% endif %}
+
+      <p class="logo-tagline">
+        <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}></span>
+        <span class="typewriter-2"></span>
+      </p>
+    </div>
+
+    <div class="divider">
+      <span data-ar="اختر وجهتك" data-en="Choose your destination">اختر وجهتك</span>
+    </div>
+
+    <div class="cards{% if site_cars_count %} has-three{% endif %}">
+
+      <!-- Card 1: Cars -->
+      <a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-label" data-ar="المعارض الكورية" data-en="Direct Sale">المعارض الكورية</div>
+          <div class="card-sub">
+            {% if cars_count %}
+              <span class="card-badge">{{ cars_count }}</span>
+              <span class="card-sub-text" data-ar="سيارة متاحة" data-en="cars available">سيارة متاحة</span>
+            {% else %}
+              <span class="card-sub-text" data-ar="استعرض الكتالوج" data-en="Browse Catalog">استعرض الكتالوج</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-arrow">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- Card 2: Auction -->
+      <a href="{% url 'car_list' %}?car_type=auction" class="card card-auction">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-label" data-ar="سيارات المزاد" data-en="Auction Cars">سيارات المزاد</div>
+          <div class="card-sub">
+            {% if auction_count %}
+              <span class="card-badge">{{ auction_count }}</span>
+              {% if next_auction_date %}
+                <span class="card-sub-text"
+                      data-ar="مزاد {{ next_auction_day_ar }}"
+                      data-en="Auction {{ next_auction_day_en }}">مزاد {{ next_auction_day_ar }}</span>
+              {% else %}
+                <span class="card-sub-text" data-ar="مزاد نشط" data-en="active auctions">مزاد نشط</span>
+              {% endif %}
+            {% else %}
+              <span class="card-sub-text" data-ar="شارك في المزادات" data-en="Join the Auctions">شارك في المزادات</span>
+            {% endif %}
+          </div>
+          {% if auction_names %}
+          <div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.25rem;">
+            {% for name in auction_names %}
+              <span style="font-size:.62rem;font-weight:600;padding:.1rem .4rem;border-radius:99px;background:rgba(245,158,11,.1);color:#b45309;border:1px solid rgba(245,158,11,.25);">{{ name }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="card-arrow">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </div>
+      </a>
+
+      {% if site_cars_count %}
+      <!-- Card 3: Site Owner Cars -->
+      <a href="{% url 'site_car_list' %}" class="card card-site">
+        <div class="card-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 21V12h6v9"/>
+          </svg>
+        </div>
+        <div>
+          <div class="card-label" data-ar="البيع المباشر" data-en="Direct Sales">البيع المباشر</div>
+          <div class="card-sub">
+            <span class="card-badge">{{ site_cars_count }}</span>
+            <span class="card-sub-text" data-ar="سيارات البيع المباشر" data-en="Direct Sales Cars">سيارات البيع المباشر</span>
+          </div>
+        </div>
+        <div class="card-arrow">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </div>
+      </a>
+      {% endif %}
+
+    </div>
+
+  </main>
+
+  <script>
+    (function () {
+      const el1 = document.querySelector('.typewriter-1');
+      const el2 = document.querySelector('.typewriter-2');
+      const divLabel = document.querySelector('.divider span');
+      if (!el1 || !el2) return;
+
+      const SPEED = 45; const ERASE = 22; const HOLD = 2400;
+
+      const rounds = [
+        { line1: el1.dataset.ar || 'أفضل منصة لشراء السيارات وتصديرها', line2: el1.dataset.ar ? '' : 'إلى المملكة العربية السعودية وجميع أنحاء العالم', dir: 'rtl' },
+        { line1: 'The Best Platform to Buy & Export Cars', line2: el1.dataset.ar ? '' : 'To Saudi Arabia and Around the World', dir: 'ltr' },
+      ];
+
+      function typeLine(el, text, dir, speed, onDone) {
+        const chars = [...text];
+        el.setAttribute('dir', dir);
+        el.textContent = '';
+        const cursor = document.createElement('span');
+        cursor.className = 'tw-cursor';
+        el.appendChild(cursor);
+        let i = 0;
+        function tick() {
+          if (i < chars.length) {
+            cursor.previousSibling
+              ? cursor.previousSibling.nodeValue = chars.slice(0, i + 1).join('')
+              : el.insertBefore(document.createTextNode(chars.slice(0, i + 1).join('')), cursor);
+            i++;
+            setTimeout(tick, speed);
+          } else { cursor.remove(); if (onDone) onDone(); }
+        }
+        tick();
+      }
+
+      function eraseLine(el, onDone) {
+        const chars = [...el.textContent];
+        let i = chars.length;
+        function tick() {
+          if (i >= 0) { el.textContent = chars.slice(0, i).join(''); i--; setTimeout(tick, ERASE); }
+          else if (onDone) onDone();
+        }
+        tick();
+      }
+
+      let round = 0;
+      const cardLabels = document.querySelectorAll('.card-label');
+      const cardSubTexts = document.querySelectorAll('.card-sub-text');
+
+      function flipCards(dir) {
+        const attr = dir === 'rtl' ? 'ar' : 'en';
+        const els = Array.from(cardLabels).concat(Array.from(cardSubTexts));
+        els.forEach(function (el) { el.style.opacity = '0'; });
+        if (divLabel) divLabel.style.opacity = '0';
+        setTimeout(function () {
+          cardLabels.forEach(function (el) { const t = el.dataset[attr]; if (t) { el.textContent = t; el.setAttribute('dir', dir); } });
+          cardSubTexts.forEach(function (el) { const t = el.dataset[attr]; if (t) { el.textContent = t; el.setAttribute('dir', dir); } });
+          if (divLabel) { divLabel.textContent = dir === 'rtl' ? (divLabel.dataset.ar || 'اختر وجهتك') : (divLabel.dataset.en || 'Choose your destination'); divLabel.style.opacity = ''; }
+          els.forEach(function (el) { el.style.opacity = ''; });
+        }, 220);
+      }
+
+      function runRound() {
+        const { line1, line2, dir } = rounds[round % rounds.length];
+        flipCards(dir);
+        round++;
+        typeLine(el1, line1, dir, SPEED, function () {
+          typeLine(el2, line2, dir, SPEED, function () {
+            setTimeout(function () {
+              eraseLine(el2, function () { eraseLine(el1, function () { setTimeout(runRound, 300); }); });
+            }, HOLD);
+          });
+        });
+      }
+
+      setTimeout(runRound, 700);
+    })();
+  </script>
+
+</body>
+</html>

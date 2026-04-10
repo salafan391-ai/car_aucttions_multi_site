@@ -1,0 +1,302 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_name|default:"سيارات" }}</title>
+  {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --p: {{ primary_color|default:"#2563eb" }};
+      --s: {{ secondary_color|default:"#1e3a8a" }};
+      --a: {{ accent_color|default:"#3b82f6" }};
+    }
+    html, body { min-height: 100%; font-family: 'Tajawal', sans-serif; overflow-y: auto; }
+
+    /* ══════════════════════════════════
+       DESKTOP: Two-column split layout
+       ══════════════════════════════════ */
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      min-height: 100dvh;
+    }
+
+    /* ── Left panel: hero image ── */
+    .panel-hero {
+      position: relative; overflow: hidden;
+      {% if site_hero_images %}
+      background: url('{{ site_hero_images.0.image.url }}') center/cover no-repeat;
+      {% elif site_hero_image %}
+      background: url('{{ site_hero_image }}') center/cover no-repeat;
+      {% else %}
+      background:
+        radial-gradient(ellipse 80% 70% at 30% 40%, color-mix(in srgb, var(--p) 55%, transparent), transparent),
+        radial-gradient(ellipse 60% 80% at 80% 80%, color-mix(in srgb, var(--s) 60%, transparent), transparent),
+        #0a1628;
+      {% endif %}
+    }
+    /* dark overlay */
+    .panel-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.3) 60%, rgba(0,0,0,.5) 100%);
+    }
+    /* vertical brand watermark */
+    .hero-brand {
+      position: absolute; bottom: 2.5rem; left: 2rem;
+      color: rgba(255,255,255,.12); font-size: 7vw; font-weight: 900;
+      letter-spacing: -.03em; line-height: 1;
+      writing-mode: vertical-rl; text-orientation: mixed;
+      user-select: none;
+    }
+    /* floating stat pills on hero */
+    .hero-stats {
+      position: absolute; top: 2rem; left: 2rem;
+      display: flex; flex-direction: column; gap: .5rem;
+    }
+    .hero-stat {
+      display: inline-flex; align-items: center; gap: .45rem;
+      padding: .4rem .8rem; border-radius: 99px;
+      font-size: .78rem; font-weight: 700;
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
+      backdrop-filter: blur(10px); color: #fff;
+    }
+    .hero-stat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Right panel: content ── */
+    .panel-content {
+      background: #fff;
+      display: flex; flex-direction: column;
+      align-items: flex-start; justify-content: center;
+      padding: 3rem 2.5rem;
+      gap: 1.75rem;
+      border-inline-start: 1px solid #e5e7eb;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Logo ── */
+    .logo-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; animation: slide-in .45s ease both; }
+    .logo-wrap img { height: clamp(70px, 12vw, 110px); width: auto; max-width: 100%; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,.1)); }
+    .site-name { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 900; color: var(--s); letter-spacing: -.02em; }
+
+    /* ── Tagline ── */
+    .tagline { font-size: clamp(.82rem, 1.8vw, .95rem); color: #6b7280; font-weight: 400; line-height: 1.65; animation: slide-in .5s .06s ease both; }
+    .typewriter-1, .typewriter-2 { display: block; min-height: 1.65em; }
+    .tw-cursor { display: inline-block; width: 2px; height: .9em; background: var(--p); margin-inline-start: 2px; vertical-align: middle; animation: blink .75s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--p); display: flex; align-items: center; gap: .5rem;
+      animation: slide-in .55s .1s ease both;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; max-width: 80px; }
+
+    /* ── Cards (vertical stack in panel) ── */
+    .cards { display: flex; flex-direction: column; gap: .7rem; width: 100%; animation: slide-in .6s .14s ease both; }
+
+    .card {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.1rem; border-radius: 12px;
+      text-decoration: none; color: #111827;
+      background: #f9fafb; border: 1px solid #e5e7eb;
+      transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s, background .2s, border-color .2s;
+      position: relative; overflow: hidden;
+    }
+    .card::before { content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 3px; background: var(--card-accent); border-radius: 12px 0 0 12px; }
+    .card:hover { transform: translateX(-4px); background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.08); border-color: color-mix(in srgb, var(--card-accent) 30%, #e5e7eb); }
+
+    .card-cars    { --card-accent: var(--p); }
+    .card-auction { --card-accent: #f59e0b; }
+    .card-site    { --card-accent: #10b981; }
+
+    .card-icon {
+      width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--card-accent) 10%, #f3f4f6);
+      border: 1px solid color-mix(in srgb, var(--card-accent) 20%, #e5e7eb);
+    }
+    .card-icon svg { width: 22px; height: 22px; color: var(--card-accent); }
+    .card-body { flex: 1; min-width: 0; }
+    .card-label { font-size: .95rem; font-weight: 700; color: #111827; line-height: 1.3; transition: opacity .2s; }
+    .card-sub { font-size: .74rem; color: #6b7280; display: flex; align-items: center; gap: .3rem; margin-top: .2rem; }
+    .card-sub-text { transition: opacity .2s; }
+    .card-badge {
+      display: inline-flex; align-items: center;
+      padding: .06rem .4rem; border-radius: 6px;
+      font-size: .62rem; font-weight: 700;
+      background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+      color: color-mix(in srgb, var(--card-accent) 90%, #000);
+      border: 1px solid color-mix(in srgb, var(--card-accent) 25%, transparent);
+    }
+    .card-arrow {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #f3f4f6; border: 1px solid #e5e7eb;
+      transition: background .2s, border-color .2s, transform .2s;
+    }
+    .card:hover .card-arrow { background: var(--card-accent); border-color: var(--card-accent); transform: translateX(-3px); }
+    .card:hover .card-arrow svg { color: #fff; }
+    .card-arrow svg { width: 13px; height: 13px; color: #9ca3af; }
+
+    /* ══════════════════════════════════
+       MOBILE: stacked layout
+       ══════════════════════════════════ */
+    @media (max-width: 768px) {
+      .split { grid-template-columns: 1fr; grid-template-rows: 40vh 1fr; }
+      .panel-hero { grid-row: 1; }
+      .panel-content { grid-row: 2; padding: 2rem 1.25rem; align-items: center; text-align: center; }
+      .logo-wrap { align-items: center; }
+      .section-label { justify-content: center; }
+      .section-label::after { display: none; }
+      .hero-brand { display: none; }
+      .hero-stats { top: 1rem; left: 1rem; }
+      .hero-stat { font-size: .7rem; padding: .3rem .65rem; }
+      .cards { gap: .55rem; }
+      .card { padding: .85rem .9rem; }
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="split">
+
+    <!-- Left: Hero -->
+    <div class="panel-hero">
+      {% if cars_count or auction_count or site_cars_count %}
+      <div class="hero-stats">
+        {% if cars_count %}
+        <div class="hero-stat">
+          <span class="hero-stat-dot" style="background:var(--a);"></span>
+          <span>{{ cars_count }} سيارة</span>
+        </div>
+        {% endif %}
+        {% if auction_count %}
+        <div class="hero-stat">
+          <span class="hero-stat-dot" style="background:#fbbf24;"></span>
+          <span>{{ auction_count }} مزاد</span>
+        </div>
+        {% endif %}
+        {% if site_cars_count %}
+        <div class="hero-stat">
+          <span class="hero-stat-dot" style="background:#34d399;"></span>
+          <span>{{ site_cars_count }} مباشر</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+      <div class="hero-brand">{{ site_name|default:"CARS" }}</div>
+    </div>
+
+    <!-- Right: Content -->
+    <div class="panel-content">
+
+      <div class="logo-wrap">
+        {% if site_logo %}
+          <a href="{% url 'home' %}" style="display:inline-block;">
+            <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+          </a>
+        {% else %}
+          <a href="{% url 'home' %}" style="display:inline-block;">
+            <div style="width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.15);">
+              <svg width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+              </svg>
+            </div>
+          </a>
+          <div class="site-name">{{ site_name|default:"سيارات" }}</div>
+        {% endif %}
+      </div>
+
+      <p class="tagline">
+        <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}></span>
+        <span class="typewriter-2"></span>
+      </p>
+
+      <div class="section-label">
+        <span data-ar="اختر قسمك" data-en="Select Section">اختر قسمك</span>
+      </div>
+
+      <div class="cards">
+
+        <a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
+          <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/></svg></div>
+          <div class="card-body">
+            <div class="card-label" data-ar="المعارض الكورية" data-en="Direct Sale">المعارض الكورية</div>
+            <div class="card-sub">
+              {% if cars_count %}<span class="card-badge">{{ cars_count }}</span><span class="card-sub-text" data-ar="سيارة متاحة" data-en="cars available">سيارة متاحة</span>
+              {% else %}<span class="card-sub-text" data-ar="استعرض الكتالوج" data-en="Browse Catalog">استعرض الكتالوج</span>{% endif %}
+            </div>
+          </div>
+          <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+        </a>
+
+        <a href="{% url 'car_list' %}?car_type=auction" class="card card-auction">
+          <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/></svg></div>
+          <div class="card-body">
+            <div class="card-label" data-ar="سيارات المزاد" data-en="Auction Cars">سيارات المزاد</div>
+            <div class="card-sub">
+              {% if auction_count %}<span class="card-badge">{{ auction_count }}</span>
+                {% if next_auction_date %}<span class="card-sub-text" data-ar="مزاد {{ next_auction_day_ar }}" data-en="Auction {{ next_auction_day_en }}">مزاد {{ next_auction_day_ar }}</span>
+                {% else %}<span class="card-sub-text" data-ar="مزاد نشط" data-en="active auctions">مزاد نشط</span>{% endif %}
+              {% else %}<span class="card-sub-text" data-ar="شارك في المزادات" data-en="Join the Auctions">شارك في المزادات</span>{% endif %}
+            </div>
+            {% if auction_names %}<div style="margin-top:.35rem;display:flex;flex-wrap:wrap;gap:.25rem;">{% for name in auction_names %}<span style="font-size:.6rem;font-weight:600;padding:.08rem .38rem;border-radius:6px;background:rgba(245,158,11,.1);color:#b45309;border:1px solid rgba(245,158,11,.22);">{{ name }}</span>{% endfor %}</div>{% endif %}
+          </div>
+          <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+        </a>
+
+        {% if site_cars_count %}
+        <a href="{% url 'site_car_list' %}" class="card card-site">
+          <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 21V12h6v9"/></svg></div>
+          <div class="card-body">
+            <div class="card-label" data-ar="البيع المباشر" data-en="Direct Sales">البيع المباشر</div>
+            <div class="card-sub"><span class="card-badge">{{ site_cars_count }}</span><span class="card-sub-text" data-ar="سيارات البيع المباشر" data-en="Direct Sales Cars">سيارات البيع المباشر</span></div>
+          </div>
+          <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+        </a>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const el1=document.querySelector('.typewriter-1'),el2=document.querySelector('.typewriter-2');
+      const sectionLbl=document.querySelector('.section-label span');
+      if(!el1||!el2)return;
+      const SPEED=46,ERASE=22,HOLD=2500;
+      const rounds=[
+        {line1:el1.dataset.ar||'أفضل منصة لشراء السيارات وتصديرها',line2:el1.dataset.ar?'':'إلى المملكة العربية السعودية وجميع أنحاء العالم',dir:'rtl'},
+        {line1:'The Best Platform to Buy & Export Cars',line2:el1.dataset.ar?'':'To Saudi Arabia and Around the World',dir:'ltr'},
+      ];
+      function typeLine(el,text,dir,speed,cb){const chars=[...text];el.setAttribute('dir',dir);el.textContent='';const cur=document.createElement('span');cur.className='tw-cursor';el.appendChild(cur);let i=0;(function tick(){if(i<chars.length){cur.previousSibling?cur.previousSibling.nodeValue=chars.slice(0,i+1).join(''):el.insertBefore(document.createTextNode(chars.slice(0,i+1).join('')),cur);i++;setTimeout(tick,speed);}else{cur.remove();if(cb)cb();}})();}
+      function eraseLine(el,cb){const chars=[...el.textContent];let i=chars.length;(function tick(){if(i>=0){el.textContent=chars.slice(0,i).join('');i--;setTimeout(tick,ERASE);}else if(cb)cb();})();}
+      let round=0;
+      const labels=document.querySelectorAll('.card-label'),subs=document.querySelectorAll('.card-sub-text');
+      function flip(dir){
+        const a=dir==='rtl'?'ar':'en';
+        const all=[...labels,...subs];
+        all.forEach(e=>e.style.opacity='0');
+        if(sectionLbl)sectionLbl.style.opacity='0';
+        setTimeout(()=>{
+          all.forEach(e=>{const t=e.dataset[a];if(t){e.textContent=t;e.setAttribute('dir',dir);}e.style.opacity='';});
+          if(sectionLbl){sectionLbl.textContent=dir==='rtl'?(sectionLbl.dataset.ar||'اختر قسمك'):(sectionLbl.dataset.en||'Select Section');sectionLbl.style.opacity='';}
+        },220);
+      }
+      function run(){const{line1,line2,dir}=rounds[round++%rounds.length];flip(dir);typeLine(el1,line1,dir,SPEED,()=>typeLine(el2,line2,dir,SPEED,()=>setTimeout(()=>eraseLine(el2,()=>eraseLine(el1,()=>setTimeout(run,300))),HOLD)));}
+      setTimeout(run,700);
+    })();
+  </script>
+</body>
+</html>

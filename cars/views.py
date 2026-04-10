@@ -80,7 +80,11 @@ def _exclude_expired_auctions(qs):
 
 @cache_control(public=True, max_age=600)
 def landing(request):
-    """Ultra-fast opening page – logo + two CTA cards."""
+    """Opening page – logo + CTA cards. Redirects to home if landing_is_active is False."""
+    # Skip landing page if disabled for this tenant
+    if not getattr(connection.tenant, 'landing_is_active', True):
+        return redirect('home')
+
     schema = getattr(connection, 'schema_name', 'public')
 
     now = timezone.now()
@@ -130,8 +134,23 @@ def landing(request):
     except Exception:
         site_cars_count = 0
 
-    # Cache key includes site_cars presence so 3-card layout is cached separately
-    html_cache_key = f"landing_html:{schema}:sc{1 if site_cars_count else 0}"
+    # Resolve landing design template for this tenant
+    _design_map = {
+        'cosmos':  'cars/landing.html',
+        'minimal': 'cars/landing_minimal.html',
+        'bold':    'cars/landing_bold.html',
+        'luxury':  'cars/landing_luxury.html',
+        'neon':    'cars/landing_neon.html',
+        'desert':  'cars/landing_desert.html',
+        'split':     'cars/landing_split.html',
+        'dashboard': 'cars/landing_dashboard.html',
+        'cockpit':   'cars/landing_cockpit.html',
+    }
+    landing_design = getattr(connection.tenant, 'landing_design', 'cosmos') or 'cosmos'
+    landing_template = _design_map.get(landing_design, 'cars/landing.html')
+
+    # Cache key includes site_cars presence and design so each variant is cached separately
+    html_cache_key = f"landing_html:{schema}:{landing_design}:sc{1 if site_cars_count else 0}"
     cached_html = cache.get(html_cache_key)
     if cached_html:
         return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
@@ -156,7 +175,7 @@ def landing(request):
         ),
     }
 
-    response = render(request, 'cars/landing.html', context)
+    response = render(request, landing_template, context)
     cache.set(html_cache_key, response.content, 60 * 30)  # 30 min
     return response
 
