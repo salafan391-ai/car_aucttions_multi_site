@@ -248,16 +248,38 @@
 
         /* ── Navbar ── */
         nav#main-nav {
+            background-color: var(--color-primary);
             transition: background-color .3s ease, backdrop-filter .3s ease, box-shadow .3s ease;
         }
+        nav#main-nav a,
+        nav#main-nav span.font-medium,
+        nav#main-nav button:not(.bg-brand):not(.bg-red-500):not(.bg-brand\/10) {
+            color: rgba(255,255,255,0.85);
+        }
+        nav#main-nav a:hover { color: #fff !important; }
+        nav#main-nav .text-gray-600 { color: rgba(255,255,255,0.8) !important; }
+        nav#main-nav .text-gray-500 { color: rgba(255,255,255,0.6) !important; }
+        nav#main-nav .text-gray-400 { color: rgba(255,255,255,0.45) !important; }
+        nav#main-nav .border-gray-200 { border-color: rgba(255,255,255,0.2) !important; }
+        nav#main-nav .bg-brand\/10 { background-color: rgba(255,255,255,0.15) !important; }
+        nav#main-nav .text-brand { color: #fff !important; }
+        nav#main-nav .bg-gray-100 { background-color: rgba(255,255,255,0.15) !important; }
+        nav#main-nav .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.2) !important; }
+        nav#main-nav .hover\:bg-gray-50:hover { background-color: rgba(255,255,255,0.12) !important; }
+        nav#main-nav #mobile-menu-btn svg { color: rgba(255,255,255,0.85); }
+        #mobile-menu a, #mobile-menu button, #mobile-menu span { color: rgba(255,255,255,0.85) !important; }
+        #mobile-menu a:hover { color: #fff !important; background-color: rgba(255,255,255,0.12) !important; }
+        #mobile-menu .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.12) !important; }
+        #mobile-menu .border-t { border-color: rgba(255,255,255,0.15) !important; }
+        #mobile-menu .bg-gray-100 { background-color: rgba(255,255,255,0.12) !important; }
         nav#main-nav.nav-scrolled {
-            background-color: rgba(255,255,255,0.6) !important;
+            background-color: color-mix(in srgb, var(--color-primary) 92%, black) !important;
             backdrop-filter: blur(16px) saturate(180%);
             -webkit-backdrop-filter: blur(16px) saturate(180%);
-            box-shadow: 0 2px 20px rgba(0,0,0,.08) !important;
+            box-shadow: 0 2px 20px rgba(0,0,0,.15) !important;
         }
         [data-theme="dark"] nav#main-nav.nav-scrolled {
-            background-color: rgba(15,15,25,0.6) !important;
+            background-color: rgba(15,15,25,0.9) !important;
         }
         [data-theme="desert"] nav#main-nav {
             background: linear-gradient(135deg, var(--desert-saddle) 0%, #5c3412 60%, var(--desert-night) 100%) !important;
@@ -611,7 +633,7 @@
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+        <div id="mobile-menu" class="hidden md:hidden border-t" style="background-color:var(--color-primary)">
             <div class="px-4 py-3 space-y-2">
                 <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرئيسية</a>
                 <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات</a>

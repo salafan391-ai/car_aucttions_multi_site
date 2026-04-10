@@ -250,6 +250,96 @@
 [data-car-theme="cockpit"] #sidebar-filters input::placeholder { color:rgba(255,255,255,.2) !important; }
 [data-car-theme="cockpit"] #sidebar-filters form { border-right:1px solid rgba(59,130,246,.3) !important; box-shadow: 0 0 20px rgba(59,130,246,.06); }
 
+/* ── Search bar theme overrides ── */
+
+/* DARK search */
+[data-car-theme="dark"] #search-bar {
+  background:linear-gradient(to bottom, #0d0d1a, rgba(13,13,26,.95), rgba(13,13,26,0)) !important;
+}
+[data-car-theme="dark"] #main-form {
+  background:#1a1a2e !important; border-color:rgba(255,255,255,.1) !important;
+  box-shadow:0 4px 20px rgba(0,0,0,.4) !important;
+}
+[data-car-theme="dark"] #main-form input[name="q"] {
+  background:#131320 !important; color:rgba(255,255,255,.85) !important;
+}
+[data-car-theme="dark"] #main-form input[name="q"]::placeholder { color:rgba(255,255,255,.25) !important; }
+[data-car-theme="dark"] #main-form input[name="q"]:focus { background:#1a1a2e !important; }
+[data-car-theme="dark"] #main-form svg { color:rgba(255,255,255,.3) !important; }
+
+/* BOLD search */
+[data-car-theme="bold"] #search-bar {
+  background:linear-gradient(to bottom, #111827, rgba(17,24,39,.95), rgba(17,24,39,0)) !important;
+}
+[data-car-theme="bold"] #main-form {
+  background:#1f2937 !important; border-color:rgba(255,255,255,.1) !important;
+  box-shadow:0 4px 20px rgba(0,0,0,.5) !important;
+}
+[data-car-theme="bold"] #main-form input[name="q"] {
+  background:#111827 !important; color:rgba(255,255,255,.85) !important;
+}
+[data-car-theme="bold"] #main-form input[name="q"]::placeholder { color:rgba(255,255,255,.25) !important; }
+[data-car-theme="bold"] #main-form input[name="q"]:focus { background:#1f2937 !important; }
+[data-car-theme="bold"] #main-form svg { color:rgba(255,255,255,.3) !important; }
+
+/* COCKPIT search */
+[data-car-theme="cockpit"] #search-bar {
+  background:linear-gradient(to bottom, #080810, rgba(8,8,16,.95), rgba(8,8,16,0)) !important;
+}
+[data-car-theme="cockpit"] #main-form {
+  background:#0b0b14 !important; border-color:rgba(59,130,246,.25) !important;
+  box-shadow:0 0 20px rgba(59,130,246,.1) !important;
+}
+[data-car-theme="cockpit"] #main-form input[name="q"] {
+  background:#08080f !important; color:rgba(147,197,253,.85) !important;
+  font-family:'Orbitron','Courier New',monospace; font-size:.75rem !important;
+}
+[data-car-theme="cockpit"] #main-form input[name="q"]::placeholder { color:rgba(147,197,253,.25) !important; }
+[data-car-theme="cockpit"] #main-form input[name="q"]:focus { background:#0e0e1a !important; }
+[data-car-theme="cockpit"] #main-form svg { color:rgba(59,130,246,.5) !important; }
+
+/* ── Type tabs theme overrides ── */
+
+/* DARK tabs */
+[data-car-theme="dark"] #type-tabs > div:first-child {
+  background:#1a1a2e !important; border-color:rgba(255,255,255,.1) !important;
+}
+[data-car-theme="dark"] #type-tabs a.text-gray-500 { color:rgba(255,255,255,.45) !important; }
+[data-car-theme="dark"] #type-tabs a.hover\:bg-gray-50:hover { background:rgba(255,255,255,.05) !important; }
+[data-car-theme="dark"] #type-tabs a.hover\:text-gray-700:hover { color:rgba(255,255,255,.8) !important; }
+[data-car-theme="dark"] #type-tabs .bg-gray-100 { background:rgba(255,255,255,.08) !important; color:rgba(255,255,255,.4) !important; }
+[data-car-theme="dark"] #type-tabs .text-gray-500.text-xs { color:rgba(255,255,255,.35) !important; }
+[data-car-theme="dark"] #type-tabs .text-gray-900 { color:rgba(255,255,255,.9) !important; }
+
+/* BOLD tabs */
+[data-car-theme="bold"] #type-tabs > div:first-child {
+  background:#1f2937 !important; border-color:rgba(255,255,255,.08) !important;
+}
+[data-car-theme="bold"] #type-tabs a.text-gray-500 { color:rgba(255,255,255,.45) !important; }
+[data-car-theme="bold"] #type-tabs a.hover\:bg-gray-50:hover { background:rgba(255,255,255,.06) !important; }
+[data-car-theme="bold"] #type-tabs a.hover\:text-gray-700:hover { color:rgba(255,255,255,.85) !important; }
+[data-car-theme="bold"] #type-tabs .bg-gray-100 { background:rgba(255,255,255,.1) !important; color:rgba(255,255,255,.45) !important; }
+[data-car-theme="bold"] #type-tabs .text-gray-500.text-xs { color:rgba(255,255,255,.35) !important; }
+[data-car-theme="bold"] #type-tabs .text-gray-900 { color:rgba(255,255,255,.9) !important; }
+
+/* MINIMAL tabs */
+[data-car-theme="minimal"] #type-tabs > div:first-child { box-shadow:none; border-color:#e5e7eb; }
+
+/* COCKPIT tabs */
+[data-car-theme="cockpit"] #type-tabs > div:first-child {
+  background:#0b0b14 !important; border-color:rgba(59,130,246,.2) !important;
+  box-shadow:0 0 12px rgba(59,130,246,.06) !important;
+}
+[data-car-theme="cockpit"] #type-tabs a {
+  font-family:'Orbitron','Courier New',monospace; font-size:.6rem !important; letter-spacing:.04em;
+}
+[data-car-theme="cockpit"] #type-tabs a.text-gray-500 { color:rgba(147,197,253,.45) !important; }
+[data-car-theme="cockpit"] #type-tabs a.hover\:bg-gray-50:hover { background:rgba(59,130,246,.08) !important; }
+[data-car-theme="cockpit"] #type-tabs a.hover\:text-gray-700:hover { color:rgba(147,197,253,.9) !important; }
+[data-car-theme="cockpit"] #type-tabs .bg-gray-100 { background:rgba(59,130,246,.1) !important; color:rgba(147,197,253,.5) !important; }
+[data-car-theme="cockpit"] #type-tabs .text-gray-500.text-xs { color:rgba(255,255,255,.3) !important; font-family:'Orbitron','Courier New',monospace; font-size:.55rem !important; }
+[data-car-theme="cockpit"] #type-tabs .text-gray-900 { color:#93c5fd !important; }
+
 /* ── Sort bar theme overrides ── */
 
 /* DARK sort */
@@ -331,6 +421,48 @@
   box-shadow:0 0 10px rgba(59,130,246,.2) !important;
 }
 [data-car-theme="cockpit"] #brands-bar a .text-gray-400 { color:rgba(59,130,246,.5) !important; }
+
+/* ── Pagination theme overrides ── */
+
+/* DARK pagination */
+[data-car-theme="dark"] #pagination a {
+  background:#1a1a2e !important; border-color:rgba(255,255,255,.1) !important;
+  color:rgba(255,255,255,.65) !important;
+}
+[data-car-theme="dark"] #pagination a:hover { background:#252540 !important; color:rgba(255,255,255,.9) !important; }
+[data-car-theme="dark"] #pagination .text-gray-400 { color:rgba(255,255,255,.2) !important; }
+[data-car-theme="dark"] #pagination a svg { color:rgba(255,255,255,.55) !important; }
+[data-car-theme="dark"] #pagination-info { color:rgba(255,255,255,.25) !important; }
+
+/* BOLD pagination */
+[data-car-theme="bold"] #pagination a {
+  background:#1f2937 !important; border-color:rgba(255,255,255,.1) !important;
+  color:rgba(255,255,255,.65) !important;
+}
+[data-car-theme="bold"] #pagination a:hover { background:#374151 !important; color:rgba(255,255,255,.9) !important; }
+[data-car-theme="bold"] #pagination .text-gray-400 { color:rgba(255,255,255,.2) !important; }
+[data-car-theme="bold"] #pagination a svg { color:rgba(255,255,255,.55) !important; }
+[data-car-theme="bold"] #pagination-info { color:rgba(255,255,255,.25) !important; }
+
+/* MINIMAL pagination */
+[data-car-theme="minimal"] #pagination a {
+  border-radius:4px !important; box-shadow:none !important; border-color:#e5e7eb !important;
+}
+[data-car-theme="minimal"] #pagination a:hover { background:#f9fafb !important; }
+
+/* COCKPIT pagination */
+[data-car-theme="cockpit"] #pagination a {
+  background:#0b0b14 !important; border-color:rgba(59,130,246,.2) !important;
+  color:rgba(147,197,253,.6) !important;
+  font-family:'Orbitron','Courier New',monospace; font-size:.65rem !important;
+}
+[data-car-theme="cockpit"] #pagination a:hover {
+  background:#13131f !important; border-color:rgba(59,130,246,.45) !important;
+  color:#93c5fd !important; box-shadow:0 0 8px rgba(59,130,246,.2);
+}
+[data-car-theme="cockpit"] #pagination a svg { color:rgba(59,130,246,.6) !important; }
+[data-car-theme="cockpit"] #pagination .text-gray-400 { color:rgba(59,130,246,.3) !important; }
+[data-car-theme="cockpit"] #pagination-info { color:rgba(147,197,253,.25) !important; font-family:'Orbitron','Courier New',monospace; font-size:.55rem !important; letter-spacing:.08em; }
 </style>
 {% endblock %}
 
@@ -340,7 +472,7 @@
 
 
     <!-- ═══════════════ STICKY SEARCH BAR ═══════════════ -->
-    <div class="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 pt-2 pb-3 sm:pb-4 bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50/0">
+    <div id="search-bar" class="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 pt-2 pb-3 sm:pb-4 bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50/0">
         <form method="get" id="main-form" class="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-gray-200/60 border border-gray-100 p-2 sm:p-3 flex gap-2 sm:gap-3">
             <!-- Hidden fields to preserve filters -->
             {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
@@ -373,7 +505,7 @@
     </div>
 
     <!-- ═══════════════ TYPE TABS + RESULT COUNT ═══════════════ -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-5 mt-2">
+    <div id="type-tabs" class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-5 mt-2">
         <div class="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100 w-full sm:w-auto overflow-x-auto scrollbar-hide">
             <a href="?{% if request.GET.q %}q={{ request.GET.q|qs_value }}&{% endif %}" class="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if not request.GET.car_type %}bg-brand text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
                 الكل
@@ -1310,7 +1442,7 @@
 
     <!-- ═══════════════ PAGINATION ═══════════════ -->
     {% if page_obj.has_other_pages %}
-    <nav class="flex justify-center mt-12">
+    <nav id="pagination" class="flex justify-center mt-12">
         <div class="flex items-center gap-1.5">
             {% if page_obj.has_previous %}
             <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition">
@@ -1349,7 +1481,7 @@
             {% endif %}
         </div>
     </nav>
-    <div class="text-center mt-3 text-xs text-gray-400">
+    <div id="pagination-info" class="text-center mt-3 text-xs text-gray-400">
         صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages|intcomma }}
     </div>
     {% endif %}

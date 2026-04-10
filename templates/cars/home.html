@@ -54,6 +54,186 @@
 {% block title %}الرئيسية - {{ site_name|default:"سيارات" }}{% endblock %}
 
 {% block extra_head %}
+{% if car_display == 'cockpit' %}
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+{% endif %}
+<style>
+{% if car_display == 'dark' %}
+/* ── HOME: DARK theme ── */
+section.bg-white,
+section.bg-gray-50 { background:#0d0d1a !important; }
+/* Category cards */
+#category-cards > a {
+  background:#1a1a2e !important; border-color:rgba(255,255,255,.08) !important;
+  box-shadow:0 4px 16px rgba(0,0,0,.4) !important;
+}
+#category-cards > a:hover { box-shadow:0 8px 28px rgba(0,0,0,.6) !important; border-color:rgba(255,255,255,.15) !important; }
+#category-cards .text-gray-500, #category-cards .text-gray-400 { color:rgba(255,255,255,.35) !important; }
+#category-cards .bg-blue-50 { background:rgba(59,130,246,.12) !important; }
+#category-cards .bg-purple-50 { background:rgba(147,51,234,.12) !important; }
+#category-cards .bg-green-50 { background:rgba(34,197,94,.1) !important; }
+#category-cards .bg-orange-50 { background:rgba(249,115,22,.1) !important; }
+#category-cards .border-gray-100 { border-color:rgba(255,255,255,.07) !important; }
+#category-cards .text-gray-400.mb-1 { color:rgba(255,255,255,.25) !important; }
+/* Body type badges */
+#body-types-scroll a {
+  background:#1a1a2e !important; border-color:rgba(255,255,255,.1) !important;
+  color:rgba(255,255,255,.65) !important;
+}
+#body-types-scroll a:hover { border-color:rgba(100,149,255,.5) !important; color:rgba(147,197,253,.9) !important; }
+#body-types-scroll a svg { color:rgba(255,255,255,.5) !important; }
+/* Manufacturer cards */
+#mfg-scroll a {
+  background:#1a1a2e !important; box-shadow:0 1px 6px rgba(0,0,0,.4) !important;
+}
+#mfg-scroll a:hover { box-shadow:0 4px 16px rgba(0,0,0,.6) !important; }
+#mfg-scroll .text-gray-600 { color:rgba(255,255,255,.5) !important; }
+#mfg-scroll .bg-brand-light { background:rgba(255,255,255,.08) !important; }
+.car-card {
+  background:#1a1a2e !important;
+  border-color:rgba(255,255,255,.08) !important;
+  box-shadow:0 1px 8px rgba(0,0,0,.4) !important;
+}
+.car-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.6) !important; }
+.car-card .text-gray-900, .car-card .font-bold { color:rgba(255,255,255,.88) !important; }
+.car-card .text-gray-500, .car-card .text-gray-600 { color:rgba(255,255,255,.4) !important; }
+.car-card .bg-gray-100 { background:#1e1e30 !important; }
+.car-card .bg-gray-100.text-gray-600 { color:rgba(255,255,255,.5) !important; }
+/* Section headings */
+section .flex.justify-between h2, section h2.font-bold { color:rgba(255,255,255,.9) !important; }
+section .flex.justify-between p.text-gray-600,
+section .flex.justify-between p.text-gray-500 { color:rgba(255,255,255,.35) !important; }
+/* Scroll arrow buttons */
+section button.bg-white.rounded-full { background:#1a1a2e !important; color:rgba(255,255,255,.7) !important; }
+{% elif car_display == 'bold' %}
+/* ── HOME: BOLD theme ── */
+section.bg-white,
+section.bg-gray-50 { background:#111827 !important; }
+/* Category cards */
+#category-cards > a {
+  background:#1f2937 !important; border-color:rgba(255,255,255,.08) !important;
+  box-shadow:0 4px 16px rgba(0,0,0,.5) !important;
+}
+#category-cards > a:hover { box-shadow:0 8px 28px rgba(0,0,0,.7) !important; border-color:rgba(255,255,255,.18) !important; }
+#category-cards .text-gray-500, #category-cards .text-gray-400 { color:rgba(255,255,255,.35) !important; }
+#category-cards .bg-blue-50 { background:rgba(59,130,246,.15) !important; }
+#category-cards .bg-purple-50 { background:rgba(147,51,234,.15) !important; }
+#category-cards .bg-green-50 { background:rgba(34,197,94,.12) !important; }
+#category-cards .bg-orange-50 { background:rgba(249,115,22,.12) !important; }
+#category-cards .border-gray-100 { border-color:rgba(255,255,255,.06) !important; }
+#category-cards .text-gray-400.mb-1 { color:rgba(255,255,255,.25) !important; }
+/* Body type badges */
+#body-types-scroll a {
+  background:#1f2937 !important; border-color:rgba(255,255,255,.1) !important;
+  color:rgba(255,255,255,.65) !important;
+}
+#body-types-scroll a:hover { border-color:rgba(255,255,255,.35) !important; color:#fff !important; }
+#body-types-scroll a svg { color:rgba(255,255,255,.5) !important; }
+/* Manufacturer cards */
+#mfg-scroll a {
+  background:#1f2937 !important; box-shadow:0 1px 6px rgba(0,0,0,.5) !important;
+}
+#mfg-scroll a:hover { box-shadow:0 4px 16px rgba(0,0,0,.7) !important; }
+#mfg-scroll .text-gray-600 { color:rgba(255,255,255,.5) !important; }
+#mfg-scroll .bg-brand-light { background:rgba(255,255,255,.08) !important; }
+.car-card {
+  background:#1f2937 !important;
+  border-color:rgba(255,255,255,.08) !important;
+  box-shadow:0 1px 8px rgba(0,0,0,.5) !important;
+}
+.car-card:hover { box-shadow:0 4px 24px rgba(0,0,0,.7) !important; }
+.car-card .text-gray-900, .car-card .font-bold { color:rgba(255,255,255,.9) !important; }
+.car-card .text-gray-500, .car-card .text-gray-600 { color:rgba(255,255,255,.4) !important; }
+.car-card .bg-gray-100 { background:#374151 !important; }
+.car-card .bg-gray-100.text-gray-600 { color:rgba(255,255,255,.55) !important; }
+section .flex.justify-between h2, section h2.font-bold { color:rgba(255,255,255,.92) !important; }
+section .flex.justify-between p.text-gray-600,
+section .flex.justify-between p.text-gray-500 { color:rgba(255,255,255,.35) !important; }
+section button.bg-white.rounded-full { background:#1f2937 !important; color:rgba(255,255,255,.7) !important; }
+{% elif car_display == 'minimal' %}
+/* ── HOME: MINIMAL theme ── */
+.car-card {
+  box-shadow:none !important;
+  border:1px solid #e5e7eb !important;
+  border-radius:6px !important;
+}
+.car-card:hover { box-shadow:0 2px 8px rgba(0,0,0,.08) !important; border-color:#d1d5db !important; }
+/* Category cards */
+#category-cards > a {
+  box-shadow:none !important; border:1px solid #e5e7eb !important; border-radius:8px !important;
+}
+#category-cards > a:hover { box-shadow:0 2px 8px rgba(0,0,0,.06) !important; border-color:#d1d5db !important; }
+/* Body type badges */
+#body-types-scroll a { box-shadow:none !important; }
+/* Manufacturer cards */
+#mfg-scroll a { box-shadow:none !important; border:1px solid #e5e7eb; }
+{% elif car_display == 'cockpit' %}
+/* ── HOME: COCKPIT theme ── */
+section.bg-white,
+section.bg-gray-50 { background:#080810 !important; }
+/* Category cards */
+#category-cards > a {
+  background:#0b0b14 !important;
+  border:1px solid rgba(59,130,246,.2) !important;
+  box-shadow:0 0 16px rgba(59,130,246,.07) !important;
+}
+#category-cards > a:hover {
+  border-color:rgba(59,130,246,.5) !important;
+  box-shadow:0 0 24px rgba(59,130,246,.2) !important;
+}
+#category-cards .text-gray-500, #category-cards .text-gray-400 { color:rgba(255,255,255,.3) !important; }
+#category-cards .bg-blue-50 { background:rgba(59,130,246,.12) !important; }
+#category-cards .bg-purple-50 { background:rgba(147,51,234,.12) !important; }
+#category-cards .bg-green-50 { background:rgba(34,197,94,.1) !important; }
+#category-cards .bg-orange-50 { background:rgba(249,115,22,.1) !important; }
+#category-cards .text-2xl, #category-cards .text-3xl {
+  font-family:'Orbitron','Courier New',monospace !important; font-size:1.2rem !important;
+}
+#category-cards .border-gray-100 { border-color:rgba(59,130,246,.1) !important; }
+#category-cards .text-gray-400.mb-1 { color:rgba(255,255,255,.2) !important; font-family:'Orbitron','Courier New',monospace; font-size:.55rem !important; }
+/* Body type badges */
+#body-types-scroll a {
+  background:#0b0b14 !important; border-color:rgba(59,130,246,.2) !important;
+  color:rgba(147,197,253,.7) !important;
+  font-family:'Orbitron','Courier New',monospace; font-size:.65rem !important; letter-spacing:.04em;
+}
+#body-types-scroll a:hover { border-color:rgba(59,130,246,.5) !important; color:#93c5fd !important; box-shadow:0 0 10px rgba(59,130,246,.2) !important; }
+#body-types-scroll a svg { color:rgba(59,130,246,.6) !important; }
+/* Manufacturer cards */
+#mfg-scroll a {
+  background:#0b0b14 !important; border:1px solid rgba(59,130,246,.2) !important;
+  box-shadow:0 0 10px rgba(59,130,246,.05) !important;
+}
+#mfg-scroll a:hover { border-color:rgba(59,130,246,.45) !important; box-shadow:0 0 16px rgba(59,130,246,.18) !important; }
+#mfg-scroll .text-gray-600 { color:rgba(147,197,253,.55) !important; font-family:'Orbitron','Courier New',monospace; font-size:.5rem !important; }
+#mfg-scroll .bg-brand-light { background:rgba(59,130,246,.12) !important; }
+.car-card {
+  background:#0b0b14 !important;
+  border:1px solid rgba(59,130,246,.2) !important;
+  box-shadow:0 0 12px rgba(59,130,246,.06) !important;
+}
+.car-card:hover {
+  border-color:rgba(59,130,246,.45) !important;
+  box-shadow:0 0 20px rgba(59,130,246,.18) !important;
+}
+.car-card .font-bold, .car-card .text-gray-900 {
+  color:rgba(147,197,253,.9) !important;
+  font-family:'Orbitron','Courier New',monospace !important;
+  font-size:.65rem !important;
+}
+.car-card .text-gray-500, .car-card .text-gray-600 { color:rgba(255,255,255,.3) !important; font-size:.6rem !important; }
+.car-card .bg-gray-100 { background:#13131f !important; }
+.car-card .bg-gray-100.text-gray-600 { color:rgba(147,197,253,.5) !important; }
+.car-card .text-brand { color:#93c5fd !important; }
+.car-card .bg-black\/60 { background:rgba(0,0,0,.8) !important; }
+section .flex.justify-between h2, section h2.font-bold {
+  color:#93c5fd !important; font-family:'Orbitron','Courier New',monospace !important; font-size:.95rem !important; letter-spacing:.06em;
+}
+section .flex.justify-between p.text-gray-600,
+section .flex.justify-between p.text-gray-500 { color:rgba(255,255,255,.3) !important; font-size:.65rem !important; }
+section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px solid rgba(59,130,246,.25); color:rgba(147,197,253,.7) !important; }
+{% endif %}
+</style>
 {% if site_theme == 'eid' %}
 <style>
     @keyframes balloon-float {
@@ -458,7 +638,7 @@
 <!-- Car Type Navigation -->
 <section class="relative z-10 -mt-8 sm:-mt-12">
     <div class="max-w-7xl mx-auto px-3 sm:px-4">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+        <div id="category-cards" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
         <a href="{% url 'car_list' %}?car_type=cars" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
             {% if cars_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
             <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-blue-50 group-hover:bg-brand-light rounded-xl sm:rounded-2xl flex items-center justify-center transition">

@@ -78,10 +78,16 @@
       position: relative; z-index: 1;
     }
 
-    /* ── Logo ── */
-    .logo-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; animation: slide-in .45s ease both; }
-    .logo-wrap img { height: clamp(70px, 12vw, 110px); width: auto; max-width: 100%; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,.1)); }
-    .site-name { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 900; color: var(--s); letter-spacing: -.02em; }
+    /* ── Logo (inside hero panel) ── */
+    .logo-wrap {
+      position: absolute; top: 2rem; right: 2rem; z-index: 10;
+      display: flex; flex-direction: column; align-items: flex-end; gap: .5rem;
+      animation: slide-in .45s ease both;
+    }
+    .logo-wrap img { height: clamp(60px, 10vw, 100px); width: auto; max-width: 220px; object-fit: contain; filter: drop-shadow(0 2px 12px rgba(0,0,0,.45)); }
+    /* site name: hidden on desktop when logo present, always shown on mobile */
+    .site-name { font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: 900; color: #fff; letter-spacing: -.02em; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
+    {% if site_logo %}.site-name { display: none; }{% endif %}
 
     /* ── Tagline ── */
     .tagline { font-size: clamp(.82rem, 1.8vw, .95rem); color: #6b7280; font-weight: 400; line-height: 1.65; animation: slide-in .5s .06s ease both; }
@@ -148,15 +154,34 @@
        MOBILE: stacked layout
        ══════════════════════════════════ */
     @media (max-width: 768px) {
-      .split { grid-template-columns: 1fr; grid-template-rows: 40vh 1fr; }
+      .split { grid-template-columns: 1fr; grid-template-rows: 52vh 1fr; }
       .panel-hero { grid-row: 1; }
       .panel-content { grid-row: 2; padding: 2rem 1.25rem; align-items: center; text-align: center; }
-      .logo-wrap { align-items: center; }
+      /* Logo: full-width strip at top of hero */
+      .logo-wrap {
+        top: 0; right: 0; left: 0;
+        transform: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 1rem 1rem;
+        background: linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,.2) 70%, transparent 100%);
+      }
+      .logo-wrap img {
+        width: 100%; height: auto;
+        max-height: 140px; max-width: 100%;
+        object-fit: contain;
+      }
+      /* Always show company name on mobile */
+      .site-name {
+        display: block !important;
+        font-size: clamp(1.3rem, 6vw, 2rem);
+        text-align: center;
+        margin-top: .25rem;
+      }
       .section-label { justify-content: center; }
       .section-label::after { display: none; }
       .hero-brand { display: none; }
-      .hero-stats { top: 1rem; left: 1rem; }
-      .hero-stat { font-size: .7rem; padding: .3rem .65rem; }
+      .hero-stats { display: none; }
       .cards { gap: .55rem; }
       .card { padding: .85rem .9rem; }
     }
@@ -172,6 +197,25 @@
 
     <!-- Left: Hero -->
     <div class="panel-hero">
+
+      <!-- Logo overlaid on hero image -->
+      <div class="logo-wrap">
+        {% if site_logo %}
+          <a href="{% url 'home' %}" style="display:inline-block;">
+            <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+          </a>
+        {% else %}
+          <a href="{% url 'home' %}" style="display:inline-block;">
+            <div style="width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+              <svg width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+              </svg>
+            </div>
+          </a>
+        {% endif %}
+        <div class="site-name">{{ site_name|default:"سيارات" }}</div>
+      </div>
+
       {% if cars_count or auction_count or site_cars_count %}
       <div class="hero-stats">
         {% if cars_count %}
@@ -199,23 +243,6 @@
 
     <!-- Right: Content -->
     <div class="panel-content">
-
-      <div class="logo-wrap">
-        {% if site_logo %}
-          <a href="{% url 'home' %}" style="display:inline-block;">
-            <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
-          </a>
-        {% else %}
-          <a href="{% url 'home' %}" style="display:inline-block;">
-            <div style="width:72px;height:72px;border-radius:14px;background:linear-gradient(135deg,var(--p),var(--s));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.15);">
-              <svg width="34" height="34" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
-              </svg>
-            </div>
-          </a>
-          <div class="site-name">{{ site_name|default:"سيارات" }}</div>
-        {% endif %}
-      </div>
 
       <p class="tagline">
         <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}></span>
