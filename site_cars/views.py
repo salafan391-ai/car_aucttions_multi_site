@@ -267,16 +267,10 @@ def site_car_delete_image(request, pk, image_id):
 
 
 def site_car_detail(request, pk):
-    import logging, traceback
-    logger = logging.getLogger(__name__)
     if _is_public_schema():
         return redirect('home')
-    try:
-        car = get_object_or_404(SiteCar, pk=pk)
-        return render(request, 'site_cars/site_car_detail.html', {'car': car})
-    except Exception as exc:
-        logger.error("site_car_detail error pk=%s: %s\n%s", pk, exc, traceback.format_exc())
-        raise
+    car = get_object_or_404(SiteCar, pk=pk)
+    return render(request, 'site_cars/site_car_detail.html', {'car': car})
 
 
 def sold_cars(request):
