@@ -350,6 +350,12 @@ class Command(BaseCommand):
 
         options = self._parse_json_safe(norm.get("options") or "")
         extra = self._parse_json_safe(norm.get("extra") or "")
+        record = self._parse_json_safe(norm.get("record") or "")
+        if record is not None:
+            if isinstance(extra, dict):
+                extra["record"] = record
+            else:
+                extra = {"record": record}
 
         vin = norm.get("inner_id") or norm.get("id") or ""
 

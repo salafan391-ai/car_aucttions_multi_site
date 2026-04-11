@@ -2111,6 +2111,7 @@ def car_report(request, lot_number):
         displacement = 0
 
     extra        = car.extra_features or {}
+    record_data  = extra.get("record") or {}
     options_raw  = car.options or {}
     images_raw   = car.images or []
 
@@ -2212,6 +2213,62 @@ def car_report(request, lot_number):
         '<div class="leg"><span class="lb T">T</span> Impairment</div>'
         '</div>'
     )
+
+    # ── insurance / record data ────────────────────────────────────────────────
+    def _fmt_insurance_val(v):
+        if v is None or v == "":
+            return "—"
+        if isinstance(v, bool):
+            return "Yes" if v else "No"
+        if isinstance(v, (int, float)):
+            return f"{v:,}"
+        return str(v)
+
+    def _build_insurance_html(rec):
+        if not rec or not isinstance(rec, dict):
+            return '<p style="color:#aaa;padding:20px;text-align:center">No insurance data available</p>'
+
+        # Known field labels (en / ar)
+        LABELS = {
+            "insuranceCompany":     ("Insurance Company",  "شركة التأمين"),
+            "insuranceType":        ("Insurance Type",     "نوع التأمين"),
+            "insuranceStartDate":   ("Start Date",         "تاريخ البدء"),
+            "insuranceEndDate":     ("End Date",           "تاريخ الانتهاء"),
+            "accidentCount":        ("Accident Count",     "عدد الحوادث"),
+            "totalLossAmount":      ("Total Loss Amount",  "إجمالي الخسارة"),
+            "myAccidentCount":      ("My Accident Count",  "حوادثي"),
+            "otherAccidentCount":   ("Other Accident Count","حوادث الطرف الآخر"),
+            "myAccidentAmount":     ("My Accident Amount", "مبلغ حوادثي"),
+            "otherAccidentAmount":  ("Other Accident Amount","مبلغ الطرف الآخر"),
+            "ownerChangeCount":     ("Ownership Changes",  "تغييرات الملكية"),
+            "carNo":                ("Car Number",         "رقم السيارة"),
+            "carType":              ("Car Type",           "نوع السيارة"),
+        }
+        rows = []
+        # Render known fields first in order
+        for key, (en, ar) in LABELS.items():
+            if key in rec:
+                rows.append(
+                    f'<div class="check-row">'
+                    f'<span class="lbl bil"><span class="bil-en">{en}</span><span class="bil-ar">{ar}</span></span>'
+                    f'<span>{_fmt_insurance_val(rec[key])}</span>'
+                    f'</div>'
+                )
+        # Render any remaining unknown keys
+        known_keys = set(LABELS.keys())
+        for key, val in rec.items():
+            if key not in known_keys and not isinstance(val, (dict, list)):
+                rows.append(
+                    f'<div class="check-row">'
+                    f'<span class="lbl">{key}</span>'
+                    f'<span>{_fmt_insurance_val(val)}</span>'
+                    f'</div>'
+                )
+        if not rows:
+            return '<p style="color:#aaa;padding:20px;text-align:center">No insurance data available</p>'
+        return '<div class="checklist">' + "".join(rows) + '</div>'
+
+    insurance_html = _build_insurance_html(record_data)
 
     # ── render HTML ────────────────────────────────────────────────────────────
     html = f"""<!doctype html>
@@ -2458,6 +2515,11 @@ def car_report(request, lot_number):
       <div class="check-row"><span class="lbl bil"><span class="bil-en">Engine Check</span><span class="bil-ar">فحص المحرك</span></span>{check_chip(engine_ok, true_label="Pass", false_label="Fail")}</div>
       <div class="check-row"><span class="lbl bil"><span class="bil-en">Transmission Check</span><span class="bil-ar">فحص ناقل الحركة</span></span>{check_chip(trans_ok, true_label="Pass", false_label="Fail")}</div>
     </div>
+  </div>
+
+  <div class="section-title">Insurance / <span dir="rtl" style="font-weight:400">بيانات التأمين</span></div>
+  <div class="card">
+    {insurance_html}
   </div>
 
   <p class="foot-note">Hover badges to see part details · Source: DB · Vehicle {vid}</p>
