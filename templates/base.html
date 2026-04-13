@@ -176,6 +176,67 @@
         /* ── Light theme (default — no overrides needed) ── */
         [data-theme="light"] {}
 
+        /* ── Smooth image loading: shimmer + fade-in ── */
+        .img-loading {
+            background: linear-gradient(90deg,
+                #f0f2f5 25%,
+                #e4e7ec 50%,
+                #f0f2f5 75%);
+            background-size: 200% 100%;
+            animation: img-shimmer 1.4s ease-in-out infinite;
+        }
+        [data-theme="dark"] .img-loading {
+            background: linear-gradient(90deg,
+                #1e293b 25%,
+                #273549 50%,
+                #1e293b 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes img-shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── Page transition: top progress bar ── */
+        #nprogress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 0%;
+            height: 3px;
+            background: var(--color-primary);
+            z-index: 99999;
+            transition: width 0.25s ease, opacity 0.4s ease;
+            pointer-events: none;
+            border-radius: 0 2px 2px 0;
+            box-shadow: 0 0 8px var(--color-primary), 0 0 4px var(--color-primary);
+        }
+        #nprogress-bar::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 0;
+            width: 80px; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.6));
+            animation: shimmer-bar 0.8s ease-in-out infinite;
+        }
+        @keyframes shimmer-bar {
+            0%   { opacity: 0; }
+            50%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        #nprogress-bar.done {
+            width: 100% !important;
+            opacity: 0;
+        }
+
+        /* ── Page content fade-in on load ── */
+        @keyframes page-enter {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        main {
+            animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
         /* ── Custom theme — uses tenant color fields ── */
         [data-theme="custom"] {
             --color-body-bg: {{ body_bg_color|default:'#ffffff' }};
@@ -527,6 +588,7 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
+<div id="nprogress-bar"></div>
         {% if eid_is_active %}
         <!-- Eid Balloons Overlay -->
         <div class="eid-balloons" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;">
@@ -1578,5 +1640,131 @@ setTimeout(() => showTooltip('account-tooltip'), 6500);
     </style>
 
     {% block extra_js %}{% endblock %}
+
+    <script>
+    /* ── Smooth image loading ── */
+    (function () {
+        function handleImg(img) {
+            // Skip SVGs, data URIs, and icon-sized images
+            var src = img.getAttribute('src') || '';
+            if (!src || src.startsWith('data:') || src.endsWith('.svg')) return;
+            var w = parseInt(img.getAttribute('width') || '0', 10);
+            if (w > 0 && w <= 40) return;
+
+            var parent = img.parentElement;
+            if (!parent) return;
+
+            // Shimmer on parent, image starts invisible
+            parent.classList.add('img-loading');
+            img.style.opacity = '0';
+            img.style.transition = 'opacity 0.5s cubic-bezier(0.4,0,0.2,1)';
+
+            function reveal() {
+                img.style.opacity = '1';
+                parent.classList.remove('img-loading');
+            }
+
+            if (img.complete && img.naturalWidth > 0) {
+                // Already cached — reveal immediately, no flicker
+                reveal();
+            } else {
+                img.addEventListener('load',  reveal, { once: true });
+                img.addEventListener('error', reveal, { once: true });
+            }
+        }
+
+        // All images present at parse time
+        document.querySelectorAll('img').forEach(handleImg);
+
+        // Images injected later (sliders, infinite scroll, modals)
+        new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+                m.addedNodes.forEach(function (n) {
+                    if (!n || n.nodeType !== 1) return;
+                    if (n.tagName === 'IMG') { handleImg(n); return; }
+                    n.querySelectorAll('img').forEach(handleImg);
+                });
+            });
+        }).observe(document.body, { childList: true, subtree: true });
+    })();
+
+    /* ── Page-transition progress bar ── */
+    (function () {
+        var bar = document.getElementById('nprogress-bar');
+        var tid = null;
+
+        function setWidth(w) { bar.style.width = w + '%'; }
+
+        function start() {
+            bar.style.opacity = '1';
+            bar.classList.remove('done');
+            setWidth(8);
+            // eased crawl: 8 → 20 → 45 → 65 → 78
+            var steps = [20, 45, 65, 78];
+            var i = 0;
+            tid = setInterval(function () {
+                if (i < steps.length) { setWidth(steps[i++]); }
+                else { clearInterval(tid); }
+            }, 220);
+        }
+
+        function finish() {
+            clearInterval(tid);
+            setWidth(100);
+            bar.classList.add('done');
+            // reset so next navigation starts fresh
+            setTimeout(function () {
+                bar.style.transition = 'none';
+                setWidth(0);
+                bar.style.opacity = '1';
+                bar.classList.remove('done');
+                // re-enable transition next frame
+                requestAnimationFrame(function () {
+                    bar.style.transition = '';
+                });
+            }, 500);
+        }
+
+        // Finish as soon as the page is interactive
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', finish);
+        } else {
+            finish();
+        }
+
+        // Intercept all internal <a> clicks
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var href = a.getAttribute('href');
+            if (!href) return;
+            // Skip: external, hash-only, javascript:, mailto:, tel:, download
+            if (a.target === '_blank') return;
+            if (href.startsWith('#') || href.startsWith('javascript') ||
+                href.startsWith('mailto') || href.startsWith('tel')) return;
+            if (a.hasAttribute('download')) return;
+            try {
+                var url = new URL(href, window.location.href);
+                if (url.origin !== window.location.origin) return;
+            } catch (_) { return; }
+            // Don't start if it's the exact same page (refresh)
+            if (href === window.location.pathname + window.location.search) return;
+            start();
+        });
+
+        // Also start on form submit (filters, search)
+        document.addEventListener('submit', function (e) {
+            var f = e.target;
+            if (f.tagName !== 'FORM') return;
+            var action = f.getAttribute('action') || window.location.href;
+            if (f.target === '_blank') return;
+            try {
+                var url = new URL(action, window.location.href);
+                if (url.origin !== window.location.origin) return;
+            } catch (_) { return; }
+            start();
+        });
+    })();
+    </script>
 </body>
 </html>
