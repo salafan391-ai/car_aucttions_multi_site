@@ -2602,24 +2602,30 @@ def debug_cache(request):
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden()
     from django.conf import settings
-    import time
+    import time, redis as redis_lib
     backend = settings.CACHES['default']['BACKEND']
     location = settings.CACHES['default'].get('LOCATION', 'N/A')
-    # Write + read test
+    safe_location = location.split('@')[-1] if '@' in str(location) else str(location)
+
+    # Direct redis-py connection test (bypasses IGNORE_EXCEPTIONS)
+    redis_error = None
+    ping_ok = False
+    try:
+        r = redis_lib.from_url(str(location), socket_connect_timeout=5, socket_timeout=5)
+        ping_ok = r.ping()
+    except Exception as e:
+        redis_error = str(e)
+
+    # Django cache write/read test
     key = '_debug_cache_check'
     cache.set(key, 'ok', 30)
     read_val = cache.get(key)
     cache.delete(key)
-    # Latency test
-    t0 = time.monotonic()
-    for _ in range(10):
-        cache.set('_lat', '1', 10)
-        cache.get('_lat')
-    latency_ms = round((time.monotonic() - t0) / 10 * 1000, 2)
-    cache.delete('_lat')
+
     return JsonResponse({
         'backend': backend,
-        'location': location.split('@')[-1] if '@' in str(location) else location,
-        'write_read': 'OK' if read_val == 'ok' else 'FAILED',
-        'avg_latency_ms': latency_ms,
+        'location': safe_location,
+        'redis_ping': ping_ok,
+        'redis_error': redis_error,
+        'django_write_read': 'OK' if read_val == 'ok' else 'FAILED',
     })
