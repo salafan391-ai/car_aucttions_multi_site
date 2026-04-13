@@ -127,6 +127,26 @@
                 {% else %}
                 <span class="bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">متاح</span>
                 {% endif %}
+                {% if car.lot_number %}
+                <div id="encar-badge-loading" class="flex items-center">
+                    <div class="h-6 w-32 rounded-full bg-white/20 animate-pulse"></div>
+                </div>
+                <div id="encar-badge-available" class="hidden">
+                    <span class="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/30 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                        </span>
+                        متاح على إنكار
+                    </span>
+                </div>
+                <div id="encar-badge-sold" class="hidden">
+                    <span class="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/30 text-white/70 text-xs font-bold px-3 py-1.5 rounded-full">
+                        <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                        غير متاح على إنكار
+                    </span>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -349,7 +369,7 @@
 
             <!-- Tabbed: Features / Inspection / History -->
             {% with rec=car.extra_features.record %}
-            {% if car.options.standard or insp.has_outer or rec.openData %}
+            {% if car.options.standard or insp.has_inspection or rec.openData %}
             <div class="bg-white rounded-2xl shadow-sm mt-6 overflow-hidden" dir="rtl">
 
               <style>
@@ -374,7 +394,7 @@
                   المميزات
                 </button>
                 {% endif %}
-                {% if insp.has_outer %}
+                {% if insp.has_inspection %}
                 <button onclick="switchDetailTab('tab-inspection',this)" id="btn-tab-inspection"
                   class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition-colors">
                   تقرير الفحص
@@ -402,11 +422,18 @@
               {% endif %}
 
               <!-- Tab: Inspection -->
-              {% if insp.has_outer %}
+              {% if insp.has_inspection %}
               <div id="tab-inspection" class="detail-tab-panel hidden" dir="ltr">
+                {% if not insp.has_outer %}
+                <!-- No damage notice -->
+                <div class="flex items-center gap-3 m-4 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
+                  <svg class="w-5 h-5 shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span class="text-sm font-semibold">لا توجد أضرار مُسجَّلة على هيكل هذه السيارة</span>
+                </div>
+                {% endif %}
                 <div class="grid grid-cols-2 gap-4 p-4">
                   <div>
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Outer Panel — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}</div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Outer Panel{% if insp.has_outer %} — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}{% endif %}</div>
                     <div class="insp-diagram rounded-xl overflow-hidden border border-gray-100">
                       <img src="{{ insp.sedan_img }}" alt="Outer panel">
                       {{ insp.outer_badges_html|safe }}
@@ -420,6 +447,7 @@
                     </div>
                   </div>
                 </div>
+                {% if insp.has_outer %}
                 <div class="flex flex-wrap gap-3 px-4 py-3 border-t border-gray-50 text-xs text-gray-500">
                   <span class="flex items-center gap-1.5"><span class="insp-lb X">X</span>تغيير</span>
                   <span class="flex items-center gap-1.5"><span class="insp-lb W">W</span>رش</span>
@@ -438,6 +466,7 @@
                     <tbody>{{ insp.table_rows_html|safe }}</tbody>
                   </table>
                 </div>
+                {% endif %}
               </div>
               {% endif %}
 
@@ -697,32 +726,8 @@
                 {% endif %}
 
                 {% if car.lot_number %}
-                <!-- Encar Live Availability -->
-                <div id="encar-badge-wrap" class="mb-4">
-                    <div id="encar-badge-loading" class="flex items-center gap-2">
-                        <div class="h-7 w-36 rounded-full bg-gray-100 animate-pulse"></div>
-                    </div>
-                    <div id="encar-badge-available" class="hidden">
-                        <span class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-700 text-sm font-bold px-3 py-1.5 rounded-full shadow-sm">
-                            <span class="relative flex h-2.5 w-2.5">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                            </span>
-                            متاح على إنكار
-                        </span>
-                    </div>
-                    <div id="encar-badge-sold" class="hidden">
-                        <span class="inline-flex items-center gap-1.5 bg-red-50 border border-red-300 text-red-700 text-sm font-bold px-3 py-1.5 rounded-full shadow-sm">
-                            <svg class="w-3.5 h-3.5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            غير متاح على إنكار
-                        </span>
-                    </div>
-                </div>
                 <script>
                 (function () {
-                    var lotNumber = "{{ car.lot_number|escapejs }}";
                     var url = "{% url 'car_availability_check' car.lot_number %}";
                     fetch(url, { method: 'GET' })
                         .then(function(r) { return r.json(); })
@@ -733,7 +738,6 @@
                             } else if (data.available === false) {
                                 document.getElementById('encar-badge-sold').classList.remove('hidden');
                             }
-                            // null → hide entirely (network error)
                         })
                         .catch(function() {
                             document.getElementById('encar-badge-loading').classList.add('hidden');

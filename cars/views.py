@@ -2061,6 +2061,7 @@ def _build_inspection_context(extra):
         "insp_images":            insp_images,
         "damage_count":           damage_count,
         "has_outer":              bool(outers_data),
+        "has_inspection":         "outers" in extra,
         "has_inner":              bool(inner_sections_html),
         "has_images":             bool(insp_images),
         "sedan_img":              _SEDAN_IMG,
