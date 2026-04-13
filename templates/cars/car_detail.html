@@ -304,6 +304,111 @@
                 </div>
             </div>
             {% endif %}
+
+
+            <!-- Vehicle History Record (record key in extra_features) -->
+            {% with rec=car.extra_features.record %}
+            {% if rec.openData %}
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6" dir="rtl">
+                <h2 class="text-xl font-bold mb-5">سجل السيارة التأميني</h2>
+
+                <!-- Summary stats row -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 text-sm text-center">
+                    <div class="bg-{% if rec.accidentCnt %}red-50{% else %}emerald-50{% endif %} rounded-xl p-3">
+                        <div class="text-xs text-gray-500 mb-1">إجمالي الحوادث</div>
+                        <div class="text-2xl font-bold {% if rec.accidentCnt %}text-red-600{% else %}text-emerald-600{% endif %}">{{ rec.accidentCnt|default:"0" }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-3">
+                        <div class="text-xs text-gray-500 mb-1">حوادث من جانبي</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ rec.myAccidentCnt|default:"0" }}</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-3">
+                        <div class="text-xs text-gray-500 mb-1">حوادث الطرف الآخر</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ rec.otherAccidentCnt|default:"0" }}</div>
+                    </div>
+                    <div class="bg-{% if rec.ownerChangeCnt and rec.ownerChangeCnt > 1 %}yellow-50{% else %}gray-50{% endif %} rounded-xl p-3">
+                        <div class="text-xs text-gray-500 mb-1">تغييرات الملكية</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ rec.ownerChangeCnt|default:"0" }}</div>
+                    </div>
+                </div>
+
+                <!-- Extra flags -->
+                <div class="flex flex-wrap gap-2 mb-5 text-sm">
+                    {% if rec.totalLossCnt %}
+                    <span class="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 font-semibold px-3 py-1.5 rounded-full">خسارة كلية: {{ rec.totalLossCnt }}</span>
+                    {% endif %}
+                    {% if rec.floodTotalLossCnt %}
+                    <span class="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 font-semibold px-3 py-1.5 rounded-full">فيضان (خسارة كلية): {{ rec.floodTotalLossCnt }}</span>
+                    {% endif %}
+                    {% if rec.floodDate %}
+                    <span class="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 font-semibold px-3 py-1.5 rounded-full">تاريخ الفيضان: {{ rec.floodDate }}</span>
+                    {% endif %}
+                    {% if rec.robberCnt %}
+                    <span class="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-300 text-gray-700 font-semibold px-3 py-1.5 rounded-full">سرقة: {{ rec.robberCnt }}</span>
+                    {% endif %}
+                    {% if rec.carNoChangeCnt %}
+                    <span class="inline-flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 text-yellow-700 font-semibold px-3 py-1.5 rounded-full">تغيير اللوحة: {{ rec.carNoChangeCnt }} مرة</span>
+                    {% endif %}
+                    {% if rec.loan %}
+                    <span class="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 font-semibold px-3 py-1.5 rounded-full">يوجد رهن/قرض</span>
+                    {% endif %}
+                </div>
+
+                <!-- Accident history -->
+                {% if rec.accidents %}
+                <div class="mb-5">
+                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">سجل الحوادث</div>
+                    <div class="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden text-sm">
+                        {% for a in rec.accidents %}
+                        <div class="flex items-center justify-between px-4 py-3 bg-white">
+                            <div class="flex items-center gap-3">
+                                <span class="text-gray-400 text-xs w-24 shrink-0">{{ a.date }}</span>
+                                <span class="text-gray-700">
+                                    {% if a.type == "1" %}حادث (تحمّلت التكلفة)
+                                    {% elif a.type == "2" %}حادث (الطرف الآخر تحمّل)
+                                    {% else %}حادث آخر{% endif %}
+                                </span>
+                            </div>
+                            <span class="text-red-600 font-semibold shrink-0">{{ a.insuranceBenefit|default:"—" }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Ownership history -->
+                {% if rec.ownerChanges %}
+                <div class="mb-5">
+                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">تاريخ تغيير الملكية</div>
+                    <div class="flex flex-wrap gap-2">
+                        {% for d in rec.ownerChanges %}
+                        <span class="bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full">{{ d }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Cost summary -->
+                {% if rec.myAccidentCost or rec.otherAccidentCost %}
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    {% if rec.myAccidentCost %}
+                    <div class="bg-red-50 rounded-xl p-3">
+                        <div class="text-xs text-gray-500 mb-1">إجمالي تكلفة حوادثي</div>
+                        <div class="font-bold text-red-700">{{ rec.myAccidentCost }} ₩</div>
+                    </div>
+                    {% endif %}
+                    {% if rec.otherAccidentCost %}
+                    <div class="bg-gray-50 rounded-xl p-3">
+                        <div class="text-xs text-gray-500 mb-1">إجمالي تكلفة حوادث الطرف الآخر</div>
+                        <div class="font-bold text-gray-700">{{ rec.otherAccidentCost }} ₩</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
         <!-- Inspection Images -->
             {% comment %} {% if car.lot_number and car.category.name != "auction" %}
             {{car.lot_number}} {{car.category.name}}

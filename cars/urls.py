@@ -57,4 +57,5 @@ urlpatterns = [
     path('posts/comment/<int:pk>/delete/', views.post_comment_delete, name='post_comment_delete'),
     path('posts/image/<int:pk>/delete/', views.post_image_delete, name='post_image_delete'),
     path('manufacturer-logo/<int:manufacturer_id>/', views.manufacturer_logo, name='manufacturer_logo'),
+    path('debug/cache/', views.debug_cache, name='debug_cache'),
 ]

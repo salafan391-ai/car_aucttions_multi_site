@@ -2595,3 +2595,31 @@ def car_availability_check(request, lot_number):
         return JsonResponse({'available': available})
     except Exception:
         return JsonResponse({'available': None})
+
+
+def debug_cache(request):
+    if not request.user.is_superuser:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+    from django.conf import settings
+    import time
+    backend = settings.CACHES['default']['BACKEND']
+    location = settings.CACHES['default'].get('LOCATION', 'N/A')
+    # Write + read test
+    key = '_debug_cache_check'
+    cache.set(key, 'ok', 30)
+    read_val = cache.get(key)
+    cache.delete(key)
+    # Latency test
+    t0 = time.monotonic()
+    for _ in range(10):
+        cache.set('_lat', '1', 10)
+        cache.get('_lat')
+    latency_ms = round((time.monotonic() - t0) / 10 * 1000, 2)
+    cache.delete('_lat')
+    return JsonResponse({
+        'backend': backend,
+        'location': location.split('@')[-1] if '@' in str(location) else location,
+        'write_read': 'OK' if read_val == 'ok' else 'FAILED',
+        'avg_latency_ms': latency_ms,
+    })
