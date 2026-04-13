@@ -249,8 +249,15 @@
                     {% endif %}
                     {% if car.power %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">القوة</div>
+                        <div class="text-xs text-gray-500 mb-1">المحرك
+                        </div>
                         <div class="font-bold text-sm">{{ car.power }} cc</div>
+                    </div>
+                    {% elif car.points %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1">المحرك
+                        </div>
+                        <div class="font-bold text-sm">{% widthratio car.points 1 1000 %} cc</div>
                     </div>
                     {% endif %}
                     {% if car.drive_wheel %}
