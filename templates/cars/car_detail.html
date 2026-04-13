@@ -1162,6 +1162,7 @@ document.addEventListener('keydown', function(e) {
     <div class="text-center mt-3 text-white/40 text-xs">اضغط ESC للإغلاق · استخدم ← → للتنقل</div>
 </div>
 
+{% block mobile_bottom_nav %}
 {% whatsapp_order_message car site_name as whatsapp_order_msg_sticky %}
 <!-- Mobile Bottom Navigation Bar -->
 <div class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.10)]">
@@ -1223,5 +1224,6 @@ document.addEventListener('keydown', function(e) {
 
     </div>
 </div>
+{% endblock mobile_bottom_nav %}
 
 {% endblock %}

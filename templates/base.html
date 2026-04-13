@@ -823,7 +823,7 @@
     </div>
 
     <!-- Content -->
-    <main class="flex-grow">
+    <main class="flex-grow pb-16 md:pb-0">
         {% block content %}{% endblock %}
     </main>
 
@@ -1640,6 +1640,59 @@ setTimeout(() => showTooltip('account-tooltip'), 6500);
     </style>
 
     {% block extra_js %}{% endblock %}
+
+    {% block mobile_bottom_nav %}
+    <!-- Default Mobile Bottom Navigation -->
+    <div class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.10)]">
+        <div class="flex items-center justify-around px-2 pb-2 pt-1">
+
+            <!-- Home -->
+            <a href="{% url 'home' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-[10px] mt-0.5">الرئيسية</span>
+            </a>
+
+            <!-- Cars list -->
+            <a href="{% url 'car_list' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span class="text-[10px] mt-0.5">السيارات</span>
+            </a>
+
+            {% if site_whatsapp %}
+            <!-- WhatsApp FAB -->
+            <div class="flex flex-col items-center flex-1 relative" style="margin-top:-22px;">
+                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}"
+                   target="_blank"
+                   class="w-16 h-16 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-xl shadow-green-300/60 transition ring-4 ring-white">
+                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                </a>
+                <span class="text-[10px] mt-1 text-green-600 font-semibold">واتساب</span>
+            </div>
+            {% endif %}
+
+            <!-- Wishlist -->
+            {% if user.is_authenticated %}
+            <a href="{% url 'wishlist' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-red-500 transition min-w-0 flex-1 relative">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                <span class="text-[10px] mt-0.5">المفضلة</span>
+            </a>
+            {% else %}
+            <div class="flex-1"></div>
+            {% endif %}
+
+            <!-- Account -->
+            {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+            {% else %}
+            <a href="{% url 'login' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+            {% endif %}
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-[10px] mt-0.5">{% if user.is_authenticated %}حسابي{% else %}دخول{% endif %}</span>
+            </a>
+
+        </div>
+    </div>
+    {% endblock mobile_bottom_nav %}
 
     <script>
     /* ── Smooth image loading ── */
