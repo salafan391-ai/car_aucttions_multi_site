@@ -291,123 +291,181 @@
             </div>
             {% endif %}
 
-            <!-- Options -->
-            {% if car.options.standard %}
-            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
-                <h2 class="text-xl font-bold mb-4">المميزات</h2>
-                <div class="flex flex-wrap gap-2">
-                    {% for opt in car.options.standard %}
-                    <span class="bg-brand-light text-brand text-sm px-3 py-1.5 rounded-full">
-                        {{ opt|translate_option }}
-                    </span>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-
-            <!-- Vehicle History Record (record key in extra_features) -->
+            <!-- Tabbed: Features / Inspection / History -->
             {% with rec=car.extra_features.record %}
-            {% if rec.openData %}
-            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6" dir="rtl">
-                <h2 class="text-xl font-bold mb-5">سجل السيارة التأميني</h2>
+            {% if car.options.standard or insp.has_outer or rec.openData %}
+            <div class="bg-white rounded-2xl shadow-sm mt-6 overflow-hidden" dir="rtl">
 
-                <!-- Summary stats row -->
+              <style>
+                .insp-badge{position:absolute;width:5.5%;aspect-ratio:1/1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(8px,1.4vw,13px);font-weight:800;color:#fff;transform:translate(-50%,-50%);box-shadow:0 2px 6px #0004;cursor:default;transition:transform .15s}
+                .insp-badge:hover{transform:translate(-50%,-50%) scale(1.3)}
+                .insp-badge::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:11px;white-space:nowrap;padding:4px 8px;border-radius:4px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10}
+                .insp-badge:hover::after{opacity:1}
+                .insp-badge.X{background:#e53935}.insp-badge.W{background:#1e88e5}.insp-badge.C{background:#fb8c00}.insp-badge.A{background:#7cb9e8}.insp-badge.U{background:#6d7c47}.insp-badge.T{background:#9e9e9e}
+                .insp-lb{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
+                .insp-lb.X{background:#e53935}.insp-lb.W{background:#1e88e5}.insp-lb.C{background:#fb8c00}.insp-lb.A{background:#7cb9e8}.insp-lb.U{background:#6d7c47}.insp-lb.T{background:#9e9e9e}
+                .insp-rank{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600}
+                .insp-rank-1{background:#fce4e4;color:#c62828}.insp-rank-2{background:#fff3e0;color:#e65100}
+                .insp-diagram{position:relative;width:100%;user-select:none}
+                .insp-diagram img{width:100%;display:block}
+              </style>
+
+              <!-- Tab buttons -->
+              <div class="flex border-b border-gray-100 overflow-x-auto">
+                {% if car.options.standard %}
+                <button onclick="switchDetailTab('tab-features',this)" id="btn-tab-features"
+                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-brand border-b-2 border-brand">
+                  المميزات
+                </button>
+                {% endif %}
+                {% if insp.has_outer %}
+                <button onclick="switchDetailTab('tab-inspection',this)" id="btn-tab-inspection"
+                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition-colors">
+                  تقرير الفحص
+                </button>
+                {% endif %}
+                {% if rec.openData %}
+                <button onclick="switchDetailTab('tab-history',this)" id="btn-tab-history"
+                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition-colors">
+                  سجل التأمين
+                </button>
+                {% endif %}
+              </div>
+
+              <!-- Tab: Features -->
+              {% if car.options.standard %}
+              <div id="tab-features" class="detail-tab-panel p-6">
+                <div class="flex flex-wrap gap-2">
+                  {% for opt in car.options.standard %}
+                  <span class="bg-brand-light text-brand text-sm px-3 py-1.5 rounded-full">
+                    {{ opt|translate_option }}
+                  </span>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Tab: Inspection -->
+              {% if insp.has_outer %}
+              <div id="tab-inspection" class="detail-tab-panel hidden" dir="ltr">
+                <div class="grid grid-cols-2 gap-4 p-4">
+                  <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Outer Panel — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}</div>
+                    <div class="insp-diagram rounded-xl overflow-hidden border border-gray-100">
+                      <img src="{{ insp.sedan_img }}" alt="Outer panel">
+                      {{ insp.outer_badges_html|safe }}
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Structural</div>
+                    <div class="insp-diagram rounded-xl overflow-hidden border border-gray-100">
+                      <img src="{{ insp.truck_img }}" alt="Structural">
+                      {{ insp.structural_badges_html|safe }}
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-3 px-4 py-3 border-t border-gray-50 text-xs text-gray-500">
+                  <span class="flex items-center gap-1.5"><span class="insp-lb X">X</span>تغيير</span>
+                  <span class="flex items-center gap-1.5"><span class="insp-lb W">W</span>رش</span>
+                  <span class="flex items-center gap-1.5"><span class="insp-lb C">C</span>صدأ</span>
+                  <span class="flex items-center gap-1.5"><span class="insp-lb A">A</span>خدش</span>
+                  <span class="flex items-center gap-1.5"><span class="insp-lb U">U</span>انبعاج</span>
+                  <span class="flex items-center gap-1.5"><span class="insp-lb T">T</span>تلف</span>
+                </div>
+                <div class="overflow-x-auto border-t border-gray-100">
+                  <table class="w-full text-sm">
+                    <thead><tr class="bg-gray-50 text-xs text-gray-400 uppercase">
+                      <th class="px-4 py-2 text-left font-semibold">القطعة</th>
+                      <th class="px-4 py-2 text-left font-semibold">الحالة</th>
+                      <th class="px-4 py-2 text-left font-semibold">الدرجة</th>
+                    </tr></thead>
+                    <tbody>{{ insp.table_rows_html|safe }}</tbody>
+                  </table>
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Tab: Vehicle History -->
+              {% if rec.openData %}
+              <div id="tab-history" class="detail-tab-panel hidden p-6">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 text-sm text-center">
-                    <div class="bg-{% if rec.accidentCnt %}red-50{% else %}emerald-50{% endif %} rounded-xl p-3">
-                        <div class="text-xs text-gray-500 mb-1">إجمالي الحوادث</div>
-                        <div class="text-2xl font-bold {% if rec.accidentCnt %}text-red-600{% else %}text-emerald-600{% endif %}">{{ rec.accidentCnt|default:"0" }}</div>
-                    </div>
-                    <div class="bg-gray-50 rounded-xl p-3">
-                        <div class="text-xs text-gray-500 mb-1">حوادث من جانبي</div>
-                        <div class="text-2xl font-bold text-gray-800">{{ rec.myAccidentCnt|default:"0" }}</div>
-                    </div>
-                    <div class="bg-gray-50 rounded-xl p-3">
-                        <div class="text-xs text-gray-500 mb-1">حوادث الطرف الآخر</div>
-                        <div class="text-2xl font-bold text-gray-800">{{ rec.otherAccidentCnt|default:"0" }}</div>
-                    </div>
-                    <div class="bg-{% if rec.ownerChangeCnt and rec.ownerChangeCnt > 1 %}yellow-50{% else %}gray-50{% endif %} rounded-xl p-3">
-                        <div class="text-xs text-gray-500 mb-1">تغييرات الملكية</div>
-                        <div class="text-2xl font-bold text-gray-800">{{ rec.ownerChangeCnt|default:"0" }}</div>
-                    </div>
+                  <div class="bg-{% if rec.accidentCnt %}red-50{% else %}emerald-50{% endif %} rounded-xl p-3">
+                    <div class="text-xs text-gray-500 mb-1">إجمالي الحوادث</div>
+                    <div class="text-2xl font-bold {% if rec.accidentCnt %}text-red-600{% else %}text-emerald-600{% endif %}">{{ rec.accidentCnt|default:"0" }}</div>
+                  </div>
+                  <div class="bg-gray-50 rounded-xl p-3">
+                    <div class="text-xs text-gray-500 mb-1">حوادث من جانبي</div>
+                    <div class="text-2xl font-bold text-gray-800">{{ rec.myAccidentCnt|default:"0" }}</div>
+                  </div>
+                  <div class="bg-gray-50 rounded-xl p-3">
+                    <div class="text-xs text-gray-500 mb-1">حوادث الطرف الآخر</div>
+                    <div class="text-2xl font-bold text-gray-800">{{ rec.otherAccidentCnt|default:"0" }}</div>
+                  </div>
+                  <div class="bg-{% if rec.ownerChangeCnt and rec.ownerChangeCnt > 1 %}yellow-50{% else %}gray-50{% endif %} rounded-xl p-3">
+                    <div class="text-xs text-gray-500 mb-1">تغييرات الملكية</div>
+                    <div class="text-2xl font-bold text-gray-800">{{ rec.ownerChangeCnt|default:"0" }}</div>
+                  </div>
                 </div>
-
-                <!-- Extra flags -->
                 <div class="flex flex-wrap gap-2 mb-5 text-sm">
-                    {% if rec.totalLossCnt %}
-                    <span class="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 font-semibold px-3 py-1.5 rounded-full">خسارة كلية: {{ rec.totalLossCnt }}</span>
-                    {% endif %}
-                    {% if rec.floodTotalLossCnt %}
-                    <span class="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 font-semibold px-3 py-1.5 rounded-full">فيضان (خسارة كلية): {{ rec.floodTotalLossCnt }}</span>
-                    {% endif %}
-                    {% if rec.floodDate %}
-                    <span class="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 font-semibold px-3 py-1.5 rounded-full">تاريخ الفيضان: {{ rec.floodDate }}</span>
-                    {% endif %}
-                    {% if rec.robberCnt %}
-                    <span class="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-300 text-gray-700 font-semibold px-3 py-1.5 rounded-full">سرقة: {{ rec.robberCnt }}</span>
-                    {% endif %}
-                    {% if rec.carNoChangeCnt %}
-                    <span class="inline-flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 text-yellow-700 font-semibold px-3 py-1.5 rounded-full">تغيير اللوحة: {{ rec.carNoChangeCnt }} مرة</span>
-                    {% endif %}
-                    {% if rec.loan %}
-                    <span class="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 font-semibold px-3 py-1.5 rounded-full">يوجد رهن/قرض</span>
-                    {% endif %}
+                  {% if rec.totalLossCnt %}<span class="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 font-semibold px-3 py-1.5 rounded-full">خسارة كلية: {{ rec.totalLossCnt }}</span>{% endif %}
+                  {% if rec.floodTotalLossCnt %}<span class="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 font-semibold px-3 py-1.5 rounded-full">فيضان (خسارة كلية): {{ rec.floodTotalLossCnt }}</span>{% endif %}
+                  {% if rec.floodDate %}<span class="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 font-semibold px-3 py-1.5 rounded-full">تاريخ الفيضان: {{ rec.floodDate }}</span>{% endif %}
+                  {% if rec.robberCnt %}<span class="inline-flex items-center gap-1.5 bg-gray-100 border border-gray-300 text-gray-700 font-semibold px-3 py-1.5 rounded-full">سرقة: {{ rec.robberCnt }}</span>{% endif %}
+                  {% if rec.carNoChangeCnt %}<span class="inline-flex items-center gap-1.5 bg-yellow-50 border border-yellow-200 text-yellow-700 font-semibold px-3 py-1.5 rounded-full">تغيير اللوحة: {{ rec.carNoChangeCnt }} مرة</span>{% endif %}
+                  {% if rec.loan %}<span class="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-700 font-semibold px-3 py-1.5 rounded-full">يوجد رهن/قرض</span>{% endif %}
                 </div>
-
-                <!-- Accident history -->
                 {% if rec.accidents %}
                 <div class="mb-5">
-                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">سجل الحوادث</div>
-                    <div class="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden text-sm">
-                        {% for a in rec.accidents %}
-                        <div class="flex items-center justify-between px-4 py-3 bg-white">
-                            <div class="flex items-center gap-3">
-                                <span class="text-gray-400 text-xs w-24 shrink-0">{{ a.date }}</span>
-                                <span class="text-gray-700">
-                                    {% if a.type == "1" %}حادث (تحمّلت التكلفة)
-                                    {% elif a.type == "2" %}حادث (الطرف الآخر تحمّل)
-                                    {% else %}حادث آخر{% endif %}
-                                </span>
-                            </div>
-                            <span class="text-red-600 font-semibold shrink-0">{{ a.insuranceBenefit|default:"—" }}</span>
-                        </div>
-                        {% endfor %}
+                  <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">سجل الحوادث</div>
+                  <div class="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden text-sm">
+                    {% for a in rec.accidents %}
+                    <div class="flex items-center justify-between px-4 py-3 bg-white">
+                      <div class="flex items-center gap-3">
+                        <span class="text-gray-400 text-xs w-24 shrink-0">{{ a.date }}</span>
+                        <span class="text-gray-700">{% if a.type == "1" %}حادث (تحمّلت التكلفة){% elif a.type == "2" %}حادث (الطرف الآخر تحمّل){% else %}حادث آخر{% endif %}</span>
+                      </div>
+                      <span class="text-red-600 font-semibold shrink-0">{{ a.insuranceBenefit|default:"—" }}</span>
                     </div>
+                    {% endfor %}
+                  </div>
                 </div>
                 {% endif %}
-
-                <!-- Ownership history -->
                 {% if rec.ownerChanges %}
                 <div class="mb-5">
-                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">تاريخ تغيير الملكية</div>
-                    <div class="flex flex-wrap gap-2">
-                        {% for d in rec.ownerChanges %}
-                        <span class="bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full">{{ d }}</span>
-                        {% endfor %}
-                    </div>
+                  <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">تاريخ تغيير الملكية</div>
+                  <div class="flex flex-wrap gap-2">
+                    {% for d in rec.ownerChanges %}
+                    <span class="bg-gray-50 border border-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-full">{{ d }}</span>
+                    {% endfor %}
+                  </div>
                 </div>
                 {% endif %}
-
-                <!-- Cost summary -->
                 {% if rec.myAccidentCost or rec.otherAccidentCost %}
                 <div class="grid grid-cols-2 gap-3 text-sm">
-                    {% if rec.myAccidentCost %}
-                    <div class="bg-red-50 rounded-xl p-3">
-                        <div class="text-xs text-gray-500 mb-1">إجمالي تكلفة حوادثي</div>
-                        <div class="font-bold text-red-700">{{ rec.myAccidentCost }} ₩</div>
-                    </div>
-                    {% endif %}
-                    {% if rec.otherAccidentCost %}
-                    <div class="bg-gray-50 rounded-xl p-3">
-                        <div class="text-xs text-gray-500 mb-1">إجمالي تكلفة حوادث الطرف الآخر</div>
-                        <div class="font-bold text-gray-700">{{ rec.otherAccidentCost }} ₩</div>
-                    </div>
-                    {% endif %}
+                  {% if rec.myAccidentCost %}<div class="bg-red-50 rounded-xl p-3"><div class="text-xs text-gray-500 mb-1">إجمالي تكلفة حوادثي</div><div class="font-bold text-red-700">{{ rec.myAccidentCost }} ₩</div></div>{% endif %}
+                  {% if rec.otherAccidentCost %}<div class="bg-gray-50 rounded-xl p-3"><div class="text-xs text-gray-500 mb-1">إجمالي تكلفة حوادث الطرف الآخر</div><div class="font-bold text-gray-700">{{ rec.otherAccidentCost }} ₩</div></div>{% endif %}
                 </div>
                 {% endif %}
+              </div>
+              {% endif %}
+
+
             </div>
             {% endif %}
             {% endwith %}
+
+            <script>
+            function switchDetailTab(tabId, btn) {
+              document.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.add('hidden'));
+              document.querySelectorAll('.detail-tab-btn').forEach(b => {
+                b.classList.remove('text-brand', 'border-brand');
+                b.classList.add('text-gray-400', 'border-transparent');
+              });
+              document.getElementById(tabId).classList.remove('hidden');
+              btn.classList.remove('text-gray-400', 'border-transparent');
+              btn.classList.add('text-brand', 'border-brand');
+            }
+            </script>
 
         <!-- Inspection Images -->
             {% comment %} {% if car.lot_number and car.category.name != "auction" %}

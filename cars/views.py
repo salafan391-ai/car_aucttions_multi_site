@@ -1351,6 +1351,8 @@ def car_detail(request, slug):
         if request.user.is_authenticated:
             user_rating = SiteRating.objects.filter(car=car, user=request.user).first()
 
+    insp = _build_inspection_context(car.extra_features or {})
+
     context = {
         'car': car,
         'ratings': ratings,
@@ -1370,6 +1372,7 @@ def car_detail(request, slug):
             ('R',   'وكالة'),
             ('WU',  'رش'),
         ],
+        'insp': insp,
     }
     return render(request, 'cars/car_detail.html', context)
 
@@ -1895,6 +1898,176 @@ def manufacturer_logo(request, manufacturer_id):
         return HttpResponse('', status=404)
 
 
+_ENCAR_BASE_IMG  = "https://ci.encar.com"
+_SEDAN_IMG       = "/static/images/car_sedan.png"
+_TRUCK_IMG       = "/static/images/car_truck.png"
+
+_PART_NAMES_AR = {
+    "P011": "غطاء المحرك",
+    "P021": "الجناح الأمامي (يسار)",
+    "P022": "الجناح الأمامي (يمين)",
+    "P031": "الباب الأمامي (يسار)",
+    "P032": "الباب الأمامي (يمين)",
+    "P033": "الباب الخلفي (يسار)",
+    "P034": "الباب الخلفي (يمين)",
+    "P041": "الصندوق الخلفي",
+    "P051": "حامل الرادياتير",
+    "P061": "اللوح الخلفي (يسار)",
+    "P062": "اللوح الخلفي (يمين)",
+    "P081": "عتبة الباب (يسار)",
+    "P082": "عتبة الباب (يمين)",
+    "P091": "إطار الزجاج الأمامي",
+    "P111": "العمود A (يسار)",
+    "P112": "العمود A (يمين)",
+    "P121": "العمود B (يسار)",
+    "P122": "العمود B (يمين)",
+    "P123": "العمود C (يسار)",
+    "P124": "العمود C (يمين)",
+    "P131": "عارضة الجانب (يسار أمام)",
+    "P132": "عارضة الجانب (يمين أمام)",
+    "P133": "عارضة الجانب (يسار خلف)",
+    "P134": "عارضة الجانب (يمين خلف)",
+    "P141": "أرضية أمامية",
+    "P142": "أرضية خلفية",
+    "P144": "عارضة العجلة الخلفية (يمين)",
+    "P151": "لوح السقف",
+    "P171": "الأرضية الخلفية",
+    "P181": "أرضية الصندوق",
+}
+
+_PART_POSITIONS = {
+    "P011": (50, 14), "P021": (17, 27), "P022": (83, 27),
+    "P031": (17, 41), "P032": (83, 41), "P033": (17, 54),
+    "P034": (83, 54), "P041": (50, 87), "P051": (50, 19),
+    "P061": (17, 67), "P062": (83, 67), "P081": (17, 61),
+    "P082": (83, 61), "P091": (50, 22), "P111": (17, 45),
+    "P112": (83, 45), "P121": (17, 32), "P122": (83, 32),
+    "P123": (17, 65), "P124": (83, 65), "P131": (11, 36),
+    "P132": (89, 36), "P133": (11, 63), "P134": (89, 63),
+    "P141": (17, 36), "P142": (17, 50), "P144": (83, 36),
+    "P151": (50, 30), "P171": (50, 82), "P181": (50, 90),
+}
+_STATUS_LABEL = {
+    "X": "Exchange / تغيير", "W": "Sheet Metal / رش",
+    "C": "Corrosion / صدأ",  "A": "Scratches / خدش",
+    "U": "Uneven / انبعاج",  "T": "Impairment / تلف",
+}
+_RANK_LABEL = {"RANK_ONE": "Rank 1", "RANK_TWO": "Rank 2"}
+_INNER_STATUS = {
+    "1":  ("ok",  "Normal / طبيعي"),    "2":  ("ok",  "Adequate / مناسب"),
+    "3":  ("ok",  "None / لا يوجد"),    "4":  ("bad", "Minor Leak / تسرب طفيف"),
+    "5":  ("bad", "Leak / تسرب"),        "6":  ("bad", "Minor Oil Leak / تسرب زيت طفيف"),
+    "7":  ("bad", "Oil Leak / تسرب زيت"), "8": ("bad", "Low / منخفض"),
+    "9":  ("bad", "Excess / زائد"),      "10": ("bad", "Fault / عطل"),
+    "11": ("bad", "Present / موجود"),
+}
+_SECTION_LABEL = {
+    "S00": ("Self-diagnosis", "التشخيص الذاتي"),
+    "S01": ("Engine",         "المحرك"),
+    "S02": ("Transmission",   "ناقل الحركة"),
+    "S03": ("Power Transfer", "نقل القوة"),
+    "S04": ("Steering",       "التوجيه"),
+    "S05": ("Brakes",         "الفرامل"),
+    "S06": ("Electrical",     "الكهرباء"),
+    "S07": ("Fuel System",    "نظام الوقود"),
+}
+
+
+def _build_inspection_context(extra):
+    """Return a dict of pre-rendered HTML strings for the inspection diagrams.
+    Safe to call from any view — pure function, no DB access."""
+    outers_data = extra.get("outers", [])
+    inners_data = extra.get("inners", [])
+    images_data = extra.get("images", [])
+
+    # ── outer panel badges & table ────────────────────────────────────────────
+    outer_badge_divs = []
+    structural_badge_divs = []
+    table_rows = []
+    for item in outers_data:
+        code     = item.get("type", {}).get("code", "")
+        name     = _PART_NAMES_AR.get(code) or item.get("type", {}).get("title", code)
+        statuses = item.get("statusTypes", [])
+        attrs    = item.get("attributes", [])
+        rank     = attrs[0] if attrs else ""
+        is_structural = code.startswith("P1")
+        for st in statuses:
+            sc  = st["code"]
+            tip = f"{name} · {_STATUS_LABEL.get(sc, sc)}"
+            pos = _PART_POSITIONS.get(code)
+            if pos:
+                left, top = pos
+                badge_html = (
+                    f'<div class="insp-badge {sc}" style="left:{left}%;top:{top}%" '
+                    f'data-tip="{tip}">{sc}</div>'
+                )
+                if is_structural:
+                    structural_badge_divs.append(badge_html)
+                else:
+                    outer_badge_divs.append(badge_html)
+            rank_lbl = _RANK_LABEL.get(rank, rank)
+            rank_cls = "insp-rank-1" if rank == "RANK_ONE" else "insp-rank-2"
+            table_rows.append(
+                f'<tr><td>{name}</td>'
+                f'<td><span class="insp-lb {sc}">{sc}</span> {_STATUS_LABEL.get(sc, sc)}</td>'
+                f'<td><span class="insp-rank {rank_cls}">{rank_lbl}</span></td></tr>'
+            )
+
+    # ── inner mechanical sections ─────────────────────────────────────────────
+    inner_sections_html = []
+    for section in inners_data:
+        sec_code = section.get("type", {}).get("code", "")
+        sec_en, sec_ar = _SECTION_LABEL.get(sec_code, (section.get("type", {}).get("title", sec_code), ""))
+        rows = []
+
+        def _walk(children):
+            for child in children:
+                st = child.get("statusType")
+                if st and st.get("code"):
+                    cls, lbl = _INNER_STATUS.get(str(st["code"]), ("", st.get("title", "")))
+                    rows.append(
+                        f'<div class="insp-check-row">'
+                        f'<span class="insp-check-lbl">{child.get("type", {}).get("title", "")}</span>'
+                        f'<span class="insp-chip {cls}">{lbl}</span>'
+                        f'</div>'
+                    )
+                if child.get("children"):
+                    _walk(child["children"])
+
+        _walk(section.get("children", []))
+        if rows:
+            inner_sections_html.append(
+                f'<div class="insp-section">'
+                f'<div class="insp-section-title">{sec_en}'
+                f' <span class="insp-section-ar">/ {sec_ar}</span></div>'
+                f'<div class="insp-checklist">{"".join(rows)}</div>'
+                f'</div>'
+            )
+
+    # ── inspection report images (scanned pages) ──────────────────────────────
+    insp_images = [
+        _ENCAR_BASE_IMG + img["path"]
+        for img in images_data
+        if isinstance(img, dict) and img.get("path")
+    ]
+
+    damage_count = sum(len(i.get("statusTypes", [])) for i in outers_data)
+
+    return {
+        "outer_badges_html":      "".join(outer_badge_divs),
+        "structural_badges_html": "".join(structural_badge_divs),
+        "table_rows_html":        "".join(table_rows),
+        "inner_html":             "".join(inner_sections_html),
+        "insp_images":            insp_images,
+        "damage_count":           damage_count,
+        "has_outer":              bool(outers_data),
+        "has_inner":              bool(inner_sections_html),
+        "has_images":             bool(insp_images),
+        "sedan_img":              _SEDAN_IMG,
+        "truck_img":              _TRUCK_IMG,
+    }
+
+
 def car_report(request, lot_number):
     """
     Generate a dynamic inspection report for a car from the database.
@@ -1905,47 +2078,16 @@ def car_report(request, lot_number):
     vid = lot_number
 
     # ── static / CDN blueprint image URLs ─────────────────────────────────────
-    BASE_IMG = "https://ci.encar.com"
-    SEDAN_IMG = "/static/images/car_sedan.png"
-    TRUCK_IMG = "/static/images/car_truck.png"
+    BASE_IMG  = _ENCAR_BASE_IMG
+    SEDAN_IMG = _SEDAN_IMG
+    TRUCK_IMG = _TRUCK_IMG
 
     # ── part positions for damage badges ──────────────────────────────────────
-    PART_POSITIONS = {
-        "P011": (50, 14), "P021": (17, 27), "P022": (83, 27),
-        "P031": (17, 41), "P032": (83, 41), "P033": (17, 54),
-        "P034": (83, 54), "P041": (50, 87), "P051": (50, 19),
-        "P061": (17, 67), "P062": (83, 67), "P081": (17, 61),
-        "P082": (83, 61), "P091": (50, 22), "P111": (17, 45),
-        "P112": (83, 45), "P121": (17, 32), "P122": (83, 32),
-        "P123": (17, 65), "P124": (83, 65), "P131": (11, 36),
-        "P132": (89, 36), "P133": (11, 63), "P134": (89, 63),
-        "P141": (17, 36), "P142": (17, 50), "P144": (83, 36),
-        "P151": (50, 30), "P171": (50, 82), "P181": (50, 90),
-    }
-    STATUS_LABEL = {
-        "X": "Exchange (Replacement)", "W": "Sheet Metal / Welding",
-        "C": "Corrosion / Rust", "A": "Scratches",
-        "U": "Uneven Surface", "T": "Impairment",
-    }
-    RANK_LABEL = {"RANK_ONE": "Rank 1", "RANK_TWO": "Rank 2"}
-    INNER_STATUS = {
-        "1":  ("ok",  "Normal / طبيعي"),    "2":  ("ok",  "Adequate / مناسب"),
-        "3":  ("ok",  "None / لا يوجد"),    "4":  ("bad", "Minor Leak / تسرب طفيف"),
-        "5":  ("bad", "Leak / تسرب"),        "6":  ("bad", "Minor Oil Leak / تسرب زيت طفيف"),
-        "7":  ("bad", "Oil Leak / تسرب زيت"), "8": ("bad", "Low / منخفض"),
-        "9":  ("bad", "Excess / زائد"),      "10": ("bad", "Fault / عطل"),
-        "11": ("bad", "Present / موجود"),
-    }
-    SECTION_LABEL = {
-        "S00": ("Self-diagnosis", "التشخيص الذاتي"),
-        "S01": ("Engine",         "المحرك"),
-        "S02": ("Transmission",   "ناقل الحركة"),
-        "S03": ("Power Transfer", "نقل القوة"),
-        "S04": ("Steering",       "التوجيه"),
-        "S05": ("Brakes",         "الفرامل"),
-        "S06": ("Electrical",     "الكهرباء"),
-        "S07": ("Fuel System",    "نظام الوقود"),
-    }
+    PART_POSITIONS = _PART_POSITIONS
+    STATUS_LABEL   = {k: v.split(" / ")[0] + " (" + v.split(" / ")[-1] + ")" if " / " in v else v for k, v in _STATUS_LABEL.items()}
+    RANK_LABEL     = _RANK_LABEL
+    INNER_STATUS   = _INNER_STATUS
+    SECTION_LABEL  = _SECTION_LABEL
     OPTION_NAMES = {
         "001": ("ABS", "نظام منع انغلاق المكابح"),
         "003": ("Airbag (Driver)", "وسادة هوائية (السائق)"),
@@ -2054,7 +2196,7 @@ def car_report(request, lot_number):
         table_rows = []
         for item in outers:
             code = item.get("type", {}).get("code", "")
-            name = item.get("type", {}).get("title", code)
+            name = _PART_NAMES_AR.get(code) or item.get("type", {}).get("title", code)
             statuses = item.get("statusTypes", [])
             attrs = item.get("attributes", [])
             rank = attrs[0] if attrs else ""
@@ -2145,6 +2287,11 @@ def car_report(request, lot_number):
     detail      = (master.get("detail") or {})
     outers_data = extra.get("outers", [])
     inners_data = extra.get("inners", [])
+    insp_images = [
+        BASE_IMG + img["path"]
+        for img in extra.get("images", [])
+        if isinstance(img, dict) and img.get("path")
+    ]
 
     record_no  = detail.get("recordNo", "—")
     issue_date = fmt_date(detail.get("issueDate"))
@@ -2597,35 +2744,3 @@ def car_availability_check(request, lot_number):
         return JsonResponse({'available': None})
 
 
-def debug_cache(request):
-    if not request.user.is_superuser:
-        from django.http import HttpResponseForbidden
-        return HttpResponseForbidden()
-    from django.conf import settings
-    import time, redis as redis_lib
-    backend = settings.CACHES['default']['BACKEND']
-    location = settings.CACHES['default'].get('LOCATION', 'N/A')
-    safe_location = location.split('@')[-1] if '@' in str(location) else str(location)
-
-    # Direct redis-py connection test (bypasses IGNORE_EXCEPTIONS)
-    redis_error = None
-    ping_ok = False
-    try:
-        r = redis_lib.from_url(str(location), socket_connect_timeout=5, socket_timeout=5)
-        ping_ok = r.ping()
-    except Exception as e:
-        redis_error = str(e)
-
-    # Django cache write/read test
-    key = '_debug_cache_check'
-    cache.set(key, 'ok', 30)
-    read_val = cache.get(key)
-    cache.delete(key)
-
-    return JsonResponse({
-        'backend': backend,
-        'location': safe_location,
-        'redis_ping': ping_ok,
-        'redis_error': redis_error,
-        'django_write_read': 'OK' if read_val == 'ok' else 'FAILED',
-    })
