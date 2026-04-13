@@ -246,7 +246,6 @@ def home(request):
         _cars_count    = _total - _auction_count
 
         _mfr_ids_set  = set(_base_filter.values_list('manufacturer_id', flat=True).distinct())
-        print(f"_mfr_ids_set: {_mfr_ids_set}")
         _body_ids_set = set(_base_filter.values_list('body_id',         flat=True).distinct())
         _years_set    = list(
             _base_filter.order_by('-year')
@@ -891,15 +890,8 @@ def car_list(request):
             }
             cache.set(_static_cache_key, static_filters, 60 * 60)  # 60 min — changes only on import
 
-            # --- popular manufacturers: use DB annotate for counts ---
-            popular_manufacturers = list(
-                Manufacturer.objects.filter(id__in=_mfr_ids)
-                .annotate(car_count=Count(
-                    'apicar',
-                    filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now),
-                ))
-                .order_by('-car_count')
-            )
+            # --- popular manufacturers: reuse already-annotated manufacturers list ---
+            popular_manufacturers = sorted(manufacturers, key=lambda m: m.car_count, reverse=True)
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
         _mfr_cache_key = f"car_list:manufacturers_{'cars' if car_type == 'cars' else 'all'}"
