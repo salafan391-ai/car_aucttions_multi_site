@@ -705,13 +705,11 @@
                             </summary>
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1">
                                 {% for m in manufacturers %}{% if m.car_count %}
-                                <label class="cursor-pointer select-none">
-                                    <input type="checkbox" name="manufacturer" value="{{ m.id }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}checked{% endif %} class="sr-only peer drawer-manufacturer">
-                                    <span class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600">
-                                        {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
-                                        <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
-                                    </span>
-                                </label>
+                                <a href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.manufacturer != m.id|stringformat:"d" %}manufacturer={{ m.id }}{% endif %}"
+                                   class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.manufacturer == m.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600{% endif %}">
+                                    {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
+                                    <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+                                </a>
                                 {% endif %}{% endfor %}
                             </div>
                         </details>
@@ -1605,19 +1603,6 @@
       }
     });
   }
-
-  document.querySelectorAll('#filter-form input.drawer-manufacturer').forEach(function (input) {
-    applyChipState(input);
-    input.addEventListener('change', function () {
-      enforceOne(input, 'drawer-manufacturer');
-      // clear model + badge when manufacturer changes
-      document.querySelectorAll('#filter-form input.drawer-model, #filter-form input.drawer-badge').forEach(function (d) {
-        d.checked = false;
-        applyChipState(d);
-      });
-      applyChipState(input);
-    });
-  });
 
   document.querySelectorAll('#filter-form input.drawer-model').forEach(function (input) {
     applyChipState(input);
