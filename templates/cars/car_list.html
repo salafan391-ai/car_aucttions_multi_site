@@ -490,36 +490,6 @@
 
 
 
-    <!-- ═══════════════ STICKY SEARCH BAR ═══════════════ -->
-    <div id="search-bar" class="sticky top-0 z-30 -mx-3 sm:-mx-4 px-3 sm:px-4 pt-2 pb-3 sm:pb-4 bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50/0">
-        <form method="get" id="main-form" class="bg-white rounded-xl sm:rounded-2xl shadow-lg shadow-gray-200/60 border border-gray-100 p-2 sm:p-3 flex gap-2 sm:gap-3">
-            <!-- Hidden fields to preserve filters -->
-            {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
-            {% if request.GET.manufacturer %}<input type="hidden" name="manufacturer" value="{{ request.GET.manufacturer }}">{% endif %}
-            {% if request.GET.model %}<input type="hidden" name="model" value="{{ request.GET.model }}">{% endif %}
-            {% if request.GET.year_from %}<input type="hidden" name="year_from" value="{{ request.GET.year_from }}">{% endif %}
-            {% if request.GET.year_to %}<input type="hidden" name="year_to" value="{{ request.GET.year_to }}">{% endif %}
-            {% for v in sel_colors %}<input type="hidden" name="color" value="{{ v }}">{% endfor %}
-            {% for v in sel_fuels %}<input type="hidden" name="fuel" value="{{ v }}">{% endfor %}
-            {% for v in sel_transmissions %}<input type="hidden" name="transmission" value="{{ v }}">{% endfor %}
-            {% for v in sel_seat_counts %}<input type="hidden" name="seat_count" value="{{ v }}">{% endfor %}
-            {% for v in sel_seat_colors %}<input type="hidden" name="seat_color" value="{{ v }}">{% endfor %}
-            {% for v in sel_auction_names %}<input type="hidden" name="auction_name" value="{{ v }}">{% endfor %}
-            {% if request.GET.price_min %}<input type="hidden" name="price_min" value="{{ request.GET.price_min }}">{% endif %}
-            {% if request.GET.price_max %}<input type="hidden" name="price_max" value="{{ request.GET.price_max }}">{% endif %}
-            {% if request.GET.mileage_min %}<input type="hidden" name="mileage_min" value="{{ request.GET.mileage_min }}">{% endif %}
-            {% if request.GET.mileage_max %}<input type="hidden" name="mileage_max" value="{{ request.GET.mileage_max }}">{% endif %}
-            {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
-
-            <div class="flex-1 relative">
-                <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث..." class="w-full pr-9 sm:pr-10 pl-3 sm:pl-4 py-2.5 sm:py-3 bg-gray-50 border-0 rounded-lg sm:rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition" autocomplete="off">
-            </div>
-            <button type="submit" class="px-5 sm:px-8 py-2.5 sm:py-3 bg-brand bg-brand-hover text-white font-bold rounded-lg sm:rounded-xl transition text-sm whitespace-nowrap">
-                بحث
-            </button>
-        </form>
-    </div>
 
     <!-- ═══════════════ TYPE TABS + RESULT COUNT ═══════════════ -->
     <div id="type-tabs" class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-5 mt-2">
@@ -551,21 +521,6 @@
         </div>
     </div>
 
-    <!-- ═══════════════ POPULAR BRANDS (quick pick) ═══════════════ -->
-    {% if popular_manufacturers and not request.GET.manufacturer %}
-    <div class="mb-6" id="brands-bar">
-        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {% for m in popular_manufacturers %}
-            <a href="?manufacturer={{ m.id }}{% if request.GET.car_type %}&car_type={{ request.GET.car_type }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
-               class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-brand hover:text-brand hover:shadow-sm transition whitespace-nowrap">
-                {% if m.logo %}<img src="{{ m.logo }}" class="w-5 h-5 object-contain lazy-load" loading="lazy" alt="">{% endif %}
-                <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
-                <span class="text-xs text-gray-400">{{ m.car_count|intcomma }}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
     {% if request.GET.manufacturer or request.GET.model or request.GET.badge or request.GET.year_from or request.GET.year_to or sel_colors or sel_fuels or sel_transmissions or sel_seat_counts or sel_seat_colors or sel_auction_names or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
@@ -711,7 +666,6 @@
     <!-- Drawer -->
     <div id="filter-drawer" class="fixed inset-x-0 bottom-0 translate-y-full transition-transform duration-300 ease-out lg:hidden" style="z-index:9999">
         <form method="get" id="filter-form" class="bg-white rounded-t-2xl shadow-2xl flex flex-col max-h-[85vh]">
-            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
             {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
 
             <!-- Drawer header -->
@@ -733,35 +687,72 @@
 
             <!-- Scrollable filters body -->
             <div class="overflow-y-auto flex-1 p-5 space-y-4">
+
+                <!-- Search -->
+                <div class="relative">
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." autocomplete="off"
+                           class="w-full pr-8 pl-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الشركة المصنعة</label>
-                        <select name="manufacturer" id="manufacturer-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
-                            {% for m in manufacturers %}{% if m.car_count %}
-                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}" {% if request.GET.manufacturer == m.id|stringformat:"d" %}selected{% endif %}>{{ m.name_ar|default:m.name }} ({{ m.car_count }})</option>
-                            {% endif %}{% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الموديل</label>
-                        <select name="model" id="model-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
-                            {% for m in models %}
-                            <option value="{{ m.id }}" class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}" {% if request.GET.model == m.id|stringformat:"d" %}selected{% endif %}>{{ m|translate_model }} ({{ m.car_count }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% if request.GET.car_type != 'auction' %}
+                    <!-- Manufacturer -->
                     <div class="col-span-2">
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">تفاصيل الموديل</label>
-                        <select name="badge" id="badge-select" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
-                            {% for b in badges %}
-                            <option value="{{ b.id }}" {% if request.GET.badge == b.id|stringformat:"d" %}selected{% endif %}>{{ b.name }} ({{ b.car_count }})</option>
-                            {% endfor %}
-                        </select>
+                        <details class="filter-group" open>
+                            <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الشركة المصنعة</span>
+                                <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                                {% for m in manufacturers %}{% if m.car_count %}
+                                <a href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.manufacturer != m.id|stringformat:"d" %}manufacturer={{ m.id }}{% endif %}"
+                                   class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.manufacturer == m.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                                    {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
+                                    <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+                                </a>
+                                {% endif %}{% endfor %}
+                            </div>
+                        </details>
                     </div>
+                    <!-- Model -->
+                    {% if models %}
+                    <div class="col-span-2">
+                        <details class="filter-group" open>
+                            <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الموديل</span>
+                                <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                                {% for m in models %}
+                                <a href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.model != m.id|stringformat:"d" %}model={{ m.id }}{% endif %}"
+                                   class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.model == m.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                                    <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    </div>
+                    {% endif %}
+                    <!-- Badge -->
+                    {% if request.GET.car_type != 'auction' %}
+                    {% if badges %}
+                    <div class="col-span-2">
+                        <details class="filter-group" open>
+                            <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">تفاصيل الموديل</span>
+                                <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                                {% for b in badges %}
+                                <a href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.badge != b.id|stringformat:"d" %}badge={{ b.id }}{% endif %}"
+                                   class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.badge == b.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                                    {{ b.name }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    </div>
+                    {% endif %}
                     {% endif %}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">من سنة</label>
@@ -893,19 +884,63 @@
     {% endwith %}
 
     <!-- ═══════════════ SORT BAR ═══════════════ -->
-    <div class="flex items-center justify-between mb-4 sm:mb-6" id="sort-bar">
-        <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <span class="text-[10px] sm:text-xs text-gray-400 font-medium whitespace-nowrap">ترتيب:</span>
-            {% with current_sort=request.GET.sort|default:"-created_at" %}
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-created_at" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-created_at' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث</a>
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'price' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأرخص</a>
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-price" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-price' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأغلى</a>
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-year" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-year' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">الأحدث صنعاً</a>
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=mileage" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == 'mileage' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">أقل مسافة</a>
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-mileage" class="whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition {% if current_sort == '-mileage' %}bg-gray-900 text-white{% else %}bg-white text-gray-600 hover:bg-gray-100 border border-gray-200{% endif %}">أكثر مسافة</a>
-            {% endwith %}
+    {% with current_sort=request.GET.sort|default:"-created_at" %}
+    <div class="flex items-center justify-end mb-4 sm:mb-6" id="sort-bar">
+        <div class="relative">
+            <button type="button" id="sort-btn" onclick="document.getElementById('sort-menu').classList.toggle('hidden')"
+                    class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-700 hover:border-gray-300 shadow-sm transition">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"/></svg>
+                <span id="sort-label">
+                    {% if current_sort == '-created_at' %}الأحدث
+                    {% elif current_sort == 'price' %}الأرخص
+                    {% elif current_sort == '-price' %}الأغلى
+                    {% elif current_sort == '-year' %}الأحدث صنعاً
+                    {% elif current_sort == 'mileage' %}أقل مسافة
+                    {% elif current_sort == '-mileage' %}أكثر مسافة
+                    {% else %}الأحدث{% endif %}
+                </span>
+                <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="sort-menu" class="hidden absolute top-full mt-1.5 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden min-w-[140px]">
+                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-created_at"
+                   class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-created_at' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
+                    الأحدث{% if current_sort == '-created_at' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                </a>
+                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=price"
+                   class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == 'price' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
+                    الأرخص{% if current_sort == 'price' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                </a>
+                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-price"
+                   class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-price' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
+                    الأغلى{% if current_sort == '-price' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                </a>
+                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-year"
+                   class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-year' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
+                    الأحدث صنعاً{% if current_sort == '-year' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                </a>
+                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=mileage"
+                   class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == 'mileage' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
+                    أقل مسافة{% if current_sort == 'mileage' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                </a>
+                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-mileage"
+                   class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-mileage' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
+                    أكثر مسافة{% if current_sort == '-mileage' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
+                </a>
+            </div>
         </div>
     </div>
+    {% endwith %}
+
+    <script>
+    // Close sort dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        var btn = document.getElementById('sort-btn');
+        var menu = document.getElementById('sort-menu');
+        if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+    </script>
 
     <!-- ═══════════════ SIDEBAR + GRID LAYOUT ═══════════════ -->
     <div class="flex gap-6 items-start">
@@ -913,7 +948,6 @@
     <!-- ── SIDEBAR FILTERS (desktop only) ─────────────────── -->
     <aside id="sidebar-filters" class="hidden lg:block w-64 xl:w-72 shrink-0 sticky top-4 self-start max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
         <form method="get" id="filter-form-sidebar" class="bg-white rounded-2xl shadow border border-gray-100">
-            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
             {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
 
             <!-- Header -->
@@ -927,116 +961,66 @@
 
             <div class="p-4 space-y-5">
 
-                <!-- Manufacturer -->
-                <div class="relative" id="sb-make-wrap">
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الشركة المصنعة</label>
-                    <button type="button" id="sb-make-btn" onclick="sbToggle('make')"
-                            class="w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-xl text-sm font-medium transition
-                                   {% if request.GET.manufacturer %}border-brand text-brand bg-blue-50{% else %}bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300{% endif %}">
-                        <span class="truncate">
-                            {% if request.GET.manufacturer %}{% for m in manufacturers %}{% if request.GET.manufacturer == m.id|stringformat:"d" %}
-                                <span class="flex items-center gap-1.5">{% if m.logo %}<img src="{{ m.logo }}" class="w-4 h-4 object-contain" loading="lazy" alt="">{% endif %}{{ m.name_ar|default:m.name }}</span>
-                            {% endif %}{% endfor %}{% else %}الكل{% endif %}
-                        </span>
-                        <svg class="w-4 h-4 shrink-0 transition-transform duration-200" id="sb-make-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div id="sb-make-menu" class="hidden absolute top-full mt-1.5 right-0 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
-                        <div class="px-2 pt-2 pb-1 border-b border-gray-100">
-                            <input type="text" id="sb-make-search" oninput="sbSearch('make',this.value)" placeholder="بحث..." autocomplete="off"
-                                   class="w-full px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 ring-brand focus:bg-white transition">
-                        </div>
-                        <div class="max-h-52 overflow-y-auto py-1" id="sb-make-list">
-                            <a data-label="الكل all" href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}"
-                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if not request.GET.manufacturer %}font-bold text-brand{% else %}text-gray-700{% endif %}">
-                                الكل{% if not request.GET.manufacturer %}<svg class="w-3.5 h-3.5 text-brand" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
-                            </a>
-                            {% for m in manufacturers %}{% if m.car_count %}
-                            <a data-label="{{ m.name_ar|default:m.name }} {{ m.name }}" href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}manufacturer={{ m.id }}"
-                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if request.GET.manufacturer == m.id|stringformat:'d' %}font-bold text-brand bg-blue-50{% else %}text-gray-700{% endif %}">
-                                <span class="flex items-center gap-2">{% if m.logo %}<img src="{{ m.logo }}" class="w-4 h-4 object-contain" loading="lazy" alt="">{% endif %}<span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span></span>
-                                <span class="text-xs text-gray-400 tabular-nums">{{ m.car_count }}</span>
-                            </a>
-                            {% endif %}{% endfor %}
-                            <p class="sb-empty hidden px-4 py-3 text-sm text-gray-400 text-center">لا توجد نتائج</p>
-                        </div>
-                    </div>
+                <!-- Search -->
+                <div class="relative">
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." autocomplete="off"
+                           class="w-full pr-8 pl-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
                 </div>
+
+                <!-- Manufacturer -->
+                <details class="filter-group border-t border-gray-100 pt-3" open>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الشركة المصنعة</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pb-1">
+                        {% for m in manufacturers %}{% if m.car_count %}
+                        <a href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.manufacturer != m.id|stringformat:"d" %}manufacturer={{ m.id }}{% endif %}"
+                           class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.manufacturer == m.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                            {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
+                            <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+                        </a>
+                        {% endif %}{% endfor %}
+                    </div>
+                </details>
 
                 <!-- Model -->
-                <div class="relative" id="sb-model-wrap">
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الموديل</label>
-
-                    <button type="button" id="sb-model-btn" onclick="sbToggle('model')"
-                            class="w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-xl text-sm font-medium transition
-                                   {% if request.GET.model %}border-indigo-500 text-indigo-600 bg-indigo-50{% else %}bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300{% endif %}">
-                        <span class="truncate">
-                            {% if request.GET.model %}{% for m in models %}{% if request.GET.model == m.id|stringformat:"d" %}{{ m|translate_model }}{% endif %}{% endfor %}{% else %}الكل{% endif %}
-                        </span>
-                        <svg class="w-4 h-4 shrink-0 transition-transform duration-200" id="sb-model-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div id="sb-model-menu" class="hidden absolute top-full mt-1.5 right-0 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
-                        <div class="px-2 pt-2 pb-1 border-b border-gray-100">
-                            <input type="text" id="sb-model-search" oninput="sbSearch('model',this.value)" placeholder="بحث..." autocomplete="off"
-                                   class="w-full px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 ring-indigo-400 focus:bg-white transition">
-                        </div>
-                        <div class="max-h-52 overflow-y-auto py-1" id="sb-model-list">
-                            {% if models %}
-                            <a data-label="الكل all" href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}"
-                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if not request.GET.model %}font-bold text-indigo-600{% else %}text-gray-700{% endif %}">
-                                الكل{% if not request.GET.model %}<svg class="w-3.5 h-3.5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
-                            </a>
-                            {% for m in models %}
-                            <a data-label="{{ m|translate_model }} {{ m.name }}" href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}model={{ m.id }}"
-                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if request.GET.model == m.id|stringformat:'d' %}font-bold text-indigo-600 bg-indigo-50{% else %}text-gray-700{% endif %}">
-                                <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
-                                <span class="text-xs text-gray-400 tabular-nums">{{ m.car_count }}</span>
-                            </a>
-                            {% endfor %}
-                            <p class="sb-empty hidden px-4 py-3 text-sm text-gray-400 text-center">لا توجد نتائج</p>
-                            {% else %}
-                            <p class="px-4 py-3 text-sm text-gray-400 text-center">اختر الشركة أولاً</p>
-                            {% endif %}
-                        </div>
+                {% if models %}
+                <details class="filter-group border-t border-gray-100 pt-3" open>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الموديل</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                        {% for m in models %}
+                        <a href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.model != m.id|stringformat:"d" %}model={{ m.id }}{% endif %}"
+                           class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.model == m.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                            <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
+                        </a>
+                        {% endfor %}
                     </div>
-                </div>
+                </details>
+                {% endif %}
 
-                {% if request.GET.car_type != 'auction' %}
                 <!-- Badge -->
-                <div class="relative" id="sb-badge-wrap">
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">تفاصيل الموديل</label>
-                    <button type="button" id="sb-badge-btn" onclick="sbToggle('badge')"
-                            class="w-full flex items-center justify-between gap-2 px-3 py-2.5 border rounded-xl text-sm font-medium transition
-                                   {% if request.GET.badge %}border-purple-500 text-purple-600 bg-purple-50{% else %}bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300{% endif %}">
-                        <span class="truncate">
-                            {% if request.GET.badge %}{% for b in badges %}{% if request.GET.badge == b.id|stringformat:"d" %}{{ b.name }}{% endif %}{% endfor %}{% else %}الكل{% endif %}
-                        </span>
-                        <svg class="w-4 h-4 shrink-0 transition-transform duration-200" id="sb-badge-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div id="sb-badge-menu" class="hidden absolute top-full mt-1.5 right-0 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-30 overflow-hidden">
-                        <div class="px-2 pt-2 pb-1 border-b border-gray-100">
-                            <input type="text" id="sb-badge-search" oninput="sbSearch('badge',this.value)" placeholder="بحث..." autocomplete="off"
-                                   class="w-full px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:ring-2 ring-purple-400 focus:bg-white transition">
-                        </div>
-                        <div class="max-h-52 overflow-y-auto py-1" id="sb-badge-list">
-                            {% if badges %}
-                            <a data-label="الكل all" href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}"
-                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if not request.GET.badge %}font-bold text-purple-600{% else %}text-gray-700{% endif %}">
-                                الكل{% if not request.GET.badge %}<svg class="w-3.5 h-3.5 text-purple-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
-                            </a>
-                            {% for b in badges %}
-                            <a data-label="{{ b.name }}" href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}badge={{ b.id }}"
-                               class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-50 transition {% if request.GET.badge == b.id|stringformat:'d' %}font-bold text-purple-600 bg-purple-50{% else %}text-gray-700{% endif %}">
-                                <span>{{ b.name }}</span>
-                                <span class="text-xs text-gray-400 tabular-nums">{{ b.car_count }}</span>
-                            </a>
-                            {% endfor %}
-                            <p class="sb-empty hidden px-4 py-3 text-sm text-gray-400 text-center">لا توجد نتائج</p>
-                            {% else %}
-                            <p class="px-4 py-3 text-sm text-gray-400 text-center">اختر الموديل أولاً</p>
-                            {% endif %}
-                        </div>
+                {% if request.GET.car_type != 'auction' %}
+                {% if badges %}
+                <details class="filter-group border-t border-gray-100 pt-3" open>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">تفاصيل الموديل</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                        {% for b in badges %}
+                        <a href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.badge != b.id|stringformat:"d" %}badge={{ b.id }}{% endif %}"
+                           class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.badge == b.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                            {{ b.name }}
+                        </a>
+                        {% endfor %}
                     </div>
-                </div>
+                </details>
+                {% endif %}
                 {% endif %}
 
 
