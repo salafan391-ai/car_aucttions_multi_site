@@ -695,6 +695,11 @@
                            class="w-full pr-8 pl-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
                 </div>
 
+                <!-- Hidden values submitted with the form -->
+                <input type="hidden" id="drawer-mfr-val" name="manufacturer" value="{{ request.GET.manufacturer }}">
+                <input type="hidden" id="drawer-mdl-val" name="model" value="{{ request.GET.model }}">
+                {% if request.GET.car_type != 'auction' %}<input type="hidden" id="drawer-bdg-val" name="badge" value="{{ request.GET.badge }}">{% endif %}
+
                 <div class="grid grid-cols-2 gap-3">
                     <!-- Manufacturer -->
                     <div class="col-span-2">
@@ -703,60 +708,48 @@
                                 <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الشركة المصنعة</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
-                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1" id="drawer-mfr-grid">
                                 {% for m in manufacturers %}{% if m.car_count %}
-                                <a href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}{% if request.GET.manufacturer != m.id|stringformat:"d" %}manufacturer={{ m.id }}{% endif %}"
-                                   class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if request.GET.manufacturer == m.id|stringformat:'d' %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600{% endif %}">
+                                <button type="button" class="drawer-mfr-btn flex items-center justify-center gap-1 w-full px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600"
+                                        data-id="{{ m.id }}" data-sel="{% if request.GET.manufacturer == m.id|stringformat:'d' %}1{% else %}0{% endif %}">
                                     {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
-                                    <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
-                                </a>
+                                    <span class="truncate">{{ m.name_ar|default:m.name }}</span>
+                                </button>
                                 {% endif %}{% endfor %}
                             </div>
                         </details>
                     </div>
-                    <!-- Model -->
-                    {% if models %}
-                    <div class="col-span-2">
+                    <!-- Model (AJAX-populated) -->
+                    <div class="col-span-2" id="drawer-models-section" {% if not models %}style="display:none"{% endif %}>
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
                                 <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الموديل</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
-                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1" id="drawer-mdl-grid">
                                 {% for m in models %}
-                                <label class="cursor-pointer select-none">
-                                    <input type="checkbox" name="model" value="{{ m.id }}" {% if request.GET.model == m.id|stringformat:"d" %}checked{% endif %} class="sr-only peer drawer-model">
-                                    <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600">
-                                        <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
-                                    </span>
-                                </label>
+                                <button type="button" class="drawer-mdl-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600"
+                                        data-id="{{ m.id }}" data-sel="{% if request.GET.model == m.id|stringformat:'d' %}1{% else %}0{% endif %}">{{ m|translate_model }}</button>
                                 {% endfor %}
                             </div>
                         </details>
                     </div>
-                    {% endif %}
-                    <!-- Badge -->
+                    <!-- Badge (AJAX-populated) -->
                     {% if request.GET.car_type != 'auction' %}
-                    {% if badges %}
-                    <div class="col-span-2">
+                    <div class="col-span-2" id="drawer-badges-section" {% if not badges %}style="display:none"{% endif %}>
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
                                 <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">تفاصيل الموديل</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
-                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1" id="drawer-bdg-grid">
                                 {% for b in badges %}
-                                <label class="cursor-pointer select-none">
-                                    <input type="checkbox" name="badge" value="{{ b.id }}" {% if request.GET.badge == b.id|stringformat:"d" %}checked{% endif %} class="sr-only peer drawer-badge">
-                                    <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600">
-                                        {{ b.name }}
-                                    </span>
-                                </label>
+                                <button type="button" class="drawer-bdg-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600"
+                                        data-id="{{ b.id }}" data-sel="{% if request.GET.badge == b.id|stringformat:'d' %}1{% else %}0{% endif %}">{{ b.name }}</button>
                                 {% endfor %}
                             </div>
                         </details>
                     </div>
-                    {% endif %}
                     {% endif %}
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">من سنة</label>
@@ -1594,34 +1587,142 @@
     input.addEventListener('change', function () { applyChipState(input); });
   });
 
-  // Single-select enforcement for drawer manufacturer / model / badge
-  function enforceOne(clickedInput, groupClass) {
-    document.querySelectorAll('#filter-form input.' + groupClass).forEach(function (other) {
-      if (other !== clickedInput) {
-        other.checked = false;
-        applyChipState(other);
-      }
+})();
+
+// ── Drawer manufacturer / model / badge — AJAX chips ──
+(function () {
+  var primary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#2563eb';
+  var carType = '{{ request.GET.car_type|default:"" }}';
+
+  var mfrVal      = document.getElementById('drawer-mfr-val');
+  var mdlVal      = document.getElementById('drawer-mdl-val');
+  var bdgVal      = document.getElementById('drawer-bdg-val');
+  var mdlSection  = document.getElementById('drawer-models-section');
+  var bdgSection  = document.getElementById('drawer-badges-section');
+  var mdlGrid     = document.getElementById('drawer-mdl-grid');
+  var bdgGrid     = document.getElementById('drawer-bdg-grid');
+
+  if (!mfrVal) return; // not on this page
+
+  function chipOn(btn) {
+    btn.style.backgroundColor = primary;
+    btn.style.borderColor = primary;
+    btn.style.color = '#fff';
+    btn.style.fontWeight = '600';
+    btn.dataset.sel = '1';
+  }
+  function chipOff(btn) {
+    btn.style.backgroundColor = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.style.fontWeight = '';
+    btn.dataset.sel = '0';
+  }
+  function clearGroup(selector) {
+    document.querySelectorAll(selector).forEach(chipOff);
+  }
+
+  // Apply initial states from server-rendered chips
+  document.querySelectorAll('.drawer-mfr-btn').forEach(function (b) { if (b.dataset.sel === '1') chipOn(b); });
+  document.querySelectorAll('.drawer-mdl-btn').forEach(function (b) { if (b.dataset.sel === '1') chipOn(b); });
+  document.querySelectorAll('.drawer-bdg-btn').forEach(function (b) { if (b.dataset.sel === '1') chipOn(b); });
+
+  function bindBadgeBtn(btn) {
+    btn.addEventListener('click', function () {
+      var active = btn.dataset.sel === '1';
+      clearGroup('.drawer-bdg-btn');
+      bdgVal && (bdgVal.value = '');
+      if (!active) { chipOn(btn); bdgVal && (bdgVal.value = btn.dataset.id); }
     });
   }
 
-  document.querySelectorAll('#filter-form input.drawer-model').forEach(function (input) {
-    applyChipState(input);
-    input.addEventListener('change', function () {
-      enforceOne(input, 'drawer-model');
-      // clear badge when model changes
-      document.querySelectorAll('#filter-form input.drawer-badge').forEach(function (d) {
-        d.checked = false;
-        applyChipState(d);
+  function renderModels(models) {
+    if (!mdlGrid) return;
+    mdlGrid.innerHTML = '';
+    models.forEach(function (m) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'drawer-mdl-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600';
+      btn.dataset.id = m.id;
+      btn.dataset.sel = '0';
+      btn.textContent = m.name;
+      btn.addEventListener('click', function () {
+        var active = btn.dataset.sel === '1';
+        clearGroup('.drawer-mdl-btn');
+        mdlVal.value = '';
+        if (bdgVal) bdgVal.value = '';
+        if (bdgGrid) bdgGrid.innerHTML = '';
+        if (bdgSection) bdgSection.style.display = 'none';
+        if (!active) {
+          chipOn(btn);
+          mdlVal.value = btn.dataset.id;
+          if (bdgSection && carType !== 'auction') {
+            fetch('/api/badges/?model_id=' + btn.dataset.id + (carType ? '&car_type=' + carType : ''))
+              .then(function (r) { return r.json(); })
+              .then(renderBadges);
+          }
+        }
       });
-      applyChipState(input);
+      mdlGrid.appendChild(btn);
+    });
+    if (mdlSection) mdlSection.style.display = models.length ? '' : 'none';
+  }
+
+  function renderBadges(badges) {
+    if (!bdgGrid) return;
+    bdgGrid.innerHTML = '';
+    badges.forEach(function (b) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'drawer-bdg-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600';
+      btn.dataset.id = b.id;
+      btn.dataset.sel = '0';
+      btn.textContent = b.name;
+      bindBadgeBtn(btn);
+      bdgGrid.appendChild(btn);
+    });
+    if (bdgSection) bdgSection.style.display = badges.length ? '' : 'none';
+  }
+
+  // Bind server-rendered model & badge buttons
+  document.querySelectorAll('.drawer-mdl-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var active = btn.dataset.sel === '1';
+      clearGroup('.drawer-mdl-btn');
+      mdlVal.value = '';
+      if (bdgVal) bdgVal.value = '';
+      if (bdgGrid) bdgGrid.innerHTML = '';
+      if (bdgSection) bdgSection.style.display = 'none';
+      if (!active) {
+        chipOn(btn);
+        mdlVal.value = btn.dataset.id;
+        if (bdgSection && carType !== 'auction') {
+          fetch('/api/badges/?model_id=' + btn.dataset.id + (carType ? '&car_type=' + carType : ''))
+            .then(function (r) { return r.json(); })
+            .then(renderBadges);
+        }
+      }
     });
   });
+  document.querySelectorAll('.drawer-bdg-btn').forEach(bindBadgeBtn);
 
-  document.querySelectorAll('#filter-form input.drawer-badge').forEach(function (input) {
-    applyChipState(input);
-    input.addEventListener('change', function () {
-      enforceOne(input, 'drawer-badge');
-      applyChipState(input);
+  // Manufacturer click — fetch models, no page reload
+  document.querySelectorAll('.drawer-mfr-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var active = btn.dataset.sel === '1';
+      clearGroup('.drawer-mfr-btn');
+      mfrVal.value = '';
+      mdlVal.value = '';
+      if (bdgVal) bdgVal.value = '';
+      renderModels([]);
+      renderBadges([]);
+      if (!active) {
+        chipOn(btn);
+        mfrVal.value = btn.dataset.id;
+        fetch('/api/models/?manufacturer_id=' + btn.dataset.id + (carType ? '&car_type=' + carType : '') + '&lang=ar')
+          .then(function (r) { return r.json(); })
+          .then(renderModels);
+      }
     });
   });
 })();
