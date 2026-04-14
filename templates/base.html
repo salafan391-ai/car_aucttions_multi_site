@@ -1,4 +1,4 @@
-{% load static tailwind_tags whatsapp_tags %}
+{% load static tailwind_tags whatsapp_tags django_htmx %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="html-root" data-theme="{{ site_theme|default:'light' }}">
 <head>
@@ -45,7 +45,7 @@
     
     <!-- Canonical URL -->
     <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
-    
+    {% htmx_script %}
     <!-- Structured Data (JSON-LD) -->
     {% block structured_data %}
     <script type="application/ld+json">
@@ -228,14 +228,11 @@
             opacity: 0;
         }
 
-        /* ── Page content fade-in on load ── */
-        @keyframes page-enter {
-            from { opacity: 0; transform: translateY(6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        main {
-            animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
+        /* ── Page content fade-in removed ── */
+        /* NOTE: DO NOT add animation/transform/opacity/filter/will-change to
+           <main> or any ancestor of position:fixed elements. Those properties
+           create a new stacking context that breaks fixed positioning — the
+           filter drawer and lightbox stop being relative to the viewport. */
 
         /* ── Custom theme — uses tenant color fields ── */
         [data-theme="custom"] {
@@ -587,7 +584,7 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}' class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
 <div id="nprogress-bar"></div>
         {% if eid_is_active %}
         <!-- Eid Balloons Overlay -->

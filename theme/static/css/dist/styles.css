@@ -1380,6 +1380,9 @@
   .border-red-300 {
     border-color: var(--color-red-300);
   }
+  .border-red-500 {
+    border-color: var(--color-red-500);
+  }
   .border-transparent {
     border-color: transparent;
   }
@@ -1406,6 +1409,9 @@
   }
   .border-yellow-200 {
     border-color: var(--color-yellow-200);
+  }
+  .border-yellow-500 {
+    border-color: var(--color-yellow-500);
   }
   .border-t-gray-900 {
     border-top-color: var(--color-gray-900);
@@ -2745,9 +2751,39 @@
       }
     }
   }
+  .peer-checked\:border-green-500 {
+    &:is(:where(.peer):checked ~ *) {
+      border-color: var(--color-green-500);
+    }
+  }
+  .peer-checked\:border-red-500 {
+    &:is(:where(.peer):checked ~ *) {
+      border-color: var(--color-red-500);
+    }
+  }
+  .peer-checked\:border-yellow-500 {
+    &:is(:where(.peer):checked ~ *) {
+      border-color: var(--color-yellow-500);
+    }
+  }
   .peer-checked\:bg-green-500 {
     &:is(:where(.peer):checked ~ *) {
       background-color: var(--color-green-500);
+    }
+  }
+  .peer-checked\:bg-red-500 {
+    &:is(:where(.peer):checked ~ *) {
+      background-color: var(--color-red-500);
+    }
+  }
+  .peer-checked\:bg-yellow-500 {
+    &:is(:where(.peer):checked ~ *) {
+      background-color: var(--color-yellow-500);
+    }
+  }
+  .peer-checked\:text-white {
+    &:is(:where(.peer):checked ~ *) {
+      color: var(--color-white);
     }
   }
   .peer-checked\:text-yellow-400 {
@@ -2918,10 +2954,31 @@
       }
     }
   }
+  .hover\:border-green-400 {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--color-green-400);
+      }
+    }
+  }
+  .hover\:border-red-400 {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--color-red-400);
+      }
+    }
+  }
   .hover\:border-white {
     &:hover {
       @media (hover: hover) {
         border-color: var(--color-white);
+      }
+    }
+  }
+  .hover\:border-yellow-400 {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--color-yellow-400);
       }
     }
   }
@@ -3349,6 +3406,13 @@
       }
     }
   }
+  .hover\:text-green-600 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-green-600);
+      }
+    }
+  }
   .hover\:text-red-500 {
     &:hover {
       @media (hover: hover) {
@@ -3388,6 +3452,13 @@
     &:hover {
       @media (hover: hover) {
         color: var(--color-yellow-400);
+      }
+    }
+  }
+  .hover\:text-yellow-600 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-yellow-600);
       }
     }
   }

@@ -480,14 +480,14 @@
             {% if request.GET.model %}<input type="hidden" name="model" value="{{ request.GET.model }}">{% endif %}
             {% if request.GET.year_from %}<input type="hidden" name="year_from" value="{{ request.GET.year_from }}">{% endif %}
             {% if request.GET.year_to %}<input type="hidden" name="year_to" value="{{ request.GET.year_to }}">{% endif %}
-            {% if request.GET.color %}<input type="hidden" name="color" value="{{ request.GET.color }}">{% endif %}
-            {% if request.GET.body_type %}<input type="hidden" name="body_type" value="{{ request.GET.body_type }}">{% endif %}
-            {% if request.GET.fuel %}<input type="hidden" name="fuel" value="{{ request.GET.fuel }}">{% endif %}
-            {% if request.GET.transmission %}<input type="hidden" name="transmission" value="{{ request.GET.transmission }}">{% endif %}
-            {% if request.GET.seat_count %}<input type="hidden" name="seat_count" value="{{ request.GET.seat_count }}">{% endif %}
-            {% if request.GET.seat_color %}<input type="hidden" name="seat_color" value="{{ request.GET.seat_color }}">{% endif %}
-            {% if request.GET.auction_name %}<input type="hidden" name="auction_name" value="{{ request.GET.auction_name }}">{% endif %}
-            {% if request.GET.status %}<input type="hidden" name="status" value="{{ request.GET.status }}">{% endif %}
+            {% for v in sel_colors %}<input type="hidden" name="color" value="{{ v }}">{% endfor %}
+            {% for v in sel_body_types %}<input type="hidden" name="body_type" value="{{ v }}">{% endfor %}
+            {% for v in sel_fuels %}<input type="hidden" name="fuel" value="{{ v }}">{% endfor %}
+            {% for v in sel_transmissions %}<input type="hidden" name="transmission" value="{{ v }}">{% endfor %}
+            {% for v in sel_seat_counts %}<input type="hidden" name="seat_count" value="{{ v }}">{% endfor %}
+            {% for v in sel_seat_colors %}<input type="hidden" name="seat_color" value="{{ v }}">{% endfor %}
+            {% for v in sel_auction_names %}<input type="hidden" name="auction_name" value="{{ v }}">{% endfor %}
+            {% for v in sel_statuses %}<input type="hidden" name="status" value="{{ v }}">{% endfor %}
             {% if request.GET.price_min %}<input type="hidden" name="price_min" value="{{ request.GET.price_min }}">{% endif %}
             {% if request.GET.price_max %}<input type="hidden" name="price_max" value="{{ request.GET.price_max }}">{% endif %}
             {% if request.GET.mileage_min %}<input type="hidden" name="mileage_min" value="{{ request.GET.mileage_min }}">{% endif %}
@@ -551,7 +551,7 @@
     {% endif %}
 
     <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
-    {% if request.GET.manufacturer or request.GET.model or request.GET.badge or request.GET.year_from or request.GET.year_to or request.GET.color or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.seat_count or request.GET.seat_color or request.GET.status or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+    {% if request.GET.manufacturer or request.GET.model or request.GET.badge or request.GET.year_from or request.GET.year_to or sel_colors or sel_body_types or sel_fuels or sel_transmissions or sel_seat_counts or sel_seat_colors or sel_statuses or sel_auction_names or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
     <div class="flex flex-wrap items-center gap-2 mb-5" id="active-chips">
         <span class="text-xs text-gray-400 font-medium">الفلاتر النشطة:</span>
 
@@ -598,45 +598,45 @@
         </a>
         {% endif %}
 
-        {% if request.GET.fuel %}
-    <a href="?{% for k,v in request.GET.items %}{% if k != 'fuel' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 text-xs font-medium rounded-full hover:bg-amber-100 transition group">
-            الوقود: <span class="bilingual" data-lang-ar="{{ request.GET.fuel|translate_fuel }}" data-lang-en="{{ request.GET.fuel }}">{{ request.GET.fuel|translate_fuel }}</span>
+        {% for f in sel_fuels %}
+        <button type="button" onclick="removeFilterValue('fuel','{{ f }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 text-xs font-medium rounded-full hover:bg-amber-100 transition group">
+            الوقود: {{ f|translate_fuel }}
             <svg class="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
+        </button>
+        {% endfor %}
 
-        {% if request.GET.transmission %}
-    <a href="?{% for k,v in request.GET.items %}{% if k != 'transmission' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full hover:bg-teal-100 transition group">
-            ناقل: <span class="bilingual" data-lang-ar="{{ request.GET.transmission|translate_transmission }}" data-lang-en="{{ request.GET.transmission }}">{{ request.GET.transmission|translate_transmission }}</span>
+        {% for t in sel_transmissions %}
+        <button type="button" onclick="removeFilterValue('transmission','{{ t }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full hover:bg-teal-100 transition group">
+            ناقل: {{ t|translate_transmission }}
             <svg class="w-3.5 h-3.5 text-teal-400 group-hover:text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
+        </button>
+        {% endfor %}
 
-        {% if request.GET.seat_count %}
-    <a href="?{% for k,v in request.GET.items %}{% if k != 'seat_count' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-50 text-violet-700 text-xs font-medium rounded-full hover:bg-violet-100 transition group">
-            المقاعد: {{ request.GET.seat_count }}
+        {% for s in sel_seat_counts %}
+        <button type="button" onclick="removeFilterValue('seat_count','{{ s }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-50 text-violet-700 text-xs font-medium rounded-full hover:bg-violet-100 transition group">
+            المقاعد: {{ s }}
             <svg class="w-3.5 h-3.5 text-violet-400 group-hover:text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
+        </button>
+        {% endfor %}
 
         {% if request.GET.car_type != 'auction' %}
-        {% for sc in seat_colors %}
-            {% if request.GET.seat_color == sc.id|stringformat:"d" %}
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'seat_color' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 text-xs font-medium rounded-full hover:bg-rose-100 transition group">
-                لون المقاعد: {{ sc.name }}
-                <svg class="w-3.5 h-3.5 text-rose-400 group-hover:text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </a>
-            {% endif %}
-        {% endfor %}
+        {% for sc in seat_colors %}{% if sc.id|stringformat:"d" in sel_seat_colors %}
+        <button type="button" onclick="removeFilterValue('seat_color','{{ sc.id }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 text-xs font-medium rounded-full hover:bg-rose-100 transition group">
+            لون المقاعد: {{ sc.name }}
+            <svg class="w-3.5 h-3.5 text-rose-400 group-hover:text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        {% endif %}{% endfor %}
         {% endif %}
 
-        {% if request.GET.car_type == 'auction' and request.GET.auction_name %}
-    <a href="?{% for k,v in request.GET.items %}{% if k != 'auction_name' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full hover:bg-purple-100 transition group">
-            المزاد: {{ request.GET.auction_name }}
+        {% if request.GET.car_type == 'auction' %}
+        {% for an in sel_auction_names %}
+        <button type="button" onclick="removeFilterValue('auction_name','{{ an }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full hover:bg-purple-100 transition group">
+            المزاد: {{ an }}
             <svg class="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% if request.user.is_staff %}
-        <a href="{% url 'export_auction_pdf' %}?auction_name={{ request.GET.auction_name|urlencode }}"
+        </button>
+        {% endfor %}
+        {% if request.user.is_staff and sel_auction_names %}
+        <a href="{% url 'export_auction_pdf' %}?auction_name={{ sel_auction_names.0|urlencode }}"
            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-full shadow transition">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
             تصدير PDF
@@ -644,23 +644,19 @@
         {% endif %}
         {% endif %}
 
-        {% for c in colors %}
-            {% if request.GET.color == c.id|stringformat:"d" %}
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'color' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 text-xs font-medium rounded-full hover:bg-pink-100 transition group">
-                اللون: {% if LANGUAGE_CODE == 'ar' %}{{ c.name|translate_color }}{% else %}{{ c.name }}{% endif %}
-                <svg class="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </a>
-            {% endif %}
-        {% endfor %}
+        {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
+        <button type="button" onclick="removeFilterValue('color','{{ c.id }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 text-xs font-medium rounded-full hover:bg-pink-100 transition group">
+            اللون: {{ c.name|translate_color }}
+            <svg class="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        {% endif %}{% endfor %}
 
-        {% for b in body_types %}
-            {% if request.GET.body_type == b.name %}
-            <a href="?{% for k,v in request.GET.items %}{% if k != 'body_type' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full hover:bg-indigo-100 transition group">
-                الهيكل: {{ b.name }}
-                <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </a>
-            {% endif %}
-        {% endfor %}
+        {% for b in body_types %}{% if b.name in sel_body_types %}
+        <button type="button" onclick="removeFilterValue('body_type','{{ b.name }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full hover:bg-indigo-100 transition group">
+            الهيكل: {{ b.name }}
+            <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        {% endif %}{% endfor %}
 
         {% if request.GET.price_min or request.GET.price_max %}
     <a href="?{% for k,v in request.GET.items %}{% if k != 'price_min' and k != 'price_max' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-full hover:bg-orange-100 transition group">
@@ -676,12 +672,12 @@
         </a>
         {% endif %}
 
-        {% if request.GET.status %}
-    <a href="?{% for k,v in request.GET.items %}{% if k != 'status' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-full hover:bg-red-100 transition group">
-            الحالة: {% if request.GET.status == 'available' %}متاح{% elif request.GET.status == 'sold' %}مباع{% else %}قيد الانتظار{% endif %}
-            <svg class="w-3.5 h-3.5 text-red-400 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </a>
-        {% endif %}
+        {% for st in sel_statuses %}
+        <button type="button" onclick="removeFilterValue('status','{{ st }}')" class="inline-flex items-center gap-1 px-3 py-1.5 {% if st == 'available' %}bg-green-50 text-green-700{% elif st == 'sold' %}bg-red-50 text-red-700{% else %}bg-yellow-50 text-yellow-700{% endif %} text-xs font-medium rounded-full hover:opacity-80 transition group">
+            الحالة: {% if st == 'available' %}متاح{% elif st == 'sold' %}مباع{% else %}قيد الانتظار{% endif %}
+            <svg class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+        {% endfor %}
 
         <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full hover:bg-gray-200 transition">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -697,7 +693,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
             <span>ابحث سيارة مخصصة</span>
-            {% if request.GET.manufacturer or request.GET.model or request.GET.year_from or request.GET.year_to or request.GET.body_type or request.GET.fuel or request.GET.transmission or request.GET.color or request.GET.status or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+            {% if request.GET.manufacturer or request.GET.model or request.GET.year_from or request.GET.year_to or sel_body_types or sel_fuels or sel_transmissions or sel_colors or sel_statuses or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
             <span class="inline-flex items-center justify-center w-5 h-5 bg-brand text-white text-[10px] font-bold rounded-full">!</span>
             {% endif %}
         </button>
@@ -705,10 +701,10 @@
 
     <!-- ═══════════════ MOBILE FILTER DRAWER (fixed bottom sheet) ═══════════════ -->
     <!-- Backdrop -->
-    <div id="filter-backdrop" class="fixed inset-0 bg-black/50 z-40 hidden" onclick="closeMobileFilters()"></div>
+    <div id="filter-backdrop" class="fixed inset-0 bg-black/50 hidden" style="z-index:9998" onclick="closeMobileFilters()"></div>
 
     <!-- Drawer -->
-    <div id="filter-drawer" class="fixed inset-x-0 bottom-0 z-50 translate-y-full transition-transform duration-300 ease-out lg:hidden">
+    <div id="filter-drawer" class="fixed inset-x-0 bottom-0 translate-y-full transition-transform duration-300 ease-out lg:hidden" style="z-index:9999">
         <form method="get" id="filter-form" class="bg-white rounded-t-2xl shadow-2xl flex flex-col max-h-[85vh]">
             {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
             {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
@@ -776,49 +772,49 @@
                             {% for y in years %}<option value="{{ y }}" {% if selected_year_to == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>{% endfor %}
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الوقود</label>
-                        <select name="fuel" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
+                    <!-- Fuel checkbox chips -->
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الوقود</label>
+                        <div class="flex flex-wrap gap-2">
                             {% for f in fuels %}
-                            <option value="{{ f }}" class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f|translate_fuel }}</option>
+                            <label class="cursor-pointer select-none"><input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer"><span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600">{{ f|translate_fuel }}</span></label>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">ناقل الحركة</label>
-                        <select name="transmission" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
+                    <!-- Transmission checkbox chips -->
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">ناقل الحركة</label>
+                        <div class="flex flex-wrap gap-2">
                             {% for t in transmissions %}
-                            <option value="{{ t }}" class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t|translate_transmission }}</option>
+                            <label class="cursor-pointer select-none"><input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer"><span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600">{{ t|translate_transmission }}</span></label>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اللون</label>
-                        <select name="color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
+                    <!-- Color checkbox chips -->
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اللون</label>
+                        <div class="flex flex-wrap gap-2">
                             {% for c in colors %}
-                            <option value="{{ c.id }}" class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name|translate_color }}</option>
+                            <label class="cursor-pointer select-none"><input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer"><span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600">{{ c.name|translate_color }}</span></label>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
                     {% if request.GET.car_type != 'auction' %}
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">لون المقاعد</label>
-                        <select name="seat_color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
-                            {% for sc in seat_colors %}<option value="{{ sc.id }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name }}</option>{% endfor %}
-                        </select>
+                    <!-- Seat Color checkbox chips -->
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">لون المقاعد</label>
+                        <div class="flex flex-wrap gap-2">
+                            {% for sc in seat_colors %}<label class="cursor-pointer select-none"><input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer"><span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600">{{ sc.name }}</span></label>{% endfor %}
+                        </div>
                     </div>
                     {% endif %}
                     {% if request.GET.car_type == 'auction' %}
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اسم المزاد</label>
-                        <select name="auction_name" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">الكل</option>
-                            {% for an in auction_names %}<option value="{{ an }}" {% if request.GET.auction_name == an %}selected{% endif %}>{{ an }}</option>{% endfor %}
-                        </select>
+                    <!-- Auction Name checkbox chips -->
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اسم المزاد</label>
+                        <div class="flex flex-wrap gap-2">
+                            {% for an in auction_names %}<label class="cursor-pointer select-none"><input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="sr-only peer"><span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600">{{ an }}</span></label>{% endfor %}
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -838,6 +834,35 @@
             </div>
         </form>
     </div>
+
+    <!-- ═══════════════ ACTIVE FILTER CHIPS (mobile) ═══════════════ -->
+    {% with mfr=request.GET.manufacturer mdl=request.GET.model bdg=request.GET.badge yfr=request.GET.year_from yto=request.GET.year_to pmn=request.GET.price_min pmx=request.GET.price_max mmn=request.GET.mileage_min mmx=request.GET.mileage_max %}
+    {% if mfr or mdl or bdg or yfr or yto or sel_body_types or sel_fuels or sel_transmissions or sel_colors or sel_seat_counts or sel_seat_colors or sel_statuses or sel_auction_names or pmn or pmx or mmn or mmx %}
+    <div class="flex flex-wrap items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+        <span class="text-xs text-gray-400 font-medium shrink-0">الفلاتر:</span>
+        {% if mfr %}{% for m in manufacturers %}{% if mfr == m.id|stringformat:"d" %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'manufacturer' and k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-brand/10 text-brand text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ m.name_ar|default:m.name }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>
+        {% endif %}{% endfor %}{% endif %}
+        {% if mdl %}{% for m in models %}{% if mdl == m.id|stringformat:"d" %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'model' and k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-600 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ m|translate_model }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>
+        {% endif %}{% endfor %}{% endif %}
+        {% if bdg %}{% for b in badges %}{% if bdg == b.id|stringformat:"d" %}
+        <a href="?{% for k,v in request.GET.items %}{% if k != 'badge' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-600 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ b.name }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>
+        {% endif %}{% endfor %}{% endif %}
+        {% if yfr or yto %}<a href="?{% for k,v in request.GET.items %}{% if k != 'year_from' and k != 'year_to' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{% if yfr %}{{ yfr }}{% endif %}{% if yfr and yto %} – {% endif %}{% if yto %}{{ yto }}{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>{% endif %}
+        {% for b in sel_body_types %}<button type="button" onclick="removeFilterValue('body_type','{{ b }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ b }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        {% for f in sel_fuels %}<button type="button" onclick="removeFilterValue('fuel','{{ f }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ f|translate_fuel }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        {% for t in sel_transmissions %}<button type="button" onclick="removeFilterValue('transmission','{{ t }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ t|translate_transmission }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}<button type="button" onclick="removeFilterValue('color','{{ c.id }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ c.name|translate_color }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endif %}{% endfor %}
+        {% for s in sel_seat_counts %}<button type="button" onclick="removeFilterValue('seat_count','{{ s }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ s }} مقاعد<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        {% for st in sel_statuses %}<button type="button" onclick="removeFilterValue('status','{{ st }}')" class="inline-flex items-center gap-1 px-2.5 py-1 {% if st == 'available' %}bg-green-50 text-green-700{% elif st == 'sold' %}bg-red-50 text-red-700{% else %}bg-yellow-50 text-yellow-700{% endif %} text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{% if st == 'available' %}متاح{% elif st == 'sold' %}تم البيع{% else %}قيد الانتظار{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        {% if pmn or pmx %}<a href="?{% for k,v in request.GET.items %}{% if k != 'price_min' and k != 'price_max' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">₩ {% if pmn %}{{ pmn }}{% endif %}{% if pmn and pmx %} – {% endif %}{% if pmx %}{{ pmx }}{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>{% endif %}
+        {% if mmn or mmx %}<a href="?{% for k,v in request.GET.items %}{% if k != 'mileage_min' and k != 'mileage_max' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">كم {% if mmn %}{{ mmn }}{% endif %}{% if mmn and mmx %} – {% endif %}{% if mmx %}{{ mmx }}{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>{% endif %}
+        {% for an in sel_auction_names %}<button type="button" onclick="removeFilterValue('auction_name','{{ an }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ an }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full hover:bg-red-100 transition">مسح الكل</a>
+    </div>
+    {% endif %}
+    {% endwith %}
 
     <!-- ═══════════════ SORT BAR ═══════════════ -->
     <div class="flex items-center justify-between mb-4 sm:mb-6" id="sort-bar">
@@ -1011,96 +1036,118 @@
                 </div>
                 </div>
 
-                <!-- Body Type -->
+                <!-- Body Type checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">نوع الهيكل</label>
-                    <select name="body_type" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">نوع الهيكل</label>
+                    <div class="flex flex-wrap gap-1.5">
                         {% for b in body_types %}
-                        <option value="{{ b.name }}" class="bilingual" data-lang-ar="{{ b.name_ar|default:b.name }}" data-lang-en="{{ b.name }}" {% if request.GET.body_type == b.name %}selected{% endif %}>{{ b.name_ar|default:b.name }}</option>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="body_type" value="{{ b.name }}" {% if b.name in sel_body_types %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600 hover:border-brand hover:text-brand">{{ b.name_ar|default:b.name }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
 
-                <!-- Fuel -->
+                <!-- Fuel checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الوقود</label>
-                    <select name="fuel" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الوقود</label>
+                    <div class="flex flex-wrap gap-1.5">
                         {% for f in fuels %}
-                        <option value="{{ f }}" class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f }}" {% if request.GET.fuel == f %}selected{% endif %}>{{ f|translate_fuel }}</option>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600 hover:border-brand hover:text-brand">{{ f|translate_fuel }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
 
-                <!-- Transmission -->
+                <!-- Transmission checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">ناقل الحركة</label>
-                    <select name="transmission" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">ناقل الحركة</label>
+                    <div class="flex flex-wrap gap-1.5">
                         {% for t in transmissions %}
-                        <option value="{{ t }}" class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t }}" {% if request.GET.transmission == t %}selected{% endif %}>{{ t|translate_transmission }}</option>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600 hover:border-brand hover:text-brand">{{ t|translate_transmission }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
 
-                <!-- Color -->
+                <!-- Color checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اللون</label>
-                    <select name="color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اللون</label>
+                    <div class="flex flex-wrap gap-1.5">
                         {% for c in colors %}
-                        <option value="{{ c.id }}" class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name }}" {% if request.GET.color == c.id|stringformat:"d" %}selected{% endif %}>{{ c.name|translate_color }}</option>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600 hover:border-brand hover:text-brand">{{ c.name|translate_color }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
 
-                <!-- Seat Count -->
+                <!-- Seat Count checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">عدد المقاعد</label>
-                    <select name="seat_count" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">عدد المقاعد</label>
+                    <div class="flex flex-wrap gap-1.5">
                         {% for s in seat_counts %}
-                        <option value="{{ s }}" class="bilingual" data-lang-ar="{{ s }}" data-lang-en="{{ s }}" {% if request.GET.seat_count == s %}selected{% endif %}>{{ s }}</option>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600 hover:border-brand hover:text-brand">{{ s }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
 
                 {% if request.GET.car_type != 'auction' %}
-                <!-- Seat Color -->
+                <!-- Seat Color checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">لون المقاعد</label>
-                    <select name="seat_color" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">لون المقاعد</label>
+                    <div class="flex flex-wrap gap-1.5">
                         {% for sc in seat_colors %}
-                        <option value="{{ sc.id }}" class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name }}" {% if request.GET.seat_color == sc.id|stringformat:"d" %}selected{% endif %}>{{ sc.name|translate_color }}</option>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600 hover:border-brand hover:text-brand">{{ sc.name|translate_color }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
                 {% endif %}
 
                 {% if request.GET.car_type == 'auction' %}
-                <!-- Auction Name -->
+                <!-- Auction Name checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">اسم المزاد</label>
-                    <select name="auction_name" id="sb-auction-name" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اسم المزاد</label>
+                    <div class="flex flex-wrap gap-1.5">
                         {% for an in auction_names %}
-                        <option value="{{ an }}" {% if auction_name == an %}selected{% endif %}>{{ an }}</option>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand bg-gray-50 border-gray-200 text-gray-600 hover:border-brand hover:text-brand">{{ an }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
+                    </div>
                 </div>
                 {% endif %}
 
-                <!-- Status -->
+                <!-- Status checkboxes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">الحالة</label>
-                    <select name="status" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="this.form.submit()">
-                        <option value="">الكل</option>
-                        <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>متاح</option>
-                        <option value="sold" {% if request.GET.status == 'sold' %}selected{% endif %}>تم البيع</option>
-                        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
-                    </select>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">الحالة</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="status" value="available" {% if "available" in sel_statuses %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-green-500 peer-checked:text-white peer-checked:border-green-500 bg-gray-50 border-gray-200 text-gray-600 hover:border-green-400 hover:text-green-600">متاح</span>
+                        </label>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="status" value="sold" {% if "sold" in sel_statuses %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500 bg-gray-50 border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-600">تم البيع</span>
+                        </label>
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="status" value="pending" {% if "pending" in sel_statuses %}checked{% endif %} class="sr-only peer">
+                            <span class="block px-3 py-1.5 text-xs rounded-full font-medium border transition peer-checked:bg-yellow-500 peer-checked:text-white peer-checked:border-yellow-500 bg-gray-50 border-gray-200 text-gray-600 hover:border-yellow-400 hover:text-yellow-600">قيد الانتظار</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Price Range -->
@@ -1516,6 +1563,16 @@
 
 <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
 <script>
+// Remove a single value from a multi-value URL param
+function removeFilterValue(key, value) {
+    const params = new URLSearchParams(window.location.search);
+    const remaining = params.getAll(key).filter(v => v !== String(value));
+    params.delete(key);
+    remaining.forEach(v => params.append(key, v));
+    params.delete('page');
+    window.location.href = '?' + params.toString();
+}
+
 // Mobile filter drawer
 const toggleBtn = document.getElementById('toggle-filters');
 const filterDrawer = document.getElementById('filter-drawer');
@@ -1525,10 +1582,11 @@ const filterForm = document.getElementById('filter-form');
 function openMobileFilters() {
     filterBackdrop.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    // Trigger transition on next frame
-    requestAnimationFrame(() => {
-        filterDrawer.classList.remove('translate-y-full');
-    });
+    // Force reflow so the browser registers the initial translate state
+    // before removing it — this guarantees the CSS transition fires on
+    // all mobile browsers (Safari, Chrome Android, etc.)
+    void filterDrawer.offsetHeight;
+    filterDrawer.classList.remove('translate-y-full');
 }
 
 function closeMobileFilters() {

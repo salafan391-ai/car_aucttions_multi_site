@@ -725,33 +725,33 @@ def car_list(request):
         except ValueError:
             pass
 
-    color = request.GET.get('color')
-    if color:
-        qs = qs.filter(color_id=color)
+    sel_colors = request.GET.getlist('color')
+    if sel_colors:
+        qs = qs.filter(color_id__in=sel_colors)
 
-    body_type = request.GET.get('body_type')
-    if body_type:
-        qs = qs.filter(body__name=body_type)
+    sel_body_types = request.GET.getlist('body_type')
+    if sel_body_types:
+        qs = qs.filter(body__name__in=sel_body_types)
 
-    fuel = request.GET.get('fuel')
-    if fuel:
-        qs = qs.filter(fuel__iexact=fuel)
+    sel_fuels = request.GET.getlist('fuel')
+    if sel_fuels:
+        qs = qs.filter(fuel__in=sel_fuels)
 
-    transmission = request.GET.get('transmission')
-    if transmission:
-        qs = qs.filter(transmission__iexact=transmission)
+    sel_transmissions = request.GET.getlist('transmission')
+    if sel_transmissions:
+        qs = qs.filter(transmission__in=sel_transmissions)
 
-    seat_count = request.GET.get('seat_count')
-    if seat_count:
-        qs = qs.filter(seat_count=seat_count)
+    sel_seat_counts = request.GET.getlist('seat_count')
+    if sel_seat_counts:
+        qs = qs.filter(seat_count__in=sel_seat_counts)
 
-    seat_color = request.GET.get('seat_color')
-    if seat_color:
-        qs = qs.filter(seat_color_id=seat_color)
+    sel_seat_colors = request.GET.getlist('seat_color')
+    if sel_seat_colors:
+        qs = qs.filter(seat_color_id__in=sel_seat_colors)
 
-    auction_name = request.GET.get('auction_name', '').strip()
-    if auction_name:
-        qs = qs.filter(auction_name__iexact=auction_name)
+    sel_auction_names = request.GET.getlist('auction_name')
+    if sel_auction_names:
+        qs = qs.filter(auction_name__in=sel_auction_names)
 
     car_type = request.GET.get('car_type')
     if car_type == 'auction':
@@ -759,9 +759,9 @@ def car_list(request):
     elif car_type == 'cars':
         qs = qs.exclude(category__name='auction')
 
-    status = request.GET.get('status')
-    if status:
-        qs = qs.filter(status=status)
+    sel_statuses = request.GET.getlist('status')
+    if sel_statuses:
+        qs = qs.filter(status__in=sel_statuses)
 
     price_min = request.GET.get('price_min')
     if price_min:
@@ -1091,6 +1091,14 @@ def car_list(request):
         'site_cars_count': site_cars_count,
         'selected_year_from': request.GET.get('year_from', ''),
         'selected_year_to': request.GET.get('year_to', ''),
+        'sel_fuels':         request.GET.getlist('fuel'),
+        'sel_transmissions': request.GET.getlist('transmission'),
+        'sel_body_types':    request.GET.getlist('body_type'),
+        'sel_colors':        request.GET.getlist('color'),
+        'sel_statuses':      request.GET.getlist('status'),
+        'sel_seat_counts':   request.GET.getlist('seat_count'),
+        'sel_seat_colors':   request.GET.getlist('seat_color'),
+        'sel_auction_names': request.GET.getlist('auction_name'),
     }
     response = render(request, 'cars/car_list.html', context)
     # Cache the rendered HTML for anonymous users only
