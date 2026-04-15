@@ -245,6 +245,7 @@ class Command(BaseCommand):
             inspection_image = item.get("inspection_image") or ""
             points = item.get("points") or item.get("score") or ""
             address = item.get("region") or ""
+            drive_wheel = item.get("wheel") or ""
 
             if dry_run:
                 action = "UPDATE" if ApiCar.objects.filter(car_id=car_id).exists() else "CREATE"
@@ -277,6 +278,7 @@ class Command(BaseCommand):
                 "points": str(points)[:50] if points else "",
                 "address": address[:255] if address else "",
                 "vin": car_id,
+                "drive_wheel": drive_wheel[:100] if drive_wheel else "",
             }
 
             try:

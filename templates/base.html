@@ -973,13 +973,13 @@
         });
 
         // ═══════════ LANGUAGE SYSTEM ═══════════
-        const LANGS = {
+        var LANGS = {
             ar: { flag: '🇸🇦', label: 'العربية', dir: 'rtl', font: "'Tajawal', sans-serif" },
             en: { flag: '🇬🇧', label: 'English', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
         };
-        const LANG_ORDER = ['ar', 'en'];
+        var LANG_ORDER = ['ar', 'en'];
 
-        const TRANSLATIONS = {
+        var TRANSLATIONS = {
             // Navbar
             'الرئيسية':        'Home',
             'السيارات':        'Cars',
@@ -1157,14 +1157,14 @@
         }
 
         // ═══════════ CURRENCY SYSTEM ═══════════
-        const CURRENCIES = {
+        var CURRENCIES = {
             KRW: { symbol: '₩', label: '₩ KRW', rate: 1 },
             USD: { symbol: '$', label: '$ USD', rate: {{ rate_usd|default:"0.00067" }} },
             SAR: { symbol: '﷼', label: '﷼ SAR', rate: {{ rate_sar|default:"0.00250" }} },
             AED: { symbol: 'د.إ', label: 'د.إ AED', rate: {{ rate_aed|default:"0.00272" }} },
             EUR: { symbol: '€', label: '€ EUR', rate: {{ rate_eur|default:"0.00069" }} },
         };
-        const CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
+        var CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
 
         function setCurrency(code) {
             localStorage.setItem('site_currency', code);
@@ -1507,7 +1507,7 @@ setTimeout(() => showTooltip('account-tooltip'), 6500);
         });
         
         // Update FAB count when wishlist changes
-        const originalUpdateWishlistCount = window.updateWishlistCount;
+        var originalUpdateWishlistCount = window.updateWishlistCount;
         window.updateWishlistCount = function() {
             // Clear cache to force fresh fetch
             wishlistCountCache = null;

@@ -234,7 +234,8 @@
                 {% endif %}
 
                 {% if site_whatsapp %}
-                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ car.title|whatsapp_encode_text }}%20-%20{{ car.year }}%20-%20{{ car.price|floatformat:0 }}%20%E2%82%A9%0A{{ request.build_absolute_uri }}"
+                {% whatsapp_site_car_message car site_name as wa_msg %}
+                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ wa_msg }}"
                    target="_blank"
                    class="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition mb-3">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -244,7 +245,8 @@
                     تواصل عبر واتساب
                 </a>
                 {% elif whatsapp_phones %}
-                <a href="https://wa.me/{{ whatsapp_phones.0.phone_number|format_whatsapp_number }}?text={{ car.title|whatsapp_encode_text }}%20-%20{{ car.year }}%20-%20{{ car.price|floatformat:0 }}%20%E2%82%A9%0A{{ request.build_absolute_uri }}"
+                {% whatsapp_site_car_message car site_name as wa_msg %}
+                <a href="https://wa.me/{{ whatsapp_phones.0.phone_number|format_whatsapp_number }}?text={{ wa_msg }}"
                    target="_blank"
                    class="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition mb-3">
                     <svg class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">

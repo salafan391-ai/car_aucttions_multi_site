@@ -665,11 +665,12 @@ def car_list(request):
     schema = getattr(connection, 'schema_name', 'public')
     cache_key = None
     if not request.user.is_authenticated:
-        _params = {k: v for k, v in request.GET.items()}
+        _params = {k: sorted(v) for k, v in request.GET.lists()}
         _params_hash = hashlib.md5(
             json.dumps(_params, sort_keys=True).encode()
         ).hexdigest()
-        cache_key = f"car_list:{schema}:{_params_hash}"
+        _variant = 'htmx' if getattr(request, 'htmx', False) else 'full'
+        cache_key = f"car_list:{schema}:{_variant}:{_params_hash}"
         cached_html = cache.get(cache_key)
         if cached_html:
             return HttpResponse(cached_html)
@@ -699,17 +700,17 @@ def car_list(request):
             | Q(badge__name__icontains=q)
         )
 
-    manufacturer = request.GET.get('manufacturer')
-    if manufacturer:
-        qs = qs.filter(manufacturer_id=manufacturer)
+    sel_manufacturers = request.GET.getlist('manufacturer')
+    if sel_manufacturers:
+        qs = qs.filter(manufacturer_id__in=sel_manufacturers)
 
-    model = request.GET.get('model')
-    if model:
-        qs = qs.filter(model_id=model)
+    sel_models = request.GET.getlist('model')
+    if sel_models:
+        qs = qs.filter(model_id__in=sel_models)
 
-    badge = request.GET.get('badge')
-    if badge:
-        qs = qs.filter(badge_id=badge)
+    sel_badges = request.GET.getlist('badge')
+    if sel_badges:
+        qs = qs.filter(badge_id__in=sel_badges)
 
     year_from = request.GET.get('year_from')
     if year_from:
@@ -801,7 +802,7 @@ def car_list(request):
     # Cache the paginator COUNT per unique filter combination (excludes sort/page
     # which don't affect the total count).  This avoids a full-table COUNT(*) on
     # every cache miss for different sort orders.
-    _count_params = {k: v for k, v in request.GET.items() if k not in ('sort', 'page')}
+    _count_params = {k: sorted(v) for k, v in request.GET.lists() if k not in ('sort', 'page')}
     _count_hash = hashlib.md5(
         json.dumps(_count_params, sort_keys=True).encode()
     ).hexdigest()
@@ -909,14 +910,15 @@ def car_list(request):
             cache.set(_mfr_cache_key, manufacturers, 60 * 15)
 
     # Only load models/badges when manufacturer/model is selected, scoped to car_type
-    if manufacturer:
+    if sel_manufacturers:
+        _mfr_key_part = sel_manufacturers[0] if len(sel_manufacturers) == 1 else '-'.join(sorted(sel_manufacturers))
         if car_type == 'auction':
-            _models_cache_key = f"car_list:models_auction_cnt:{manufacturer}"
+            _models_cache_key = f"car_list:models_auction_cnt:{_mfr_key_part}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
                 _auction_model_ids = list(
                     ApiCar.objects.filter(
-                        category__name='auction', manufacturer_id=manufacturer
+                        category__name='auction', manufacturer_id__in=sel_manufacturers
                     ).exclude(auction_date__lt=now)
                     .values_list('model_id', flat=True).distinct()
                 )
@@ -924,7 +926,7 @@ def car_list(request):
                     CarModel.objects.filter(id__in=_auction_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer),
+                        filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
                     .order_by('name')
                 )
@@ -932,11 +934,11 @@ def car_list(request):
                     setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
                 cache.set(_models_cache_key, models_qs, 60 * 15)
         elif car_type == 'cars':
-            _models_cache_key = f"car_list:models_cars_cnt:{manufacturer}"
+            _models_cache_key = f"car_list:models_cars_cnt:{_mfr_key_part}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
                 _cars_model_ids = list(
-                    ApiCar.objects.filter(manufacturer_id=manufacturer)
+                    ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers)
                     .exclude(category__name='auction')
                     .values_list('model_id', flat=True).distinct()
                 )
@@ -944,7 +946,7 @@ def car_list(request):
                     CarModel.objects.filter(id__in=_cars_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=~Q(apicar__category__name='auction') & Q(apicar__manufacturer_id=manufacturer),
+                        filter=~Q(apicar__category__name='auction') & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
                     .order_by('name')
                 )
@@ -952,14 +954,14 @@ def car_list(request):
                     setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
                 cache.set(_models_cache_key, models_qs, 60 * 15)
         else:
-            _models_cache_key = f"car_list:models_cnt:{manufacturer}"
+            _models_cache_key = f"car_list:models_cnt:{_mfr_key_part}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
                 models_qs = list(
-                    CarModel.objects.filter(manufacturer_id=manufacturer)
+                    CarModel.objects.filter(manufacturer_id__in=sel_manufacturers)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer),
+                        filter=~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
                     .order_by('name')
                 )
@@ -969,19 +971,19 @@ def car_list(request):
     else:
         models_qs = []
 
-    model_param = request.GET.get('model')
-    if model_param:
-        _badges_cache_key = f"car_list:badges_cnt:{model_param}:{car_type or 'all'}"
+    if sel_models:
+        _mdl_key_part = sel_models[0] if len(sel_models) == 1 else '-'.join(sorted(sel_models))
+        _badges_cache_key = f"car_list:badges_cnt:{_mdl_key_part}:{car_type or 'all'}"
         badges = cache.get(_badges_cache_key)
         if badges is None:
             if car_type == 'auction':
-                _badge_filter = Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__model_id=model_param)
+                _badge_filter = Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__model_id__in=sel_models)
             elif car_type == 'cars':
-                _badge_filter = ~Q(apicar__category__name='auction') & Q(apicar__model_id=model_param)
+                _badge_filter = ~Q(apicar__category__name='auction') & Q(apicar__model_id__in=sel_models)
             else:
-                _badge_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id=model_param)
+                _badge_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id__in=sel_models)
             badges = list(
-                CarBadge.objects.filter(model_id=model_param)
+                CarBadge.objects.filter(model_id__in=sel_models)
                 .annotate(car_count=Count('apicar', filter=_badge_filter))
                 .distinct().order_by('name')
             )
@@ -1091,6 +1093,9 @@ def car_list(request):
         'site_cars_count': site_cars_count,
         'selected_year_from': request.GET.get('year_from', ''),
         'selected_year_to': request.GET.get('year_to', ''),
+        'sel_manufacturers': sel_manufacturers,
+        'sel_models':        sel_models,
+        'sel_badges':        sel_badges,
         'sel_fuels':         request.GET.getlist('fuel'),
         'sel_transmissions': request.GET.getlist('transmission'),
         'sel_body_types':    request.GET.getlist('body_type'),
@@ -1100,7 +1105,14 @@ def car_list(request):
         'sel_seat_colors':   request.GET.getlist('seat_color'),
         'sel_auction_names': request.GET.getlist('auction_name'),
     }
+    # HTMX partial request — return only the car grid fragment
+    if request.htmx:
+        resp = render(request, 'cars/_car_list_results.html', context)
+        resp['Vary'] = 'HX-Request'
+        return resp
+
     response = render(request, 'cars/car_list.html', context)
+    response['Vary'] = 'HX-Request'
     # Cache the rendered HTML for anonymous users only
     try:
         if cache_key and not request.user.is_authenticated:

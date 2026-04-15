@@ -174,3 +174,35 @@ def whatsapp_car_message(context, car, site_name=""):
 
     full_message = "\n".join(message_parts)
     return quote(full_message, safe='')
+
+
+@register.simple_tag(takes_context=True)
+def whatsapp_site_car_message(context, car, site_name=""):
+    """
+    Generate a WhatsApp message for a SiteCar inquiry.
+    SiteCar.price is stored directly in SAR — no conversion needed.
+    """
+    message_parts = ["مرحباً، أرغب في الاستفسار عن السيارة التالية:"]
+    message_parts.append("")
+
+    car_name = f"{car.manufacturer} {car.model} {car.year}"
+    message_parts.append(car_name)
+
+    if car.price:
+        message_parts.append(f"السعر: {car.price:,.0f} ريال سعودي")
+
+    try:
+        request = context.get('request')
+        if request:
+            message_parts.append("")
+            message_parts.append(f"رابط السيارة: {request.build_absolute_uri()}")
+    except Exception:
+        pass
+
+    message_parts.append("")
+    message_parts.append("يرجى تزويدي بمزيد من المعلومات.")
+
+    if site_name:
+        message_parts.append(f"شكراً - {site_name}")
+
+    return quote("\n".join(message_parts), safe='')

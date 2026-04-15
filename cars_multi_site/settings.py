@@ -233,6 +233,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+WHITENOISE_MAX_AGE = 31536000  # 1 year — safe because WhiteNoise uses content-hash filenames
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
