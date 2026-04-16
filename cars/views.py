@@ -758,7 +758,9 @@ def car_list(request):
     if car_type == 'auction':
         qs = qs.filter(category__name='auction')
     elif car_type == 'cars':
-        qs = qs.exclude(category__name='auction')
+        qs = qs.exclude(category__name='auction').exclude(body__name='TRUCK')
+    elif car_type == 'truck':
+        qs = qs.exclude(category__name='auction').filter(body__name='TRUCK')
 
     sel_statuses = request.GET.getlist('status')
     if sel_statuses:
@@ -865,7 +867,7 @@ def car_list(request):
                     'apicar',
                     filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now),
                 ))
-                .order_by('name')
+                .order_by('-car_count')
             )
             cache.set(_auction_mfr_key, manufacturers, 60 * 15)
 
@@ -895,17 +897,19 @@ def car_list(request):
             popular_manufacturers = sorted(manufacturers, key=lambda m: m.car_count, reverse=True)
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
-        _mfr_cache_key = f"car_list:manufacturers_{'cars' if car_type == 'cars' else 'all'}"
+        _mfr_cache_suffix = {'cars': 'cars', 'truck': 'truck'}.get(car_type, 'all')
+        _mfr_cache_key = f"car_list:manufacturers_{_mfr_cache_suffix}"
         manufacturers = cache.get(_mfr_cache_key)
         if manufacturers is None:
-            _mfr_count_filter = (
-                ~Q(apicar__category__name='auction')
-                if car_type == 'cars'
-                else ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
-            )
+            if car_type == 'truck':
+                _mfr_count_filter = ~Q(apicar__category__name='auction') & Q(apicar__body__name='TRUCK')
+            elif car_type == 'cars':
+                _mfr_count_filter = ~Q(apicar__category__name='auction') & ~Q(apicar__body__name='TRUCK')
+            else:
+                _mfr_count_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
             manufacturers = list(
                 Manufacturer.objects.annotate(car_count=Count('apicar', filter=_mfr_count_filter))
-                .order_by('name')
+                .order_by('-car_count')
             )
             cache.set(_mfr_cache_key, manufacturers, 60 * 15)
 
@@ -928,7 +932,7 @@ def car_list(request):
                         'apicar',
                         filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
-                    .order_by('name')
+                    .order_by('-car_count')
                 )
                 for m in models_qs:
                     setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
@@ -940,15 +944,36 @@ def car_list(request):
                 _cars_model_ids = list(
                     ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers)
                     .exclude(category__name='auction')
+                    .exclude(body__name='TRUCK')
                     .values_list('model_id', flat=True).distinct()
                 )
                 models_qs = list(
                     CarModel.objects.filter(id__in=_cars_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=~Q(apicar__category__name='auction') & Q(apicar__manufacturer_id__in=sel_manufacturers),
+                        filter=~Q(apicar__category__name='auction') & ~Q(apicar__body__name='TRUCK') & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
-                    .order_by('name')
+                    .order_by('-car_count')
+                )
+                for m in models_qs:
+                    setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
+                cache.set(_models_cache_key, models_qs, 60 * 15)
+        elif car_type == 'truck':
+            _models_cache_key = f"car_list:models_truck_cnt:{_mfr_key_part}"
+            models_qs = cache.get(_models_cache_key)
+            if models_qs is None:
+                _truck_model_ids = list(
+                    ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers, body__name='TRUCK')
+                    .exclude(category__name='auction')
+                    .values_list('model_id', flat=True).distinct()
+                )
+                models_qs = list(
+                    CarModel.objects.filter(id__in=_truck_model_ids)
+                    .annotate(car_count=Count(
+                        'apicar',
+                        filter=~Q(apicar__category__name='auction') & Q(apicar__body__name='TRUCK') & Q(apicar__manufacturer_id__in=sel_manufacturers),
+                    ))
+                    .order_by('-car_count')
                 )
                 for m in models_qs:
                     setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
@@ -957,13 +982,18 @@ def car_list(request):
             _models_cache_key = f"car_list:models_cnt:{_mfr_key_part}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
+                _model_ids = list(
+                    ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers)
+                    .exclude(category__name='auction', auction_date__lt=now)
+                    .values_list('model_id', flat=True).distinct()
+                )
                 models_qs = list(
-                    CarModel.objects.filter(manufacturer_id__in=sel_manufacturers)
+                    CarModel.objects.filter(id__in=_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
                         filter=~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
-                    .order_by('name')
+                    .order_by('-car_count')
                 )
                 for m in models_qs:
                     setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
@@ -979,13 +1009,16 @@ def car_list(request):
             if car_type == 'auction':
                 _badge_filter = Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__model_id__in=sel_models)
             elif car_type == 'cars':
-                _badge_filter = ~Q(apicar__category__name='auction') & Q(apicar__model_id__in=sel_models)
+                _badge_filter = ~Q(apicar__category__name='auction') & ~Q(apicar__body__name='TRUCK') & Q(apicar__model_id__in=sel_models)
+            elif car_type == 'truck':
+                _badge_filter = ~Q(apicar__category__name='auction') & Q(apicar__body__name='TRUCK') & Q(apicar__model_id__in=sel_models)
             else:
                 _badge_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id__in=sel_models)
             badges = list(
                 CarBadge.objects.filter(model_id__in=sel_models)
                 .annotate(car_count=Count('apicar', filter=_badge_filter))
-                .distinct().order_by('name')
+                .filter(car_count__gt=0)
+                .distinct().order_by('-car_count')
             )
             cache.set(_badges_cache_key, badges, 60 * 15)
     else:
@@ -996,7 +1029,10 @@ def car_list(request):
     if car_type != 'auction':
         if car_type == 'cars':
             _static_cache_key = f"car_list:static_filters_cars:{schema}"
-            _base_qs = ApiCar.objects.exclude(category__name='auction')
+            _base_qs = ApiCar.objects.exclude(category__name='auction').exclude(body__name='TRUCK')
+        elif car_type == 'truck':
+            _static_cache_key = f"car_list:static_filters_truck:{schema}"
+            _base_qs = ApiCar.objects.exclude(category__name='auction').filter(body__name='TRUCK')
         else:
             _static_cache_key = f"car_list:static_filters_all:{schema}"
             _base_qs = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
@@ -1032,19 +1068,21 @@ def car_list(request):
     auction_names = static_filters['auction_names']
 
     # Counts for tabs – single aggregate query, cached 5 min (global, not filter-specific)
-    _tab_count_key = f"car_list:tab_counts:{schema}"
+    _tab_count_key = f"car_list:tab_counts_v3:{schema}"
     tab_counts = cache.get(_tab_count_key)
     if tab_counts is None:
         _tab_base = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
         tab_counts = _tab_base.aggregate(
             count_all=Count('id'),
             count_auction=Count('id', filter=Q(category__name='auction')),
-            count_cars=Count('id', filter=~Q(category__name='auction')),
+            count_cars=Count('id', filter=~Q(category__name='auction') & ~Q(body__name='TRUCK')),
+            count_truck=Count('id', filter=~Q(category__name='auction') & Q(body__name='TRUCK')),
         )
         cache.set(_tab_count_key, tab_counts, 60 * 5)
     count_all = tab_counts['count_all']
     count_cars = tab_counts['count_cars']
     count_auction = tab_counts['count_auction']
+    count_truck = tab_counts['count_truck']
 
     # Site cars count for the showroom tab — cached 10 min
     _site_cars_tab_key = f"car_list:site_cars_count:{schema}"
@@ -1090,6 +1128,7 @@ def car_list(request):
         'count_all': count_all,
         'count_cars': count_cars,
         'count_auction': count_auction,
+        'count_truck': count_truck,
         'site_cars_count': site_cars_count,
         'selected_year_from': request.GET.get('year_from', ''),
         'selected_year_to': request.GET.get('year_to', ''),
@@ -1171,7 +1210,8 @@ def api_models_by_manufacturer(request):
     # the cache key.
     car_type = request.GET.get('car_type')
     lang = request.GET.get('lang') or getattr(request, 'LANGUAGE_CODE', '') or ''
-    _cache_key = f"api_models:{manufacturer_id}:ct:{car_type or 'all'}:lang:{lang or 'en'}"
+    schema = getattr(connection, 'schema_name', 'public')
+    _cache_key = f"api_models:{schema}:{manufacturer_id}:ct:{car_type or 'all'}:lang:{lang or 'en'}"
     cached = cache.get(_cache_key)
     if cached is not None:
         return JsonResponse(cached, safe=False)
@@ -1222,13 +1262,30 @@ def api_models_by_manufacturer(request):
             model_ids = list(
                 ApiCar.objects.filter(manufacturer_id=manufacturer_id)
                 .exclude(category__name='auction')
+                .exclude(body__name='TRUCK')
                 .values_list('model_id', flat=True).distinct()
             )
             qs = CarModel.objects.filter(id__in=model_ids)
-            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name='auction')))
+            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name='auction') & ~Q(apicar__body__name='TRUCK')))
+        elif car_type == 'truck':
+            model_ids = list(
+                ApiCar.objects.filter(manufacturer_id=manufacturer_id, body__name='TRUCK')
+                .exclude(category__name='auction')
+                .values_list('model_id', flat=True).distinct()
+            )
+            qs = CarModel.objects.filter(id__in=model_ids)
+            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name='auction') & Q(apicar__body__name='TRUCK')))
         else:
-            qs = CarModel.objects.filter(manufacturer_id=manufacturer_id)
-            qs = qs.annotate(car_count=Count('apicar'))
+            model_ids = list(
+                ApiCar.objects.filter(manufacturer_id=manufacturer_id)
+                .exclude(category__name='auction', auction_date__lt=now)
+                .values_list('model_id', flat=True).distinct()
+            )
+            qs = CarModel.objects.filter(id__in=model_ids)
+            qs = qs.annotate(car_count=Count(
+                'apicar',
+                filter=~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer_id),
+            ))
 
         qs = qs.order_by('-car_count')
 
@@ -1253,24 +1310,43 @@ def api_badges_by_model(request):
     if not model_id:
         return JsonResponse([], safe=False)
 
-    _cache_key = f"api_badges:{model_id}"
+    schema = getattr(connection, 'schema_name', 'public')
+    car_type_key = request.GET.get('car_type') or 'all'
+    _cache_key = f"api_badges:{schema}:{model_id}:ct:{car_type_key}"
     cached = cache.get(_cache_key)
     if cached is not None:
         return JsonResponse(cached, safe=False)
 
-    # Optionally scope badges to car_type (auction or cars) so the badge list
-    # only contains badges actually present in the current filtered car set.
+    # Scope badges to car_type via ApiCar membership so only badges that have
+    # at least one matching car are returned.
     car_type = request.GET.get('car_type')
     now = timezone.now()
     if car_type == 'auction':
-        badges_qs = CarBadge.objects.filter(model_id=model_id, apicar__category__name='auction')
-        badges_qs = badges_qs.exclude(apicar__auction_date__lt=now)
+        badge_ids = ApiCar.objects.filter(
+            model_id=model_id, category__name='auction'
+        ).exclude(auction_date__lt=now).values_list('badge_id', flat=True).distinct()
+        _badge_count_filter = Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__model_id=model_id)
     elif car_type == 'cars':
-        badges_qs = CarBadge.objects.filter(model_id=model_id).exclude(apicar__category__name='auction')
+        badge_ids = ApiCar.objects.filter(model_id=model_id).exclude(
+            category__name='auction'
+        ).exclude(body__name='TRUCK').values_list('badge_id', flat=True).distinct()
+        _badge_count_filter = ~Q(apicar__category__name='auction') & ~Q(apicar__body__name='TRUCK') & Q(apicar__model_id=model_id)
+    elif car_type == 'truck':
+        badge_ids = ApiCar.objects.filter(
+            model_id=model_id, body__name='TRUCK'
+        ).exclude(category__name='auction').values_list('badge_id', flat=True).distinct()
+        _badge_count_filter = ~Q(apicar__category__name='auction') & Q(apicar__body__name='TRUCK') & Q(apicar__model_id=model_id)
     else:
-        badges_qs = CarBadge.objects.filter(model_id=model_id)
+        badge_ids = ApiCar.objects.filter(model_id=model_id).exclude(
+            category__name='auction', auction_date__lt=now
+        ).values_list('badge_id', flat=True).distinct()
+        _badge_count_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id=model_id)
 
-    badges = list(badges_qs.distinct().order_by('name').values('id', 'name'))
+    badges = list(
+        CarBadge.objects.filter(id__in=badge_ids)
+        .annotate(car_count=Count('apicar', filter=_badge_count_filter))
+        .order_by('-car_count').values('id', 'name', 'car_count')
+    )
     cache.set(_cache_key, badges, 60 * 30)  # 30 minutes
     return JsonResponse(badges, safe=False)
 

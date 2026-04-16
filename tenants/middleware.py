@@ -26,7 +26,7 @@ _THROTTLED_UA_PATTERNS = re.compile(
 # Parameters that should only contain simple values (no slashes/paths)
 _VALID_PAGE_RE = re.compile(r'^\d{1,5}$')
 _VALID_ID_RE = re.compile(r'^\d{1,10}$')
-_VALID_CAR_TYPE_RE = re.compile(r'^(auction|cars|auctioncars)?$', re.IGNORECASE)
+_VALID_CAR_TYPE_RE = re.compile(r'^(auction|cars|auctioncars|truck)?$', re.IGNORECASE)
 
 MAX_PAGE_NUMBER = 200  # Hard cap – no listing needs 200+ pages
 

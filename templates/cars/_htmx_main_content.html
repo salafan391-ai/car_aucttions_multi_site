@@ -1,6 +1,6 @@
 {% load static humanize i18n safe_query custom_filters %}
     <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
-    <div id="active-chips">{% if sel_manufacturers or sel_models or sel_badges or request.GET.year_from or request.GET.year_to or sel_colors or sel_fuels or sel_transmissions or sel_seat_counts or sel_seat_colors or sel_auction_names or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+    <div id="active-chips" class="hidden lg:block">{% if sel_manufacturers or sel_models or sel_badges or request.GET.year_from or request.GET.year_to or sel_colors or sel_fuels or sel_transmissions or sel_seat_counts or sel_seat_colors or sel_auction_names or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
     <div class="flex flex-wrap items-center gap-2 mb-5">
         <span class="text-xs text-gray-400 font-medium">الفلاتر النشطة:</span>
 
@@ -187,6 +187,7 @@
                                         data-id="{{ m.id }}" data-sel="{% if m.id|stringformat:'d' in sel_manufacturers %}1{% else %}0{% endif %}">
                                     {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
                                     <span class="truncate">{{ m.name_ar|default:m.name }}</span>
+                                    <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
                                 </button>
                                 {% endif %}{% endfor %}
                             </div>
@@ -202,10 +203,10 @@
                             <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'drawer-mdl-grid')" autocomplete="off"
                                    class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1" id="drawer-mdl-grid">
-                                {% for m in models %}
+                                {% for m in models %}{% if m.car_count %}
                                 <button type="button" class="drawer-mdl-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600"
-                                        data-id="{{ m.id }}" data-sel="{% if m.id|stringformat:'d' in sel_models %}1{% else %}0{% endif %}">{{ m|translate_model }}</button>
-                                {% endfor %}
+                                        data-id="{{ m.id }}" data-sel="{% if m.id|stringformat:'d' in sel_models %}1{% else %}0{% endif %}">{{ m|translate_model }} <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span></button>
+                                {% endif %}{% endfor %}
                             </div>
                         </details>
                     </div>
@@ -220,10 +221,10 @@
                             <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'drawer-bdg-grid')" autocomplete="off"
                                    class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1" id="drawer-bdg-grid">
-                                {% for b in badges %}
+                                {% for b in badges %}{% if b.car_count %}
                                 <button type="button" class="drawer-bdg-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600"
-                                        data-id="{{ b.id }}" data-sel="{% if b.id|stringformat:'d' in sel_badges %}1{% else %}0{% endif %}">{{ b.name }}</button>
-                                {% endfor %}
+                                        data-id="{{ b.id }}" data-sel="{% if b.id|stringformat:'d' in sel_badges %}1{% else %}0{% endif %}">{{ b.name }} <span class="opacity-60 text-[10px] font-normal">({{ b.car_count }})</span></button>
+                                {% endif %}{% endfor %}
                             </div>
                         </details>
                     </div>
@@ -345,7 +346,7 @@
     </div>
 
     <!-- ═══════════════ ACTIVE FILTER CHIPS (mobile) ═══════════════ -->
-    <div id="mobile-chips">{% with yfr=request.GET.year_from yto=request.GET.year_to pmn=request.GET.price_min pmx=request.GET.price_max mmn=request.GET.mileage_min mmx=request.GET.mileage_max %}
+    <div id="mobile-chips" class="lg:hidden">{% with yfr=request.GET.year_from yto=request.GET.year_to pmn=request.GET.price_min pmx=request.GET.price_max mmn=request.GET.mileage_min mmx=request.GET.mileage_max %}
     {% if sel_manufacturers or sel_models or sel_badges or yfr or yto or sel_fuels or sel_transmissions or sel_colors or sel_seat_counts or sel_seat_colors or sel_auction_names or pmn or pmx or mmn or mmx %}
     <div class="flex flex-wrap items-center gap-2 mb-4 pb-3 border-b border-gray-100">
         <span class="text-xs text-gray-400 font-medium shrink-0">الفلاتر:</span>
@@ -496,6 +497,7 @@
                            class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if m.id|stringformat:'d' in sel_manufacturers %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
                             {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
                             <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+                            <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
                         </button>
                         {% endif %}{% endfor %}
                     </div>
@@ -511,12 +513,13 @@
                     <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'sidebar-mdl-grid')" autocomplete="off"
                            class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                     <div id="sidebar-mdl-grid" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
-                        {% for m in models %}
+                        {% for m in models %}{% if m.car_count %}
                         <button type="button" onclick="toggleFilterValue('model', '{{ m.id }}')"
                            class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if m.id|stringformat:'d' in sel_models %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
                             <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
+                            <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
                         </button>
-                        {% endfor %}
+                        {% endif %}{% endfor %}
                     </div>
                 </details>
                 {% endif %}</div>
@@ -531,12 +534,12 @@
                     <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'sidebar-bdg-grid')" autocomplete="off"
                            class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                     <div id="sidebar-bdg-grid" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
-                        {% for b in badges %}
+                        {% for b in badges %}{% if b.car_count %}
                         <button type="button" onclick="toggleFilterValue('badge', '{{ b.id }}')"
                            class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if b.id|stringformat:'d' in sel_badges %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
-                            {{ b.name }}
+                            {{ b.name }} <span class="opacity-60 text-[10px] font-normal">({{ b.car_count }})</span>
                         </button>
-                        {% endfor %}
+                        {% endif %}{% endfor %}
                     </div>
                 </details>
                 {% endif %}{% endif %}</div>
