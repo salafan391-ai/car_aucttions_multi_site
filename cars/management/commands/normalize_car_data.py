@@ -12,7 +12,7 @@ Optionally limit to one tenant with --schema <schema_name>.
 """
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import connection, transaction
 from django_tenants.utils import schema_context, get_tenant_model
 
 from cars.normalization import (
@@ -44,6 +44,10 @@ class Command(BaseCommand):
             with schema_context(tenant.schema_name):
                 if apply_changes:
                     with transaction.atomic():
+                        # Large UPDATEs would otherwise trip the DB's
+                        # statement_timeout. Drop it for this transaction only.
+                        with connection.cursor() as c:
+                            c.execute("SET LOCAL statement_timeout = 0")
                         self._process(apply_changes=True)
                 else:
                     self._process(apply_changes=False)
