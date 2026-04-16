@@ -998,6 +998,13 @@ colors_dict = {
     'Black':'أسود',
     'Silver':'فضي',
     'Red':'أحمر',
+    "Galaxy Silver": 'فضي جالاكسي',
+    "Dark Gray": 'رمادي داكن',
+    "Maroon": 'مارون',
+    "Pearl White": 'أبيض لؤلؤي',
+    "Reed Brown": 'بني قصب',
+    "Yellow Green": 'أصفر أخضر',
+    "Teal": 'أزرق مخضر',
 }
 
 fuel_types_dict = {
@@ -1011,6 +1018,14 @@ fuel_types_dict = {
     'LPG': 'غاز',
     'LPG + Electric': 'غاز + كهربائي',
     'Other': 'آخر',
+    "Diesel+Electric (Hybrid)": 'ديزل + كهربائي (هايبرد)',
+    "LPG+Electric (Hybrid)": 'غاز + كهربائي (هايبرد)',
+    "Gasoline+Electric (Hybrid)": 'بنزين + كهربائي (هايبرد)',
+    "Gasoline+CNG (Bi-Fuel)": 'بنزين + غاز (ثنائي الوقود)',
+    "Gasoline+LPG (Bi-Fuel)": 'بنزين + غاز (ثنائي الوقود)',
+    
+    
+    
 
     'Hybrid (Diesel)': 'هايبرد (ديزل)',
     'Hybrid (Gasoline)': 'هايبرد (بنزين)',
