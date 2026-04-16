@@ -182,14 +182,15 @@ class Command(BaseCommand):
         skipped = 0
 
         for i, item in enumerate(data, 1):
-            car_id = (item.get("car_identifire") or item.get("car_ids") or "").strip()
+            car_id = item.get("car_ids")
             if not car_id:
                 self.stdout.write(self.style.WARNING(f"  Row {i}: No car_id, skipping"))
                 skipped += 1
                 continue
 
+            from cars.normalization import normalize_name
             # Manufacturer
-            make_name = item.get("make_en") or item.get("make") or "Unknown"
+            make_name = normalize_name(item.get("make_en"))
             if make_name not in manu_cache:
                 manu_cache[make_name] = self._safe_get_or_create(
                     Manufacturer.objects,
@@ -199,7 +200,7 @@ class Command(BaseCommand):
             manufacturer = manu_cache[make_name]
 
             # Model — use models_en or models field
-            model_name = item.get("models_en") or item.get("models") or "Unknown"
+            model_name = normalize_name(item.get("models_en"))
             model_key = (model_name, manufacturer.id)
             if model_key not in model_cache:
                 model_cache[model_key] = self._safe_get_or_create(
@@ -210,7 +211,7 @@ class Command(BaseCommand):
             car_model = model_cache[model_key]
 
             # Badge — auction cars don't have badge, use model name as badge
-            badge_name = (item.get("badge") or item.get("grade") or model_name)[:100]
+            badge_name = normalize_name((item.get("badge") or item.get("grade") or model_name)[:100])
             badge_key = (badge_name, car_model.id)
             if badge_key not in badge_cache:
                 badge_cache[badge_key] = self._safe_get_or_create(
@@ -221,7 +222,7 @@ class Command(BaseCommand):
             badge = badge_cache[badge_key]
            
             # Color
-            color_name = item.get("color_en") or item.get("color") or "Unknown"
+            color_name = normalize_name(item.get("color_en") or item.get("color") or "Unknown")
             if color_name not in color_cache:
                 color_cache[color_name] = self._safe_get_or_create(
                     CarColor.objects,
@@ -236,8 +237,8 @@ class Command(BaseCommand):
             price = int(item.get("price") or 0)
             mileage = self._parse_mileage(item.get("mileage"))
             power = int(item.get("power") or 0)
-            fuel = item.get("fuel_en") or item.get("fuel") or ""
-            transmission = item.get("mission") or ""
+            fuel = normalize_name(item.get("fuel_en") or item.get("fuel") or "")
+            transmission = normalize_name(item.get("mission_en") or item.get("mission") or "")
             auction_name = item.get("auction_name") or ""
             auction_date = self._parse_auction_date(item.get("auction_date"))
             image = item.get("image") or ""
@@ -277,7 +278,7 @@ class Command(BaseCommand):
                 "inspection_image": inspection_image,
                 "points": str(points)[:50] if points else "",
                 "address": address[:255] if address else "",
-                "vin": car_id,
+                "vin": item.get("car_identifire"),
                 "drive_wheel": drive_wheel[:100] if drive_wheel else "",
             }
 

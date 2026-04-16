@@ -2,6 +2,10 @@ from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
 
+from cars.normalization import (
+    normalize_name, normalize_body, normalize_transmission, normalize_fuel,
+)
+
 
 
 
@@ -22,7 +26,11 @@ class Manufacturer(models.Model):
     name_ar = models.CharField(max_length=100, null=True, blank=True, verbose_name="الاسم بالعربي")
     country = models.CharField(max_length=100,null=True,blank=True)
     logo = models.CharField(max_length=255,null=True,blank=True)
-    
+
+    def save(self, *args, **kwargs):
+        self.name = normalize_name(self.name)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -30,18 +38,32 @@ class CarModel(models.Model):
     name = models.CharField(max_length=100)
     name_ar = models.CharField(max_length=100, null=True, blank=True, verbose_name="الاسم بالعربي")
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE)
-    
+
+    def save(self, *args, **kwargs):
+        self.name = normalize_name(self.name)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
 class CarBadge(models.Model):
     name = models.CharField(max_length=100,blank=True,null=True)
     model = models.ForeignKey(CarModel, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        self.name = normalize_name(self.name)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
 class CarColor(models.Model):
     name = models.CharField(max_length=100,blank=True,null=True)
+
+    def save(self, *args, **kwargs):
+        self.name = normalize_name(self.name)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -59,6 +81,11 @@ class CarSeatCount(models.Model):
 class BodyType(models.Model):
     name = models.CharField(max_length=100,blank=True,null=True)
     name_ar = models.CharField(max_length=100,blank=True,null=True)
+
+    def save(self, *args, **kwargs):
+        self.name = normalize_body(self.name)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -148,6 +175,8 @@ class ApiCar(models.Model):
         return base or f"car-{self.pk}"
 
     def save(self, *args, **kwargs):
+        self.fuel = normalize_fuel(self.fuel)
+        self.transmission = normalize_transmission(self.transmission)
         # Generate slug after first save so we have a PK
         if not self.pk:
             super().save(*args, **kwargs)

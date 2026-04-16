@@ -119,6 +119,12 @@ class Command(BaseCommand):
             return manager.filter(**kwargs).order_by('id').first()
 
     def _get_or_create_related(self, caches: Dict[str, Dict], manufacturer_name: str, model_name: str, badge_name: str, color_name: str, seat_color_name: Optional[str]):
+        from cars.normalization import normalize_name
+        manufacturer_name = normalize_name(manufacturer_name)
+        model_name = normalize_name(model_name)
+        badge_name = normalize_name(badge_name)
+        color_name = normalize_name(color_name)
+        seat_color_name = normalize_name(seat_color_name)
         manu_cache = caches.setdefault("manufacturer", {})
         if manufacturer_name not in manu_cache:
             manu_cache[manufacturer_name] = self._safe_get_or_create(
@@ -179,9 +185,10 @@ class Command(BaseCommand):
         price = self._to_int(n.get("price"), default=0, max_value=9223372036854775807)
         power = self._to_int(n.get("displacement") or n.get("dispacement"), default=0, max_value=2147483647)
         price_kw = price * 10000
-        transmission = n.get("transmission_type") or "Unknown"
+        from cars.normalization import normalize_transmission, normalize_fuel
+        transmission = normalize_transmission(n.get("transmission_type") or "Unknown")
         body_type = n.get("body_type")
-        fuel = n.get("engine_type")
+        fuel = normalize_fuel(n.get("engine_type"))
         color_name = n.get("color") or "Unknown"
         seat_color_name = n.get("seatColor")
         drive_wheel = n.get("prep_drive_type") or ""

@@ -1029,6 +1029,8 @@ fuel_types_dict = {
 
     'Hybrid (Diesel)': 'هايبرد (ديزل)',
     'Hybrid (Gasoline)': 'هايبرد (بنزين)',
+    'Hybrid': 'هايبرد',
+    'Dual-Fuel': 'ثنائي الوقود',
 }
 transmission_types_dict = {
     'Automatic': 'أوتوماتيك',
@@ -1295,6 +1297,9 @@ car_models_dict = {
 
 # Normalise keys to lowercase so lookups are case-insensitive
 car_models_dict = {k.lower(): v for k, v in car_models_dict.items()}
+colors_dict = {k.lower(): v for k, v in colors_dict.items()}
+fuel_types_dict = {k.lower(): v for k, v in fuel_types_dict.items()}
+transmission_types_dict = {k.lower(): v for k, v in transmission_types_dict.items()}
 
 
 address_ar = {

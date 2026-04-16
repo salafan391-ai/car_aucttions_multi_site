@@ -93,21 +93,37 @@ def translate_model(value):
     name_ar = getattr(value, 'name_ar', None)
     if name_ar:
         return name_ar
-    return car_models_dict.get(name.lower(), name)
+    return car_models_dict.get(name.lower(), name.lower())
+
+
+@register.filter(name='translate_manufacturer')
+def translate_manufacturer(value):
+    """
+    Accepts either a Manufacturer instance or a plain string name.
+    Returns name_ar if set, otherwise the lowercased English name.
+    """
+    name = getattr(value, 'name', value)
+    name_ar = getattr(value, 'name_ar', None)
+    if name_ar:
+        return name_ar
+    return name.lower() if isinstance(name, str) else name
 
 
 @register.filter(name='translate_fuel')
 def translate_fuel(value):
+    value = value.lower() if isinstance(value, str) else value
     return fuel_types_dict.get(value, value)
 
 
 
 @register.filter(name='translate_transmission')
 def translate_transmission(value):
+    value = value.lower() if isinstance(value, str) else value
     return transmission_types_dict.get(value, value)
 
 
 
 @register.filter(name='translate_color')
 def translate_color(value):
+    value = value.lower() if isinstance(value, str) else value
     return colors_dict.get(value, value)

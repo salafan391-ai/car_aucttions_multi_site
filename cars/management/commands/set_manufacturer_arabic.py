@@ -85,9 +85,9 @@ class Command(BaseCommand):
                 qs = Manufacturer.objects.filter(name__icontains=name.split("-")[0].split(" ")[0])
 
             if qs.exists():
-                count = qs.update(name_ar=name_ar)
+                count = qs.update(name=name.lower(), name_ar=name_ar)
                 updated += count
-                self.stdout.write(f"  ✓ {name} → {name_ar}")
+                self.stdout.write(f"  ✓ {name.lower()} → {name_ar}")
             else:
                 not_found.append(name)
 
