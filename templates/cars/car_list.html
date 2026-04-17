@@ -572,12 +572,16 @@
       span.style.backgroundColor = color;
       span.style.color = '#fff';
       span.style.borderColor = color;
-      span.style.fontWeight = '600';
+      span.style.fontWeight = '700';
+      span.style.boxShadow = '0 4px 12px ' + color + '40, 0 0 0 3px ' + color + '25';
+      span.style.transform = 'scale(1.02)';
     } else {
       span.style.backgroundColor = '';
       span.style.color = '';
       span.style.borderColor = '';
       span.style.fontWeight = '';
+      span.style.boxShadow = '';
+      span.style.transform = '';
     }
   }
 

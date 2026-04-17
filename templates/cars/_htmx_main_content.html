@@ -256,7 +256,7 @@
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for f in fuels %}
-                                <label class="cursor-pointer select-none"><input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span></label>
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span></label>
                                 {% endfor %}
                             </div>
                         </details>
@@ -270,7 +270,7 @@
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for t in transmissions %}
-                                <label class="cursor-pointer select-none"><input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span></label>
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span></label>
                                 {% endfor %}
                             </div>
                         </details>
@@ -284,7 +284,7 @@
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for c in colors %}
-                                <label class="cursor-pointer select-none"><input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span></label>
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span></label>
                                 {% endfor %}
                             </div>
                         </details>
@@ -298,7 +298,7 @@
                             </summary>
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for s in seat_counts %}
-                                <label class="cursor-pointer select-none"><input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ s }}</span></label>
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ s }}</span></label>
                                 {% endfor %}
                             </div>
                         </details>
@@ -312,7 +312,7 @@
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
-                                {% for sc in seat_colors %}<label class="cursor-pointer select-none"><input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span></label>{% endfor %}
+                                {% for sc in seat_colors %}<label class="cursor-pointer select-none"><input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span></label>{% endfor %}
                             </div>
                         </details>
                     </div>
@@ -326,7 +326,7 @@
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
-                                {% for an in auction_names %}<label class="cursor-pointer select-none"><input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ an }}</span></label>{% endfor %}
+                                {% for an in auction_names %}<label class="cursor-pointer select-none"><input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ an }}</span></label>{% endfor %}
                             </div>
                         </details>
                     </div>
@@ -519,7 +519,7 @@
                     <div id="sidebar-mdl-grid" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for m in models %}{% if m.car_count %}
                         <button type="button" onclick="toggleFilterValue('model', '{{ m.id }}')"
-                           class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if m.id|stringformat:'d' in sel_models %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                           class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all {% if m.id|stringformat:'d' in sel_models %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
                             <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name|pretty_en }}">{{ m|translate_model }}</span>
                             <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
                         </button>
@@ -540,7 +540,7 @@
                     <div id="sidebar-bdg-grid" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for b in badges %}{% if b.car_count %}
                         <button type="button" onclick="toggleFilterValue('badge', '{{ b.id }}')"
-                           class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if b.id|stringformat:'d' in sel_badges %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                           class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all {% if b.id|stringformat:'d' in sel_badges %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
                             {{ b.name }} <span class="opacity-60 text-[10px] font-normal">({{ b.car_count }})</span>
                         </button>
                         {% endif %}{% endfor %}
@@ -583,7 +583,7 @@
                         {% for f in fuels %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span>
+                            <span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -599,7 +599,7 @@
                         {% for t in transmissions %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span>
+                            <span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -615,7 +615,7 @@
                         {% for c in colors %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span>
+                            <span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -631,7 +631,7 @@
                         {% for s in seat_counts %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ s }}</span>
+                            <span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ s }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -648,7 +648,7 @@
                         {% for sc in seat_colors %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span>
+                            <span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -666,7 +666,7 @@
                         {% for an in auction_names %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ an }}</span>
+                            <span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ an }}</span>
                         </label>
                         {% endfor %}
                     </div>
