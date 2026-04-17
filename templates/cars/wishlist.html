@@ -63,11 +63,11 @@
 
                     <!-- Manufacturer & Model -->
                     <div class="text-sm text-gray-600 mb-3">
-                        <span class="bilingual" data-lang-ar="{{ item.car.manufacturer.name_ar|default:item.car.manufacturer.name }}" data-lang-en="{{ item.car.manufacturer.name }}">
+                        <span class="bilingual" data-lang-ar="{{ item.car.manufacturer.name_ar|default:item.car.manufacturer.name }}" data-lang-en="{{ item.car.manufacturer.name|pretty_en }}">
                             {{ item.car.manufacturer.name_ar|default:item.car.manufacturer.name }}
                         </span>
                         <span class="mx-1">•</span>
-                        <span class="bilingual" data-lang-ar="{{ item.car.model.name_ar|default:item.car.model.name }}" data-lang-en="{{ item.car.model.name }}">
+                        <span class="bilingual" data-lang-ar="{{ item.car.model.name_ar|default:item.car.model.name }}" data-lang-en="{{ item.car.model.name|pretty_en }}">
                             {{ item.car.model.name_ar|default:item.car.model.name }}
                         </span>
                     </div>

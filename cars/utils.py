@@ -1040,6 +1040,32 @@ transmission_types_dict = {
     'Semi-Automatic': 'نصف-أوتوماتيك',
     'Unknown': 'غير معروف'
 }
+
+body_types_dict = {
+    'suv':                        'سيارات دفع رباعي',
+    'sedan':                      'سيدان',
+    'hatchback':                  'هاتشباك',
+    'coupe':                      'كوبيه',
+    'roadster':                   'روادستر',
+    'truck':                      'شاحنة صغيرة',
+    'pickup truck':               'شاحنة صغيرة',
+    'minivan':                    'ميني فان',
+    'microbus':                   'ميكروباص',
+    'rv':                         'مركبة ترفيهية',
+    'sedan/hatchback':            'سيدان/هاتشباك',
+    'compact car':                'سيارة مدمجة',
+    'full-size car':              'سيارة كبيرة الحجم',
+    'light commercial vehicle':   'مركبة تجارية خفيفة',
+    'mid-size car':               'سيارة متوسطة الحجم',
+    'mini car':                   'سيارة صغيرة',
+    'semi-mid-size car':          'سيارة شبه متوسطة',
+    'sports car':                 'سيارة رياضية',
+    'van':                        'فان',
+    'wagon':                      'ستيشن واغن',
+    'convertible':                'قابلة للتحويل',
+    'bus':                        'حافلة',
+    'other':                      'أخرى',
+}
 car_models_dict = {
   "bongo":"بونغو",
   "nexo": "نيكسو",
@@ -1322,6 +1348,28 @@ address_ar = {
     '충남': 'تشونغنام',
     '화성시': 'مدينة هواسيونغ',
     None: None  # for nan values
+}
+
+address_en = {
+    '경기': 'Gyeonggi',
+    '부산': 'Busan',
+    '광주': 'Gwangju',
+    '경북': 'Gyeongbuk',
+    '인천': 'Incheon',
+    '울산': 'Ulsan',
+    '경남': 'Gyeongnam',
+    '서울': 'Seoul',
+    '대구': 'Daegu',
+    '전북': 'Jeonbuk',
+    '대전': 'Daejeon',
+    '전남': 'Jeonnam',
+    '충북': 'Chungbuk',
+    '제주': 'Jeju',
+    '강원': 'Gangwon',
+    '세종': 'Sejong',
+    '충남': 'Chungnam',
+    '화성시': 'Hwaseong',
+    None: None,
 }
 
 

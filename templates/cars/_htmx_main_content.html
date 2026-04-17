@@ -2,18 +2,18 @@
     <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
     <div id="active-chips" class="hidden lg:block">{% if sel_manufacturers or sel_models or sel_badges or request.GET.year_from or request.GET.year_to or sel_colors or sel_fuels or sel_transmissions or sel_seat_counts or sel_seat_colors or sel_auction_names or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
     <div class="flex flex-wrap items-center gap-2 mb-5">
-        <span class="text-xs text-gray-400 font-medium">الفلاتر النشطة:</span>
+        <span class="bilingual text-xs text-gray-400 font-medium" data-lang-ar="الفلاتر النشطة:" data-lang-en="Active filters:">الفلاتر النشطة:</span>
 
         {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
         <button type="button" onclick="removeFilterValue('manufacturer','{{ m.id }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-full hover:bg-blue-100 transition group">
-            الشركة: <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+            الشركة: <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
             <svg class="w-3.5 h-3.5 text-blue-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endif %}{% endfor %}
 
         {% for m in models %}{% if m.id|stringformat:"d" in sel_models %}
         <button type="button" onclick="removeFilterValue('model','{{ m.id }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full hover:bg-indigo-100 transition group">
-            الموديل: <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
+            <span class="bilingual" data-lang-ar="الموديل:" data-lang-en="Model:">الموديل:</span> <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name|pretty_en }}">{{ m|translate_model }}</span>
             <svg class="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endif %}{% endfor %}
@@ -21,7 +21,7 @@
         {% if request.GET.car_type != 'auction' %}
         {% for b in badges %}{% if b.id|stringformat:"d" in sel_badges %}
         <button type="button" onclick="removeFilterValue('badge','{{ b.id }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full hover:bg-purple-100 transition group">
-            العلامة: {{ b.name }}
+            <span class="bilingual" data-lang-ar="العلامة:" data-lang-en="Trim:">العلامة:</span> {{ b.name }}
             <svg class="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endif %}{% endfor %}
@@ -29,35 +29,37 @@
 
         {% if request.GET.year_from %}
     <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_from' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-full hover:bg-green-100 transition group">
-            من سنة: {{ request.GET.year_from }}
+            <span class="bilingual" data-lang-ar="من سنة:" data-lang-en="Year from:">من سنة:</span> {{ request.GET.year_from }}
             <svg class="w-3.5 h-3.5 text-green-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
 
         {% if request.GET.year_to %}
     <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_to' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-medium rounded-full hover:bg-green-100 transition group">
-            إلى سنة: {{ request.GET.year_to }}
+            <span class="bilingual" data-lang-ar="إلى سنة:" data-lang-en="Year to:">إلى سنة:</span> {{ request.GET.year_to }}
             <svg class="w-3.5 h-3.5 text-green-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
 
         {% for f in sel_fuels %}
         <button type="button" onclick="removeFilterValue('fuel','{{ f }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 text-xs font-medium rounded-full hover:bg-amber-100 transition group">
-            الوقود: {{ f|translate_fuel }}
+            <span class="bilingual" data-lang-ar="الوقود:" data-lang-en="Fuel:">الوقود:</span>
+            <span class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span>
             <svg class="w-3.5 h-3.5 text-amber-400 group-hover:text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endfor %}
 
         {% for t in sel_transmissions %}
         <button type="button" onclick="removeFilterValue('transmission','{{ t }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full hover:bg-teal-100 transition group">
-            ناقل: {{ t|translate_transmission }}
+            <span class="bilingual" data-lang-ar="ناقل:" data-lang-en="Transmission:">ناقل:</span>
+            <span class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span>
             <svg class="w-3.5 h-3.5 text-teal-400 group-hover:text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endfor %}
 
         {% for s in sel_seat_counts %}
         <button type="button" onclick="removeFilterValue('seat_count','{{ s }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-50 text-violet-700 text-xs font-medium rounded-full hover:bg-violet-100 transition group">
-            المقاعد: {{ s }}
+            <span class="bilingual" data-lang-ar="المقاعد:" data-lang-en="Seats:">المقاعد:</span> {{ s }}
             <svg class="w-3.5 h-3.5 text-violet-400 group-hover:text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endfor %}
@@ -65,7 +67,8 @@
         {% if request.GET.car_type != 'auction' %}
         {% for sc in seat_colors %}{% if sc.id|stringformat:"d" in sel_seat_colors %}
         <button type="button" onclick="removeFilterValue('seat_color','{{ sc.id }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 text-rose-700 text-xs font-medium rounded-full hover:bg-rose-100 transition group">
-            لون المقاعد: {{ sc.name }}
+            <span class="bilingual" data-lang-ar="لون المقاعد:" data-lang-en="Seat color:">لون المقاعد:</span>
+            <span class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span>
             <svg class="w-3.5 h-3.5 text-rose-400 group-hover:text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endif %}{% endfor %}
@@ -74,7 +77,7 @@
         {% if request.GET.car_type == 'auction' %}
         {% for an in sel_auction_names %}
         <button type="button" onclick="removeFilterValue('auction_name','{{ an }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-full hover:bg-purple-100 transition group">
-            المزاد: {{ an }}
+            <span class="bilingual" data-lang-ar="المزاد:" data-lang-en="Auction:">المزاد:</span> {{ an }}
             <svg class="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endfor %}
@@ -89,7 +92,8 @@
 
         {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
         <button type="button" onclick="removeFilterValue('color','{{ c.id }}')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-pink-50 text-pink-700 text-xs font-medium rounded-full hover:bg-pink-100 transition group">
-            اللون: {{ c.name|translate_color }}
+            <span class="bilingual" data-lang-ar="اللون:" data-lang-en="Color:">اللون:</span>
+            <span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span>
             <svg class="w-3.5 h-3.5 text-pink-400 group-hover:text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         {% endif %}{% endfor %}
@@ -97,14 +101,14 @@
 
         {% if request.GET.price_min or request.GET.price_max %}
     <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_min' and k != 'price_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-full hover:bg-orange-100 transition group">
-            السعر: {% if request.GET.price_min %}{{ request.GET.price_min }}{% else %}0{% endif %} - {% if request.GET.price_max %}{{ request.GET.price_max }}{% else %}&infin;{% endif %} ₩
+            <span class="bilingual" data-lang-ar="السعر:" data-lang-en="Price:">السعر:</span> {% if request.GET.price_min %}{{ request.GET.price_min }}{% else %}0{% endif %} - {% if request.GET.price_max %}{{ request.GET.price_max }}{% else %}&infin;{% endif %} ₩
             <svg class="w-3.5 h-3.5 text-orange-400 group-hover:text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
 
         {% if request.GET.mileage_min or request.GET.mileage_max %}
     <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_min' and k != 'mileage_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-cyan-50 text-cyan-700 text-xs font-medium rounded-full hover:bg-cyan-100 transition group">
-            المسافة: {% if request.GET.mileage_min %}{{ request.GET.mileage_min }}{% else %}0{% endif %} - {% if request.GET.mileage_max %}{{ request.GET.mileage_max }}{% else %}&infin;{% endif %} كم
+            <span class="bilingual" data-lang-ar="المسافة:" data-lang-en="Mileage:">المسافة:</span> {% if request.GET.mileage_min %}{{ request.GET.mileage_min }}{% else %}0{% endif %} - {% if request.GET.mileage_max %}{{ request.GET.mileage_max }}{% else %}&infin;{% endif %} <span class="bilingual" data-lang-ar="كم" data-lang-en="km">كم</span>
             <svg class="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </a>
         {% endif %}
@@ -112,7 +116,7 @@
 
         <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full hover:bg-gray-200 transition">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            مسح الكل
+            <span class="bilingual" data-lang-ar="مسح الكل" data-lang-en="Clear All">مسح الكل</span>
         </a>
     </div>
     {% endif %}</div>
@@ -123,7 +127,7 @@
             <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
             </svg>
-            <span>ابحث سيارة مخصصة</span>
+            <span class="bilingual" data-lang-ar="ابحث سيارة مخصصة" data-lang-en="Find a specific car">ابحث سيارة مخصصة</span>
             {% if sel_manufacturers or sel_models or sel_badges or request.GET.year_from or request.GET.year_to or sel_fuels or sel_transmissions or sel_colors or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
             <span class="inline-flex items-center justify-center w-5 h-5 bg-brand text-white text-[10px] font-bold rounded-full">!</span>
             {% endif %}
@@ -147,7 +151,7 @@
                     <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
-                    <span class="font-bold text-gray-900 text-base">فلاتر البحث</span>
+                    <span class="font-bold text-gray-900 text-base"><span class="bilingual" data-lang-ar="فلاتر البحث" data-lang-en="Search Filters">فلاتر البحث</span></span>
                 </div>
                 <button type="button" onclick="closeMobileFilters()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +166,7 @@
                 <!-- Search -->
                 <div class="relative">
                     <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." autocomplete="off"
+                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." data-placeholder-ar="ابحث بالاسم..." data-placeholder-en="Search by name..." autocomplete="off"
                            class="w-full pr-8 pl-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
                 </div>
 
@@ -176,17 +180,17 @@
                     <div class="col-span-2">
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الشركة المصنعة</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer">الشركة المصنعة</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
-                            <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'drawer-mfr-grid')" autocomplete="off"
+                            <input type="text" placeholder="ابحث..." data-placeholder-ar="ابحث..." data-placeholder-en="Search..." oninput="filterGridSearch(this,'drawer-mfr-grid')" autocomplete="off"
                                    class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1" id="drawer-mfr-grid">
                                 {% for m in manufacturers %}{% if m.car_count %}
                                 <button type="button" class="drawer-mfr-btn flex items-center justify-center gap-1 w-full px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600"
                                         data-id="{{ m.id }}" data-sel="{% if m.id|stringformat:'d' in sel_manufacturers %}1{% else %}0{% endif %}">
                                     {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
-                                    <span class="truncate">{{ m.name_ar|default:m.name }}</span>
+                                    <span class="bilingual truncate" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
                                     <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
                                 </button>
                                 {% endif %}{% endfor %}
@@ -197,15 +201,15 @@
                     <div class="col-span-2" id="drawer-models-section" {% if not models %}style="display:none"{% endif %}>
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الموديل</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الموديل" data-lang-en="Model">الموديل</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
-                            <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'drawer-mdl-grid')" autocomplete="off"
+                            <input type="text" placeholder="ابحث..." data-placeholder-ar="ابحث..." data-placeholder-en="Search..." oninput="filterGridSearch(this,'drawer-mdl-grid')" autocomplete="off"
                                    class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1" id="drawer-mdl-grid">
                                 {% for m in models %}{% if m.car_count %}
                                 <button type="button" class="drawer-mdl-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600"
-                                        data-id="{{ m.id }}" data-sel="{% if m.id|stringformat:'d' in sel_models %}1{% else %}0{% endif %}">{{ m|translate_model }} <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span></button>
+                                        data-id="{{ m.id }}" data-sel="{% if m.id|stringformat:'d' in sel_models %}1{% else %}0{% endif %}"><span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name|pretty_en }}">{{ m|translate_model }}</span> <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span></button>
                                 {% endif %}{% endfor %}
                             </div>
                         </details>
@@ -215,10 +219,10 @@
                     <div class="col-span-2" id="drawer-badges-section" {% if not badges %}style="display:none"{% endif %}>
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">تفاصيل الموديل</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="تفاصيل الموديل" data-lang-en="Trim">تفاصيل الموديل</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
-                            <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'drawer-bdg-grid')" autocomplete="off"
+                            <input type="text" placeholder="ابحث..." data-placeholder-ar="ابحث..." data-placeholder-en="Search..." oninput="filterGridSearch(this,'drawer-bdg-grid')" autocomplete="off"
                                    class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1" id="drawer-bdg-grid">
                                 {% for b in badges %}{% if b.car_count %}
@@ -230,16 +234,16 @@
                     </div>
                     {% endif %}
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">من سنة</label>
+                        <label class="bilingual block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" data-lang-ar="من سنة" data-lang-en="Year from">من سنة</label>
                         <select name="year_from" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">من</option>
+                            <option value="" class="bilingual" data-lang-ar="من" data-lang-en="From">من</option>
                             {% for y in years %}<option value="{{ y }}" {% if selected_year_from == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>{% endfor %}
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">إلى سنة</label>
+                        <label class="bilingual block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" data-lang-ar="إلى سنة" data-lang-en="Year to">إلى سنة</label>
                         <select name="year_to" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none">
-                            <option value="">إلى</option>
+                            <option value="" class="bilingual" data-lang-ar="إلى" data-lang-en="To">إلى</option>
                             {% for y in years %}<option value="{{ y }}" {% if selected_year_to == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>{% endfor %}
                         </select>
                     </div>
@@ -247,12 +251,12 @@
                     <div class="col-span-2">
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الوقود</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الوقود" data-lang-en="Fuel">الوقود</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for f in fuels %}
-                                <label class="cursor-pointer select-none"><input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ f|translate_fuel }}</span></label>
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span></label>
                                 {% endfor %}
                             </div>
                         </details>
@@ -261,12 +265,12 @@
                     <div class="col-span-2">
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">ناقل الحركة</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="ناقل الحركة" data-lang-en="Transmission">ناقل الحركة</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for t in transmissions %}
-                                <label class="cursor-pointer select-none"><input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ t|translate_transmission }}</span></label>
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span></label>
                                 {% endfor %}
                             </div>
                         </details>
@@ -275,12 +279,12 @@
                     <div class="col-span-2">
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">اللون</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اللون" data-lang-en="Color">اللون</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for c in colors %}
-                                <label class="cursor-pointer select-none"><input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ c.name|translate_color }}</span></label>
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span></label>
                                 {% endfor %}
                             </div>
                         </details>
@@ -289,7 +293,7 @@
                     <div class="col-span-2">
                         <details class="filter-group" {% if sel_seat_counts %}open{% endif %}>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">عدد المقاعد</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="عدد المقاعد" data-lang-en="Seat count">عدد المقاعد</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1">
@@ -304,11 +308,11 @@
                     <div class="col-span-2">
                         <details class="filter-group" {% if sel_seat_colors %}open{% endif %}>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">لون المقاعد</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="لون المقاعد" data-lang-en="Seat color">لون المقاعد</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
-                                {% for sc in seat_colors %}<label class="cursor-pointer select-none"><input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ sc.name }}</span></label>{% endfor %}
+                                {% for sc in seat_colors %}<label class="cursor-pointer select-none"><input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span></label>{% endfor %}
                             </div>
                         </details>
                     </div>
@@ -318,7 +322,7 @@
                     <div class="col-span-2">
                         <details class="filter-group" open>
                             <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">اسم المزاد</span>
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اسم المزاد" data-lang-en="Auction name">اسم المزاد</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
@@ -330,17 +334,17 @@
                 </div>
                 <!-- Range inputs -->
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="السعر من ₩" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                    <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="السعر إلى ₩" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                    <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="المسافة من كم" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                    <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="المسافة إلى كم" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="السعر من ₩" data-placeholder-ar="السعر من ₩" data-placeholder-en="Price from ₩" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="السعر إلى ₩" data-placeholder-ar="السعر إلى ₩" data-placeholder-en="Price to ₩" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="المسافة من كم" data-placeholder-ar="المسافة من كم" data-placeholder-en="Mileage from km" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                    <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="المسافة إلى كم" data-placeholder-ar="المسافة إلى كم" data-placeholder-en="Mileage to km" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
                 </div>
             </div>
 
             <!-- Drawer footer: actions -->
             <div class="shrink-0 bg-white border-t border-gray-100 px-5 py-4 flex gap-3 pb-safe">
-                <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="flex-1 py-3 text-center text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition">مسح الكل</a>
-                <button type="submit" class="flex-1 py-3 bg-brand text-white font-bold rounded-xl transition text-sm">تطبيق الفلاتر</button>
+                <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="bilingual flex-1 py-3 text-center text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition" data-lang-ar="مسح الكل" data-lang-en="Clear All">مسح الكل</a>
+                <button type="submit" class="bilingual flex-1 py-3 bg-brand text-white font-bold rounded-xl transition text-sm" data-lang-ar="تطبيق الفلاتر" data-lang-en="Apply Filters">تطبيق الفلاتر</button>
             </div>
         </form>
     </div>
@@ -349,7 +353,7 @@
     <div id="mobile-chips" class="lg:hidden">{% with yfr=request.GET.year_from yto=request.GET.year_to pmn=request.GET.price_min pmx=request.GET.price_max mmn=request.GET.mileage_min mmx=request.GET.mileage_max %}
     {% if sel_manufacturers or sel_models or sel_badges or yfr or yto or sel_fuels or sel_transmissions or sel_colors or sel_seat_counts or sel_seat_colors or sel_auction_names or pmn or pmx or mmn or mmx %}
     <div class="flex flex-wrap items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-        <span class="text-xs text-gray-400 font-medium shrink-0">الفلاتر:</span>
+        <span class="bilingual text-xs text-gray-400 font-medium shrink-0" data-lang-ar="الفلاتر:" data-lang-en="Filters:">الفلاتر:</span>
         {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
         <button type="button" onclick="removeFilterValue('manufacturer','{{ m.id }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-brand/10 text-brand text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ m.name_ar|default:m.name }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
         {% endif %}{% endfor %}
@@ -360,14 +364,14 @@
         <button type="button" onclick="removeFilterValue('badge','{{ b.id }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-600 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ b.name }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>
         {% endif %}{% endfor %}
         {% if yfr or yto %}<a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_from' and k != 'year_to' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{% if yfr %}{{ yfr }}{% endif %}{% if yfr and yto %} – {% endif %}{% if yto %}{{ yto }}{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>{% endif %}
-{% for f in sel_fuels %}<button type="button" onclick="removeFilterValue('fuel','{{ f }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ f|translate_fuel }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
-        {% for t in sel_transmissions %}<button type="button" onclick="removeFilterValue('transmission','{{ t }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ t|translate_transmission }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
-        {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}<button type="button" onclick="removeFilterValue('color','{{ c.id }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ c.name|translate_color }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endif %}{% endfor %}
-        {% for s in sel_seat_counts %}<button type="button" onclick="removeFilterValue('seat_count','{{ s }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ s }} مقاعد<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+{% for f in sel_fuels %}<button type="button" onclick="removeFilterValue('fuel','{{ f }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group"><span class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span><svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        {% for t in sel_transmissions %}<button type="button" onclick="removeFilterValue('transmission','{{ t }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group"><span class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span><svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
+        {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}<button type="button" onclick="removeFilterValue('color','{{ c.id }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group"><span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span><svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endif %}{% endfor %}
+        {% for s in sel_seat_counts %}<button type="button" onclick="removeFilterValue('seat_count','{{ s }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ s }} <span class="bilingual" data-lang-ar="مقاعد" data-lang-en="seats">مقاعد</span><svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
 {% if pmn or pmx %}<a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_min' and k != 'price_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">₩ {% if pmn %}{{ pmn }}{% endif %}{% if pmn and pmx %} – {% endif %}{% if pmx %}{{ pmx }}{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>{% endif %}
-        {% if mmn or mmx %}<a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_min' and k != 'mileage_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">كم {% if mmn %}{{ mmn }}{% endif %}{% if mmn and mmx %} – {% endif %}{% if mmx %}{{ mmx }}{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>{% endif %}
+        {% if mmn or mmx %}<a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_min' and k != 'mileage_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group"><span class="bilingual" data-lang-ar="كم" data-lang-en="km">كم</span> {% if mmn %}{{ mmn }}{% endif %}{% if mmn and mmx %} – {% endif %}{% if mmx %}{{ mmx }}{% endif %}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></a>{% endif %}
         {% for an in sel_auction_names %}<button type="button" onclick="removeFilterValue('auction_name','{{ an }}')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-red-50 hover:text-red-600 transition group">{{ an }}<svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg></button>{% endfor %}
-        <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full hover:bg-red-100 transition">مسح الكل</a>
+        <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="bilingual inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full hover:bg-red-100 transition" data-lang-ar="مسح الكل" data-lang-en="Clear All">مسح الكل</a>
     </div>
     {% endif %}
     {% endwith %}</div>
@@ -469,9 +473,9 @@
             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80 rounded-t-2xl">
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-                    <span class="font-bold text-sm text-gray-800">فلاتر البحث</span>
+                    <span class="font-bold text-sm text-gray-800"><span class="bilingual" data-lang-ar="فلاتر البحث" data-lang-en="Search Filters">فلاتر البحث</span></span>
                 </div>
-                <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="text-xs text-red-500 hover:text-red-700 font-medium transition">مسح الكل</a>
+                <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="bilingual text-xs text-red-500 hover:text-red-700 font-medium transition" data-lang-ar="مسح الكل" data-lang-en="Clear All">مسح الكل</a>
             </div>
 
             <div class="p-4 space-y-5">
@@ -479,24 +483,24 @@
                 <!-- Search -->
                 <div class="relative">
                     <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." autocomplete="off"
+                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." data-placeholder-ar="ابحث بالاسم..." data-placeholder-en="Search by name..." autocomplete="off"
                            class="w-full pr-8 pl-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
                 </div>
 
                 <!-- Manufacturer -->
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الشركة المصنعة</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer">الشركة المصنعة</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'sidebar-mfr-buttons')" autocomplete="off"
+                    <input type="text" placeholder="ابحث..." data-placeholder-ar="ابحث..." data-placeholder-en="Search..." oninput="filterGridSearch(this,'sidebar-mfr-buttons')" autocomplete="off"
                            class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                     <div id="sidebar-mfr-buttons" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pb-1">
                         {% for m in manufacturers %}{% if m.car_count %}
                         <button type="button" onclick="toggleFilterValue('manufacturer', '{{ m.id }}')"
                            class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if m.id|stringformat:'d' in sel_manufacturers %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
                             {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
-                            <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name }}">{{ m.name_ar|default:m.name }}</span>
+                            <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
                             <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
                         </button>
                         {% endif %}{% endfor %}
@@ -507,16 +511,16 @@
                 <div id="sidebar-models-section">{% if models %}
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الموديل</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الموديل" data-lang-en="Model">الموديل</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'sidebar-mdl-grid')" autocomplete="off"
+                    <input type="text" placeholder="ابحث..." data-placeholder-ar="ابحث..." data-placeholder-en="Search..." oninput="filterGridSearch(this,'sidebar-mdl-grid')" autocomplete="off"
                            class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                     <div id="sidebar-mdl-grid" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for m in models %}{% if m.car_count %}
                         <button type="button" onclick="toggleFilterValue('model', '{{ m.id }}')"
                            class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if m.id|stringformat:'d' in sel_models %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
-                            <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name }}">{{ m|translate_model }}</span>
+                            <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m.name|pretty_en }}">{{ m|translate_model }}</span>
                             <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
                         </button>
                         {% endif %}{% endfor %}
@@ -528,10 +532,10 @@
                 <div id="sidebar-badges-section">{% if request.GET.car_type != 'auction' %}{% if badges %}
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">تفاصيل الموديل</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="تفاصيل الموديل" data-lang-en="Trim">تفاصيل الموديل</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <input type="text" placeholder="ابحث..." oninput="filterGridSearch(this,'sidebar-bdg-grid')" autocomplete="off"
+                    <input type="text" placeholder="ابحث..." data-placeholder-ar="ابحث..." data-placeholder-en="Search..." oninput="filterGridSearch(this,'sidebar-bdg-grid')" autocomplete="off"
                            class="w-full mb-1.5 px-2 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-1 ring-brand outline-none transition">
                     <div id="sidebar-bdg-grid" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for b in badges %}{% if b.car_count %}
@@ -551,16 +555,16 @@
 
                 <!-- Year Range -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">سنة الصنع</label>
+                    <label class="bilingual block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" data-lang-ar="سنة الصنع" data-lang-en="Year">سنة الصنع</label>
                     <div class="flex gap-2">
                         <select name="year_from" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="submitSidebarForm(this.form)">
-                            <option value="">من</option>
+                            <option value="" class="bilingual" data-lang-ar="من" data-lang-en="From">من</option>
                             {% for y in years %}
                             <option value="{{ y }}" {% if selected_year_from == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
                             {% endfor %}
                         </select>
                         <select name="year_to" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition appearance-none" onchange="submitSidebarForm(this.form)">
-                            <option value="">إلى</option>
+                            <option value="" class="bilingual" data-lang-ar="إلى" data-lang-en="To">إلى</option>
                             {% for y in years %}
                             <option value="{{ y }}" {% if selected_year_to == y|stringformat:"d" %}selected{% endif %}>{{ y }}</option>
                             {% endfor %}
@@ -572,14 +576,14 @@
                 <!-- Fuel checkboxes -->
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">الوقود</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الوقود" data-lang-en="Fuel">الوقود</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for f in fuels %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ f|translate_fuel }}</span>
+                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -588,14 +592,14 @@
                 <!-- Transmission checkboxes -->
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">ناقل الحركة</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="ناقل الحركة" data-lang-en="Transmission">ناقل الحركة</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for t in transmissions %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ t|translate_transmission }}</span>
+                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -604,14 +608,14 @@
                 <!-- Color checkboxes -->
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">اللون</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اللون" data-lang-en="Color">اللون</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for c in colors %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ c.name|translate_color }}</span>
+                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -620,7 +624,7 @@
                 <!-- Seat Count checkboxes -->
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">عدد المقاعد</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="عدد المقاعد" data-lang-en="Seat count">عدد المقاعد</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1">
@@ -637,14 +641,14 @@
                 <!-- Seat Color checkboxes -->
                 <details class="filter-group border-t border-gray-100 pt-3" {% if sel_seat_colors %}open{% endif %}>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">لون المقاعد</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="لون المقاعد" data-lang-en="Seat color">لون المقاعد</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for sc in seat_colors %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
-                            <span class="block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5">{{ sc.name|translate_color }}</span>
+                            <span class="bilingual block w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand hover:bg-brand/5" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span>
                         </label>
                         {% endfor %}
                     </div>
@@ -655,7 +659,7 @@
                 <!-- Auction Name checkboxes -->
                 <details class="filter-group border-t border-gray-100 pt-3" open>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">اسم المزاد</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اسم المزاد" data-lang-en="Auction name">اسم المزاد</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
@@ -671,19 +675,19 @@
 
                 <!-- Price Range -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">السعر (₩)</label>
+                    <label class="bilingual block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" data-lang-ar="السعر (₩)" data-lang-en="Price (₩)">السعر (₩)</label>
                     <div class="flex gap-2">
-                        <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="من" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                        <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="إلى" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="من" data-placeholder-ar="من" data-placeholder-en="From" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-en="To" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
                     </div>
                 </div>
 
                 <!-- Mileage Range -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">المسافة (كم)</label>
+                    <label class="bilingual block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5" data-lang-ar="المسافة (كم)" data-lang-en="Mileage (km)">المسافة (كم)</label>
                     <div class="flex gap-2">
-                        <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="من" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                        <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="إلى" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" name="mileage_min" value="{{ request.GET.mileage_min }}" placeholder="من" data-placeholder-ar="من" data-placeholder-en="From" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-en="To" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
                     </div>
                 </div>
             </div>

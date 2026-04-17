@@ -952,7 +952,7 @@
                 {% endif %}
             </div>
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
-                &copy; {% now "Y" %} {{ site_name|default:"سيارات" }}. جميع الحقوق محفوظة.
+                &copy; {% now "Y" %} {{ site_name|default:"سيارات" }}. <span class="bilingual" data-lang-ar="جميع الحقوق محفوظة." data-lang-en="All rights reserved.">جميع الحقوق محفوظة.</span>
             </div>
         </div>
     </footer>
@@ -1086,6 +1086,49 @@
             'الرسالة':         'Message',
             'إرسال':           'Send',
             'للاستفسارات والطلبات': 'For inquiries and orders',
+
+            // Nav / menu additions
+            'المنشورات':       'Posts',
+            'قائمة الأمنيات':  'Wishlist',
+            'المفضلة':         'Favorites',
+            'حسابي':           'My Account',
+            'واتساب':          'WhatsApp',
+
+            // Tooltip / hint card copy
+            'جديد!':           'New!',
+            'تغيير العملة واللغة': 'Change currency & language',
+            'احفظ السيارات المفضلة لديك': 'Save your favorite cars',
+            'إعدادات الحساب والملف الشخصي': 'Account & profile settings',
+
+            // Footer
+            'روابط سريعة':     'Quick Links',
+            'طلب سيارة':       'Request a Car',
+
+            // Settings / auth modals
+            'الإعدادات':       'Settings',
+            'اللغة':           'Language',
+            'العربية':         'Arabic',
+            'العملة':          'Currency',
+            'إغلاق':           'Close',
+            'إلغاء':           'Cancel',
+            'مرحباً!':          'Welcome!',
+            'سجل دخولك أو أنشئ حساباً جديداً للاستفادة من جميع الميزات': 'Sign in or create an account to unlock all features',
+            'إنشاء حساب جديد': 'Create a New Account',
+
+            // Social tooltips
+            'انستقرام':        'Instagram',
+            'تويتر':           'Twitter',
+            'فيسبوك':          'Facebook',
+            'تيك توك':         'TikTok',
+            'سناب شات':        'Snapchat',
+            'يوتيوب':          'YouTube',
+            'تيليجرام':        'Telegram',
+
+            // Auction countdown
+            'انتهى المزاد':    'Auction ended',
+
+            // Eid
+            'عيد مبارك':       'Eid Mubarak',
         };
 
         function t(text) {
@@ -1124,9 +1167,29 @@
                 if (val) el.textContent = val;
             });
 
+            // Swap input placeholders (data-placeholder-ar / data-placeholder-en)
+            document.querySelectorAll('[data-placeholder-' + lang + ']').forEach(el => {
+                const val = el.getAttribute('data-placeholder-' + lang);
+                if (val !== null) el.setAttribute('placeholder', val);
+            });
+
+            // Notify dynamic JS-rendered content that the language changed.
+            document.dispatchEvent(new CustomEvent('langchange', { detail: { lang } }));
+
+            // Swap title/aria-label attributes (data-title-ar / data-aria-label-ar)
+            document.querySelectorAll('[data-title-' + lang + ']').forEach(el => {
+                const val = el.getAttribute('data-title-' + lang);
+                if (val !== null) el.setAttribute('title', val);
+            });
+            document.querySelectorAll('[data-aria-label-' + lang + ']').forEach(el => {
+                const val = el.getAttribute('data-aria-label-' + lang);
+                if (val !== null) el.setAttribute('aria-label', val);
+            });
+
+            const TEXT_NODE_SELECTOR = 'a, span, button, h1, h2, h3, h4, h5, h6, p, div, label, li, option, td, th';
             // Translate all text nodes via dictionary
             if (lang === 'en') {
-                document.querySelectorAll('a, span, button, h1, h2, h3, p, div, label, li, option, td, th').forEach(el => {
+                document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(el => {
                     if (el.classList.contains('bilingual')) return;
                     el.childNodes.forEach(node => {
                         if (node.nodeType === 3) {
@@ -1139,19 +1202,31 @@
                         }
                     });
                 });
+                // Also translate title / aria-label attributes using the dict.
+                document.querySelectorAll('[title]').forEach(el => {
+                    const orig = el._origTitle || el.getAttribute('title').trim();
+                    if (!el._origTitle && orig) el._origTitle = orig;
+                    if (orig) {
+                        const translated = t(orig);
+                        if (translated !== orig) el.setAttribute('title', translated);
+                    }
+                });
             } else {
                 // Restore Arabic originals
                 document.querySelectorAll('.bilingual').forEach(el => {
                     const val = el.getAttribute('data-lang-ar');
                     if (val) el.textContent = val;
                 });
-                document.querySelectorAll('a, span, button, h1, h2, h3, p, div, label, li, option, td, th').forEach(el => {
+                document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(el => {
                     if (el.classList.contains('bilingual')) return;
                     el.childNodes.forEach(node => {
                         if (node.nodeType === 3 && node._origText) {
                             node.textContent = node.textContent.replace(node.textContent.trim(), node._origText);
                         }
                     });
+                });
+                document.querySelectorAll('[title]').forEach(el => {
+                    if (el._origTitle) el.setAttribute('title', el._origTitle);
                 });
             }
         }
@@ -1525,9 +1600,14 @@ setTimeout(() => showTooltip('account-tooltip'), 6500);
         function pad(n) { return String(n).padStart(2, '0'); }
 
         function renderCountdown(el, targetMs) {
+            const curLang = localStorage.getItem('site_lang') || 'ar';
+            const U = curLang === 'en'
+                ? { d: 'd', h: 'h', m: 'm', s: 's', ended: 'Auction ended' }
+                : { d: 'ي', h: 'س', m: 'د', s: 'ث', ended: 'انتهى المزاد' };
+
             const diff = targetMs - Date.now();
             if (diff <= 0) {
-                el.innerHTML = '<span class="auction-ended-badge">انتهى المزاد</span>';
+                el.innerHTML = `<span class="auction-ended-badge">${U.ended}</span>`;
                 el.classList.add('auction-ended');
                 return false; // stop ticking
             }
@@ -1548,18 +1628,18 @@ setTimeout(() => showTooltip('account-tooltip'), 6500);
 
             if (days > 0) {
                 el.innerHTML =
-                    `<span class="cd-unit">${days}<small>ي</small></span>` +
+                    `<span class="cd-unit">${days}<small>${U.d}</small></span>` +
                     `<span class="cd-sep">:</span>` +
-                    `<span class="cd-unit">${pad(hours)}<small>س</small></span>` +
+                    `<span class="cd-unit">${pad(hours)}<small>${U.h}</small></span>` +
                     `<span class="cd-sep">:</span>` +
-                    `<span class="cd-unit">${pad(mins)}<small>د</small></span>`;
+                    `<span class="cd-unit">${pad(mins)}<small>${U.m}</small></span>`;
             } else {
                 el.innerHTML =
-                    `<span class="cd-unit">${pad(hours)}<small>س</small></span>` +
+                    `<span class="cd-unit">${pad(hours)}<small>${U.h}</small></span>` +
                     `<span class="cd-sep">:</span>` +
-                    `<span class="cd-unit">${pad(mins)}<small>د</small></span>` +
+                    `<span class="cd-unit">${pad(mins)}<small>${U.m}</small></span>` +
                     `<span class="cd-sep">:</span>` +
-                    `<span class="cd-unit">${pad(secs)}<small>ث</small></span>`;
+                    `<span class="cd-unit">${pad(secs)}<small>${U.s}</small></span>`;
             }
             return true;
         }

@@ -1,6 +1,6 @@
 from django import template
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
-from cars.utils import OPTION_TRANSLATIONS, address_ar, car_models_dict, fuel_types_dict, transmission_types_dict, colors_dict
+from cars.utils import OPTION_TRANSLATIONS, address_ar, address_en, body_types_dict, car_models_dict, fuel_types_dict, transmission_types_dict, colors_dict
 
 register = template.Library()
 
@@ -57,6 +57,74 @@ def https_url(url):
     return _force_https(url)
 
 
+# Words that must stay fully uppercase in English display.
+_UPPERCASE_TOKENS = {
+    'bmw', 'gmc', 'mg', 'vw', 'suv', 'cvt', 'cng', 'lpg', 'vin', 'rv', 'ev',
+    'hud', 'epb', 'abs', 'usa', 'uk', 'uae', 'ksa', 'kia', 'id',
+}
+
+# Manual overrides for tokens that aren't just "uppercase".
+_TOKEN_OVERRIDES = {
+    'mclaren': 'McLaren',
+    'rolls-royce': 'Rolls-Royce',
+    'mercedes-benz': 'Mercedes-Benz',
+    'mercedesbenz': 'Mercedes-Benz',
+    'alfa': 'Alfa',
+    'romeo': 'Romeo',
+    'landrover': 'Land Rover',
+    'rangerover': 'Range Rover',
+    'astonmartin': 'Aston Martin',
+    'iphone': 'iPhone',
+}
+
+
+def _prettify_token(tok):
+    low = tok.lower()
+    if low in _TOKEN_OVERRIDES:
+        return _TOKEN_OVERRIDES[low]
+    if low in _UPPERCASE_TOKENS:
+        return low.upper()
+    # Title-case but preserve hyphens / slashes / parentheses
+    return low[:1].upper() + low[1:] if low else low
+
+
+@register.filter(name='pretty_en')
+def pretty_en(value):
+    """
+    Proper-case an English string that may have been stored lowercase in the DB.
+    Preserves acronyms like BMW, SUV, CVT, VIN, etc.
+
+    "hyundai" → "Hyundai"
+    "bmw"     → "BMW"
+    "sonata"  → "Sonata"
+    "pearl two-tone" → "Pearl Two-Tone"
+    """
+    if not value or not isinstance(value, str):
+        return value
+    # Split on whitespace first, keep internal punctuation.
+    out = []
+    for word in value.split(' '):
+        # Handle hyphen / slash / plus / parentheses splits inside a word.
+        parts = []
+        buf = ''
+        seps = []
+        for ch in word:
+            if ch in '-/+()':
+                parts.append(buf)
+                seps.append(ch)
+                buf = ''
+            else:
+                buf += ch
+        parts.append(buf)
+        pretty_parts = [_prettify_token(p) if p else p for p in parts]
+        # Reassemble
+        assembled = pretty_parts[0]
+        for i, sep in enumerate(seps):
+            assembled += sep + pretty_parts[i + 1]
+        out.append(assembled)
+    return ' '.join(out)
+
+
 
 
 @register.filter
@@ -68,6 +136,11 @@ def translate_option(value):
     return OPTION_TRANSLATIONS.get('ar', {}).get(value, value)
 
 
+@register.filter
+def translate_option_en(value):
+    return OPTION_TRANSLATIONS.get('en', {}).get(value, value)
+
+
 
 @register.filter
 def ar_address(value):
@@ -75,6 +148,14 @@ def ar_address(value):
         return value
     split_value = value.split()[0]
     return address_ar.get(split_value, value)
+
+
+@register.filter
+def en_address(value):
+    if not value:
+        return value
+    split_value = value.split()[0]
+    return address_en.get(split_value, value)
 
 
 
@@ -127,3 +208,18 @@ def translate_transmission(value):
 def translate_color(value):
     value = value.lower() if isinstance(value, str) else value
     return colors_dict.get(value, value)
+
+
+@register.filter(name='translate_body')
+def translate_body(value):
+    """
+    Return the Arabic translation of a body type (from DB, lowercase).
+    Falls back to the prettified English name if no translation exists.
+    """
+    name = getattr(value, 'name', value)
+    name_ar = getattr(value, 'name_ar', None)
+    if name_ar:
+        return name_ar
+    if not isinstance(name, str):
+        return name
+    return body_types_dict.get(name.lower(), pretty_en(name))

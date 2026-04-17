@@ -187,13 +187,13 @@ def home(request):
 
     # Cache the full rendered HTML keyed by schema (no CSRF tokens are embedded
     # in the home template, so this is safe and bypasses Vary: Cookie).
-    html_cache_key = f"home_html:{schema}"
+    html_cache_key = f"home_html_v6:{schema}"
     cached_html = cache.get(html_cache_key)
     if cached_html:
         return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
 
     # Cache the expensive DB context by tenant schema.
-    ctx_cache_key = f"home_ctx:{schema}"
+    ctx_cache_key = f"home_ctx_v6:{schema}"
     context = cache.get(ctx_cache_key)
 
     if context is None:
@@ -1211,7 +1211,7 @@ def api_models_by_manufacturer(request):
     car_type = request.GET.get('car_type')
     lang = request.GET.get('lang') or getattr(request, 'LANGUAGE_CODE', '') or ''
     schema = getattr(connection, 'schema_name', 'public')
-    _cache_key = f"api_models_v2:{schema}:{manufacturer_id}:ct:{car_type or 'all'}:lang:{lang or 'en'}"
+    _cache_key = f"api_models_v4:{schema}:{manufacturer_id}:ct:{car_type or 'all'}:lang:{lang or 'en'}"
     cached = cache.get(_cache_key)
     if cached is not None:
         return JsonResponse(cached, safe=False)
@@ -1289,16 +1289,23 @@ def api_models_by_manufacturer(request):
 
         qs = qs.order_by('-car_count')
 
+        from cars.templatetags.custom_filters import pretty_en
         models = []
         for m in qs:
+            name_ar = getattr(m, 'name_ar', None) or car_models_dict.get(m.name.lower()) or m.name
+            name_en = pretty_en(m.name)
             if lang and lang.startswith('ar'):
-                # Prefer an explicit name_ar attribute (may have been attached earlier),
-                # otherwise consult the repo mapping `car_models_dict` and finally fall back to m.name.
-                name_ar = getattr(m, 'name_ar', None) or car_models_dict.get(m.name.lower())
-                display_name = name_ar if name_ar else m.name
+                display_name = name_ar
             else:
-                display_name = m.name
-            models.append({'id': m.id, 'name': display_name, 'car_count': getattr(m, 'car_count', 0), 'manufacturer_logo': manufacturer_logo})
+                display_name = name_en
+            models.append({
+                'id': m.id,
+                'name': display_name,
+                'name_ar': name_ar,
+                'name_en': name_en,
+                'car_count': getattr(m, 'car_count', 0),
+                'manufacturer_logo': manufacturer_logo,
+            })
 
         cache.set(_cache_key, models, 60 * 30)  # 30 minutes
         return JsonResponse(models, safe=False)
@@ -1457,16 +1464,16 @@ def car_detail(request, slug):
         'pending_ratings': pending_ratings,
         'similar_cars': _get_similar_cars(car),
         'inspection_legend': [
-            ('P',   'وكالة'),
-            ('A',   'وكالة'),
-            ('Q',   'وكالة'),
-            ('W',   'رش'),
-            ('X',   'تغيير بدون رش'),
-            ('XXP', 'مغير ومرشوش'),
-            ('PP',  'رش تجميلي'),
-            ('WR',  'رش'),
-            ('R',   'وكالة'),
-            ('WU',  'رش'),
+            ('P',   'وكالة',        'Dealer'),
+            ('A',   'وكالة',        'Dealer'),
+            ('Q',   'وكالة',        'Dealer'),
+            ('W',   'رش',           'Paint'),
+            ('X',   'تغيير بدون رش', 'Replaced (no paint)'),
+            ('XXP', 'مغير ومرشوش',   'Replaced & Painted'),
+            ('PP',  'رش تجميلي',    'Cosmetic paint'),
+            ('WR',  'رش',           'Paint'),
+            ('R',   'وكالة',        'Dealer'),
+            ('WU',  'رش',           'Paint'),
         ],
         'insp': insp,
     }

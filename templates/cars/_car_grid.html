@@ -29,18 +29,18 @@
                 </div>
                 {% if car.auction_name %}<div class="absolute top-2 left-2"><span style="background:rgba(139,92,246,.85); backdrop-filter:blur(4px);" class="text-white text-[9px] font-bold px-2 py-0.5 rounded-full">{{ car.auction_name }}</span></div>{% endif %}
                 <div class="absolute bottom-2 right-2"><span style="background:rgba(0,0,0,.7); backdrop-filter:blur(4px);" class="text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md">{{ car.year }}</span></div>
-                {% if car.category.name != 'auction' %}<div class="absolute bottom-2 left-2"><span style="background:rgba(0,0,0,.7); backdrop-filter:blur(4px);" class="text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md">{{ car.address|ar_address }}</span></div>{% endif %}
+                {% if car.category.name != 'auction' %}<div class="absolute bottom-2 left-2"><span style="background:rgba(0,0,0,.7); backdrop-filter:blur(4px);" class="bilingual text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md" data-lang-ar="{{ car.address|ar_address }}" data-lang-en="{{ car.address|en_address }}">{{ car.address|ar_address }}</span></div>{% endif %}
             </div>
             <div class="p-2.5 sm:p-4">
                 <div class="font-bold mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px] transition-colors" style="color:rgba(255,255,255,.9);">
-                    <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
-                    <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
+                    <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                    <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="text-[10px] sm:text-xs mb-2 sm:mb-3 truncate" style="color:rgba(255,255,255,.35);">{{ car.badge.name }}</div>
                 <div class="flex items-center justify-between gap-1 text-[10px] sm:text-xs mb-2 sm:mb-3" style="color:rgba(255,255,255,.45);">
                     {% if car.mileage %}<span class="text-brand">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                    {% if car.transmission %}<span class="bilingual text-brand" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
-                    {% if car.fuel %}<span class="bilingual text-brand" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                    {% if car.transmission %}<span class="bilingual text-brand" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                    {% if car.fuel %}<span class="bilingual text-brand" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
                 </div>
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mb-2 text-[10px] sm:text-xs" style="color:rgba(167,139,250,.8);">
@@ -76,15 +76,15 @@
             <div class="px-0.5">
                 <div class="flex items-start justify-between gap-1 mb-0.5">
                     <div class="font-bold text-gray-900 text-xs sm:text-sm truncate group-hover:text-brand transition-colors leading-tight">
-                        <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
-                        <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
+                        <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                        <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                     </div>
                     <span class="text-brand font-extrabold text-xs sm:text-sm shrink-0" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}₩</span>
                 </div>
                 <div class="text-[10px] sm:text-xs text-gray-400 truncate">
                     {{ car.year }} · {{ car.badge.name }}
                     {% if car.mileage %} · <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                    {% if car.transmission %} · <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                    {% if car.transmission %} · <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
                 </div>
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mt-1 text-[10px] text-purple-500">
@@ -123,15 +123,15 @@
             {# bottom info overlay #}
             <div class="absolute bottom-0 inset-x-0 p-3 sm:p-4 z-10">
                 <div class="font-extrabold text-white text-sm sm:text-base leading-tight truncate mb-1 drop-shadow">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
-                    <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="flex items-center justify-between gap-1 flex-wrap">
                     <div class="flex items-center gap-1.5 text-[10px] sm:text-xs" style="color:rgba(255,255,255,.65);">
                         <span>{{ car.year }}</span>
                         {% if car.mileage %}<span>·</span><span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                        {% if car.transmission %}<span>·</span><span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
-                        {% if car.fuel %}<span>·</span><span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                        {% if car.transmission %}<span>·</span><span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                        {% if car.fuel %}<span>·</span><span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
                     </div>
                     <span class="text-brand font-extrabold text-sm sm:text-base drop-shadow" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}<span class="text-[9px] font-medium"> ₩</span></span>
                 </div>
@@ -179,7 +179,7 @@
                 </button>
                 {# bottom-right: address #}
                 {% if car.category.name != 'auction' and car.address %}
-                <div style="position:absolute;bottom:.6rem;right:.6rem;font-size:.6rem;letter-spacing:.06em;color:rgba(255,255,255,.4);">{{ car.address|ar_address }}</div>
+                <div class="bilingual" style="position:absolute;bottom:.6rem;right:.6rem;font-size:.6rem;letter-spacing:.06em;color:rgba(255,255,255,.4);" data-lang-ar="{{ car.address|ar_address }}" data-lang-en="{{ car.address|en_address }}">{{ car.address|ar_address }}</div>
                 {% endif %}
             </div>
 
@@ -191,9 +191,9 @@
 
                 {# make · model #}
                 <div class="truncate" style="font-size:.75rem;sm:font-size:.85rem;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.88);text-shadow:0 0 12px rgba(59,130,246,.3);margin-bottom:.2rem;">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     <span style="color:rgba(255,255,255,.35);margin:0 .2rem;">·</span>
-                    <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div style="font-size:.6rem;letter-spacing:.08em;color:rgba(255,255,255,.28);margin-bottom:.5rem;">{{ car.badge.name }}</div>
 
@@ -208,13 +208,13 @@
                     {% if car.transmission %}
                     <span style="display:flex;align-items:center;gap:.25rem;font-size:.6rem;letter-spacing:.06em;color:rgba(255,255,255,.45);">
                         <span style="width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 5px #10b981;flex-shrink:0;"></span>
-                        <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission }}">{{ car.transmission|translate_transmission }}</span>
+                        <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     </span>
                     {% endif %}
                     {% if car.fuel %}
                     <span style="display:flex;align-items:center;gap:.25rem;font-size:.6rem;letter-spacing:.06em;color:rgba(255,255,255,.45);">
                         <span style="width:5px;height:5px;border-radius:50%;background:#f59e0b;box-shadow:0 0 5px #f59e0b;flex-shrink:0;"></span>
-                        <span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel }}">{{ car.fuel|translate_fuel }}</span>
+                        <span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>
                     </span>
                     {% endif %}
                 </div>
@@ -265,18 +265,18 @@
                 </div>
                 {% if car.auction_name %}<div class="absolute top-2 sm:top-3 left-2 sm:left-3"><span class="bg-purple-600/90 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm">{{ car.auction_name }}</span></div>{% endif %}
                 <div class="absolute bottom-2 sm:bottom-3 right-1"><span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span></div>
-                {% if car.category.name != 'auction' %}<div class="absolute bottom-2 sm:bottom-3 left-1"><span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.address|ar_address }}</span></div>{% endif %}
+                {% if car.category.name != 'auction' %}<div class="absolute bottom-2 sm:bottom-3 left-1"><span class="bilingual bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg" data-lang-ar="{{ car.address|ar_address }}" data-lang-en="{{ car.address|en_address }}">{{ car.address|ar_address }}</span></div>{% endif %}
             </div>
             <div class="p-2.5 sm:p-4">
                 <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px] group-hover:text-brand transition-colors">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
-                    <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name }}">{{ car.model|translate_model }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-400 mb-2 sm:mb-3 truncate"><p>{{ car.badge.name }}</p></div>
                 <div class="flex items-center justify-between gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">
                     {% if car.mileage %}<span class="text-brand p-2 rounded-md border-brand">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                    {% if car.transmission %}<span class="text-brand" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
-                    {% if car.fuel %}<span class="text-brand p-2 rounded-md" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                    {% if car.transmission %}<span class="bilingual text-brand" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                    {% if car.fuel %}<span class="bilingual text-brand p-2 rounded-md" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
                 </div>
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 sm:gap-1.5 mb-2 sm:mb-3">

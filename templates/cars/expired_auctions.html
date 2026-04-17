@@ -71,7 +71,7 @@
                 </div>
             </div>
             <div class="p-2.5 sm:p-4">
-                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px]"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> {{ car.model.name }}</h3>
+                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-[15px]"><span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span></h3>
                 <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-400 mb-2 sm:mb-3 truncate">
                     <span>{{ car.badge.name }}</span>
                     {% if car.mileage %}
