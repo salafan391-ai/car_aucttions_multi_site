@@ -177,6 +177,32 @@ def whatsapp_car_message(context, car, site_name=""):
 
 
 @register.simple_tag(takes_context=True)
+def whatsapp_site_inquiry_message(context, site_name=""):
+    """
+    Generic WhatsApp message used outside a specific car page (footer,
+    bottom nav, hero CTA). Includes the site name and the current page URL
+    so the website owner knows the inquiry came from their site and is
+    about cars.
+    """
+    parts = ["مرحباً، أود الاستفسار عن السيارات المعروضة لديكم."]
+
+    if site_name:
+        parts.append(f"الموقع: {site_name}")
+
+    try:
+        request = context.get('request')
+        if request is not None:
+            parts.append(f"الرابط: {request.build_absolute_uri()}")
+    except Exception:
+        pass
+
+    parts.append("")
+    parts.append("شكراً لكم.")
+
+    return quote("\n".join(parts), safe='')
+
+
+@register.simple_tag(takes_context=True)
 def whatsapp_site_car_message(context, car, site_name=""):
     """
     Generate a WhatsApp message for a SiteCar inquiry.

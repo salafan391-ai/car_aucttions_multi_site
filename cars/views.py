@@ -185,15 +185,18 @@ def home(request):
     now = timezone.now()
     schema = getattr(connection, 'schema_name', 'public')
 
-    # Cache the full rendered HTML keyed by schema (no CSRF tokens are embedded
-    # in the home template, so this is safe and bypasses Vary: Cookie).
-    html_cache_key = f"home_html_v6:{schema}"
-    cached_html = cache.get(html_cache_key)
-    if cached_html:
-        return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
+    # Cache the full rendered HTML — anonymous visitors only. The rendered HTML
+    # embeds auth-specific bits (nav links, account menu, username initial), so
+    # sharing it across sessions would leak state between users.
+    is_anon = not request.user.is_authenticated
+    html_cache_key = f"home_html_v9:{schema}"
+    if is_anon:
+        cached_html = cache.get(html_cache_key)
+        if cached_html:
+            return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
 
     # Cache the expensive DB context by tenant schema.
-    ctx_cache_key = f"home_ctx_v6:{schema}"
+    ctx_cache_key = f"home_ctx_v9:{schema}"
     context = cache.get(ctx_cache_key)
 
     if context is None:
@@ -317,7 +320,8 @@ def home(request):
         cache.set(ctx_cache_key, context, 60 * 15)  # 15 minutes
 
     response = render(request, 'cars/home.html', context)
-    cache.set(html_cache_key, response.content, 60 * 30)  # 30 minutes
+    if is_anon:
+        cache.set(html_cache_key, response.content, 60 * 30)  # 30 minutes
     return response
 
 
