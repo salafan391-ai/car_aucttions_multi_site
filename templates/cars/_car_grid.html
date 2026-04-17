@@ -36,11 +36,15 @@
                     <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
-                <div class="text-[10px] sm:text-xs mb-2 sm:mb-3 truncate" style="color:rgba(255,255,255,.35);">{{ car.badge.name }}</div>
-                <div class="flex items-center justify-between gap-1 text-[10px] sm:text-xs mb-2 sm:mb-3" style="color:rgba(255,255,255,.45);">
-                    {% if car.mileage %}<span class="text-brand">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                    {% if car.transmission %}<span class="bilingual text-brand" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
-                    {% if car.fuel %}<span class="bilingual text-brand" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                {% if car.badge.name %}
+                <div class="mb-2 sm:mb-3">
+                    <span class="inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full max-w-full truncate" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.1);">{{ car.badge.name }}</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center flex-wrap gap-1.5 mb-2 sm:mb-3">
+                    {% if car.mileage %}<span class="inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" style="background:rgba(var(--color-primary-rgb,59,130,246),.18);color:var(--color-primary,#3b82f6);border:1px solid rgba(var(--color-primary-rgb,59,130,246),.3);"><span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km">{{ car.mileage|intcomma }} كم</span></span>{% endif %}
+                    {% if car.transmission %}<span class="bilingual inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" style="background:rgba(96,165,250,.18);color:#93c5fd;border:1px solid rgba(96,165,250,.3);" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                    {% if car.fuel %}<span class="bilingual inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" style="background:rgba(251,191,36,.18);color:#fcd34d;border:1px solid rgba(251,191,36,.3);" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
                 </div>
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mb-2 text-[10px] sm:text-xs" style="color:rgba(167,139,250,.8);">
@@ -272,11 +276,15 @@
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
-                <div class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-400 mb-2 sm:mb-3 truncate"><p>{{ car.badge.name }}</p></div>
-                <div class="flex items-center justify-between gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3">
-                    {% if car.mileage %}<span class="text-brand p-2 rounded-md border-brand">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                    {% if car.transmission %}<span class="bilingual text-brand" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
-                    {% if car.fuel %}<span class="bilingual text-brand p-2 rounded-md" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                {% if car.badge.name %}
+                <div class="mb-2 sm:mb-3">
+                    <span class="inline-flex items-center bg-gray-100 text-gray-700 border border-gray-200 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full max-w-full truncate">{{ car.badge.name }}</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center flex-wrap gap-1.5 mb-2 sm:mb-3">
+                    {% if car.mileage %}<span class="inline-flex items-center bg-brand/10 text-brand border border-brand/20 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full"><span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km">{{ car.mileage|intcomma }} كم</span></span>{% endif %}
+                    {% if car.transmission %}<span class="bilingual inline-flex items-center bg-blue-50 text-blue-700 border border-blue-100 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                    {% if car.fuel %}<span class="bilingual inline-flex items-center bg-amber-50 text-amber-700 border border-amber-100 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
                 </div>
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 sm:gap-1.5 mb-2 sm:mb-3">
