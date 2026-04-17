@@ -602,6 +602,9 @@ document.body.addEventListener('htmx:afterSwap', function(e) {
   // Re-apply current language to any bilingual elements brought in by the swap
   var lang = localStorage.getItem('site_lang') || 'ar';
   if (typeof applyLang === 'function') applyLang(lang);
+  // Re-apply current currency so swapped-in [data-price-krw] elements get converted
+  var currency = localStorage.getItem('site_currency') || 'SAR';
+  if (typeof applyCurrency === 'function') applyCurrency(currency);
 });
 
 // Filter buttons in a grid by search query (Arabic-aware)
