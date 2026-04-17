@@ -118,6 +118,11 @@
                 <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 <span class="font-light text-white/60 text-xl sm:text-2xl mr-1">{{ car.year }}</span>
             </h1>
+            {% if car.badge.name %}
+            <div class="mb-3">
+                <span class="inline-flex items-center text-xs sm:text-sm font-semibold px-3 py-1 rounded-full max-w-full truncate" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(4px);">{{ car.badge.name }}</span>
+            </div>
+            {% endif %}
             <div class="flex flex-wrap items-center gap-3">
                 <span class="text-white font-extrabold text-2xl" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-sm text-white/60">₩</span></span>
                 {% if car.status == 'sold' %}
@@ -273,6 +278,12 @@
                         <div class="text-xs text-gray-500 mb-1">الموديل</div>
                         <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</div>
                     </div>
+                    {% if car.badge.name %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="تفاصيل الموديل" data-lang-en="Trim">تفاصيل الموديل</div>
+                        <div class="font-bold text-sm">{{ car.badge.name }}</div>
+                    </div>
+                    {% endif %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1">سنة الصنع</div>
                         <div class="font-bold text-sm">{{ car.year }}</div>
