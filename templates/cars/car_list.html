@@ -598,6 +598,7 @@
 document.body.addEventListener('htmx:afterSwap', function(e) {
   if (e.detail.target && e.detail.target.id === 'htmx-main') {
     document.body.style.overflow = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   // Re-apply current language to any bilingual elements brought in by the swap
   var lang = localStorage.getItem('site_lang') || 'ar';

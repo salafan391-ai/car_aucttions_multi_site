@@ -316,16 +316,21 @@
 
     <!-- ═══════════════ PAGINATION ═══════════════ -->
     {% if page_obj.has_other_pages %}
-    <nav id="pagination" class="flex justify-center mt-12">
+    <nav id="pagination" class="flex justify-center mt-12"
+         hx-target="#htmx-main" hx-swap="innerHTML" hx-push-url="true" hx-indicator="#htmx-main">
         <div class="flex items-center gap-1.5">
             {% if page_obj.has_previous %}
-            <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition">
+            <a href="?{{ query_string }}&page={{ page_obj.previous_page_number }}"
+               hx-get="?{{ query_string }}&page={{ page_obj.previous_page_number }}"
+               class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
             {% endif %}
 
             {% if page_obj.number > 3 %}
-            <a href="?{{ query_string }}&page=1" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition">1</a>
+            <a href="?{{ query_string }}&page=1"
+               hx-get="?{{ query_string }}&page=1"
+               class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition">1</a>
             {% if page_obj.number > 4 %}
             <span class="w-10 h-10 flex items-center justify-center text-gray-400 text-sm">...</span>
             {% endif %}
@@ -336,7 +341,9 @@
                     {% if page_obj.number == num %}
                     <span class="w-10 h-10 flex items-center justify-center bg-brand text-white rounded-xl text-sm font-bold shadow-sm">{{ num }}</span>
                     {% else %}
-                    <a href="?{{ query_string }}&page={{ num }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition font-medium">{{ num }}</a>
+                    <a href="?{{ query_string }}&page={{ num }}"
+                       hx-get="?{{ query_string }}&page={{ num }}"
+                       class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition font-medium">{{ num }}</a>
                     {% endif %}
                 {% endif %}
             {% endfor %}
@@ -345,11 +352,15 @@
             {% if page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
             <span class="w-10 h-10 flex items-center justify-center text-gray-400 text-sm">...</span>
             {% endif %}
-            <a href="?{{ query_string }}&page={{ page_obj.paginator.num_pages }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition">{{ page_obj.paginator.num_pages }}</a>
+            <a href="?{{ query_string }}&page={{ page_obj.paginator.num_pages }}"
+               hx-get="?{{ query_string }}&page={{ page_obj.paginator.num_pages }}"
+               class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition">{{ page_obj.paginator.num_pages }}</a>
             {% endif %}
 
             {% if page_obj.has_next %}
-            <a href="?{{ query_string }}&page={{ page_obj.next_page_number }}" class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition">
+            <a href="?{{ query_string }}&page={{ page_obj.next_page_number }}"
+               hx-get="?{{ query_string }}&page={{ page_obj.next_page_number }}"
+               class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             </a>
             {% endif %}
