@@ -173,8 +173,42 @@
             background-color: #1e293b !important;
         }
 
-        /* ── Light theme (default — no overrides needed) ── */
+        /* ── Light theme (default) ── */
         [data-theme="light"] {}
+        /* Navbar on light theme: white background, primary-colored text */
+        [data-theme="light"] nav#main-nav {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] nav#main-nav a:not(.bg-brand):not(.text-white),
+        [data-theme="light"] nav#main-nav span.font-medium,
+        [data-theme="light"] nav#main-nav button:not(.bg-brand):not(.bg-red-500):not(.bg-brand\/10):not(.bg-gray-50) {
+            color: var(--color-primary) !important;
+        }
+        [data-theme="light"] nav#main-nav a:not(.bg-brand):not(.text-white):hover {
+            color: color-mix(in srgb, var(--color-primary) 75%, black) !important;
+        }
+        [data-theme="light"] nav#main-nav .text-gray-600 { color: #4b5563 !important; }
+        [data-theme="light"] nav#main-nav .text-gray-500 { color: #6b7280 !important; }
+        [data-theme="light"] nav#main-nav .text-gray-400 { color: #9ca3af !important; }
+        [data-theme="light"] nav#main-nav .border-gray-200 { border-color: #e5e7eb !important; }
+        [data-theme="light"] nav#main-nav .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, white) !important; }
+        [data-theme="light"] nav#main-nav .text-brand { color: var(--color-primary) !important; }
+        [data-theme="light"] nav#main-nav .bg-gray-100 { background-color: #f3f4f6 !important; }
+        [data-theme="light"] nav#main-nav .hover\:bg-gray-100:hover { background-color: #f3f4f6 !important; }
+        [data-theme="light"] nav#main-nav .hover\:bg-gray-50:hover { background-color: #f9fafb !important; }
+        [data-theme="light"] nav#main-nav #mobile-menu-btn svg { color: var(--color-primary) !important; }
+        [data-theme="light"] nav#main-nav.nav-scrolled {
+            background-color: rgba(255,255,255,0.95) !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+        }
+        /* Mobile menu on light theme */
+        [data-theme="light"] #mobile-menu a,
+        [data-theme="light"] #mobile-menu button,
+        [data-theme="light"] #mobile-menu span { color: var(--color-primary) !important; }
+        [data-theme="light"] #mobile-menu a:hover { background-color: #f3f4f6 !important; }
+        [data-theme="light"] #mobile-menu .border-t { border-color: #e5e7eb !important; }
+        [data-theme="light"] #mobile-menu .bg-gray-100 { background-color: #f3f4f6 !important; }
 
         /* ── Smooth image loading: shimmer + fade-in ── */
         .img-loading {
