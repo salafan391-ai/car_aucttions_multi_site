@@ -311,7 +311,7 @@
         }
         nav#main-nav a,
         nav#main-nav span.font-medium,
-        nav#main-nav button:not(.bg-brand):not(.bg-red-500):not(.bg-brand\/10) {
+        nav#main-nav button:not(.bg-brand):not(.bg-red-500):not(.bg-brand\/10):not(.bg-gray-50) {
             color: rgba(255,255,255,0.85);
         }
         nav#main-nav a:hover { color: #fff !important; }
@@ -324,6 +324,15 @@
         nav#main-nav .bg-gray-100 { background-color: rgba(255,255,255,0.15) !important; }
         nav#main-nav .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.2) !important; }
         nav#main-nav .hover\:bg-gray-50:hover { background-color: rgba(255,255,255,0.12) !important; }
+        /* Dropdown menus (lang/currency) keep their own light styling */
+        nav#main-nav #lang-menu,
+        nav#main-nav #currency-menu { background-color: #fff !important; }
+        nav#main-nav #lang-menu button,
+        nav#main-nav #currency-menu button,
+        nav#main-nav #lang-menu button span,
+        nav#main-nav #currency-menu button span { color: #1f2937 !important; }
+        nav#main-nav #lang-menu button:hover,
+        nav#main-nav #currency-menu button:hover { background-color: rgba(37,99,235,0.06) !important; }
         nav#main-nav #mobile-menu-btn svg { color: rgba(255,255,255,0.85); }
         #mobile-menu a, #mobile-menu button, #mobile-menu span { color: rgba(255,255,255,0.85) !important; }
         #mobile-menu a:hover { color: #fff !important; background-color: rgba(255,255,255,0.12) !important; }
