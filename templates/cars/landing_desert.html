@@ -189,7 +189,7 @@
 
     <div class="tagline-wrap">
       <p class="tagline">
-        <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}></span>
+        <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %} {% if site_tagline_en %}data-en="{{ site_tagline_en }}"{% endif %}></span>
         <span class="typewriter-2"></span>
       </p>
     </div>
@@ -251,8 +251,8 @@
       if(!el1||!el2)return;
       const SPEED=46,ERASE=22,HOLD=2500;
       const rounds=[
-        {line1:el1.dataset.ar||'أفضل منصة لشراء السيارات وتصديرها',line2:el1.dataset.ar?'':'إلى المملكة العربية السعودية وجميع أنحاء العالم',dir:'rtl'},
-        {line1:'The Best Platform to Buy & Export Cars',line2:el1.dataset.ar?'':'To Saudi Arabia and Around the World',dir:'ltr'},
+        {line1:el1.dataset.ar||'أفضل منصة لشراء السيارات وتصديرها',line2:(el1.dataset.ar||el1.dataset.en)?'':'إلى المملكة العربية السعودية وجميع أنحاء العالم',dir:'rtl'},
+        {line1:el1.dataset.en||'The Best Platform to Buy & Export Cars',line2:(el1.dataset.ar||el1.dataset.en)?'':'To Saudi Arabia and Around the World',dir:'ltr'},
       ];
       function typeLine(el,text,dir,speed,cb){const chars=[...text];el.setAttribute('dir',dir);el.textContent='';const cur=document.createElement('span');cur.className='tw-cursor';el.appendChild(cur);let i=0;(function tick(){if(i<chars.length){cur.previousSibling?cur.previousSibling.nodeValue=chars.slice(0,i+1).join(''):el.insertBefore(document.createTextNode(chars.slice(0,i+1).join('')),cur);i++;setTimeout(tick,speed);}else{cur.remove();if(cb)cb();}})();}
       function eraseLine(el,cb){const chars=[...el.textContent];let i=chars.length;(function tick(){if(i>=0){el.textContent=chars.slice(0,i).join('');i--;setTimeout(tick,ERASE);}else if(cb)cb();})();}

@@ -71,6 +71,8 @@ def tenant_branding(request):
         "footer_text_en": tenant.footer_text_en or "",
         "car_display": getattr(tenant, 'car_display', 'classic') or 'classic',
         # Business info
+        "site_tagline": tenant.tagline or "",
+        "site_tagline_en": tenant.tagline_en or "",
         "site_about": tenant.about or "",
         "site_about_en": tenant.about_en or "",
         "site_phone": tenant.phone or "",

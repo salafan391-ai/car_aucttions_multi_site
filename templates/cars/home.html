@@ -382,11 +382,9 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             {% endif %}
             </div>
             <p class="text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto drop-shadow-lg bg-gradient-to-r from-white/80 via-brand-light/60 to-white/80 bg-clip-text text-transparent" style="text-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.3), 0 2px 4px rgba(0,0,0,0.2);">
-                {% if site_tagline %}
-                  <span id="hero-typewriter" data-ar="{{ site_tagline }}"></span>
-                {% else %}
-                  <span id="hero-typewriter"></span>
-                {% endif %}
+                <span id="hero-typewriter"
+                      {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}
+                      {% if site_tagline_en %}data-en="{{ site_tagline_en }}"{% endif %}></span>
             </p>
         </div>
         

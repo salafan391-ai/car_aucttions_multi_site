@@ -69,6 +69,8 @@ class Tenant(TenantMixin):
     footer_text_en = models.CharField(max_length=255, blank=True, null=True, verbose_name="Footer Text (EN)")
 
     # Business Information
+    tagline = models.CharField(max_length=255, blank=True, null=True, verbose_name="شعار الموقع (عربي)", help_text="النص الذي يظهر بتأثير الكتابة في الصفحة الرئيسية وصفحة الهبوط")
+    tagline_en = models.CharField(max_length=255, blank=True, null=True, verbose_name="Site Tagline (EN)", help_text="Shown with typewriter effect on the home and landing pages")
     about = models.TextField(blank=True, null=True, verbose_name="نبذة عنا (عربي)")
     about_en = models.TextField(blank=True, null=True, verbose_name="About Us (EN)")
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم الهاتف")

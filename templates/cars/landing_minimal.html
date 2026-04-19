@@ -299,7 +299,7 @@
       {% endif %}
 
       <p class="logo-tagline">
-        <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %}></span>
+        <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %} {% if site_tagline_en %}data-en="{{ site_tagline_en }}"{% endif %}></span>
         <span class="typewriter-2"></span>
       </p>
     </div>
@@ -415,8 +415,8 @@
       const SPEED = 45; const ERASE = 22; const HOLD = 2400;
 
       const rounds = [
-        { line1: el1.dataset.ar || 'أفضل منصة لشراء السيارات وتصديرها', line2: el1.dataset.ar ? '' : 'إلى المملكة العربية السعودية وجميع أنحاء العالم', dir: 'rtl' },
-        { line1: 'The Best Platform to Buy & Export Cars', line2: el1.dataset.ar ? '' : 'To Saudi Arabia and Around the World', dir: 'ltr' },
+        { line1: el1.dataset.ar || 'أفضل منصة لشراء السيارات وتصديرها', line2: (el1.dataset.ar || el1.dataset.en) ? '' : 'إلى المملكة العربية السعودية وجميع أنحاء العالم', dir: 'rtl' },
+        { line1: el1.dataset.en || 'The Best Platform to Buy & Export Cars', line2: (el1.dataset.ar || el1.dataset.en) ? '' : 'To Saudi Arabia and Around the World', dir: 'ltr' },
       ];
 
       function typeLine(el, text, dir, speed, onDone) {

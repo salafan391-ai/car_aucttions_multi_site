@@ -49,6 +49,8 @@ def site_settings(request):
         tenant.footer_text_en = request.POST.get('footer_text_en', tenant.footer_text_en)
         
         # Update business info
+        tenant.tagline = request.POST.get('tagline', tenant.tagline)
+        tenant.tagline_en = request.POST.get('tagline_en', tenant.tagline_en)
         tenant.about = request.POST.get('about', tenant.about)
         tenant.about_en = request.POST.get('about_en', tenant.about_en)
         tenant.phone = request.POST.get('phone', tenant.phone)
