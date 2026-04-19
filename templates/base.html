@@ -680,6 +680,12 @@
                     <a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition">طلباتي</a>
                     <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition">الرسائل</a>
                     {% if user.is_staff %}
+                    <a href="{% url 'site_car_add' %}"
+                       class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-brand/30 ring-1 ring-white/10 transition active:scale-95"
+                       style="box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--color-primary) 45%, transparent);">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car">أضف سيارة</span>
+                    </a>
                     <a href="{% url 'site_dashboard' %}" class="inline-flex items-center gap-1.5 bg-brand/10 text-brand text-sm font-bold px-4 py-2 rounded-xl hover:bg-brand/20 transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
                         لوحة التحكم
@@ -780,6 +786,10 @@
                     <a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلباتي</a>
                     <a href="{% url 'inbox' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرسائل</a>
                     {% if user.is_staff %}
+                    <a href="{% url 'site_car_add' %}" class="flex items-center gap-2 py-2 px-3 rounded-lg bg-brand text-white font-bold">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        <span>أضف سيارة</span>
+                    </a>
                     <a href="{% url 'site_dashboard' %}" class="block py-2 px-3 rounded-lg hover:bg-brand/10 text-brand font-medium">لوحة التحكم</a>
                     {% endif %}
                     <div class="flex items-center gap-2 py-2 px-3">
