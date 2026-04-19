@@ -2,6 +2,21 @@ from django import template
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
 from cars.utils import OPTION_TRANSLATIONS, address_ar, address_en, body_types_dict, car_models_dict, fuel_types_dict, transmission_types_dict, colors_dict
 
+# Generated dicts for extra languages (es, ru, …). Absent if the
+# `translate_enums` command hasn't been run yet — gracefully fall back.
+try:
+    from cars import utils_i18n as _i18n
+except ImportError:
+    _i18n = None
+
+
+def _extra_dict(enum_name: str, lang: str):
+    """Look up a lang-specific enum dict (e.g. colors_dict_es) on utils_i18n."""
+    if _i18n is None:
+        return {}
+    return getattr(_i18n, f"{enum_name}_{lang}", {})
+
+
 register = template.Library()
 
 
@@ -128,12 +143,15 @@ def pretty_en(value):
 
 
 @register.filter
-def translate_option(value):
+def translate_option(value, lang='ar'):
     """
-    Translates a given option value using the OPTION_TRANSLATIONS mapping.
-    If the value is not found in the mapping, it returns the original value.
+    Translates a given option value using the OPTION_TRANSLATIONS mapping
+    (or, for non-ar/en, the auto-generated options_dict_<lang>).
+    Falls back to the original value if not found.
     """
-    return OPTION_TRANSLATIONS.get('ar', {}).get(value, value)
+    if lang in ('ar', 'en'):
+        return OPTION_TRANSLATIONS.get(lang, {}).get(value, value)
+    return _extra_dict('options_dict', lang).get(value, value)
 
 
 @register.filter
@@ -158,68 +176,117 @@ def en_address(value):
     return address_en.get(split_value, value)
 
 
+@register.filter
+def translate_address(value, lang='ar'):
+    """
+    Look up a Korean address prefix in the address_<lang> table.
+    Falls back to English, then to the raw value. Used for es/ru; ar/en still
+    use the dedicated `ar_address` / `en_address` filters for back-compat.
+    """
+    if not value:
+        return value
+    split_value = value.split()[0]
+    if lang == 'ar':
+        return address_ar.get(split_value, value)
+    if lang == 'en':
+        return address_en.get(split_value, value)
+    extra = _extra_dict('address', lang)
+    return extra.get(split_value) or address_en.get(split_value, value)
 
+
+
+
+
+def _translate_enum(value, lang, ar_dict, dict_stem, missing_fallback=None):
+    """Shared lookup for enum filters that optionally accept a target lang."""
+    if not isinstance(value, str):
+        return value
+    key = value.lower()
+    if lang == 'ar':
+        return ar_dict.get(key, key)
+    if lang == 'en':
+        return pretty_en(value)
+    translated = _extra_dict(dict_stem, lang).get(key)
+    if translated:
+        return translated
+    # Fall back to English pretty-cased if the extra dict is missing.
+    return missing_fallback(value) if missing_fallback else pretty_en(value)
 
 
 @register.filter(name='translate_model')
-def translate_model(value):
+def translate_model(value, lang='ar'):
     """
     Accepts either a CarModel instance or a plain string model name.
-    Returns the Arabic translation from car_models_dict, or the English
-    name if no translation exists.
+    Returns the Arabic translation from car_models_dict by default; for
+    other target languages falls back to the generated car_models_dict_<lang>
+    or the English name.
     """
     # If value is a model object, extract the name string first.
-    name = getattr(value, 'name', value)
-    # Prefer an explicit name_ar attribute set dynamically in views.
-    name_ar = getattr(value, 'name_ar', None)
-    if name_ar:
-        return name_ar
-    return car_models_dict.get(name.lower(), name.lower())
-
-
-@register.filter(name='translate_manufacturer')
-def translate_manufacturer(value):
-    """
-    Accepts either a Manufacturer instance or a plain string name.
-    Returns name_ar if set, otherwise the lowercased English name.
-    """
-    name = getattr(value, 'name', value)
-    name_ar = getattr(value, 'name_ar', None)
-    if name_ar:
-        return name_ar
-    return name.lower() if isinstance(name, str) else name
-
-
-@register.filter(name='translate_fuel')
-def translate_fuel(value):
-    value = value.lower() if isinstance(value, str) else value
-    return fuel_types_dict.get(value, value)
-
-
-
-@register.filter(name='translate_transmission')
-def translate_transmission(value):
-    value = value.lower() if isinstance(value, str) else value
-    return transmission_types_dict.get(value, value)
-
-
-
-@register.filter(name='translate_color')
-def translate_color(value):
-    value = value.lower() if isinstance(value, str) else value
-    return colors_dict.get(value, value)
-
-
-@register.filter(name='translate_body')
-def translate_body(value):
-    """
-    Return the Arabic translation of a body type (from DB, lowercase).
-    Falls back to the prettified English name if no translation exists.
-    """
-    name = getattr(value, 'name', value)
-    name_ar = getattr(value, 'name_ar', None)
-    if name_ar:
+    obj = value
+    name = getattr(obj, 'name', obj)
+    # Prefer an explicit name_ar attribute set dynamically in views (for ar only).
+    name_ar = getattr(obj, 'name_ar', None)
+    if lang == 'ar' and name_ar:
         return name_ar
     if not isinstance(name, str):
         return name
-    return body_types_dict.get(name.lower(), pretty_en(name))
+    if lang == 'ar':
+        return car_models_dict.get(name.lower(), name.lower())
+    if lang == 'en':
+        return pretty_en(name)
+    return _extra_dict('car_models_dict', lang).get(name.lower()) or pretty_en(name)
+
+
+@register.filter(name='translate_manufacturer')
+def translate_manufacturer(value, lang='ar'):
+    """
+    Accepts either a Manufacturer instance or a plain string name.
+    Returns name_ar for Arabic, pretty_en for everything else (brand names
+    generally don't localize).
+    """
+    obj = value
+    name = getattr(obj, 'name', obj)
+    name_ar = getattr(obj, 'name_ar', None)
+    if lang == 'ar' and name_ar:
+        return name_ar
+    if not isinstance(name, str):
+        return name
+    if lang == 'ar':
+        return name.lower()
+    return pretty_en(name)
+
+
+@register.filter(name='translate_fuel')
+def translate_fuel(value, lang='ar'):
+    return _translate_enum(value, lang, fuel_types_dict, 'fuel_types_dict')
+
+
+@register.filter(name='translate_transmission')
+def translate_transmission(value, lang='ar'):
+    return _translate_enum(value, lang, transmission_types_dict, 'transmission_types_dict')
+
+
+@register.filter(name='translate_color')
+def translate_color(value, lang='ar'):
+    return _translate_enum(value, lang, colors_dict, 'colors_dict')
+
+
+@register.filter(name='translate_body')
+def translate_body(value, lang='ar'):
+    """
+    Return a body type translated for the given language. Body type values
+    are stored as lowercase English (e.g. 'suv', 'sedan') or, for ar, may
+    come in via an object with a name_ar attribute.
+    """
+    obj = value
+    name = getattr(obj, 'name', obj)
+    name_ar = getattr(obj, 'name_ar', None)
+    if lang == 'ar' and name_ar:
+        return name_ar
+    if not isinstance(name, str):
+        return name
+    if lang == 'ar':
+        return body_types_dict.get(name.lower(), pretty_en(name))
+    if lang == 'en':
+        return pretty_en(name)
+    return _extra_dict('body_types_dict', lang).get(name.lower()) or pretty_en(name)

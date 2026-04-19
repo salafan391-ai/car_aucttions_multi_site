@@ -684,7 +684,7 @@
                        class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-brand/30 ring-1 ring-white/10 transition active:scale-95"
                        style="box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--color-primary) 45%, transparent);">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                        <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car">أضف سيارة</span>
+                        <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-ru="Добавить машину" data-lang-es="Añadir un coche" data-lang-en="Add Car">أضف سيارة</span>
                     </a>
                     <a href="{% url 'site_dashboard' %}" class="inline-flex items-center gap-1.5 bg-brand/10 text-brand text-sm font-bold px-4 py-2 rounded-xl hover:bg-brand/20 transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
@@ -719,6 +719,14 @@
                             </button>
                             <button data-lang-code="en" onclick="setLang('en')" class="lang-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
                                 <span class="flex items-center gap-2"><span class="text-base leading-none">🇬🇧</span> English</span>
+                                <svg class="lang-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                            <button data-lang-code="es" onclick="setLang('es')" class="lang-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                                <span class="flex items-center gap-2"><span class="text-base leading-none">🇪🇸</span> Español</span>
+                                <svg class="lang-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                            <button data-lang-code="ru" onclick="setLang('ru')" class="lang-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                                <span class="flex items-center gap-2"><span class="text-base leading-none">🇷🇺</span> Русский</span>
                                 <svg class="lang-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                             </button>
                         </div>
@@ -953,7 +961,7 @@
                 {% endif %}
             </div>
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
-                &copy; {% now "Y" %} {{ site_name|default:"سيارات" }}. <span class="bilingual" data-lang-ar="جميع الحقوق محفوظة." data-lang-en="All rights reserved.">جميع الحقوق محفوظة.</span>
+                &copy; {% now "Y" %} {{ site_name|default:"سيارات" }}. <span class="bilingual" data-lang-ar="جميع الحقوق محفوظة." data-lang-ru="Все права защищены." data-lang-es="Reservados todos los derechos." data-lang-en="All rights reserved.">جميع الحقوق محفوظة.</span>
             </div>
         </div>
     </footer>
@@ -977,163 +985,171 @@
         var LANGS = {
             ar: { flag: '🇸🇦', label: 'العربية', dir: 'rtl', font: "'Tajawal', sans-serif" },
             en: { flag: '🇬🇧', label: 'English', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+            es: { flag: '🇪🇸', label: 'Español', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+            ru: { flag: '🇷🇺', label: 'Русский', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
         };
-        var LANG_ORDER = ['ar', 'en'];
+        var LANG_ORDER = ['ar', 'en', 'es', 'ru'];
 
         var TRANSLATIONS = {
             // Navbar
-            'الرئيسية':        'Home',
-            'السيارات':        'Cars',
-            'سياراتنا':        'Our Cars',
-            'المباعة':         'Sold',
-            'طلب سيارة':       'Request Car',
-            'تواصل معنا':      'Contact Us',
-            'طلباتي':          'My Orders',
-            'الرسائل':         'Messages',
-            'لوحة التحكم':     'Dashboard',
-            'خروج':            'Logout',
-            'دخول':            'Login',
-            'حساب جديد':       'Register',
-            'تسجيل الدخول':    'Login',
-            'إنشاء حساب':      'Create Account',
-            'تسجيل الخروج':    'Logout',
-            'السيارات المباعة': 'Sold Cars',
+            'الرئيسية': { en: 'Home', es: 'Hogar', ru: 'Дом' },
+            'السيارات': { en: 'Cars', es: 'coches', ru: 'Автомобили' },
+            'سياراتنا': { en: 'Our Cars', es: 'Nuestros coches', ru: 'Наши автомобили' },
+            'المباعة': { en: 'Sold', es: 'Vendido', ru: 'Продал' },
+            'طلب سيارة': { en: 'Request Car', es: 'Solicitar coche', ru: 'Запросить автомобиль' },
+            'تواصل معنا': { en: 'Contact Us', es: 'Contáctanos', ru: 'Связаться с нами' },
+            'طلباتي': { en: 'My Orders', es: 'Mis pedidos', ru: 'Мои заказы' },
+            'الرسائل': { en: 'Messages', es: 'Mensajes', ru: 'Сообщения' },
+            'لوحة التحكم': { en: 'Dashboard', es: 'Panel', ru: 'Панель управления' },
+            'خروج': { en: 'Logout', es: 'Cerrar sesión', ru: 'Выйти' },
+            'دخول': { en: 'Login', es: 'Acceso', ru: 'Авторизоваться' },
+            'حساب جديد': { en: 'Register', es: 'Registro', ru: 'Регистрация' },
+            'تسجيل الدخول': { en: 'Login', es: 'Acceso', ru: 'Авторизоваться' },
+            'إنشاء حساب': { en: 'Create Account', es: 'Crear una cuenta', ru: 'Зарегистрироваться' },
+            'تسجيل الخروج': { en: 'Logout', es: 'Cerrar sesión', ru: 'Выйти' },
+            'السيارات المباعة': { en: 'Sold Cars', es: 'Autos vendidos', ru: 'Проданные автомобили' },
             // Home
-            'اعثر على سيارة أحلامك': 'Find Your Dream Car',
-            'تصفح آلاف السيارات المستوردة بأفضل الأسعار والجودة': 'Browse thousands of imported cars at the best prices and quality',
-            'بحث':             'Search',
-            'الشركة المصنعة':  'Manufacturer',
-            'سنة الصنع':       'Year',
-            'سيارة متاحة':     'Available Cars',
-            'شركة مصنعة':      'Manufacturers',
-            'موديل':           'Models',
-            'دعم متواصل':      '24/7 Support',
-            'أحدث السيارات':   'Latest Cars',
-            'عرض الكل':        'View All',
-            'الشركات المصنعة': 'Manufacturers',
-            'لم تجد سيارتك المطلوبة؟': "Didn't find your car?",
-            'أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر': 'Send us your request and we will find the right car at the best price',
-            'اطلب سيارة الآن': 'Request a Car Now',
+            'اعثر على سيارة أحلامك': { en: 'Find Your Dream Car', es: 'Encuentra el coche de tus sueños', ru: 'Найдите автомобиль своей мечты' },
+            'تصفح آلاف السيارات المستوردة بأفضل الأسعار والجودة': { en: 'Browse thousands of imported cars at the best prices and quality', es: 'Explore miles de autos importados a los mejores precios y con la mejor calidad.', ru: 'Просмотрите тысячи импортных автомобилей по лучшим ценам и качеству.' },
+            'بحث': { en: 'Search', es: 'Buscar', ru: 'Поиск' },
+            'الشركة المصنعة': { en: 'Manufacturer', es: 'Fabricante', ru: 'Производитель' },
+            'سنة الصنع': { en: 'Year', es: 'Año', ru: 'Год' },
+            'سيارة متاحة': { en: 'Available Cars', es: 'Autos disponibles', ru: 'Доступные автомобили' },
+            'شركة مصنعة': { en: 'Manufacturers', es: 'fabricantes', ru: 'Производители' },
+            'موديل': { en: 'Models', es: 'Modelos', ru: 'Модели' },
+            'دعم متواصل': { en: '24/7 Support', es: 'Soporte 24/7', ru: 'Круглосуточная поддержка' },
+            'أحدث السيارات': { en: 'Latest Cars', es: 'Últimos coches', ru: 'Новейшие автомобили' },
+            'عرض الكل': { en: 'View All', es: 'Ver todo', ru: 'Посмотреть все' },
+            'الشركات المصنعة': { en: 'Manufacturers', es: 'fabricantes', ru: 'Производители' },
+            'لم تجد سيارتك المطلوبة؟': { en: 'Didn\'t find your car?', es: '¿No encontraste tu coche?', ru: 'Не нашли свою машину?' },
+            'أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر': { en: 'Send us your request and we will find the right car at the best price', es: 'Envíanos tu solicitud y encontraremos el coche adecuado al mejor precio.', ru: 'Отправьте нам свой запрос, и мы найдем подходящий автомобиль по лучшей цене.' },
+            'اطلب سيارة الآن': { en: 'Request a Car Now', es: 'Solicita un coche ahora', ru: 'Закажите автомобиль прямо сейчас!' },
             // Car list
-            'الكل':            'All',
-            'سيارات':          'Cars',
-            'مزادات':          'Auctions',
-            'نتيجة':           'results',
-            'ابحث سيارة مخصصة':    'Search for a specific car',
-            'ترتيب:':          'Sort:',
-            'الأحدث':          'Newest',
-            'الأرخص':          'Cheapest',
-            'الأغلى':          'Most Expensive',
-            'الأحدث صنعاً':    'Newest Make',
-            'أقل مسافة':       'Lowest Mileage',
-            'أكثر مسافة':      'Highest Mileage',
-            'تم البيع':        'Sold',
-            'كم':              'km',
-            'لا توجد نتائج':   'No Results',
-            'جرّب تغيير الفلاتر أو البحث بكلمات مختلفة': 'Try changing filters or search with different keywords',
-            'عرض جميع السيارات': 'Show All Cars',
-            'مسح الكل':        'Clear All',
-            'مسح جميع الفلاتر': 'Clear All Filters',
-            'تطبيق الفلاتر':   'Apply Filters',
-            'متاح':            'Available',
-            'قيد الانتظار':    'Pending',
-            'منتهي':           'Expired',
+            'الكل': { en: 'All', es: 'Todo', ru: 'Все' },
+            'سيارات': { en: 'Cars', es: 'coches', ru: 'Автомобили' },
+            'مزادات': { en: 'Auctions', es: 'Subastas', ru: 'Аукционы' },
+            'نتيجة': { en: 'results', es: 'resultados', ru: 'результаты' },
+            'ابحث سيارة مخصصة': { en: 'Search for a specific car', es: 'Buscar un coche específico', ru: 'Поиск конкретного автомобиля' },
+            'ترتيب:': { en: 'Sort:', es: 'Clasificar:', ru: 'Сортировка:' },
+            'الأحدث': { en: 'Newest', es: 'El más nuevo', ru: 'Новейшие' },
+            'الأرخص': { en: 'Cheapest', es: 'El más barato', ru: 'Самый дешевый' },
+            'الأغلى': { en: 'Most Expensive', es: 'El más caro', ru: 'Самый дорогой' },
+            'الأحدث صنعاً': { en: 'Newest Make', es: 'Marca más reciente', ru: 'Новейшая марка' },
+            'أقل مسافة': { en: 'Lowest Mileage', es: 'Menor kilometraje', ru: 'Самый низкий пробег' },
+            'أكثر مسافة': { en: 'Highest Mileage', es: 'Mayor kilometraje', ru: 'Максимальный пробег' },
+            'تم البيع': { en: 'Sold', es: 'Vendido', ru: 'Продал' },
+            'كم': { en: 'km', es: 'kilómetros', ru: 'км' },
+            'لا توجد نتائج': { en: 'No Results', es: 'No hay resultados', ru: 'Результаты отсутствуют' },
+            'جرّب تغيير الفلاتر أو البحث بكلمات مختلفة': { en: 'Try changing filters or search with different keywords', es: 'Intenta cambiar los filtros o buscar con palabras clave diferentes.', ru: 'Попробуйте изменить фильтры или выполнить поиск с использованием других ключевых слов.' },
+            'عرض جميع السيارات': { en: 'Show All Cars', es: 'Mostrar todos los coches', ru: 'Показать все автомобили' },
+            'مسح الكل': { en: 'Clear All', es: 'Borrar todo', ru: 'Очистить все' },
+            'مسح جميع الفلاتر': { en: 'Clear All Filters', es: 'Borrar todos los filtros', ru: 'Очистить все фильтры' },
+            'تطبيق الفلاتر': { en: 'Apply Filters', es: 'Aplicar filtros', ru: 'Применить фильтры' },
+            'متاح': { en: 'Available', es: 'Disponible', ru: 'Доступный' },
+            'قيد الانتظار': { en: 'Pending', es: 'Pendiente', ru: 'В ожидании' },
+            'منتهي': { en: 'Expired', es: 'Venció', ru: 'Истекший' },
             // Car detail
-            'المواصفات':       'Specifications',
-            'الموديل':         'Model',
-            'المسافة المقطوعة': 'Mileage',
-            'المسافة':         'Mileage',
-            'ناقل الحركة':     'Transmission',
-            'الوقود':          'Fuel',
-            'اللون':           'Color',
-            'لون المقاعد':     'Seat Color',
-            'نوع الهيكل':      'Body Type',
-            'القوة':           'Power',
-            'نظام الدفع':      'Drive',
-            'المحرك':          'Engine',
-            'رقم الهيكل':      'VIN',
-            'الموقع':          'Location',
-            'السعر':           'Price',
-            'اطلب هذه السيارة': 'Order This Car',
-            'استفسار':         'Inquiry',
-            'رقم القطعة:':     'Lot #:',
-            'تقرير الفحص':     'Inspection Report',
-            'الوصف':           'Description',
-            'المميزات':        'Features',
-            'التقييمات':       'Reviews',
+            'المواصفات': { en: 'Specifications', es: 'Presupuesto', ru: 'Технические характеристики' },
+            'الموديل': { en: 'Model', es: 'Modelo', ru: 'Модель' },
+            'المسافة المقطوعة': { en: 'Mileage', es: 'Kilometraje', ru: 'Пробег' },
+            'المسافة': { en: 'Mileage', es: 'Kilometraje', ru: 'Пробег' },
+            'ناقل الحركة': { en: 'Transmission', es: 'Transmisión', ru: 'Передача инфекции' },
+            'الوقود': { en: 'Fuel', es: 'Combustible', ru: 'Топливо' },
+            'اللون': { en: 'Color', es: 'Color', ru: 'Цвет' },
+            'لون المقاعد': { en: 'Seat Color', es: 'Color del asiento', ru: 'Цвет сиденья' },
+            'نوع الهيكل': { en: 'Body Type', es: 'Tipo de cuerpo', ru: 'Тип телосложения' },
+            'القوة': { en: 'Power', es: 'Fuerza', ru: 'Власть' },
+            'نظام الدفع': { en: 'Drive', es: 'Conducir', ru: 'Водить машину' },
+            'المحرك': { en: 'Engine', es: 'Motor', ru: 'Двигатель' },
+            'رقم الهيكل': { en: 'VIN', es: 'VIN', ru: 'VIN' },
+            'الموقع': { en: 'Location', es: 'Ubicación', ru: 'Расположение' },
+            'السعر': { en: 'Price', es: 'Precio', ru: 'Цена' },
+            'اطلب هذه السيارة': { en: 'Order This Car', es: 'Pide este coche', ru: 'Закажите этот автомобиль' },
+            'استفسار': { en: 'Inquiry', es: 'Consulta', ru: 'Расследование' },
+            'رقم القطعة:': { en: 'Lot #:', es: 'Lote #:', ru: 'Много #:' },
+            'تقرير الفحص': { en: 'Inspection Report', es: 'Informe de inspección', ru: 'Отчет об инспекции' },
+            'الوصف': { en: 'Description', es: 'Descripción', ru: 'Описание' },
+            'المميزات': { en: 'Features', es: 'Características', ru: 'Функции' },
+            'التقييمات': { en: 'Reviews', es: 'Reseñas', ru: 'Отзывы' },
             // Footer
-            'روابط سريعة':     'Quick Links',
-            'تواصل سريع':      'Quick Contact',
-            'راسلنا واتساب':   'WhatsApp Us',
-            'جميع الحقوق محفوظة.': 'All rights reserved.',
+            'روابط سريعة': { en: 'Quick Links', es: 'Enlaces rápidos', ru: 'Быстрые ссылки' },
+            'تواصل سريع': { en: 'Quick Contact', es: 'Contacto rápido', ru: 'Быстрый контакт' },
+            'راسلنا واتساب': { en: 'WhatsApp Us', es: 'Contáctanos por WhatsApp', ru: 'Напишите нам в WhatsApp' },
+            'جميع الحقوق محفوظة.': { en: 'All rights reserved.', es: 'Reservados todos los derechos.', ru: 'Все права защищены.' },
             // Filters
-            'جميع الشركات':    'All Manufacturers',
-            'جميع الموديلات':  'All Models',
-            'جميع السنوات':    'All Years',
-            'جميع الألوان':    'All Colors',
-            'السعر من':        'Price From',
-            'السعر إلى':       'Price To',
-            'المسافة من':      'Mileage From',
-            'المسافة إلى':     'Mileage To',
-            'لا توجد سيارات حالياً': 'No cars available',
-            'مميزة':           'Featured',
+            'جميع الشركات': { en: 'All Manufacturers', es: 'Todos los fabricantes', ru: 'Все производители' },
+            'جميع الموديلات': { en: 'All Models', es: 'Todos los modelos', ru: 'Все модели' },
+            'جميع السنوات': { en: 'All Years', es: 'Todos los años', ru: 'Все годы' },
+            'جميع الألوان': { en: 'All Colors', es: 'Todos los colores', ru: 'Все цвета' },
+            'السعر من': { en: 'Price From', es: 'Precio desde', ru: 'Цена от' },
+            'السعر إلى': { en: 'Price To', es: 'Precio a', ru: 'Цена к' },
+            'المسافة من': { en: 'Mileage From', es: 'Kilometraje desde', ru: 'Пробег от' },
+            'المسافة إلى': { en: 'Mileage To', es: 'Kilometraje a', ru: 'Пробег до' },
+            'لا توجد سيارات حالياً': { en: 'No cars available', es: 'No hay coches disponibles', ru: 'Нет свободных автомобилей' },
+            'مميزة': { en: 'Featured', es: 'Presentado', ru: 'Рекомендуемые' },
             // Expired auctions
-            'مزادات منتهية':   'Expired Auctions',
-            'المزادات النشطة': 'Active Auctions',
+            'مزادات منتهية': { en: 'Expired Auctions', es: 'Subastas vencidas', ru: 'Аукционы завершились' },
+            'المزادات النشطة': { en: 'Active Auctions', es: 'Subastas activas', ru: 'Активные аукционы' },
             // Forms
-            'الاسم الكامل':    'Full Name',
-            'رقم الجوال':      'Phone Number',
-            'البريد الإلكتروني': 'Email',
-            'الرسالة':         'Message',
-            'إرسال':           'Send',
-            'للاستفسارات والطلبات': 'For inquiries and orders',
+            'الاسم الكامل': { en: 'Full Name', es: 'Nombre completo', ru: 'Полное имя' },
+            'رقم الجوال': { en: 'Phone Number', es: 'Número de teléfono', ru: 'Номер телефона' },
+            'البريد الإلكتروني': { en: 'Email', es: 'Correo electrónico', ru: 'Электронная почта' },
+            'الرسالة': { en: 'Message', es: 'Mensaje', ru: 'Сообщение' },
+            'إرسال': { en: 'Send', es: 'Enviar', ru: 'Отправлять' },
+            'للاستفسارات والطلبات': { en: 'For inquiries and orders', es: 'Para consultas y pedidos', ru: 'Для запросов и заказов' },
 
             // Nav / menu additions
-            'المنشورات':       'Posts',
-            'قائمة الأمنيات':  'Wishlist',
-            'المفضلة':         'Favorites',
-            'حسابي':           'My Account',
-            'واتساب':          'WhatsApp',
+            'المنشورات': { en: 'Posts', es: 'Publicaciones', ru: 'Сообщения' },
+            'قائمة الأمنيات': { en: 'Wishlist', es: 'Lista de deseos', ru: 'Список желаний' },
+            'المفضلة': { en: 'Favorites', es: 'Favoritos', ru: 'Избранное' },
+            'حسابي': { en: 'My Account', es: 'Mi cuenta', ru: 'Мой счет' },
+            'واتساب': { en: 'WhatsApp', es: 'WhatsApp', ru: 'WhatsApp' },
 
             // Tooltip / hint card copy
-            'جديد!':           'New!',
-            'تغيير العملة واللغة': 'Change currency & language',
-            'احفظ السيارات المفضلة لديك': 'Save your favorite cars',
-            'إعدادات الحساب والملف الشخصي': 'Account & profile settings',
+            'جديد!': { en: 'New!', es: '¡Nuevo!', ru: 'Новый!' },
+            'تغيير العملة واللغة': { en: 'Change currency & language', es: 'Cambiar moneda e idioma', ru: 'Изменить валюту и язык' },
+            'احفظ السيارات المفضلة لديك': { en: 'Save your favorite cars', es: 'Guarda tus coches favoritos', ru: 'Сохраните свои любимые автомобили' },
+            'إعدادات الحساب والملف الشخصي': { en: 'Account & profile settings', es: 'Configuración de cuenta y perfil', ru: 'Настройки учетной записи и профиля' },
 
             // Footer
-            'روابط سريعة':     'Quick Links',
-            'طلب سيارة':       'Request a Car',
+            'روابط سريعة': { en: 'Quick Links', es: 'Enlaces rápidos', ru: 'Быстрые ссылки' },
+            'طلب سيارة': { en: 'Request a Car', es: 'Solicitar un coche', ru: 'Заказать автомобиль' },
 
             // Settings / auth modals
-            'الإعدادات':       'Settings',
-            'اللغة':           'Language',
-            'العربية':         'Arabic',
-            'العملة':          'Currency',
-            'إغلاق':           'Close',
-            'إلغاء':           'Cancel',
-            'مرحباً!':          'Welcome!',
-            'سجل دخولك أو أنشئ حساباً جديداً للاستفادة من جميع الميزات': 'Sign in or create an account to unlock all features',
-            'إنشاء حساب جديد': 'Create a New Account',
+            'الإعدادات': { en: 'Settings', es: 'Ajustes', ru: 'Настройки' },
+            'اللغة': { en: 'Language', es: 'Idioma', ru: 'Язык' },
+            'العربية': { en: 'Arabic', es: 'árabe', ru: 'арабский' },
+            'العملة': { en: 'Currency', es: 'Divisa', ru: 'Валюта' },
+            'إغلاق': { en: 'Close', es: 'Cerca', ru: 'Закрывать' },
+            'إلغاء': { en: 'Cancel', es: 'Cancelar', ru: 'Отмена' },
+            'مرحباً!': { en: 'Welcome!', es: '¡Bienvenido!', ru: 'Добро пожаловать!' },
+            'سجل دخولك أو أنشئ حساباً جديداً للاستفادة من جميع الميزات': { en: 'Sign in or create an account to unlock all features', es: 'Inicia sesión o crea una cuenta para desbloquear todas las funciones.', ru: 'Войдите в систему или создайте учетную запись, чтобы разблокировать все функции.' },
+            'إنشاء حساب جديد': { en: 'Create a New Account', es: 'Crear una nueva cuenta', ru: 'Создать новую учетную запись' },
 
             // Social tooltips
-            'انستقرام':        'Instagram',
-            'تويتر':           'Twitter',
-            'فيسبوك':          'Facebook',
-            'تيك توك':         'TikTok',
-            'سناب شات':        'Snapchat',
-            'يوتيوب':          'YouTube',
-            'تيليجرام':        'Telegram',
+            'انستقرام': { en: 'Instagram', es: 'Instagram', ru: 'Инстаграм' },
+            'تويتر': { en: 'Twitter', es: 'Gorjeo', ru: 'Твиттер' },
+            'فيسبوك': { en: 'Facebook', es: 'Facebook', ru: 'Фейсбук' },
+            'تيك توك': { en: 'TikTok', es: 'TikTok', ru: 'ТикТок' },
+            'سناب شات': { en: 'Snapchat', es: 'Snapchat', ru: 'Snapchat' },
+            'يوتيوب': { en: 'YouTube', es: 'YouTube', ru: 'YouTube' },
+            'تيليجرام': { en: 'Telegram', es: 'Telegrama', ru: 'Телеграмма' },
 
             // Auction countdown
-            'انتهى المزاد':    'Auction ended',
+            'انتهى المزاد': { en: 'Auction ended', es: 'La subasta ha finalizado.', ru: 'Аукцион завершился.' },
 
             // Eid
-            'عيد مبارك':       'Eid Mubarak',
+            'عيد مبارك': { en: 'Eid Mubarak', es: 'Eid Mubarak', ru: 'Ид Мубарак' },
         };
 
-        function t(text) {
-            return TRANSLATIONS[text] || text;
+        function t(text, lang) {
+            // TRANSLATIONS entries can be either a flat `en` string (legacy) or
+            // a nested `{ en: '...', es: '...', ru: '...' }` object once the
+            // `translate_base_dict` command has rewritten them.
+            const entry = TRANSLATIONS[text];
+            if (!entry) return text;
+            if (typeof entry === 'string') return lang === 'en' ? entry : text;
+            return entry[lang] || entry.en || text;
         }
 
         function setLang(lang) {
@@ -1162,34 +1178,46 @@
             setEl('mobile-lang-flag', cfg.flag);
             setEl('mobile-lang-label', cfg.label);
 
-            // Handle bilingual elements (data-lang-ar / data-lang-en)
+            // Handle bilingual elements (data-lang-ar / data-lang-en / data-lang-es / data-lang-ru).
+            // Fallback chain: requested lang → en → ar, so partially-translated pages
+            // still read correctly.
             document.querySelectorAll('.bilingual').forEach(el => {
-                const val = el.getAttribute('data-lang-' + lang);
+                const val = el.getAttribute('data-lang-' + lang)
+                         || el.getAttribute('data-lang-en')
+                         || el.getAttribute('data-lang-ar');
                 if (val) el.textContent = val;
             });
 
-            // Swap input placeholders (data-placeholder-ar / data-placeholder-en)
-            document.querySelectorAll('[data-placeholder-' + lang + ']').forEach(el => {
-                const val = el.getAttribute('data-placeholder-' + lang);
+            // Swap input placeholders (data-placeholder-<lang>) with the same fallback chain.
+            document.querySelectorAll('[data-placeholder-ar], [data-placeholder-en]').forEach(el => {
+                const val = el.getAttribute('data-placeholder-' + lang)
+                         || el.getAttribute('data-placeholder-en')
+                         || el.getAttribute('data-placeholder-ar');
                 if (val !== null) el.setAttribute('placeholder', val);
             });
 
             // Notify dynamic JS-rendered content that the language changed.
             document.dispatchEvent(new CustomEvent('langchange', { detail: { lang } }));
 
-            // Swap title/aria-label attributes (data-title-ar / data-aria-label-ar)
-            document.querySelectorAll('[data-title-' + lang + ']').forEach(el => {
-                const val = el.getAttribute('data-title-' + lang);
+            // Swap title / aria-label attributes with the same fallback chain.
+            document.querySelectorAll('[data-title-ar], [data-title-en]').forEach(el => {
+                const val = el.getAttribute('data-title-' + lang)
+                         || el.getAttribute('data-title-en')
+                         || el.getAttribute('data-title-ar');
                 if (val !== null) el.setAttribute('title', val);
             });
-            document.querySelectorAll('[data-aria-label-' + lang + ']').forEach(el => {
-                const val = el.getAttribute('data-aria-label-' + lang);
+            document.querySelectorAll('[data-aria-label-ar], [data-aria-label-en]').forEach(el => {
+                const val = el.getAttribute('data-aria-label-' + lang)
+                         || el.getAttribute('data-aria-label-en')
+                         || el.getAttribute('data-aria-label-ar');
                 if (val !== null) el.setAttribute('aria-label', val);
             });
 
             const TEXT_NODE_SELECTOR = 'a, span, button, h1, h2, h3, h4, h5, h6, p, div, label, li, option, td, th';
-            // Translate all text nodes via dictionary
-            if (lang === 'en') {
+            // Dict-based translation for text that isn't wrapped in `.bilingual`.
+            // Runs for every non-Arabic language so navbar / footer / modal text
+            // localizes even for es/ru once `translate_base_dict` has been run.
+            if (lang !== 'ar') {
                 document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(el => {
                     if (el.classList.contains('bilingual')) return;
                     el.childNodes.forEach(node => {
@@ -1197,27 +1225,23 @@
                             const orig = node._origText || node.textContent.trim();
                             if (!node._origText && orig) node._origText = orig;
                             if (orig) {
-                                const translated = t(orig);
+                                const translated = t(orig, lang);
                                 if (translated !== orig) node.textContent = node.textContent.replace(orig, translated);
                             }
                         }
                     });
                 });
-                // Also translate title / aria-label attributes using the dict.
                 document.querySelectorAll('[title]').forEach(el => {
                     const orig = el._origTitle || el.getAttribute('title').trim();
                     if (!el._origTitle && orig) el._origTitle = orig;
                     if (orig) {
-                        const translated = t(orig);
+                        const translated = t(orig, lang);
                         if (translated !== orig) el.setAttribute('title', translated);
                     }
                 });
             } else {
-                // Restore Arabic originals
-                document.querySelectorAll('.bilingual').forEach(el => {
-                    const val = el.getAttribute('data-lang-ar');
-                    if (val) el.textContent = val;
-                });
+                // Restoring Arabic originals. Bilingual elements are handled by the
+                // data-lang-<lang> loop above, so skip them here.
                 document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(el => {
                     if (el.classList.contains('bilingual')) return;
                     el.childNodes.forEach(node => {
@@ -1433,10 +1457,17 @@
                 return `<button onclick="setCurrency('${code}'); document.getElementById('cl-modal').remove();" class="py-2 px-3 rounded-lg text-sm font-medium transition ${cls}">${label}</button>`;
             };
 
-            const settingsTitle = curLang === 'en' ? 'Settings' : 'الإعدادات';
-            const langTitle     = curLang === 'en' ? 'Language' : 'اللغة';
-            const currencyTitle = curLang === 'en' ? 'Currency' : 'العملة';
-            const closeLabel    = curLang === 'en' ? 'Close' : 'إغلاق';
+            const SETTINGS_LABELS = {
+                ar: { settings: 'الإعدادات', language: 'اللغة', currency: 'العملة', close: 'إغلاق' },
+                en: { settings: 'Settings',    language: 'Language', currency: 'Currency', close: 'Close' },
+                es: { settings: 'Ajustes',     language: 'Idioma',   currency: 'Moneda',   close: 'Cerrar' },
+                ru: { settings: 'Настройки',   language: 'Язык',     currency: 'Валюта',   close: 'Закрыть' },
+            };
+            const L = SETTINGS_LABELS[curLang] || SETTINGS_LABELS.en;
+            const settingsTitle = L.settings;
+            const langTitle     = L.language;
+            const currencyTitle = L.currency;
+            const closeLabel    = L.close;
 
             const modal = document.createElement('div');
             modal.id = 'cl-modal';
@@ -1447,9 +1478,11 @@
 
                     <div class="mb-6">
                         <h4 class="text-sm font-medium text-gray-700 mb-2">${langTitle}</h4>
-                        <div class="flex gap-2">
+                        <div class="grid grid-cols-2 gap-2">
                             ${langBtn('ar', 'العربية')}
                             ${langBtn('en', 'English')}
+                            ${langBtn('es', 'Español')}
+                            ${langBtn('ru', 'Русский')}
                         </div>
                     </div>
 
@@ -1754,7 +1787,7 @@
                    style="background-color: var(--color-primary);">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                 </a>
-                <span class="text-[10px] mt-1 font-semibold bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" style="color: var(--color-primary);">أضف سيارة</span>
+                <span class="text-[10px] mt-1 font-semibold bilingual" data-lang-ar="أضف سيارة" data-lang-ru="Добавить машину" data-lang-es="Añadir un coche" data-lang-en="Add Car" style="color: var(--color-primary);">أضف سيارة</span>
             </div>
             {% elif site_whatsapp %}
             {% whatsapp_site_inquiry_message site_name as wa_site_inquiry_msg %}
@@ -1772,19 +1805,19 @@
             <!-- Currency / Language -->
             <button type="button" onclick="showCurrencyLanguageMenu()" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="العملة" data-lang-en="Currency">العملة</span>
+                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="العملة" data-lang-ru="Валюта" data-lang-es="Divisa" data-lang-en="Currency">العملة</span>
             </button>
 
             <!-- Account -->
             {% if user.is_authenticated %}
             <button type="button" onclick="showAccountMenu()" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="حسابي" data-lang-en="My Account">حسابي</span>
+                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="حسابي" data-lang-ru="Мой счет" data-lang-es="Mi cuenta" data-lang-en="My Account">حسابي</span>
             </button>
             {% else %}
             <a href="{% url 'login' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="دخول" data-lang-en="Login">دخول</span>
+                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="دخول" data-lang-ru="вход" data-lang-es="entrada" data-lang-en="Login">دخول</span>
             </a>
             {% endif %}
 

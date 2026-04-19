@@ -10,10 +10,10 @@
     <!-- Header -->
     <div class="mb-6 sm:mb-8">
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            <span class="bilingual" data-lang-ar="قائمة الأمنيات" data-lang-en="My Wishlist">قائمة الأمنيات</span>
+            <span class="bilingual" data-lang-ar="قائمة الأمنيات" data-lang-ru="Список желаний" data-lang-es="Lista de deseos" data-lang-en="My Wishlist">قائمة الأمنيات</span>
         </h1>
         <p class="text-gray-600">
-            <span class="bilingual" data-lang-ar="السيارات التي حفظتها لوقت لاحق" data-lang-en="Cars you've saved for later">السيارات التي حفظتها لوقت لاحق</span>
+            <span class="bilingual" data-lang-ar="السيارات التي حفظتها لوقت لاحق" data-lang-ru="Машины, которые я приберег на потом." data-lang-es="Los coches que guardé para más adelante" data-lang-en="Cars you've saved for later">السيارات التي حفظتها لوقت لاحق</span>
         </p>
     </div>
 
@@ -38,7 +38,7 @@
                     <!-- Status Badge -->
                     {% if item.car.category.name == 'auction' %}
                         <div class="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                            <span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction">مزاد</span>
+                            <span class="bilingual" data-lang-ar="مزاد" data-lang-ru="Аукцион" data-lang-es="Subasta" data-lang-en="Auction">مزاد</span>
                         </div>
                     {% endif %}
                     
@@ -93,7 +93,7 @@
                     <div class="flex gap-2">
                         <a href="{% url 'car_detail' item.car.slug %}" 
                            class="flex-1 bg-brand text-white px-3 py-2 rounded-lg text-center text-sm font-medium hover:bg-brand-hover transition-colors">
-                            <span class="bilingual" data-lang-ar="عرض التفاصيل" data-lang-en="View Details">عرض التفاصيل</span>
+                            <span class="bilingual" data-lang-ar="عرض التفاصيل" data-lang-ru="Просмотреть подробности" data-lang-es="Ver detalles" data-lang-en="View Details">عرض التفاصيل</span>
                         </a>
                     </div>
                 </div>
@@ -108,19 +108,19 @@
                 {% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}" 
                        class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                        <span class="bilingual" data-lang-ar="السابق" data-lang-en="Previous">السابق</span>
+                        <span class="bilingual" data-lang-ar="السابق" data-lang-ru="предыдущий" data-lang-es="el anterior" data-lang-en="Previous">السابق</span>
                     </a>
                 {% endif %}
 
                 <span class="px-4 py-2 text-sm text-gray-600">
-                    <span class="bilingual" data-lang-ar="صفحة" data-lang-en="Page">صفحة</span> {{ page_obj.number }} 
-                    <span class="bilingual" data-lang-ar="من" data-lang-en="of">من</span> {{ page_obj.paginator.num_pages }}
+                    <span class="bilingual" data-lang-ar="صفحة" data-lang-ru="страница" data-lang-es="página" data-lang-en="Page">صفحة</span> {{ page_obj.number }} 
+                    <span class="bilingual" data-lang-ar="من" data-lang-ru="от" data-lang-es="de" data-lang-en="of">من</span> {{ page_obj.paginator.num_pages }}
                 </span>
 
                 {% if page_obj.has_next %}
                     <a href="?page={{ page_obj.next_page_number }}" 
                        class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                        <span class="bilingual" data-lang-ar="التالي" data-lang-en="Next">التالي</span>
+                        <span class="bilingual" data-lang-ar="التالي" data-lang-ru="следующий" data-lang-es="el próximo" data-lang-en="Next">التالي</span>
                     </a>
                 {% endif %}
             </nav>
@@ -135,14 +135,14 @@
                 </svg>
             </div>
             <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                <span class="bilingual" data-lang-ar="قائمة الأمنيات فارغة" data-lang-en="Your wishlist is empty">قائمة الأمنيات فارغة</span>
+                <span class="bilingual" data-lang-ar="قائمة الأمنيات فارغة" data-lang-ru="Список желаний пуст." data-lang-es="La lista de deseos está vacía." data-lang-en="Your wishlist is empty">قائمة الأمنيات فارغة</span>
             </h3>
             <p class="text-gray-600 mb-6">
-                <span class="bilingual" data-lang-ar="ابدأ بإضافة السيارات التي تعجبك إلى قائمة الأمنيات" data-lang-en="Start adding cars you like to your wishlist">ابدأ بإضافة السيارات التي تعجبك إلى قائمة الأمنيات</span>
+                <span class="bilingual" data-lang-ar="ابدأ بإضافة السيارات التي تعجبك إلى قائمة الأمنيات" data-lang-ru="Начните с добавления понравившихся вам автомобилей в список желаний." data-lang-es="Empieza por añadir los coches que te gustan a tu lista de deseos." data-lang-en="Start adding cars you like to your wishlist">ابدأ بإضافة السيارات التي تعجبك إلى قائمة الأمنيات</span>
             </p>
             <a href="{% url 'car_list' %}" 
                class="inline-flex items-center px-6 py-3 bg-brand text-white font-medium rounded-lg hover:bg-brand-hover transition-colors">
-                <span class="bilingual" data-lang-ar="استعرض السيارات" data-lang-en="Browse Cars">استعرض السيارات</span>
+                <span class="bilingual" data-lang-ar="استعرض السيارات" data-lang-ru="автосалон" data-lang-es="sala de exposición de automóviles" data-lang-en="Browse Cars">استعرض السيارات</span>
             </a>
         </div>
     {% endif %}

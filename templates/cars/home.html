@@ -324,7 +324,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" alt="Eid Balloons">
         <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="transform: scaleX(-1);" alt="Eid Balloons">
     </div>
-    <div class="eid-mubarak bilingual" data-lang-ar="عيد مبارك" data-lang-en="Eid Mubarak">عيد مبارك</div>
+    <div class="eid-mubarak bilingual" data-lang-ar="عيد مبارك" data-lang-ru="Ид Мубарак" data-lang-es="Eid Mubarak" data-lang-en="Eid Mubarak">عيد مبارك</div>
 {% endif %}
 <!-- Hero Section -->
 <section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" id="hero-section">
@@ -397,7 +397,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                         type="text" 
                         id="hero-search-input"
                         placeholder="ما هي السيارة التي تبحث عنها؟"
-                        data-placeholder-ar="ما هي السيارة التي تبحث عنها؟"
+                        data-placeholder-ar="ما هي السيارة التي تبحث عنها؟" data-placeholder-ru="Какую машину вы ищете?" data-placeholder-es="¿Qué coche estás buscando?"
                         data-placeholder-en="What car are you looking for?"
                         class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-white text-gray-800 placeholder-gray-400 text-sm sm:text-base focus:ring-2 focus:ring-primary-400 outline-none pr-12"
                     >
@@ -434,7 +434,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 
                     <!-- Manufacturer Grid -->
                     <div id="manufacturer-selection" class="space-y-3">
-                        <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر الشركة المصنعة" data-lang-en="Choose a Manufacturer">اختر الشركة المصنعة</label>
+                        <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر الشركة المصنعة" data-lang-ru="Выберите производителя" data-lang-es="Elija al fabricante" data-lang-en="Choose a Manufacturer">اختر الشركة المصنعة</label>
                         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-60 overflow-y-auto scrollbar-hide">
                             {% for m in manufacturers %}
                             <div 
@@ -457,7 +457,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                                 <div class="text-sm font-bold text-gray-800 group-hover:text-brand transition">
                                     <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
                                 </div>
-                                <div class="text-xs text-gray-500 mt-1">{{ m.car_count|default:0 }} <span class="bilingual" data-lang-ar="سيارة" data-lang-en="cars">سيارة</span></div>
+                                <div class="text-xs text-gray-500 mt-1">{{ m.car_count|default:0 }} <span class="bilingual" data-lang-ar="سيارة" data-lang-ru="машина" data-lang-es="auto" data-lang-en="cars">سيارة</span></div>
                             </div>
                             {% endfor %}
                         </div>
@@ -466,12 +466,12 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                     <!-- Model Grid (Hidden initially) -->
                     <div id="model-selection" class="space-y-3 hidden">
                         <div class="flex items-center justify-between">
-                            <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر الموديل" data-lang-en="Choose a Model">اختر الموديل</label>
+                            <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر الموديل" data-lang-ru="Выберите модель" data-lang-es="Elige el modelo" data-lang-en="Choose a Model">اختر الموديل</label>
                             <button type="button" id="back-to-manufacturer" class="flex items-center gap-2 px-3 py-1 text-sm text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="عودة" data-lang-en="Back">عودة</span>
+                                <span class="bilingual" data-lang-ar="عودة" data-lang-ru="возвращаться" data-lang-es="devolver" data-lang-en="Back">عودة</span>
                             </button>
                         </div>
                         <div id="selected-manufacturer-name" class="text-sm text-white/80 mb-2"></div>
@@ -483,18 +483,18 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                     <!-- Year Selection -->
                     <div id="year-selection" class="space-y-4 hidden">
                         <div class="flex items-center justify-between">
-                            <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر السنة" data-lang-en="Choose a Year">اختر السنة</label>
+                            <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر السنة" data-lang-ru="Выберите год" data-lang-es="Elige el año" data-lang-en="Choose a Year">اختر السنة</label>
                             <button type="button" id="back-to-model" class="flex items-center gap-2 px-3 py-1 text-sm text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="عودة" data-lang-en="Back">عودة</span>
+                                <span class="bilingual" data-lang-ar="عودة" data-lang-ru="возвращаться" data-lang-es="devolver" data-lang-en="Back">عودة</span>
                             </button>
                         </div>
                         <div id="selected-model-name" class="text-sm text-white/80 mb-2"></div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-2">
-                                <label class="bilingual block text-sm font-medium text-white/90" data-lang-ar="من سنة" data-lang-en="Year from">من سنة</label>
+                                <label class="bilingual block text-sm font-medium text-white/90" data-lang-ar="من سنة" data-lang-ru="С года" data-lang-es="Desde el año" data-lang-en="Year from">من سنة</label>
                                 <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto scrollbar-hide">
                                     {% for y in years %}
                                     <div class="year-from-option cursor-pointer p-2 bg-white/90 backdrop-blur-sm rounded-lg text-center text-sm font-bold text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200" data-year="{{ y }}">
@@ -504,7 +504,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                                 </div>
                             </div>
                             <div class="space-y-2">
-                                <label class="bilingual block text-sm font-medium text-white/90" data-lang-ar="إلى سنة" data-lang-en="Year to">إلى سنة</label>
+                                <label class="bilingual block text-sm font-medium text-white/90" data-lang-ar="إلى سنة" data-lang-ru="к году" data-lang-es="al año" data-lang-en="Year to">إلى سنة</label>
                                 <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto scrollbar-hide">
                                     {% for y in years %}
                                     <div class="year-to-option cursor-pointer p-2 bg-white/90 backdrop-blur-sm rounded-lg text-center text-sm font-bold text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200" data-year="{{ y }}">
@@ -521,9 +521,9 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                         <!-- Selection Summary -->
                         <div id="selection-summary" class="hidden p-4 bg-white/10 rounded-lg backdrop-blur-sm">
                             <div class="text-sm text-white/90 space-y-1">
-                                <div id="summary-manufacturer" class="hidden"><span class="bilingual" data-lang-ar="الشركة:" data-lang-en="Manufacturer:">الشركة:</span> <span class="font-bold text-white"></span></div>
-                                <div id="summary-model" class="hidden"><span class="bilingual" data-lang-ar="الموديل:" data-lang-en="Model:">الموديل:</span> <span class="font-bold text-white"></span></div>
-                                <div id="summary-years" class="hidden"><span class="bilingual" data-lang-ar="السنة:" data-lang-en="Year:">السنة:</span> <span class="font-bold text-white"></span></div>
+                                <div id="summary-manufacturer" class="hidden"><span class="bilingual" data-lang-ar="الشركة:" data-lang-ru="Компания:" data-lang-es="Compañía:" data-lang-en="Manufacturer:">الشركة:</span> <span class="font-bold text-white"></span></div>
+                                <div id="summary-model" class="hidden"><span class="bilingual" data-lang-ar="الموديل:" data-lang-ru="Модель:" data-lang-es="Modelo:" data-lang-en="Model:">الموديل:</span> <span class="font-bold text-white"></span></div>
+                                <div id="summary-years" class="hidden"><span class="bilingual" data-lang-ar="السنة:" data-lang-ru="Год:" data-lang-es="Año:" data-lang-en="Year:">السنة:</span> <span class="font-bold text-white"></span></div>
                             </div>
                         </div>
 
@@ -534,14 +534,14 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                                     <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                     </svg>
-                                    <span id="search-btn-text" class="bilingual" data-lang-ar="بحث متقدم" data-lang-en="Advanced Search">بحث متقدم</span>
+                                    <span id="search-btn-text" class="bilingual" data-lang-ar="بحث متقدم" data-lang-ru="Расширенный поиск" data-lang-es="Búsqueda avanzada" data-lang-en="Advanced Search">بحث متقدم</span>
                                 </span>
                             </button>
                         </div>
                         
                         <!-- Skip to Search Option -->
                         <div class="text-center">
-                            <button type="button" id="skip-to-search" class="bilingual text-sm text-white/70 hover:text-white underline transition" data-lang-ar="تخطي واستعراض جميع السيارات" data-lang-en="Skip and browse all cars">
+                            <button type="button" id="skip-to-search" class="bilingual text-sm text-white/70 hover:text-white underline transition" data-lang-ar="تخطي واستعراض جميع السيارات" data-lang-ru="Пропустить и просмотреть все автомобили" data-lang-es="Saltar y ver todos los coches" data-lang-en="Skip and browse all cars">
                                 تخطي واستعراض جميع السيارات
                             </button>
                         </div>
@@ -577,53 +577,53 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="سيارات دفع رباعي" data-lang-en="SUV">سيارات دفع رباعي</span>
+                                <span class="bilingual" data-lang-ar="سيارات دفع رباعي" data-lang-ru="внедорожники" data-lang-es="SUV" data-lang-en="SUV">سيارات دفع رباعي</span>
                             {% elif bt_key == 'sedan' %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="سيدان" data-lang-en="Sedan">سيدان</span>
+                                <span class="bilingual" data-lang-ar="سيدان" data-lang-ru="Седан" data-lang-es="Sedán" data-lang-en="Sedan">سيدان</span>
                             {% elif bt_key == 'hatchback' %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="هاتشباك" data-lang-en="Hatchback">هاتشباك</span>
+                                <span class="bilingual" data-lang-ar="هاتشباك" data-lang-ru="хэтчбек" data-lang-es="hatchback" data-lang-en="Hatchback">هاتشباك</span>
                             {% elif bt_key == 'coupe' or bt_key == 'roadster' %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="كوبيه/روادستر" data-lang-en="Coupe/Roadster">كوبيه/روادستر</span>
+                                <span class="bilingual" data-lang-ar="كوبيه/روادستر" data-lang-ru="Купе/Роудстер" data-lang-es="Coupé/Roadster" data-lang-en="Coupe/Roadster">كوبيه/روادستر</span>
                             {% elif bt_key == 'truck' or bt_key == 'pickup truck' %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="شاحنة صغيرة" data-lang-en="Pickup Truck">شاحنة صغيرة</span>
+                                <span class="bilingual" data-lang-ar="شاحنة صغيرة" data-lang-ru="небольшой грузовик" data-lang-es="camión pequeño" data-lang-en="Pickup Truck">شاحنة صغيرة</span>
                             {% elif bt_key == 'minivan' or bt_key == 'microbus' %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="ميني فان/ميكروباص" data-lang-en="{{ bt.name|pretty_en }}">ميني فان/ميكروباص</span>
+                                <span class="bilingual" data-lang-ar="ميني فان/ميكروباص" data-lang-ru="Минивэн/микроавтобус" data-lang-es="Minivan/Microbús" data-lang-en="{{ bt.name|pretty_en }}">ميني فان/ميكروباص</span>
                             {% elif bt_key == 'rv' %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="مركبة ترفيهية" data-lang-en="RV">مركبة ترفيهية</span>
+                                <span class="bilingual" data-lang-ar="مركبة ترفيهية" data-lang-ru="транспортное средство для отдыха" data-lang-es="vehículo recreativo" data-lang-en="RV">مركبة ترفيهية</span>
                             {% elif bt_key == 'sedan/hatchback' %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="سيدان/هاتشباك" data-lang-en="Sedan/Hatchback">سيدان/هاتشباك</span>
+                                <span class="bilingual" data-lang-ar="سيدان/هاتشباك" data-lang-ru="Седан/Хэтчбек" data-lang-es="Sedán/Hatchback" data-lang-en="Sedan/Hatchback">سيدان/هاتشباك</span>
                             {% else %}
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                 </svg>
-                                <span class="bilingual" data-lang-ar="{{ bt|translate_body }}" data-lang-en="{{ bt.name|pretty_en }}">{{ bt|translate_body }}</span>
+                                <span class="bilingual" data-lang-ar="{{ bt|translate_body }}" data-lang-ru="{{ bt|translate_body:'ru' }}" data-lang-es="{{ bt|translate_body:'es' }}" data-lang-en="{{ bt.name|pretty_en }}">{{ bt|translate_body }}</span>
                             {% endif %}
                         </a>
                         {% endwith %}
@@ -648,10 +648,10 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             </div>
             {% if cars_count %}
             <div class="text-2xl sm:text-3xl font-extrabold text-brand">{{ cars_count|intcomma }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-en="Korean Showrooms">المعارض الكورية</div>
+            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-ru="Корейские выставки" data-lang-es="exposiciones coreanas" data-lang-en="Korean Showrooms">المعارض الكورية</div>
             {% else %}
-            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-en="Coming soon">قريباً</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-en="Korean Showrooms">المعارض الكورية</div>
+            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
+            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-ru="Корейские выставки" data-lang-es="exposiciones coreanas" data-lang-en="Korean Showrooms">المعارض الكورية</div>
             {% endif %}
         </a>
         <a href="{% url 'car_list' %}?car_type=auction" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
@@ -661,10 +661,10 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             </div>
             {% if auction_count %}
             <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">{{ auction_count|intcomma }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات" data-lang-en="Auctions">مزادات</div>
+            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات" data-lang-ru="Аукционы" data-lang-es="Subastas" data-lang-en="Auctions">مزادات</div>
             {% else %}
-            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-en="Coming soon">قريباً</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات كوريا تتجدد بشكل يومي" data-lang-en="Korean auctions updated daily">مزادات كوريا تتجدد بشكل يومي</div>
+            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
+            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات كوريا تتجدد بشكل يومي" data-lang-ru="Корейские аукционы обновляются ежедневно." data-lang-es="Las subastas coreanas se actualizan diariamente." data-lang-en="Korean auctions updated daily">مزادات كوريا تتجدد بشكل يومي</div>
             {% endif %}
         </a>
            <a href="{% url 'site_car_list' %}" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
@@ -674,10 +674,10 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             </div>
             {% if site_cars %}
             <div class="text-2xl sm:text-3xl font-extrabold text-green-600">{{ site_cars|length }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-en="Our Cars">سياراتنا</div>
+            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</div>
             {% else %}
-            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-en="Coming soon">قريباً</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-en="Our Cars">سياراتنا</div>
+            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
+            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</div>
             {% endif %}
         </a>
         <a href="{% url 'post_list' %}" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30 overflow-hidden">
@@ -687,10 +687,10 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             </div>
             {% if posts_count %}
             <div class="text-2xl sm:text-3xl font-extrabold text-orange-600">{{ posts_count|intcomma }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المنشورات" data-lang-en="Posts">المنشورات</div>
+            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المنشورات" data-lang-ru="Публикации" data-lang-es="Publicaciones" data-lang-en="Posts">المنشورات</div>
             {% if latest_post %}
             <div class="mt-2 pt-2 border-t border-gray-100">
-                <div class="bilingual text-[9px] sm:text-xs text-gray-400 mb-1" data-lang-ar="آخر منشور:" data-lang-en="Latest post:">آخر منشور:</div>
+                <div class="bilingual text-[9px] sm:text-xs text-gray-400 mb-1" data-lang-ar="آخر منشور:" data-lang-ru="Последняя запись:" data-lang-es="Última publicación:" data-lang-en="Latest post:">آخر منشور:</div>
                 <div class="text-[10px] sm:text-xs font-medium text-orange-600 line-clamp-2 leading-tight">
                     {{ latest_post.title_ar|default:latest_post.title }}
                 </div>
@@ -698,7 +698,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             {% endif %}
             {% else %}
             <div class="text-sm sm:text-base font-extrabold text-gray-400">0</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المنشورات" data-lang-en="Posts">المنشورات</div>
+            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المنشورات" data-lang-ru="Публикации" data-lang-es="Publicaciones" data-lang-en="Posts">المنشورات</div>
             {% endif %}
         </a>
         </div>
@@ -710,8 +710,8 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 <section class="bg-gray-50 py-8 sm:py-12">
     <div class="max-w-7xl mx-auto px-3 sm:px-4">
         <div class="text-center mb-6 sm:mb-8">
-            <h2 class="bilingual text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2" data-lang-ar="الشركات المصنعة" data-lang-en="Manufacturers">الشركات المصنعة</h2>
-            <p class="bilingual text-gray-600 text-sm sm:text-base" data-lang-ar="اختر من أشهر الشركات المصنعة للسيارات" data-lang-en="Choose from the most popular car manufacturers">اختر من أشهر الشركات المصنعة للسيارات</p>
+            <h2 class="bilingual text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2" data-lang-ar="الشركات المصنعة" data-lang-ru="Производители" data-lang-es="fabricantes" data-lang-en="Manufacturers">الشركات المصنعة</h2>
+            <p class="bilingual text-gray-600 text-sm sm:text-base" data-lang-ar="اختر من أشهر الشركات المصنعة للسيارات" data-lang-ru="Выберите одного из самых известных автопроизводителей." data-lang-es="Elige entre los fabricantes de automóviles más famosos." data-lang-en="Choose from the most popular car manufacturers">اختر من أشهر الشركات المصنعة للسيارات</p>
         </div>
     <div class="relative group">
         <!-- Left Arrow -->
@@ -753,11 +753,11 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
     <div class="max-w-7xl mx-auto px-3 sm:px-4">
         <div class="flex justify-between items-center mb-6 sm:mb-8">
             <div>
-                <h2 class="bilingual text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1" data-lang-ar="سيارات" data-lang-en="Cars">سيارات</h2>
-                <p class="bilingual text-gray-600 text-sm" data-lang-ar="أحدث السيارات المتاحة في المعارض الكورية" data-lang-en="Latest cars available in Korean showrooms">أحدث السيارات المتاحة في المعارض الكورية</p>
+                <h2 class="bilingual text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1" data-lang-ar="سيارات" data-lang-ru="автомобили" data-lang-es="coches" data-lang-en="Cars">سيارات</h2>
+                <p class="bilingual text-gray-600 text-sm" data-lang-ar="أحدث السيارات المتاحة في المعارض الكورية" data-lang-ru="Новейшие автомобили, доступные в корейских автосалонах." data-lang-es="Los últimos modelos de coches disponibles en los concesionarios coreanos." data-lang-en="Latest cars available in Korean showrooms">أحدث السيارات المتاحة في المعارض الكورية</p>
             </div>
             <a href="{% url 'car_list' %}?car_type=cars" class="text-brand hover:text-brand/80 font-medium text-sm sm:text-base flex items-center gap-1 transition">
-                <span class="bilingual" data-lang-ar="عرض الكل" data-lang-en="View All">عرض الكل</span>
+                <span class="bilingual" data-lang-ar="عرض الكل" data-lang-ru="Просмотреть все" data-lang-es="Ver todo" data-lang-en="View All">عرض الكل</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -808,19 +808,19 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             </div>
             <div class="p-2.5 sm:p-4">
                 <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base group-hover:text-brand transition-colors">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     {% if car.mileage %}
                     <span>&bull;</span>
-                    <span>{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-en="km">كم</span></span>
+                    <span>{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-ru="сколько?" data-lang-es="cuánto" data-lang-en="km">كم</span></span>
                     {% endif %}
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
                     {% if car.transmission %}
-                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
+                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -835,8 +835,8 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 {% if latest_auctions %}
 <section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
     <div class="flex justify-between items-center mb-3 sm:mb-5">
-        <h2 class="bilingual text-lg sm:text-xl md:text-2xl font-bold" data-lang-ar="مزادات" data-lang-en="Auctions">مزادات</h2>
-        <a href="{% url 'car_list' %}?car_type=auction" class="bilingual text-brand text-brand-hover font-medium text-xs sm:text-sm" data-lang-ar="عرض الكل ←" data-lang-en="View All ←">عرض الكل &larr;</a>
+        <h2 class="bilingual text-lg sm:text-xl md:text-2xl font-bold" data-lang-ar="مزادات" data-lang-ru="Аукционы" data-lang-es="Subastas" data-lang-en="Auctions">مزادات</h2>
+        <a href="{% url 'car_list' %}?car_type=auction" class="bilingual text-brand text-brand-hover font-medium text-xs sm:text-sm" data-lang-ar="عرض الكل ←" data-lang-ru="Посмотреть все ←" data-lang-es="Ver todo ←" data-lang-en="View All ←">عرض الكل &larr;</a>
     </div>
     <div class="relative group">
         <!-- Left Arrow -->
@@ -888,13 +888,13 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             </div>
             <div class="p-2.5 sm:p-4">
                 <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base group-hover:text-brand transition-colors">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     {% if car.mileage %}
                     <span>&bull;</span>
-                    <span>{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-en="km">كم</span></span>
+                    <span>{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-ru="сколько?" data-lang-es="cuánto" data-lang-en="km">كم</span></span>
                     {% endif %}
                 </div>
                 {% if car.auction_date %}
@@ -906,7 +906,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                 <div class="flex justify-between items-center">
                     <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
                     {% if car.transmission %}
-                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
+                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -922,10 +922,10 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 <section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
     <div class="flex justify-between items-center mb-3 sm:mb-5">
         <div>
-            <h2 class="bilingual text-lg sm:text-xl md:text-2xl font-bold" data-lang-ar="سياراتنا" data-lang-en="Our Cars">سياراتنا</h2>
+            <h2 class="bilingual text-lg sm:text-xl md:text-2xl font-bold" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</h2>
             <p class="bilingual text-gray-500 text-xs sm:text-sm mt-1" data-lang-ar="سيارات مختارة ومعروضة من {{ site_name|default:'موقعنا' }}" data-lang-en="Hand-picked cars displayed by {{ site_name|default:'our site' }}">سيارات مختارة ومعروضة من {{ site_name|default:"موقعنا" }}</p>
         </div>
-        <a href="{% url 'site_car_list' %}" class="bilingual text-brand text-brand-hover font-medium text-xs sm:text-sm" data-lang-ar="عرض الكل ←" data-lang-en="View All ←">عرض الكل &larr;</a>
+        <a href="{% url 'site_car_list' %}" class="bilingual text-brand text-brand-hover font-medium text-xs sm:text-sm" data-lang-ar="عرض الكل ←" data-lang-ru="Посмотреть все ←" data-lang-es="Ver todo ←" data-lang-en="View All ←">عرض الكل &larr;</a>
     </div>
 
     <div class="relative group">
@@ -959,15 +959,15 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                 </div>
                 {% endif %}
                 {% if car.is_featured %}
-                <div class="bilingual absolute top-2 sm:top-3 right-2 sm:right-3 bg-yellow-400 text-yellow-900 text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full" data-lang-ar="مميزة" data-lang-en="Featured">مميزة</div>
+                <div class="bilingual absolute top-2 sm:top-3 right-2 sm:right-3 bg-yellow-400 text-yellow-900 text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full" data-lang-ar="مميزة" data-lang-ru="отличительный" data-lang-es="distintivo" data-lang-en="Featured">مميزة</div>
                 {% endif %}
                 {% if car.status == 'sold' %}
-                <div class="bilingual absolute top-2 sm:top-3 left-2 sm:left-3 bg-red-500 text-white text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full" data-lang-ar="تم البيع" data-lang-en="Sold">تم البيع</div>
+                <div class="bilingual absolute top-2 sm:top-3 left-2 sm:left-3 bg-red-500 text-white text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full" data-lang-ar="تم البيع" data-lang-ru="Продал" data-lang-es="Vendido" data-lang-en="Sold">تم البيع</div>
                 {% endif %}
             </div>
             <div class="p-2.5 sm:p-4">
                 <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base">
-                    <span class="bilingual" data-lang-ar="{{ car.manufacturer }}" data-lang-en="{{ car.manufacturer }}">{{ car.manufacturer }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model }}">{{ car.model|translate_model }}</span>
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer }}" data-lang-en="{{ car.manufacturer }}">{{ car.manufacturer }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model }}">{{ car.model|translate_model }}</span>
                 </h3>
                 <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
                     <span>{{ car.year }}</span>
@@ -975,13 +975,13 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                     <span>{{ car.manufacturer }}</span>
                     {% if car.mileage %}
                     <span class="hidden sm:inline">&bull;</span>
-                    <span class="hidden sm:inline">{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-en="km">كم</span></span>
+                    <span class="hidden sm:inline">{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-ru="сколько?" data-lang-es="cuánto" data-lang-en="km">كم</span></span>
                     {% endif %}
                 </div>
                 <div class="flex justify-between items-center">
                     <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
                     {% if car.transmission %}
-                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
+                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -995,9 +995,9 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 <!-- CTA -->
 <section class="max-w-7xl mx-auto px-3 sm:px-4 mt-10 sm:mt-16 mb-8 sm:mb-0">
     <div class="bg-brand rounded-xl sm:rounded-2xl p-6 sm:p-8 md:p-12 text-white text-center">
-        <h2 class="bilingual text-lg sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4" data-lang-ar="لم تجد سيارتك المطلوبة؟" data-lang-en="Didn't find the car you want?">لم تجد سيارتك المطلوبة؟</h2>
-        <p class="bilingual text-white/80 mb-4 sm:mb-6 max-w-xl mx-auto text-sm sm:text-base" data-lang-ar="أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر" data-lang-en="Send us your request and we'll find the right car at the best price">أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر</p>
-        <a href="{% url 'car_request' %}" class="bilingual inline-block bg-white text-brand font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-gray-100 transition text-sm sm:text-base" data-lang-ar="اطلب سيارة الآن" data-lang-en="Request a car now">
+        <h2 class="bilingual text-lg sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4" data-lang-ar="لم تجد سيارتك المطلوبة؟" data-lang-ru="Не нашли нужный автомобиль?" data-lang-es="¿No encontraste el coche que buscabas?" data-lang-en="Didn't find the car you want?">لم تجد سيارتك المطلوبة؟</h2>
+        <p class="bilingual text-white/80 mb-4 sm:mb-6 max-w-xl mx-auto text-sm sm:text-base" data-lang-ar="أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر" data-lang-ru="Отправьте нам свой запрос, и мы подберем для вас подходящий автомобиль по лучшей цене." data-lang-es="Envíanos tu solicitud y encontraremos el coche adecuado para ti al mejor precio." data-lang-en="Send us your request and we'll find the right car at the best price">أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر</p>
+        <a href="{% url 'car_request' %}" class="bilingual inline-block bg-white text-brand font-bold px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-gray-100 transition text-sm sm:text-base" data-lang-ar="اطلب سيارة الآن" data-lang-ru="Закажите автомобиль прямо сейчас!" data-lang-es="Pide un coche ahora" data-lang-en="Request a car now">
             اطلب سيارة الآن
         </a>
     </div>
