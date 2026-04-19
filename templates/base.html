@@ -1736,7 +1736,17 @@
                 <span class="text-[10px] mt-0.5">السيارات</span>
             </a>
 
-            {% if site_whatsapp %}
+            {% if user.is_staff %}
+            <!-- Add car FAB (admin only) -->
+            <div class="flex flex-col items-center flex-1 relative" style="margin-top:-22px;">
+                <a href="{% url 'site_car_add' %}"
+                   class="w-16 h-16 bg-brand hover:opacity-90 active:scale-95 rounded-full flex items-center justify-center shadow-xl shadow-brand/40 transition ring-4 ring-white"
+                   style="background-color: var(--color-primary);">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                </a>
+                <span class="text-[10px] mt-1 font-semibold bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" style="color: var(--color-primary);">أضف سيارة</span>
+            </div>
+            {% elif site_whatsapp %}
             {% whatsapp_site_inquiry_message site_name as wa_site_inquiry_msg %}
             <!-- WhatsApp FAB -->
             <div class="flex flex-col items-center flex-1 relative" style="margin-top:-22px;">
