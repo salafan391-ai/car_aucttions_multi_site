@@ -1,45 +1,67 @@
 """
-Management command to clear the home page Redis cache for all tenants.
-Use when a bad response has been cached or after view-level fixes.
+Management command to clear tenant-facing caches for all tenants.
+Covers: tenant_branding, home_html_v9, home_ctx_v9, landing_html (all design + sc variants), car_list.
 
 Usage:
     python manage.py clear_home_cache
-    heroku run python manage.py clear_home_cache --app tenant-cars
+    railway ssh -> /opt/venv/bin/python manage.py clear_home_cache
 """
 from django.core.management.base import BaseCommand
 from django.core.cache import cache
 from django_tenants.utils import get_tenant_model
 
 
+LANDING_DESIGNS = (
+    'cosmos', 'minimal', 'bold', 'luxury', 'neon',
+    'desert', 'split', 'dashboard', 'cockpit',
+)
+
+
 class Command(BaseCommand):
-    help = "Clear home_html and home_ctx cache keys for all tenants"
+    help = "Clear tenant_branding, home_html_v9, home_ctx_v9, landing_html, and car_list caches for all tenants"
 
     def handle(self, *args, **options):
         Tenant = get_tenant_model()
         cleared = 0
+
         for tenant in Tenant.objects.all():
-            for prefix in ['home_html', 'home_ctx', 'car_list']:
-                key = f"{prefix}:{tenant.schema_name}"
-                deleted = cache.delete(key)
-                if deleted:
+            schema = tenant.schema_name
+            keys = [
+                f"tenant_branding:{schema}",
+                f"home_html_v9:{schema}",
+                f"home_ctx_v9:{schema}",
+                f"car_list:{schema}",
+            ]
+            for design in LANDING_DESIGNS:
+                for sc in (0, 1):
+                    keys.append(f"landing_html:{schema}:{design}:sc{sc}")
+
+            for key in keys:
+                if cache.delete(key):
                     self.stdout.write(f"  Cleared: {key}")
                     cleared += 1
 
-        # Also clear with wildcard pattern if using django-redis
+        # Wildcard pass for django-redis — catches anything schema-agnostic or with prefixes we missed
         try:
             from django_redis import get_redis_connection
             redis_conn = get_redis_connection("default")
-            patterns = ["home_html:*", "home_ctx:*", ":1:home_html:*", ":1:home_ctx:*"]
+            patterns = [
+                "*tenant_branding:*",
+                "*home_html*",
+                "*home_ctx*",
+                "*landing_html:*",
+                "*car_list:*",
+            ]
             total_deleted = 0
             for pattern in patterns:
-                keys = redis_conn.keys(pattern)
-                if keys:
-                    total_deleted += redis_conn.delete(*keys)
-                    for k in keys:
-                        self.stdout.write(f"  Redis KEYS cleared: {k.decode()}")
+                rkeys = redis_conn.keys(pattern)
+                if rkeys:
+                    total_deleted += redis_conn.delete(*rkeys)
+                    for k in rkeys:
+                        self.stdout.write(f"  Redis cleared: {k.decode() if isinstance(k, bytes) else k}")
             if total_deleted:
                 self.stdout.write(self.style.SUCCESS(
-                    f"  Redis wildcard: deleted {total_deleted} additional key(s)"
+                    f"  Redis wildcard: deleted {total_deleted} key(s)"
                 ))
         except Exception as e:
             self.stdout.write(f"  (django-redis wildcard not available: {e})")
