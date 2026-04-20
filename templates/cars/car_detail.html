@@ -283,6 +283,19 @@
                         <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="تفاصيل الموديل" data-lang-ru="Детали модели" data-lang-es="Detalles del modelo" data-lang-en="Trim">تفاصيل الموديل</div>
                         <div class="font-bold text-sm">{{ car.badge.name }}</div>
                     </div>
+                    {% else %}
+                        {% if car.points %}
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="المحرك" data-lang-ru="двигатель" data-lang-es="motor" data-lang-en="Engine">المحرك</div>
+                            <div class="font-bold text-sm">{{ car.points }}</div>
+                        </div>
+                        {% endif %}
+                        {% if car.drive_wheel %}
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="نظام الدفع" data-lang-ru="Платежная система" data-lang-es="Sistema de pago" data-lang-en="Drive">نظام الدفع</div>
+                            <div class="font-bold text-sm">{{ car.drive_wheel }}</div>
+                        </div>
+                        {% endif %}
                     {% endif %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="سنة الصنع" data-lang-ru="Год выпуска" data-lang-es="Año de fabricación" data-lang-en="Year">سنة الصنع</div>
@@ -342,7 +355,7 @@
                     {% elif car.points %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="المحرك" data-lang-ru="двигатель" data-lang-es="motor" data-lang-en="Engine">المحرك</div>
-                        <div class="font-bold text-sm">{% widthratio car.points 1 1000 %} cc</div>
+                        <div class="font-bold text-sm">{{ car.points }}</div>
                     </div>
                     {% endif %}
                     {% if car.drive_wheel %}
