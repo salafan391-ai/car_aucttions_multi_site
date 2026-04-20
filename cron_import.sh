@@ -11,6 +11,9 @@ python manage.py run_encar_import
 
 echo "==> [$(date -u)] Import complete"
 
+echo "==> Updating exchange rates..."
+python manage.py update_exchange_rates || echo "==> Exchange rate update failed (non-fatal)"
+
 # Fill in Arabic names / logos only for manufacturers that are still missing them
 python manage.py shell -c "
 from cars.models import Manufacturer
