@@ -594,11 +594,45 @@
 
 })();
 
+// Preserve sidebar scroll positions across HTMX swaps of #htmx-main.
+// The sidebar is re-rendered on every swap, so without this, its outer scroll
+// and each filter-group's inner scroll reset to the top on any filter click.
+var __sidebarScrollCache = null;
+var __sidebarScrollSelectors = [
+  '#sidebar-filters',
+  '#sidebar-mfr-buttons',
+  '#sidebar-mdl-grid',
+  '#sidebar-bdg-grid'
+];
+document.body.addEventListener('htmx:beforeSwap', function(e) {
+  if (e.detail.target && e.detail.target.id === 'htmx-main') {
+    __sidebarScrollCache = {};
+    __sidebarScrollSelectors.forEach(function(sel) {
+      var el = document.querySelector(sel);
+      if (el) __sidebarScrollCache[sel] = el.scrollTop;
+    });
+  }
+});
+
 // Always restore body scroll after any HTMX swap (safety net for mobile drawer)
 document.body.addEventListener('htmx:afterSwap', function(e) {
   if (e.detail.target && e.detail.target.id === 'htmx-main') {
     document.body.style.overflow = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Only scroll to top on mobile/tablet (where the drawer is used).
+    // On desktop (lg+), the sidebar is persistent and jumping to top is jarring.
+    if (window.innerWidth < 1024) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    // Restore sidebar scroll positions captured before the swap
+    if (__sidebarScrollCache) {
+      __sidebarScrollSelectors.forEach(function(sel) {
+        var el = document.querySelector(sel);
+        if (el && typeof __sidebarScrollCache[sel] === 'number') {
+          el.scrollTop = __sidebarScrollCache[sel];
+        }
+      });
+      __sidebarScrollCache = null;
+    }
   }
   // Re-apply current language to any bilingual elements brought in by the swap
   var lang = localStorage.getItem('site_lang') || 'ar';

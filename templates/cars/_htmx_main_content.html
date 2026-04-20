@@ -456,6 +456,7 @@
             var href = pLink.getAttribute('href');
             var qs = href.indexOf('?') !== -1 ? href.substring(href.indexOf('?') + 1) : '';
             htmxGet(qs);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
     </script>
@@ -498,7 +499,7 @@
                     <div id="sidebar-mfr-buttons" class="filter-group-body grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto pb-1">
                         {% for m in manufacturers %}{% if m.car_count %}
                         <button type="button" onclick="toggleFilterValue('manufacturer', '{{ m.id }}')"
-                           class="flex items-center justify-center gap-1 w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all {% if m.id|stringformat:'d' in sel_manufacturers %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
+                           class="flex items-center justify-center gap-1 w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all {% if m.id|stringformat:'d' in sel_manufacturers %}bg-brand border-brand text-white{% else %}bg-white border-gray-200 text-gray-600 hover:border-brand hover:text-brand{% endif %}">
                             {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
                             <span class="truncate bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
                             <span class="opacity-60 text-[10px] font-normal">({{ m.car_count }})</span>
