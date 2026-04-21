@@ -390,8 +390,8 @@
             {% endif %}
 
             <!-- Tabbed: Features / Inspection / History -->
-            {% with rec=car.extra_features.record %}
-            {% if car.options.standard or insp.has_inspection or rec.openData %}
+            {% with rec=car.extra_features.record autohub_opts=car.autohub_options %}
+            {% if car.options.standard or insp.has_inspection or rec.openData or autohub_opts %}
             <div class="bg-white rounded-2xl shadow-sm mt-6 overflow-hidden" dir="rtl">
 
               <style>
@@ -410,7 +410,7 @@
 
               <!-- Tab buttons -->
               <div class="flex border-b border-gray-100 overflow-x-auto">
-                {% if car.options.standard %}
+                {% if car.options.standard or autohub_opts %}
                 <button onclick="switchDetailTab('tab-features',this)" id="btn-tab-features"
                   class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-brand border-b-2 border-brand">
                   <span class="bilingual" data-lang-ar="المميزات" data-lang-ru="Функции" data-lang-es="Características" data-lang-en="Features">المميزات</span>
@@ -438,6 +438,23 @@
                   <span class="bilingual bg-brand-light text-brand text-sm px-3 py-1.5 rounded-full" data-lang-ar="{{ opt|translate_option }}" data-lang-ru="{{ opt|translate_option:'ru' }}" data-lang-es="{{ opt|translate_option:'es' }}" data-lang-en="{{ opt|translate_option_en }}">
                     {{ opt|translate_option }}
                   </span>
+                  {% endfor %}
+                </div>
+              </div>
+              {% elif autohub_opts %}
+              <div id="tab-features" class="detail-tab-panel p-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {% for opt in autohub_opts %}
+                  {% with fallback=opt.name_ar|default:opt.ctDtlNm %}
+                  <div class="flex flex-col items-center text-center gap-2 p-3 bg-brand-light/40 rounded-xl">
+                    <img src="{{ opt.url }}" alt="{{ fallback }}" class="w-12 h-12 object-contain" loading="lazy">
+                    <span class="bilingual text-sm font-semibold text-brand"
+                          data-lang-ar="{{ opt.name_ar|default:fallback }}"
+                          data-lang-en="{{ opt.name_en|default:fallback }}"
+                          data-lang-ru="{{ opt.name_ru|default:fallback }}"
+                          data-lang-es="{{ opt.name_es|default:fallback }}">{{ fallback }}</span>
+                  </div>
+                  {% endwith %}
                   {% endfor %}
                 </div>
               </div>

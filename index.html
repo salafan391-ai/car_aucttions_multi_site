@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>tectop — المنصة المتكاملة لوكلاء السيارات</title>
+  <meta name="description" content="tectop تمنح معارض السيارات منصة واحدة لإدارة المخزون والتسعير والعملاء المحتملين والتقارير. سعّر بذكاء، بِع أسرع، وأدر المعرض بالكامل من مكان واحد." />
+  <meta property="og:title" content="tectop — المنصة المتكاملة لوكلاء السيارات" />
+  <meta property="og:description" content="المخزون والتسعير والعملاء والتقارير — كل شيء في منصة واحدة." />
+  <meta property="og:type" content="website" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Cairo', 'Tajawal', 'ui-sans-serif', 'system-ui'] },
+          colors: {
+            ink:   { 900:'#0B1B34', 800:'#122544', 700:'#1B3260', 600:'#27457F' },
+            brand: { 50:'#EEF4FF', 100:'#D9E5FF', 500:'#2F6BFF', 600:'#1E57F0', 700:'#1847CC' },
+            slateline: '#E6ECF5'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Cairo', 'Tajawal', sans-serif; -webkit-font-smoothing: antialiased; }
+    .hero-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+    .card-shadow { box-shadow: 0 1px 2px rgba(11,27,52,0.04), 0 8px 24px rgba(11,27,52,0.06); }
+    .fade-mask {
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+              mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    }
+    /* flip chevron arrows so they point the right way in RTL */
+    .rtl-flip { transform: scaleX(-1); }
+  </style>
+</head>
+
+<body class="bg-white text-ink-900">
+
+  <!-- NAV -->
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slateline">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-ink-900 text-white font-bold">t</span>
+        <span class="font-bold text-lg tracking-tight">tectop</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-8 text-sm text-ink-700">
+        <a href="#features" class="hover:text-ink-900">المنصة</a>
+        <a href="#how" class="hover:text-ink-900">كيف تعمل</a>
+        <a href="#results" class="hover:text-ink-900">النتائج</a>
+        <a href="#pricing" class="hover:text-ink-900">الأسعار</a>
+        <a href="#faq" class="hover:text-ink-900">الأسئلة الشائعة</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <a href="#demo" class="hidden sm:inline text-sm font-medium text-ink-700 hover:text-ink-900">تسجيل الدخول</a>
+        <a href="#demo" class="inline-flex items-center gap-1 rounded-lg bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold px-4 py-2">
+          اطلب عرضاً توضيحياً
+          <svg class="w-4 h-4 rtl-flip" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 5l6 5-6 5"/></svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="relative overflow-hidden bg-ink-900 text-white">
+    <div class="absolute inset-0 hero-grid opacity-40"></div>
+    <div class="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-brand-500/20 blur-3xl"></div>
+    <div class="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-brand-700/30 blur-3xl"></div>
+
+    <div class="relative max-w-7xl mx-auto px-6 pt-20 pb-24 md:pt-28 md:pb-32">
+      <div class="max-w-3xl">
+        <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          مصممة لمعارض السيارات المستقلة والوكالات المعتمدة
+        </span>
+        <h1 class="mt-6 text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.25]">
+          أدر معرض سياراتك بالكامل <span class="text-brand-500">من منصة واحدة.</span>
+        </h1>
+        <p class="mt-6 text-lg md:text-xl text-white/75 max-w-2xl leading-relaxed">
+          تجمع tectop المخزون والتسعير والعملاء المحتملين والتقارير في مكان واحد، حتى يقضي فريقك وقتاً أقل في جداول البيانات ووقتاً أكثر في بيع السيارات.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="#demo" class="inline-flex items-center gap-2 rounded-lg bg-white text-ink-900 font-semibold px-5 py-3 hover:bg-brand-50">
+            اطلب عرضاً توضيحياً
+            <svg class="w-4 h-4 rtl-flip" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 5l6 5-6 5"/></svg>
+          </a>
+          <a href="#how" class="inline-flex items-center gap-2 rounded-lg border border-white/20 text-white font-semibold px-5 py-3 hover:bg-white/5">
+            تعرّف على طريقة العمل
+          </a>
+        </div>
+
+        <div class="mt-10 flex flex-wrap gap-6 text-sm text-white/60">
+          <div class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor"><path d="M7.5 13.5l-3-3 1.4-1.4 1.6 1.6 4.6-4.6L13.5 7z"/></svg> متوافقة مع SOC 2</div>
+          <div class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor"><path d="M7.5 13.5l-3-3 1.4-1.4 1.6 1.6 4.6-4.6L13.5 7z"/></svg> تكامل مع أنظمة إدارة المعارض</div>
+          <div class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor"><path d="M7.5 13.5l-3-3 1.4-1.4 1.6 1.6 4.6-4.6L13.5 7z"/></svg> تهيئة وتدريب كامل</div>
+        </div>
+      </div>
+
+      <!-- Dashboard mock -->
+      <div class="mt-16 md:mt-20 relative">
+        <div class="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-3 card-shadow">
+          <div class="rounded-xl bg-white text-ink-900 p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <div class="text-xs uppercase tracking-wider text-ink-700/60">نظرة عامة على المعرض</div>
+                <div class="text-xl font-bold">معرض الرياض للسيارات — أبريل</div>
+              </div>
+              <div class="hidden sm:flex items-center gap-2 text-xs text-ink-700/60">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> مباشر
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="rounded-lg border border-slateline p-4">
+                <div class="text-xs text-ink-700/60">المخزون النشط</div>
+                <div class="mt-1 text-2xl font-bold">184</div>
+                <div class="text-xs text-emerald-600 font-medium mt-1">+12 هذا الأسبوع</div>
+              </div>
+              <div class="rounded-lg border border-slateline p-4">
+                <div class="text-xs text-ink-700/60">متوسط أيام العرض</div>
+                <div class="mt-1 text-2xl font-bold">23.4</div>
+                <div class="text-xs text-emerald-600 font-medium mt-1">−6.1 مقارنة بالسوق</div>
+              </div>
+              <div class="rounded-lg border border-slateline p-4">
+                <div class="text-xs text-ink-700/60">العملاء المحتملون</div>
+                <div class="mt-1 text-2xl font-bold">67</div>
+                <div class="text-xs text-brand-600 font-medium mt-1">14 بحاجة للمتابعة</div>
+              </div>
+              <div class="rounded-lg border border-slateline p-4">
+                <div class="text-xs text-ink-700/60">إجمالي المبيعات</div>
+                <div class="mt-1 text-2xl font-bold">412 ألف ر.س</div>
+                <div class="text-xs text-emerald-600 font-medium mt-1">+18% عن الشهر الماضي</div>
+              </div>
+            </div>
+            <div class="mt-6 grid md:grid-cols-3 gap-4">
+              <div class="md:col-span-2 rounded-lg border border-slateline p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-sm font-semibold">أسعارك مقابل السوق</div>
+                  <div class="text-xs text-ink-700/60">آخر 30 يوماً</div>
+                </div>
+                <svg viewBox="0 0 400 120" class="w-full h-24">
+                  <polyline fill="none" stroke="#1E57F0" stroke-width="2.5"
+                    points="0,80 40,70 80,75 120,55 160,60 200,40 240,48 280,30 320,35 360,20 400,25"/>
+                  <polyline fill="none" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="4 4"
+                    points="0,90 40,85 80,88 120,75 160,78 200,65 240,70 280,58 320,60 360,50 400,52"/>
+                </svg>
+                <div class="flex gap-4 text-xs text-ink-700/70 mt-2">
+                  <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-brand-600"></span> معرضك</span>
+                  <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400"></span> متوسط السوق</span>
+                </div>
+              </div>
+              <div class="rounded-lg border border-slateline p-4">
+                <div class="text-sm font-semibold mb-3">الأكثر حركة</div>
+                <ul class="space-y-2 text-sm">
+                  <li class="flex justify-between"><span>تويوتا كامري 2022</span><span class="text-emerald-600 font-medium">+3,150 ر.س</span></li>
+                  <li class="flex justify-between"><span>هيونداي سوناتا 2021</span><span class="text-emerald-600 font-medium">+2,300 ر.س</span></li>
+                  <li class="flex justify-between"><span>نيسان التيما 2020</span><span class="text-rose-600 font-medium">−820 ر.س</span></li>
+                  <li class="flex justify-between"><span>فورد F-150 2023</span><span class="text-emerald-600 font-medium">+4,160 ر.س</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGO STRIP -->
+  <section class="border-y border-slateline bg-white">
+    <div class="max-w-7xl mx-auto px-6 py-10">
+      <p class="text-center text-xs uppercase tracking-widest text-ink-700/60 mb-6">يعتمد علينا وكلاء السيارات في جميع أنحاء المنطقة</p>
+      <div class="fade-mask flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-ink-700/50 font-semibold">
+        <span class="text-lg">السميط للسيارات</span>
+        <span class="text-lg">المرسى موتورز</span>
+        <span class="text-lg">مجموعة الخليج</span>
+        <span class="text-lg">معارض النخبة</span>
+        <span class="text-lg">الوفاء للسيارات</span>
+        <span class="text-lg">الأندلس أوتو</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="py-20 md:py-28">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-2xl">
+        <div class="text-sm font-semibold text-brand-600 uppercase tracking-wider">المنصة</div>
+        <h2 class="mt-2 text-3xl md:text-5xl font-bold tracking-tight leading-tight">كل ما يحتاجه معرضك. في مكان واحد.</h2>
+        <p class="mt-5 text-lg text-ink-700/80 leading-relaxed">توقف عن استخدام سبع أدوات منفصلة. تجمع tectop المخزون والتسعير والعملاء المحتملين والتقارير تحت تسجيل دخول واحد، مع بيانات يثق بها مديروك فعلاً.</p>
+      </div>
+
+      <div class="mt-14 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="rounded-2xl border border-slateline p-6 hover:border-brand-500 transition card-shadow bg-white">
+          <div class="w-11 h-11 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>
+          </div>
+          <h3 class="text-lg font-bold">إدارة المخزون</h3>
+          <p class="mt-2 text-ink-700/80 text-sm leading-relaxed">أدخل السيارات من المزادات أو المقايضات أو تجار الجملة. فك تلقائي لرقم الهيكل، صور، حالة التجهيز، ومدة العرض — كلها أمامك بنظرة واحدة.</p>
+        </div>
+
+        <div class="rounded-2xl border border-slateline p-6 hover:border-brand-500 transition card-shadow bg-white">
+          <div class="w-11 h-11 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7h-4V3"/></svg>
+          </div>
+          <h3 class="text-lg font-bold">ذكاء التسعير</h3>
+          <p class="mt-2 text-ink-700/80 text-sm leading-relaxed">مقارنات حية مع السوق، مراقبة للمنافسين، واقتراحات لإعادة التسعير — كل سيارة تُعرض بالسعر الصحيح دون تخمين.</p>
+        </div>
+
+        <div class="rounded-2xl border border-slateline p-6 hover:border-brand-500 transition card-shadow bg-white">
+          <div class="w-11 h-11 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18v14H3z"/><path d="M3 9h18"/><path d="M8 14h5"/></svg>
+          </div>
+          <h3 class="text-lg font-bold">العملاء المحتملون وإدارة العلاقات</h3>
+          <p class="mt-2 text-ink-700/80 text-sm leading-relaxed">استقبل العملاء من كل قناة، وزّعهم على مندوب البيع المناسب، ولا تفوّت متابعة واحدة بفضل التذكيرات والقوالب التلقائية.</p>
+        </div>
+
+        <div class="rounded-2xl border border-slateline p-6 hover:border-brand-500 transition card-shadow bg-white">
+          <div class="w-11 h-11 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-5">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></svg>
+          </div>
+          <h3 class="text-lg font-bold">التقارير والتحليلات</h3>
+          <p class="mt-2 text-ink-700/80 text-sm leading-relaxed">الأرباح، معدل الدوران، المخزون الراكد، عائد كل مصدر — لوحات مصممة للمديرين، لا للمحللين. ملخص أسبوعي يصلك على بريدك.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="py-20 md:py-28 bg-ink-900 text-white relative overflow-hidden">
+    <div class="absolute inset-0 hero-grid opacity-25"></div>
+    <div class="relative max-w-7xl mx-auto px-6">
+      <div class="max-w-2xl">
+        <div class="text-sm font-semibold text-brand-500 uppercase tracking-wider">كيف تعمل</div>
+        <h2 class="mt-2 text-3xl md:text-5xl font-bold tracking-tight leading-tight">جاهز للعمل على tectop خلال أقل من 14 يوماً.</h2>
+        <p class="mt-5 text-lg text-white/75 leading-relaxed">نحن نتولى المهام الصعبة — نقل البيانات، ربط نظام إدارة المعرض، تدريب الفريق — حتى يبدأ معرضك بسرعة.</p>
+      </div>
+
+      <div class="mt-14 grid md:grid-cols-3 gap-6">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <div class="text-brand-500 text-sm font-bold">01</div>
+          <h3 class="mt-2 text-xl font-bold">اربط بياناتك</h3>
+          <p class="mt-2 text-white/70 text-sm leading-relaxed">نتكامل مع نظام إدارة معرضك، ومنصات الإعلانات، ومصادر العملاء. دون الحاجة إلى تغيير أنظمتك الحالية.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <div class="text-brand-500 text-sm font-bold">02</div>
+          <h3 class="mt-2 text-xl font-bold">درّب فريقك</h3>
+          <p class="mt-2 text-white/70 text-sm leading-relaxed">تدريب مخصص حسب الدور للمديرين ومشرفي المبيعات وفريق المتابعة. معظم الفرق جاهزة خلال أسبوع واحد.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6">
+          <div class="text-brand-500 text-sm font-bold">03</div>
+          <h3 class="mt-2 text-xl font-bold">بع أكثر وأسرع</h3>
+          <p class="mt-2 text-white/70 text-sm leading-relaxed">تسعير أدق، متابعة أسرع، تقارير أنظف. يلاحظ الوكلاء تحسناً واضحاً خلال أول شهر.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS / STATS -->
+  <section id="results" class="py-20 md:py-28">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="text-sm font-semibold text-brand-600 uppercase tracking-wider">الأرقام</div>
+          <h2 class="mt-2 text-3xl md:text-5xl font-bold tracking-tight leading-tight">مبنية لتحريك المؤشرات التي تهم المديرين.</h2>
+          <p class="mt-5 text-lg text-ink-700/80 leading-relaxed">يرى عملاء tectop تحسناً ثابتاً في سرعة البيع، وهامش الربح، وزمن الاستجابة للعملاء — المؤشرات التي تصنع الفرق الحقيقي داخل المعرض.</p>
+          <a href="#demo" class="mt-6 inline-flex items-center gap-2 rounded-lg bg-ink-900 hover:bg-ink-800 text-white font-semibold px-5 py-3">
+            احصل على دراسة الحالة كاملة
+            <svg class="w-4 h-4 rtl-flip" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 5l6 5-6 5"/></svg>
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-slateline p-6 card-shadow">
+            <div class="text-4xl font-extrabold text-ink-900">−31%</div>
+            <div class="mt-2 text-sm text-ink-700/70">متوسط أيام العرض</div>
+          </div>
+          <div class="rounded-2xl border border-slateline p-6 card-shadow">
+            <div class="text-4xl font-extrabold text-ink-900">+2,300 ر.س</div>
+            <div class="mt-2 text-sm text-ink-700/70">هامش الربح لكل سيارة</div>
+          </div>
+          <div class="rounded-2xl border border-slateline p-6 card-shadow">
+            <div class="text-4xl font-extrabold text-ink-900">4.2×</div>
+            <div class="mt-2 text-sm text-ink-700/70">سرعة الرد على العملاء</div>
+          </div>
+          <div class="rounded-2xl border border-slateline p-6 card-shadow">
+            <div class="text-4xl font-extrabold text-ink-900">12 يوماً</div>
+            <div class="mt-2 text-sm text-ink-700/70">متوسط مدة التشغيل</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIAL -->
+  <section class="py-16 bg-brand-50/50 border-y border-slateline">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+      <svg class="w-10 h-10 mx-auto text-brand-600" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h4v4H7c0 2 1 3 3 3v2c-4 0-6-2-6-6V7zm9 0h4v4h-4c0 2 1 3 3 3v2c-4 0-6-2-6-6V7z"/></svg>
+      <blockquote class="mt-6 text-2xl md:text-3xl font-semibold leading-snug text-ink-900">
+        "قلّلنا أيام العرض بنحو الثلث خلال الربع الأول. هذه أول أداة يفتحها مشرفو المبيعات عندنا من تلقاء أنفسهم."
+      </blockquote>
+      <div class="mt-6 text-sm text-ink-700/70">
+        <span class="font-semibold text-ink-900">خالد العتيبي</span> — المدير العام، المرسى موتورز
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing" class="py-20 md:py-28">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="max-w-2xl mx-auto text-center">
+        <div class="text-sm font-semibold text-brand-600 uppercase tracking-wider">الأسعار</div>
+        <h2 class="mt-2 text-3xl md:text-5xl font-bold tracking-tight leading-tight">باقات بسيطة تنمو مع معرضك.</h2>
+        <p class="mt-5 text-lg text-ink-700/80 leading-relaxed">ابدأ بما تحتاجه. وأضف الميزات مع توسّعك.</p>
+      </div>
+
+      <div class="mt-14 grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div class="rounded-2xl border border-slateline p-8 bg-white card-shadow">
+          <div class="text-sm font-semibold text-ink-700/70">المبتدئ</div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-extrabold">1,899 ر.س</span>
+            <span class="text-ink-700/60">/ شهرياً</span>
+          </div>
+          <p class="mt-2 text-sm text-ink-700/70">للمعارض الفردية المستقلة.</p>
+          <ul class="mt-6 space-y-3 text-sm">
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> حتى 150 سيارة</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> المخزون + التسعير</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> تقارير أساسية</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> دعم عبر البريد</li>
+          </ul>
+          <a href="#demo" class="mt-8 block text-center rounded-lg border border-ink-900 font-semibold py-3 hover:bg-ink-900 hover:text-white transition">ابدأ بالمبتدئ</a>
+        </div>
+
+        <div class="rounded-2xl border-2 border-brand-600 p-8 bg-white card-shadow relative">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-600 text-white text-xs font-semibold px-3 py-1 rounded-full">الأكثر طلباً</span>
+          <div class="text-sm font-semibold text-brand-600">النمو</div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-extrabold">4,899 ر.س</span>
+            <span class="text-ink-700/60">/ شهرياً</span>
+          </div>
+          <p class="mt-2 text-sm text-ink-700/70">للمعارض النامية والمجموعات الصغيرة.</p>
+          <ul class="mt-6 space-y-3 text-sm">
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> عدد غير محدود من السيارات</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> كل ميزات المبتدئ</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> العملاء المحتملون وإدارة العلاقات</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> تكامل مع أنظمة المعارض</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> دعم ذو أولوية</li>
+          </ul>
+          <a href="#demo" class="mt-8 block text-center rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3">اختر النمو</a>
+        </div>
+
+        <div class="rounded-2xl border border-slateline p-8 bg-white card-shadow">
+          <div class="text-sm font-semibold text-ink-700/70">المؤسسات</div>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="text-4xl font-extrabold">مخصص</span>
+          </div>
+          <p class="mt-2 text-sm text-ink-700/70">لمجموعات المعارض والوكالات الكبرى.</p>
+          <ul class="mt-6 space-y-3 text-sm">
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> تقارير موحّدة لعدة فروع</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> تسجيل دخول موحّد وتقارير أمان</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> مدير حساب مخصص</li>
+            <li class="flex gap-2"><span class="text-brand-600">✓</span> تكاملات حسب الطلب</li>
+          </ul>
+          <a href="#demo" class="mt-8 block text-center rounded-lg border border-ink-900 font-semibold py-3 hover:bg-ink-900 hover:text-white transition">تحدث مع المبيعات</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO FORM -->
+  <section id="demo" class="py-20 md:py-28 bg-ink-900 text-white relative overflow-hidden">
+    <div class="absolute inset-0 hero-grid opacity-25"></div>
+    <div class="relative max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <div class="text-sm font-semibold text-brand-500 uppercase tracking-wider">احجز عرضاً</div>
+        <h2 class="mt-2 text-3xl md:text-5xl font-bold tracking-tight leading-tight">شاهد tectop على بيانات معرضك.</h2>
+        <p class="mt-5 text-lg text-white/75 leading-relaxed">احجز جولة لمدة 30 دقيقة. سنربط مخزونك ونريك بالضبط ما سيتغير في أول 30 يوماً.</p>
+        <ul class="mt-8 space-y-3 text-white/85">
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> عرض مباشر، بدون عروض تقديمية</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> سعر مخصص لمعرضك</li>
+          <li class="flex gap-3"><span class="text-emerald-400">✓</span> بدون ضغط وبدون مبيعات مزعجة</li>
+        </ul>
+      </div>
+
+      <form class="bg-white text-ink-900 rounded-2xl p-6 md:p-8 card-shadow"
+            action="mailto:ama89999@gmail.com"
+            method="post"
+            enctype="text/plain">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold mb-1" for="name">الاسم الكامل</label>
+            <input required name="name" id="name" type="text" class="w-full rounded-lg border border-slateline px-3 py-2 focus:outline-none focus:border-brand-600" placeholder="أحمد العلي"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1" for="dealership">اسم المعرض</label>
+            <input required name="dealership" id="dealership" type="text" class="w-full rounded-lg border border-slateline px-3 py-2 focus:outline-none focus:border-brand-600" placeholder="معرض الرياض للسيارات"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1" for="email">البريد الإلكتروني</label>
+            <input required name="email" id="email" type="email" class="w-full rounded-lg border border-slateline px-3 py-2 focus:outline-none focus:border-brand-600" placeholder="you@dealership.com" dir="ltr"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1" for="phone">رقم الجوال</label>
+            <input name="phone" id="phone" type="tel" class="w-full rounded-lg border border-slateline px-3 py-2 focus:outline-none focus:border-brand-600" placeholder="+966 5X XXX XXXX" dir="ltr"/>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold mb-1" for="size">حجم المعرض</label>
+            <select name="size" id="size" class="w-full rounded-lg border border-slateline px-3 py-2 bg-white focus:outline-none focus:border-brand-600">
+              <option>أقل من 100 سيارة / شهر</option>
+              <option>100 – 250 سيارة / شهر</option>
+              <option>250 – 500 سيارة / شهر</option>
+              <option>أكثر من 500 سيارة / شهر</option>
+              <option>مجموعة معارض / عدة فروع</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold mb-1" for="notes">ما الذي تبحث عن حله؟</label>
+            <textarea name="notes" id="notes" rows="3" class="w-full rounded-lg border border-slateline px-3 py-2 focus:outline-none focus:border-brand-600" placeholder="مثال: الأسعار غير منضبطة، مخزون راكد، متابعة العملاء..."></textarea>
+          </div>
+        </div>
+        <button type="submit" class="mt-5 w-full rounded-lg bg-ink-900 hover:bg-ink-800 text-white font-semibold py-3">
+          أرسل طلب العرض
+        </button>
+        <p class="mt-3 text-xs text-ink-700/60 text-center">بإرسالك للطلب، فإنك توافق على سياسة الخصوصية. سنتواصل معك خلال يوم عمل واحد.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-20 md:py-28">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-sm font-semibold text-brand-600 uppercase tracking-wider text-center">الأسئلة الشائعة</div>
+      <h2 class="mt-2 text-3xl md:text-5xl font-bold tracking-tight text-center leading-tight">أسئلة يطرحها الوكلاء عادةً</h2>
+
+      <div class="mt-12 divide-y divide-slateline border-y border-slateline">
+        <details class="group py-5">
+          <summary class="flex justify-between items-center cursor-pointer font-semibold">
+            هل عليّ استبدال نظام إدارة المعرض الحالي؟
+            <span class="text-brand-600 group-open:rotate-45 transition">+</span>
+          </summary>
+          <p class="mt-3 text-ink-700/80 leading-relaxed">لا. تعمل tectop فوق نظام إدارة معرضك وتتكامل مع أبرز الأنظمة. لن يتغير شيء في مكتبك الإداري.</p>
+        </details>
+        <details class="group py-5">
+          <summary class="flex justify-between items-center cursor-pointer font-semibold">
+            كم يستغرق التشغيل؟
+            <span class="text-brand-600 group-open:rotate-45 transition">+</span>
+          </summary>
+          <p class="mt-3 text-ink-700/80 leading-relaxed">معظم المعارض الفردية تعمل خلال 7 إلى 14 يوماً. مجموعات المعارض الكبيرة تحتاج عادةً من 3 إلى 6 أسابيع حسب التكاملات.</p>
+        </details>
+        <details class="group py-5">
+          <summary class="flex justify-between items-center cursor-pointer font-semibold">
+            هل بياناتي آمنة؟
+            <span class="text-brand-600 group-open:rotate-45 transition">+</span>
+          </summary>
+          <p class="mt-3 text-ink-700/80 leading-relaxed">نعم. tectop مبنية على بنية تحتية بمعايير المؤسسات، مع تشفير أثناء النقل والتخزين. نحن متوافقون مع ضوابط SOC 2 ويمكننا تزويدك بمستندات الأمان عند الطلب.</p>
+        </details>
+        <details class="group py-5">
+          <summary class="flex justify-between items-center cursor-pointer font-semibold">
+            هل يمكنني تجربتها قبل الاشتراك؟
+            <span class="text-brand-600 group-open:rotate-45 transition">+</span>
+          </summary>
+          <p class="mt-3 text-ink-700/80 leading-relaxed">بالطبع. كل عرض توضيحي يشمل جولة مباشرة على بياناتك، ونوفّر فترة تجريبية بدون التزام للمعارض المؤهّلة.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-ink-900 text-white/70">
+    <div class="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-10">
+      <div class="md:col-span-2">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white text-ink-900 font-bold">t</span>
+          <span class="font-bold text-lg text-white">tectop</span>
+        </div>
+        <p class="mt-4 text-sm max-w-sm leading-relaxed">المنصة المتكاملة لوكلاء السيارات الحديثين. المخزون والتسعير والعملاء والتقارير — في مكان واحد.</p>
+      </div>
+      <div>
+        <div class="text-white font-semibold mb-3 text-sm">المنتج</div>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#features" class="hover:text-white">المنصة</a></li>
+          <li><a href="#pricing" class="hover:text-white">الأسعار</a></li>
+          <li><a href="#faq" class="hover:text-white">الأسئلة الشائعة</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="text-white font-semibold mb-3 text-sm">تواصل معنا</div>
+        <ul class="space-y-2 text-sm">
+          <li><a href="mailto:ama89999@gmail.com" class="hover:text-white" dir="ltr">ama89999@gmail.com</a></li>
+          <li><a href="#demo" class="hover:text-white">اطلب عرضاً توضيحياً</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10">
+      <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row justify-between items-center text-xs">
+        <div>© <span id="yr"></span> tectop. جميع الحقوق محفوظة.</div>
+        <div class="flex gap-6 mt-3 sm:mt-0">
+          <a href="#" class="hover:text-white">الخصوصية</a>
+          <a href="#" class="hover:text-white">الشروط</a>
+          <a href="#" class="hover:text-white">الأمان</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('yr').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

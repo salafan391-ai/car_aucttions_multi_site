@@ -638,6 +638,17 @@ def upload_auction_json(request):
 
         # Pre-fetch all related objects to minimize database queries
         auction_category = safe_get_or_create(Category.objects, name="auction")
+
+        # Collect every unique Arabic option name across the whole feed and
+        # batch-translate it once to en/ru/es. Cached in .translations_cache.json
+        # so repeated uploads don't re-hit the API.
+        from cars.translation_utils import translate_batch
+        unique_option_ar: set[str] = set()
+        for item in data:
+            for name in (item.get("option") or []):
+                if isinstance(name, str) and name.strip():
+                    unique_option_ar.add(name.strip())
+        option_translations = translate_batch(unique_option_ar, ["en", "ru", "es"], source="ar")
         
         # Get all existing car IDs in one query
         existing_car_ids = set(
@@ -775,8 +786,26 @@ def upload_auction_json(request):
    
 
             title = item.get("title") or f"{make_name} {model_name}"
-            
-            
+
+            # Autohub feeds ship a parallel `option` (Arabic names) alongside
+            # `options` (objects with image URLs). Zip them so each stored
+            # option carries its Arabic label plus translations pulled from
+            # the cached Google Translate pass above.
+            raw_options = item.get("options") or []
+            raw_option_ar = item.get("option") or []
+            enriched_options = []
+            for idx, opt in enumerate(raw_options):
+                if isinstance(opt, dict):
+                    opt_copy = dict(opt)
+                    if idx < len(raw_option_ar):
+                        ar_name = (raw_option_ar[idx] or "").strip()
+                        opt_copy["name_ar"] = ar_name
+                        tr = option_translations.get(ar_name, {})
+                        opt_copy["name_en"] = tr.get("en", ar_name)
+                        opt_copy["name_ru"] = tr.get("ru", ar_name)
+                        opt_copy["name_es"] = tr.get("es", ar_name)
+                    enriched_options.append(opt_copy)
+
             car_data = {
                 "car_id": car_id,
                 "title": title[:100],
@@ -803,6 +832,7 @@ def upload_auction_json(request):
                 "entry": item.get("entry") or "",
                 "vin": car_id,
                 "drive_wheel": (item.get("wheel") or "")[:100],
+                "options": enriched_options,
             }
             
             # If we don't have a resolved badge, skip the row to avoid DB constraint errors
@@ -842,10 +872,10 @@ def upload_auction_json(request):
                 if cars_to_bulk_update:
                     ApiCar.objects.bulk_update(
                         cars_to_bulk_update,
-                        ['title', 'image', 'manufacturer', 'category', 'auction_date', 'auction_name', 
-                         'lot_number', 'model', 'year', 'color', 'transmission', 'power', 
-                         'price', 'mileage', 'fuel', 'images', 'inspection_image', 'points', 
-                         'address', 'vin', "seat_count", "entry", "drive_wheel"],
+                        ['title', 'image', 'manufacturer', 'category', 'auction_date', 'auction_name',
+                         'lot_number', 'model', 'year', 'color', 'transmission', 'power',
+                         'price', 'mileage', 'fuel', 'images', 'inspection_image', 'points',
+                         'address', 'vin', "seat_count", "entry", "drive_wheel", "options"],
                         batch_size=500
                     )
                     updated = len(cars_to_bulk_update)

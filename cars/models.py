@@ -174,6 +174,15 @@ class ApiCar(models.Model):
         base = slugify(f"{self.year or ''}-{getattr(self.manufacturer, 'name', '') or ''}-{getattr(self.model, 'name', '') or ''}-{self.pk or ''}")
         return base or f"car-{self.pk}"
 
+    @property
+    def autohub_options(self):
+        if (self.auction_name or '').strip().lower() != 'autohub':
+            return []
+        opts = self.options
+        if not isinstance(opts, list):
+            return []
+        return [o for o in opts if isinstance(o, dict) and o.get('url')]
+
     def save(self, *args, **kwargs):
         self.fuel = normalize_fuel(self.fuel)
         self.transmission = normalize_transmission(self.transmission)
