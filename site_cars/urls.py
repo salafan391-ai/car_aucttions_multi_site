@@ -23,4 +23,6 @@ urlpatterns = [
     path('send-email/', views.send_email_view, name='send_email'),
     path('upload-auction/', views.upload_auction_json, name='upload_auction_json'),
     path('upload-auction/delete-expired/', views.delete_expired_auctions, name='delete_expired_auctions'),
+    path('dashboard/import-happycar/', views.import_happycar_view, name='import_happycar'),
+    path('dashboard/damaged-cars/delete-unsold/', views.delete_unsold_damaged, name='delete_unsold_damaged'),
 ]

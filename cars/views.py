@@ -127,12 +127,17 @@ def landing(request):
     next_auction_day_ar = WEEKDAYS_AR[next_auction.weekday()] if next_auction else None
     next_auction_day_en = WEEKDAYS_EN[next_auction.weekday()] if next_auction else None
 
-    # Get site cars count
+    # Get site cars + damaged cars counts
     try:
         from site_cars.models import SiteCar
-        site_cars_count = SiteCar.objects.filter(status='available').count()
+        site_cars_count = (SiteCar.objects
+                           .exclude(external_id__startswith='hc_')
+                           .filter(status='available').count())
+        damaged_cars_count = (SiteCar.objects
+                              .filter(external_id__startswith='hc_').count())
     except Exception:
         site_cars_count = 0
+        damaged_cars_count = 0
 
     # Resolve landing design template for this tenant
     _design_map = {
@@ -149,8 +154,12 @@ def landing(request):
     landing_design = getattr(connection.tenant, 'landing_design', 'cosmos') or 'cosmos'
     landing_template = _design_map.get(landing_design, 'cars/landing.html')
 
-    # Cache key includes site_cars presence and design so each variant is cached separately
-    html_cache_key = f"landing_html:{schema}:{landing_design}:sc{1 if site_cars_count else 0}"
+    # Cache key includes site_cars + damaged presence and design so each variant caches separately
+    html_cache_key = (
+        f"landing_html:{schema}:{landing_design}"
+        f":sc{1 if site_cars_count else 0}"
+        f":dc{1 if damaged_cars_count else 0}"
+    )
     cached_html = cache.get(html_cache_key)
     if cached_html:
         return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
@@ -162,6 +171,7 @@ def landing(request):
         'next_auction_day_ar': next_auction_day_ar,
         'next_auction_day_en': next_auction_day_en,
         'site_cars_count': site_cars_count,
+        'damaged_cars_count': damaged_cars_count,
         'auction_names': list(
             ApiCar.objects.filter(
                 category__name='auction',
@@ -278,6 +288,7 @@ def home(request):
 
         # Tenant site cars
         site_cars = []
+        damaged_cars_count = 0
         tenant = _get_current_tenant()
         if tenant and tenant.schema_name != 'public':
             from site_cars.models import SiteCar
@@ -288,6 +299,8 @@ def home(request):
                     'transmission',
                 ).prefetch_related('gallery').order_by('-created_at')[:8]
             )
+            damaged_cars_count = (SiteCar.objects
+                                  .filter(external_id__startswith='hc_').count())
 
         # Posts (filtered by tenant)
         posts_qs = Post.objects.filter(is_published=True)
@@ -305,6 +318,7 @@ def home(request):
             'latest_cars': latest_cars,
             'latest_auctions': latest_auctions,
             'site_cars': site_cars,
+            'damaged_cars_count': damaged_cars_count,
             'manufacturers': manufacturers,
             'body_types': body_types,
             'years': years,
@@ -1089,15 +1103,25 @@ def car_list(request):
     count_truck = tab_counts['count_truck']
 
     # Site cars count for the showroom tab — cached 10 min
+    # site_cars_count  = admin-uploaded SiteCars (no external_id)  → "سياراتنا" tab
+    # damaged_cars_count = HappyCar imports (external_id hc_*)     → "سيارات مصدومة" tab
     _site_cars_tab_key = f"car_list_v2:site_cars_count:{schema}"
     site_cars_count = cache.get(_site_cars_tab_key)
-    if site_cars_count is None:
+    _damaged_cars_tab_key = f"car_list_v2:damaged_cars_count:{schema}"
+    damaged_cars_count = cache.get(_damaged_cars_tab_key)
+    if site_cars_count is None or damaged_cars_count is None:
         try:
             from site_cars.models import SiteCar
-            site_cars_count = SiteCar.objects.filter(status='available').count()
+            site_cars_count = (SiteCar.objects
+                               .exclude(external_id__startswith='hc_')
+                               .filter(status='available').count())
+            damaged_cars_count = (SiteCar.objects
+                                  .filter(external_id__startswith='hc_').count())
         except Exception:
             site_cars_count = 0
+            damaged_cars_count = 0
         cache.set(_site_cars_tab_key, site_cars_count, 60 * 10)
+        cache.set(_damaged_cars_tab_key, damaged_cars_count, 60 * 10)
 
     # Popular manufacturers – auction path already set above; non-auction handled here
     if car_type != 'auction':
@@ -1134,6 +1158,7 @@ def car_list(request):
         'count_auction': count_auction,
         'count_truck': count_truck,
         'site_cars_count': site_cars_count,
+        'damaged_cars_count': damaged_cars_count,
         'selected_year_from': request.GET.get('year_from', ''),
         'selected_year_to': request.GET.get('year_to', ''),
         'sel_manufacturers': sel_manufacturers,

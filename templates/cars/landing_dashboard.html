@@ -181,6 +181,7 @@
     .stat-dot-cars    { background: var(--p); }
     .stat-dot-auction { background: #f59e0b; }
     .stat-dot-site    { background: #10b981; }
+    .stat-dot-damaged { background: #ef4444; }
 
     .stat-num {
       font-size: 1.6rem;
@@ -233,6 +234,11 @@
 
     .btn-site {
       background: #10b981;
+      color: #fff;
+    }
+
+    .btn-damaged {
+      background: #ef4444;
       color: #fff;
     }
 
@@ -342,6 +348,16 @@
       </div>
       {% endif %}
 
+      {% if damaged_cars_count %}
+      <div class="stat-card">
+        <span class="stat-dot stat-dot-damaged"></span>
+        <div>
+          <div class="stat-num" data-target="{{ damaged_cars_count }}">0</div>
+          <div class="stat-lbl">سيارات مصدومة</div>
+        </div>
+      </div>
+      {% endif %}
+
     </div>
 
     <!-- Action buttons -->
@@ -371,6 +387,15 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 21V12h6v9"/>
         </svg>
         البيع المباشر
+      </a>
+      {% endif %}
+
+      {% if damaged_cars_count %}
+      <a href="{% url 'site_car_list' %}?source=auctions" class="btn btn-damaged">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.73 4a2 2 0 00-3.46 0L3.33 16a2 2 0 001.74 3z"/>
+        </svg>
+        سيارات مصدومة
       </a>
       {% endif %}
 

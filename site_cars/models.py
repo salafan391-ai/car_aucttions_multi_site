@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 from cars.models import ApiCar
+from cars.normalization import (
+    normalize_name, normalize_fuel, normalize_transmission,
+)
 from site_cars.image_utils import optimize_image
 
 
@@ -28,6 +31,47 @@ class SiteCar(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name="الحالة")
     is_featured = models.BooleanField(default=False, verbose_name="مميزة")
     inspection_image = models.ImageField(upload_to='site_cars/inspections/', blank=True, null=True, verbose_name="صورة الفحص")
+    # Extra specs surfaced on the source listing (HappyCar) that weren't
+    # captured by the earlier importer. Freeform; safe for admin-created rows.
+    trim = models.CharField(max_length=100, blank=True, default='', verbose_name="الطراز")
+    engine_cc = models.IntegerField(null=True, blank=True, verbose_name="حجم المحرك (سي سي)")
+    month = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name="شهر الصنع")
+    location = models.CharField(max_length=200, blank=True, default='', verbose_name="موقع التخزين")
+    registration_no = models.CharField(
+        max_length=50, blank=True, default='', db_index=True,
+        verbose_name="رقم التسجيل",
+    )
+    source_url = models.URLField(
+        max_length=500, blank=True, default='',
+        verbose_name="رابط الإعلان المصدر",
+    )
+    auction_end = models.DateTimeField(null=True, blank=True, verbose_name="نهاية المزاد")
+    source_status = models.CharField(
+        max_length=20, blank=True, default='', db_index=True,
+        verbose_name="حالة المصدر",
+        help_text="رمز الحالة الأصلي من المصدر (مثال: 폐차 / 구제 / 부품).",
+    )
+    claims_count = models.PositiveSmallIntegerField(
+        default=0, db_index=True,
+        verbose_name="عدد الحوادث",
+        help_text="إجمالي مطالبات التأمين (الذاتية + الطرف الآخر).",
+    )
+    insurance_history = models.JSONField(
+        null=True, blank=True,
+        verbose_name="سجل التأمين",
+        help_text="البيانات الخام: plate_changes / owner_changes / own_damage / opposing_damage.",
+    )
+    # External-source identifiers (e.g. HappyCar imports). Null for admin-created rows.
+    external_id = models.CharField(
+        max_length=50, null=True, blank=True, unique=True, db_index=True,
+        verbose_name="المعرف الخارجي",
+        help_text="مفتاح استيراد خارجي — مثال: hc_896409",
+    )
+    external_image_url = models.URLField(
+        max_length=500, null=True, blank=True,
+        verbose_name="رابط الصورة الخارجي",
+        help_text="يستخدم بدل رفع الصورة عند استيراد السيارة من مصدر خارجي",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -40,6 +84,16 @@ class SiteCar(models.Model):
         return f"{self.manufacturer} {self.model} {self.year}"
 
     def save(self, *args, **kwargs):
+        # Normalize enum-ish fields to lowercase so they line up with the
+        # translation dicts in cars.utils (fuel_types_dict, car_models_dict,
+        # transmission_types_dict, etc.) and the |pretty_en / |translate_*
+        # filters used in templates.
+        self.manufacturer = normalize_name(self.manufacturer) or ''
+        self.model = normalize_name(self.model) or ''
+        self.fuel = normalize_fuel(self.fuel) if self.fuel else self.fuel
+        self.transmission = normalize_transmission(self.transmission) if self.transmission else self.transmission
+        self.body_type = normalize_name(self.body_type) if self.body_type else self.body_type
+        self.color = normalize_name(self.color) if self.color else self.color
         if self.image and getattr(self.image, '_file', None) is not None:
             self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)
         if self.inspection_image and getattr(self.inspection_image, '_file', None) is not None:

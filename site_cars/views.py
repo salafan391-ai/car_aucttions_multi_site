@@ -1,6 +1,15 @@
+import os
+import subprocess
+import sys
+import tempfile
+import time
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Avg, Sum, Count, Q
 from django.http import Http404
@@ -72,33 +81,128 @@ def dashboard(request):
 def site_car_list(request):
     if _is_public_schema():
         return redirect('home')
-    
-    # By default, exclude sold cars
+
+    # Primary tab — "mine" (admin-uploaded) vs. "auctions" (imported cars
+    # whose external_id starts with 'hc_' e.g. from HappyCar).
+    source = request.GET.get('source', 'mine')  # 'mine' | 'auctions'
+    external_qs = SiteCar.objects.filter(external_id__startswith='hc_')
+    if source == 'auctions':
+        base_qs = external_qs
+    else:
+        base_qs = SiteCar.objects.exclude(external_id__startswith='hc_')
+        source = 'mine'
+
+    # Secondary tab (within the selected source): active / sold / all
     status = request.GET.get('status', 'active')
     if status == 'sold':
-        qs = SiteCar.objects.filter(status='sold')
+        qs = base_qs.filter(status='sold')
     elif status == 'all':
-        qs = SiteCar.objects.all()
+        qs = base_qs
     else:
-        qs = SiteCar.objects.exclude(status='sold')
+        qs = base_qs.exclude(status='sold')
 
+    # ---- Filters ----
     q = request.GET.get('q', '').strip()
     if q:
-        qs = qs.filter(title__icontains=q)
+        qs = qs.filter(
+            Q(title__icontains=q) | Q(manufacturer__icontains=q)
+            | Q(model__icontains=q) | Q(external_id__icontains=q)
+        )
+
+    def _pick(param):
+        v = (request.GET.get(param) or '').strip()
+        return v or None
+
+    def _int(param):
+        try:
+            return int(request.GET.get(param) or '')
+        except (TypeError, ValueError):
+            return None
+
+    if v := _pick('make'):
+        qs = qs.filter(manufacturer__iexact=v)
+    if v := _pick('fuel'):
+        qs = qs.filter(fuel__iexact=v)
+    if v := _pick('transmission'):
+        qs = qs.filter(transmission__iexact=v)
+    if (v := _int('year_min')) is not None:
+        qs = qs.filter(year__gte=v)
+    if (v := _int('year_max')) is not None:
+        qs = qs.filter(year__lte=v)
+    if (v := _int('price_min')) is not None:
+        qs = qs.filter(price__gte=v)
+    if (v := _int('price_max')) is not None:
+        qs = qs.filter(price__lte=v)
+    if (v := _int('km_max')) is not None:
+        qs = qs.filter(mileage__lte=v)
 
     sort = request.GET.get('sort', '-created_at')
-    allowed_sorts = ['-created_at', 'price', '-price', '-year', 'mileage']
+    allowed_sorts = [
+        '-created_at', 'price', '-price', '-year', 'year',
+        'mileage', '-mileage', 'manufacturer',
+    ]
     if sort in allowed_sorts:
         qs = qs.order_by(sort)
 
-    sold_count = SiteCar.objects.filter(status='sold').count()
-    active_count = SiteCar.objects.exclude(status='sold').count()
+    # ---- Counts (for the top tabs; unaffected by filters below) ----
+    sold_count = base_qs.filter(status='sold').count()
+    active_count = base_qs.exclude(status='sold').count()
+    auctions_total = external_qs.count()
+    mine_total = SiteCar.objects.exclude(external_id__startswith='hc_').count()
+
+    # ---- Dropdown options (scoped to the active source, not the filters
+    # so users can always see the full list of available values) ----
+    makes = (base_qs.exclude(manufacturer__exact='')
+                     .values_list('manufacturer', flat=True)
+                     .distinct().order_by('manufacturer'))
+    fuels = (base_qs.exclude(fuel__isnull=True).exclude(fuel__exact='')
+                     .values_list('fuel', flat=True)
+                     .distinct().order_by('fuel'))
+    transmissions = (base_qs.exclude(transmission__isnull=True)
+                            .exclude(transmission__exact='')
+                            .values_list('transmission', flat=True)
+                            .distinct().order_by('transmission'))
+
+    # ---- Pagination ----
+    try:
+        per_page = min(max(int(request.GET.get('per_page', 24) or 24), 6), 96)
+    except ValueError:
+        per_page = 24
+    paginator = Paginator(qs, per_page)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # Build a querystring base for pager links (preserves filters, drops `page`)
+    from urllib.parse import urlencode
+    qs_params = {k: v for k, v in request.GET.items() if k != 'page' and v}
+    qs_base = urlencode(qs_params)
 
     context = {
-        'site_cars': qs,
+        'site_cars': page_obj.object_list,
+        'page_obj': page_obj,
+        'paginator': paginator,
+        'qs_base': qs_base,
+        'per_page': per_page,
         'sold_count': sold_count,
         'active_count': active_count,
         'current_status': status,
+        'current_source': source,
+        'auctions_total': auctions_total,
+        'mine_total': mine_total,
+        'is_auctions_tab': source == 'auctions',
+        # filter UI state
+        'filter_q': q,
+        'filter_make': request.GET.get('make', ''),
+        'filter_fuel': request.GET.get('fuel', ''),
+        'filter_transmission': request.GET.get('transmission', ''),
+        'filter_year_min': request.GET.get('year_min', ''),
+        'filter_year_max': request.GET.get('year_max', ''),
+        'filter_price_min': request.GET.get('price_min', ''),
+        'filter_price_max': request.GET.get('price_max', ''),
+        'filter_km_max': request.GET.get('km_max', ''),
+        'current_sort': sort,
+        'makes': list(makes),
+        'fuels': list(fuels),
+        'transmissions': list(transmissions),
     }
     return render(request, 'site_cars/site_car_list.html', context)
 
@@ -906,3 +1010,147 @@ def upload_auction_json(request):
     # GET — show recent auction cars
     recent_auctions = ApiCar.objects.filter(category__name='auction').order_by('-created_at')[:20]
     return render(request, 'site_cars/upload_auction_json.html', {'recent_auctions': recent_auctions})
+
+
+@staff_member_required
+def import_happycar_view(request):
+    """Kick off `manage.py import_happycar` for the current tenant as a
+    detached subprocess so the web request returns immediately. A single run
+    per schema is tracked via the cache (`happycar_import:<schema>`); the
+    subprocess's stdout/stderr stream into a /tmp log that this view tails.
+    """
+    if _is_public_schema():
+        messages.error(request, "لا يمكن الاستيراد في مخطط 'public'.")
+        return redirect('site_dashboard')
+
+    schema = connection.schema_name
+    cache_key = f"happycar_import:{schema}"
+    state = cache.get(cache_key) or {}
+
+    # Detect stale state (process exited or host rebooted).
+    def _pid_alive(pid):
+        if not pid:
+            return False
+        try:
+            os.kill(pid, 0)
+            return True
+        except (ProcessLookupError, PermissionError):
+            return False
+
+    running = _pid_alive(state.get('pid'))
+    if state and not running:
+        # Process finished — clear state so the form re-appears on next GET,
+        # but keep the final log visible for this one render.
+        cache.delete(cache_key)
+
+    if request.method == 'POST':
+        if running:
+            messages.info(request, "استيراد جارٍ بالفعل، الرجاء الانتظار حتى ينتهي.")
+            return redirect('import_happycar')
+
+        cookie = (request.POST.get('cookie') or '').strip()
+        lang = request.POST.get('lang') or 'ar'
+        if lang not in ('ar', 'en', 'ko'):
+            lang = 'ar'
+
+        cmd = [
+            sys.executable, 'manage.py', 'import_happycar',
+            '--schema', schema, '--lang', lang,
+        ]
+        pages_raw = (request.POST.get('pages') or '').strip()
+        if pages_raw:
+            try:
+                cmd += ['--pages', str(int(pages_raw))]
+            except ValueError:
+                pass
+        if request.POST.get('with_gallery'):
+            cmd.append('--with-gallery')
+        if request.POST.get('download_images'):
+            cmd.append('--download-images')
+        if request.POST.get('delete_missing'):
+            cmd.append('--delete-missing')
+        if request.POST.get('dry_run'):
+            cmd.append('--dry-run')
+
+        env = os.environ.copy()
+        if cookie:
+            env['HAPPYCAR_COOKIE'] = cookie
+
+        log_fd, log_path = tempfile.mkstemp(
+            prefix=f'happycar-{schema}-', suffix='.log')
+        try:
+            proc = subprocess.Popen(
+                cmd,
+                cwd=str(settings.BASE_DIR),
+                stdout=log_fd, stderr=subprocess.STDOUT,
+                env=env,
+                start_new_session=True,
+                close_fds=True,
+            )
+        finally:
+            os.close(log_fd)
+
+        cache.set(cache_key, {
+            'pid': proc.pid,
+            'log_path': log_path,
+            'started_at': time.time(),
+            'cmd': ' '.join(cmd),
+        }, 60 * 60 * 6)
+
+        messages.success(request, "بدأ الاستيراد في الخلفية.")
+        return redirect('import_happycar')
+
+    # GET — render form + log tail
+    log_output = ''
+    if state.get('log_path') and os.path.exists(state['log_path']):
+        try:
+            with open(state['log_path'], 'rb') as f:
+                data = f.read()
+            log_output = data[-8000:].decode('utf-8', errors='replace')
+        except OSError:
+            pass
+
+    elapsed = None
+    if state.get('started_at'):
+        elapsed = int(time.time() - state['started_at'])
+
+    unsold_damaged_count = (SiteCar.objects
+                            .filter(external_id__startswith='hc_')
+                            .exclude(status='sold').count())
+
+    return render(request, 'site_cars/import_happycar.html', {
+        'schema': schema,
+        'running': running,
+        'elapsed': elapsed,
+        'log_output': log_output,
+        'cmd_preview': state.get('cmd', ''),
+        'unsold_damaged_count': unsold_damaged_count,
+    })
+
+
+@staff_member_required
+@require_POST
+def delete_unsold_damaged(request):
+    """Bulk-delete damaged (HappyCar-imported) SiteCars whose status is not
+    'sold'. Cascades to SiteCarImage via FK; no other related models point
+    at SiteCar, so this is a clean wipe of non-sold stock.
+    """
+    if _is_public_schema():
+        messages.error(request, "غير متاح في مخطط 'public'.")
+        return redirect('site_dashboard')
+
+    qs = SiteCar.objects.filter(external_id__startswith='hc_').exclude(status='sold')
+    count = qs.count()
+    if count == 0:
+        messages.info(request, "لا توجد سيارات مصدومة غير مباعة للحذف.")
+    else:
+        qs.delete()
+        # Invalidate the damaged-cars tab + landing caches so the UI reflects
+        # the deletion immediately instead of after TTL.
+        schema = connection.schema_name
+        cache.delete(f"car_list_v2:damaged_cars_count:{schema}")
+        # Landing cache keys include the design, so be conservative — just
+        # pattern-delete any landing entry for this schema.
+        # (Django's core cache doesn't support pattern delete; rely on TTL.)
+        messages.success(request, f"تم حذف {count} سيارة مصدومة غير مباعة.")
+    return redirect('import_happycar')
