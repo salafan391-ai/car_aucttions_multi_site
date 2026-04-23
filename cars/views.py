@@ -688,7 +688,7 @@ def car_list(request):
             json.dumps(_params, sort_keys=True).encode()
         ).hexdigest()
         _variant = 'htmx' if getattr(request, 'htmx', False) else 'full'
-        cache_key = f"car_list_v2:{schema}:{_variant}:{_params_hash}"
+        cache_key = f"car_list_v3:{schema}:{_variant}:{_params_hash}"
         cached_html = cache.get(cache_key)
         if cached_html:
             return HttpResponse(cached_html)
@@ -699,7 +699,7 @@ def car_list(request):
         ).only(
             'id', 'title', 'slug', 'image', 'images', 'price', 'year', 'mileage',
             'status', 'lot_number', 'vin', 'fuel', 'transmission', 'address',
-            'auction_date', 'auction_name', 'condition', 'created_at',
+            'auction_date', 'auction_name', 'condition', 'created_at', 'is_new',
             'manufacturer__id', 'manufacturer__name', 'manufacturer__name_ar',
             'manufacturer__logo',
             'model__id', 'model__name', 'model__name_ar',

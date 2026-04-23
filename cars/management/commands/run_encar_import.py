@@ -7,6 +7,7 @@ import requests
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.db import connection
+from django.utils import timezone
 
 from cars.models import ApiCar
 
@@ -99,7 +100,13 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Deleted {total_deleted:,} stale cars."))
 
-        # ── Step 3: Import fresh data ─────────────────────────────────────────
+        # ── Step 3: Clear previous is_new flags before importing ──────────────
+        cleared = ApiCar.objects.filter(is_new=True).update(is_new=False)
+        self.stdout.write(f"Cleared is_new flag on {cleared:,} cars from previous import.")
+
+        import_started_at = timezone.now()
+
+        # ── Step 4: Import fresh data ─────────────────────────────────────────
         self.stdout.write("Starting import...")
         call_command(
             "import_encar_fast",
@@ -108,3 +115,7 @@ class Command(BaseCommand):
             progress=True,
             progress_every=5000,
         )
+
+        # ── Step 5: Mark freshly imported cars as new ─────────────────────────
+        marked = ApiCar.objects.filter(created_at__gte=import_started_at).update(is_new=True)
+        self.stdout.write(self.style.SUCCESS(f"Marked {marked:,} newly imported cars as new."))

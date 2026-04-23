@@ -139,6 +139,7 @@ class ApiCar(models.Model):
     images = models.JSONField(blank=True,null=True)
     is_special = models.BooleanField(default=False, db_index=True)
     is_luxury = models.BooleanField(default=False, db_index=True)
+    is_new = models.BooleanField(default=False, db_index=True)
     inspection_image = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', db_index=True)
     address = models.CharField(max_length=255,blank=True,null=True)
