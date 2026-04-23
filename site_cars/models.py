@@ -150,10 +150,15 @@ class SiteOrder(models.Model):
 
 
 class SiteBill(models.Model):
-    order = models.ForeignKey(SiteOrder, on_delete=models.CASCADE, related_name='bills', verbose_name="الطلب")
+    order = models.ForeignKey(SiteOrder, on_delete=models.CASCADE, related_name='bills', null=True, blank=True, verbose_name="الطلب")
+    site_car = models.ForeignKey(SiteCar, on_delete=models.SET_NULL, related_name='bills', null=True, blank=True, verbose_name="السيارة")
     price = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="المبلغ")
-    receipt_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="رقم الإيصال")
+    receipt_number = models.CharField(max_length=100, blank=True, null=True, db_index=True, verbose_name="رقم الإيصال")
     description = models.CharField(max_length=255, blank=True, verbose_name="الوصف")
+    buyer_name = models.CharField(max_length=200, blank=True, default='', verbose_name="اسم المشتري")
+    buyer_id_number = models.CharField(max_length=50, blank=True, default='', verbose_name="رقم الهوية")
+    buyer_phone = models.CharField(max_length=50, blank=True, default='', verbose_name="جوال المشتري")
+    buyer_address = models.CharField(max_length=255, blank=True, default='', verbose_name="عنوان المشتري")
     date = models.DateField(verbose_name="التاريخ")
     is_paid = models.BooleanField(default=False, verbose_name="مدفوعة")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -164,7 +169,52 @@ class SiteBill(models.Model):
         verbose_name_plural = "الفواتير"
 
     def __str__(self):
-        return f"فاتورة {self.receipt_number or self.pk} - {self.order}"
+        return f"فاتورة {self.receipt_number or self.pk}"
+
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            super().save(*args, **kwargs)
+            self.receipt_number = f"INV-{self.date.strftime('%Y%m%d')}-{self.pk:05d}"
+            type(self).objects.filter(pk=self.pk).update(receipt_number=self.receipt_number)
+            return
+        super().save(*args, **kwargs)
+
+
+class SiteShipment(models.Model):
+    STATUS_CHOICES = [
+        ('preparing', 'قيد التجهيز'),
+        ('loaded', 'تم التحميل'),
+        ('in_transit', 'قيد الشحن'),
+        ('arrived', 'وصلت الميناء'),
+        ('delivered', 'تم التسليم'),
+        ('cancelled', 'ملغي'),
+    ]
+
+    bill = models.OneToOneField(SiteBill, on_delete=models.CASCADE, related_name='shipment', verbose_name="الفاتورة")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='preparing', db_index=True, verbose_name="الحالة")
+    shipping_company = models.CharField(max_length=150, blank=True, default='', verbose_name="شركة الشحن")
+    vessel_name = models.CharField(max_length=150, blank=True, default='', verbose_name="اسم السفينة")
+    container_number = models.CharField(max_length=50, blank=True, default='', db_index=True, verbose_name="رقم الحاوية")
+    bill_of_lading = models.CharField(max_length=100, blank=True, default='', db_index=True, verbose_name="بوليصة الشحن")
+    origin_port = models.CharField(max_length=150, blank=True, default='', verbose_name="ميناء الشحن")
+    destination_port = models.CharField(max_length=150, blank=True, default='', verbose_name="ميناء الوصول")
+    destination_country = models.CharField(max_length=100, blank=True, default='', verbose_name="دولة الوصول")
+    etd = models.DateField(null=True, blank=True, verbose_name="تاريخ المغادرة المتوقع")
+    eta = models.DateField(null=True, blank=True, verbose_name="تاريخ الوصول المتوقع")
+    delivered_at = models.DateField(null=True, blank=True, verbose_name="تاريخ التسليم")
+    shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="تكلفة الشحن")
+    tracking_url = models.URLField(max_length=500, blank=True, default='', verbose_name="رابط التتبع")
+    notes = models.TextField(blank=True, default='', verbose_name="ملاحظات")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "شحنة"
+        verbose_name_plural = "الشحنات"
+
+    def __str__(self):
+        return f"شحنة {self.bill.receipt_number} ({self.get_status_display()})"
 
 
 class SiteRating(models.Model):

@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
-from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
+from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
 from .image_utils import optimize_image, batch_optimize_images
 
 
@@ -253,8 +253,8 @@ def site_car_add(request):
         messages.success(request, 'تم إضافة السيارة بنجاح')
         return redirect('site_car_list')
     
-    manufacturers = Manufacturer.objects.all().order_by('name')
-    models = CarModel.objects.all().order_by('name')
+    manufacturers = Manufacturer.objects.only('name', 'name_ar').order_by('name')
+    models = CarModel.objects.select_related('manufacturer').only('name', 'manufacturer__name').order_by('name')
     return render(request, 'site_cars/site_car_form.html', {
         'action': 'add',
         'manufacturers': manufacturers,
@@ -309,8 +309,8 @@ def site_car_edit(request, pk):
         messages.success(request, 'تم تحديث السيارة بنجاح')
         return redirect('site_car_list')
     
-    manufacturers = Manufacturer.objects.all().order_by('name')
-    models = CarModel.objects.all().order_by('name')
+    manufacturers = Manufacturer.objects.only('name', 'name_ar').order_by('name')
+    models = CarModel.objects.select_related('manufacturer').only('name', 'manufacturer__name').order_by('name')
     return render(request, 'site_cars/site_car_form.html', {
         'action': 'edit',
         'car': car,
@@ -1154,3 +1154,258 @@ def delete_unsold_damaged(request):
         # (Django's core cache doesn't support pattern delete; rely on TTL.)
         messages.success(request, f"تم حذف {count} سيارة مصدومة غير مباعة.")
     return redirect('import_happycar')
+
+
+@staff_member_required
+@require_POST
+def save_public_car(request, api_car_id):
+    """Copy a public ApiCar into the current tenant's SiteCar inventory.
+
+    Dedupe key: external_id='apicar_<car_id>' — mirrors the 'hc_*' pattern
+    used for HappyCar imports. Cross-schema FKs aren't possible under
+    django-tenants, so the string key is the link back to the public row.
+    """
+    if _is_public_schema():
+        return redirect('home')
+
+    api_car = get_object_or_404(
+        ApiCar.objects.select_related('manufacturer', 'model', 'color', 'body'),
+        pk=api_car_id,
+    )
+    external_id = f"apicar_{api_car.car_id}"
+
+    existing = SiteCar.objects.filter(external_id=external_id).first()
+    if existing:
+        messages.info(request, 'هذه السيارة محفوظة لديك بالفعل.')
+        return redirect('site_car_detail', pk=existing.pk)
+
+    first_image = ''
+    if isinstance(api_car.images, list) and api_car.images:
+        first = api_car.images[0]
+        if isinstance(first, str):
+            first_image = first
+        elif isinstance(first, dict):
+            first_image = first.get('url') or first.get('image') or ''
+    if not first_image and api_car.image:
+        first_image = api_car.image
+
+    site_car = SiteCar.objects.create(
+        title=api_car.title or f"{api_car.manufacturer.name} {api_car.model.name} {api_car.year}",
+        description=api_car.description or '',
+        manufacturer=api_car.manufacturer.name,
+        model=api_car.model.name,
+        year=api_car.year,
+        color=api_car.color.name if api_car.color_id else '',
+        mileage=api_car.mileage or 0,
+        price=api_car.price or 0,
+        transmission=api_car.transmission or '',
+        fuel=api_car.fuel or '',
+        body_type=api_car.body.name if api_car.body_id else '',
+        engine=api_car.engine or '',
+        drive_wheel=api_car.drive_wheel or '',
+        status='available',
+        external_id=external_id,
+        external_image_url=first_image,
+        source_url='',
+    )
+    messages.success(request, 'تم حفظ السيارة في موقعك.')
+    return redirect('site_car_detail', pk=site_car.pk)
+
+
+@staff_member_required
+def invoice_new(request, pk):
+    """Create a sales invoice for a SiteCar and redirect to the printable view."""
+    if _is_public_schema():
+        return redirect('home')
+
+    car = get_object_or_404(SiteCar, pk=pk)
+
+    existing_bill = car.bills.order_by('-created_at').first()
+    if existing_bill is not None:
+        messages.info(request, f'توجد فاتورة سابقة لهذه السيارة ({existing_bill.receipt_number}).')
+        return redirect('invoice_view', pk=car.pk, bill_pk=existing_bill.pk)
+
+    if request.method == 'POST':
+        buyer_name = request.POST.get('buyer_name', '').strip()
+        if not buyer_name:
+            messages.error(request, 'يرجى إدخال اسم المشتري.')
+            return render(request, 'site_cars/invoice_form.html', {'car': car})
+
+        try:
+            sale_price = int(request.POST.get('sale_price') or car.price)
+        except ValueError:
+            messages.error(request, 'السعر غير صالح.')
+            return render(request, 'site_cars/invoice_form.html', {'car': car})
+
+        sale_date_str = request.POST.get('sale_date', '').strip()
+        if sale_date_str:
+            from datetime import datetime
+            try:
+                sale_date = datetime.strptime(sale_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                sale_date = timezone.now().date()
+        else:
+            sale_date = timezone.now().date()
+
+        bill = SiteBill.objects.create(
+            site_car=car,
+            price=sale_price,
+            date=sale_date,
+            buyer_name=buyer_name,
+            buyer_id_number=request.POST.get('buyer_id_number', '').strip(),
+            buyer_phone=request.POST.get('buyer_phone', '').strip(),
+            buyer_address=request.POST.get('buyer_address', '').strip(),
+            description=request.POST.get('description', '').strip(),
+            is_paid=request.POST.get('is_paid') == 'on',
+        )
+
+        if car.status != 'sold':
+            car.status = 'sold'
+            car.save(update_fields=['status'])
+
+        messages.success(request, f'تم إنشاء الفاتورة {bill.receipt_number}.')
+        return redirect('invoice_view', pk=car.pk, bill_pk=bill.pk)
+
+    return render(request, 'site_cars/invoice_form.html', {'car': car})
+
+
+@staff_member_required
+def invoice_edit(request, pk, bill_pk):
+    """Edit an existing invoice. Receipt number stays locked (auditability)."""
+    if _is_public_schema():
+        return redirect('home')
+
+    car = get_object_or_404(SiteCar, pk=pk)
+    bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
+
+    if request.method == 'POST':
+        buyer_name = request.POST.get('buyer_name', '').strip()
+        if not buyer_name:
+            messages.error(request, 'يرجى إدخال اسم المشتري.')
+            return render(request, 'site_cars/invoice_form.html', {'car': car, 'bill': bill})
+
+        try:
+            sale_price = int(request.POST.get('sale_price') or bill.price)
+        except ValueError:
+            messages.error(request, 'السعر غير صالح.')
+            return render(request, 'site_cars/invoice_form.html', {'car': car, 'bill': bill})
+
+        sale_date_str = request.POST.get('sale_date', '').strip()
+        if sale_date_str:
+            from datetime import datetime
+            try:
+                bill.date = datetime.strptime(sale_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        bill.price = sale_price
+        bill.buyer_name = buyer_name
+        bill.buyer_id_number = request.POST.get('buyer_id_number', '').strip()
+        bill.buyer_phone = request.POST.get('buyer_phone', '').strip()
+        bill.buyer_address = request.POST.get('buyer_address', '').strip()
+        bill.description = request.POST.get('description', '').strip()
+        bill.is_paid = request.POST.get('is_paid') == 'on'
+        bill.save()
+
+        messages.success(request, 'تم تحديث الفاتورة.')
+        return redirect('invoice_view', pk=car.pk, bill_pk=bill.pk)
+
+    return render(request, 'site_cars/invoice_form.html', {'car': car, 'bill': bill})
+
+
+@staff_member_required
+def invoice_view(request, pk, bill_pk):
+    """Render a printable invoice. Use browser print dialog for PDF export."""
+    if _is_public_schema():
+        return redirect('home')
+    car = get_object_or_404(SiteCar, pk=pk)
+    bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
+    shipment = getattr(bill, 'shipment', None)
+    return render(request, 'site_cars/invoice.html', {'car': car, 'bill': bill, 'shipment': shipment})
+
+
+def public_track(request, receipt_number):
+    """Public shipment tracking — no login. Buyer scans the URL off the
+    printed invoice and sees status + ETA only. Tenant middleware routes
+    to the right schema by hostname, so lookups stay tenant-scoped.
+
+    Deliberately does NOT expose: buyer PII, prices, notes. Only the
+    shipment/vehicle fields the buyer already knows.
+    """
+    if _is_public_schema():
+        raise Http404()
+
+    bill = get_object_or_404(
+        SiteBill.objects.select_related('site_car'),
+        receipt_number=receipt_number,
+    )
+    shipment = getattr(bill, 'shipment', None)
+    return render(request, 'site_cars/public_track.html', {
+        'bill': bill,
+        'car': bill.site_car,
+        'shipment': shipment,
+    })
+
+
+@staff_member_required
+def shipment_edit(request, pk, bill_pk):
+    """Create or update the shipment attached to a bill."""
+    if _is_public_schema():
+        return redirect('home')
+
+    car = get_object_or_404(SiteCar, pk=pk)
+    bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
+    shipment = SiteShipment.objects.filter(bill=bill).first()
+
+    if request.method == 'POST':
+        from datetime import datetime
+
+        def _parse_date(value):
+            value = (value or '').strip()
+            if not value:
+                return None
+            try:
+                return datetime.strptime(value, '%Y-%m-%d').date()
+            except ValueError:
+                return None
+
+        shipping_cost_raw = (request.POST.get('shipping_cost') or '').strip()
+        try:
+            shipping_cost = float(shipping_cost_raw) if shipping_cost_raw else None
+        except ValueError:
+            shipping_cost = None
+
+        fields = dict(
+            status=request.POST.get('status', 'preparing'),
+            shipping_company=request.POST.get('shipping_company', '').strip(),
+            vessel_name=request.POST.get('vessel_name', '').strip(),
+            container_number=request.POST.get('container_number', '').strip(),
+            bill_of_lading=request.POST.get('bill_of_lading', '').strip(),
+            origin_port=request.POST.get('origin_port', '').strip(),
+            destination_port=request.POST.get('destination_port', '').strip(),
+            destination_country=request.POST.get('destination_country', '').strip(),
+            etd=_parse_date(request.POST.get('etd')),
+            eta=_parse_date(request.POST.get('eta')),
+            delivered_at=_parse_date(request.POST.get('delivered_at')),
+            shipping_cost=shipping_cost,
+            tracking_url=request.POST.get('tracking_url', '').strip(),
+            notes=request.POST.get('notes', '').strip(),
+        )
+
+        if shipment is None:
+            shipment = SiteShipment.objects.create(bill=bill, **fields)
+            messages.success(request, 'تم إنشاء الشحنة.')
+        else:
+            for key, value in fields.items():
+                setattr(shipment, key, value)
+            shipment.save()
+            messages.success(request, 'تم تحديث الشحنة.')
+
+        return redirect('invoice_view', pk=car.pk, bill_pk=bill.pk)
+
+    return render(request, 'site_cars/shipment_form.html', {
+        'car': car,
+        'bill': bill,
+        'shipment': shipment,
+        'status_choices': SiteShipment.STATUS_CHOICES,
+    })

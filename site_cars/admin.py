@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
+from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
 
 
 class SiteCarImageInline(admin.TabularInline):
@@ -70,10 +70,18 @@ class SiteOrderAdmin(admin.ModelAdmin):
 
 @admin.register(SiteBill)
 class SiteBillAdmin(admin.ModelAdmin):
-    list_display = ("receipt_number", "order", "price", "date", "is_paid")
+    list_display = ("receipt_number", "site_car", "buyer_name", "price", "date", "is_paid")
     list_filter = ("is_paid",)
     list_editable = ("is_paid",)
-    search_fields = ("receipt_number",)
+    search_fields = ("receipt_number", "buyer_name", "buyer_phone")
+
+
+@admin.register(SiteShipment)
+class SiteShipmentAdmin(admin.ModelAdmin):
+    list_display = ("bill", "status", "destination_port", "container_number", "etd", "eta")
+    list_filter = ("status",)
+    search_fields = ("bill__receipt_number", "container_number", "bill_of_lading", "vessel_name")
+    list_editable = ("status",)
 
 
 @admin.register(SiteRating)
