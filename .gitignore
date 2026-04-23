@@ -21,3 +21,6 @@ db.sqlite3
 
 # macOS
 .DS_Store
+
+# HappyCar import tool local cache
+.happycar_cache/
