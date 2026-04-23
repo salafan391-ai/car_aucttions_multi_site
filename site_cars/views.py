@@ -1208,7 +1208,7 @@ def save_public_car(request, api_car_id):
         external_image_url=first_image,
         source_url='',
     )
-    messages.success(request, 'تم حفظ السيارة في موقعك.')
+    messages.success(request, 'تم حفظ السيارة في سياراتك.')
     return redirect('site_car_detail', pk=site_car.pk)
 
 
