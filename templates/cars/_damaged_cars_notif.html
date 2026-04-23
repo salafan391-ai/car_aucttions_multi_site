@@ -1,0 +1,82 @@
+{% if damaged_cars_count %}
+<style>
+  .dc-notif {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 640px;
+    margin: 1.25rem auto;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 1px solid #fecaca;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.08);
+    transition: transform .15s, box-shadow .15s;
+    font-family: inherit;
+    direction: rtl;
+    text-align: start;
+    box-sizing: border-box;
+  }
+  .dc-notif:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.18);
+  }
+  .dc-notif-pulse {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fee2e2;
+    border-radius: 50%;
+  }
+  .dc-notif-pulse::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: #ef4444;
+    opacity: .55;
+    animation: dc-notif-ping 1.6s cubic-bezier(0,0,.2,1) infinite;
+  }
+  @keyframes dc-notif-ping {
+    75%, 100% { transform: scale(1.6); opacity: 0; }
+  }
+  .dc-notif-pulse svg {
+    width: 22px; height: 22px; color: #dc2626; position: relative; z-index: 1;
+  }
+  .dc-notif-body { flex: 1; min-width: 0; }
+  .dc-notif-title {
+    font-weight: 800; font-size: .95rem; color: #991b1b;
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    margin: 0;
+  }
+  .dc-notif-count {
+    background: #dc2626; color: #fff; font-size: .75rem; font-weight: 800;
+    padding: .1rem .5rem; border-radius: 999px;
+  }
+  .dc-notif-sub { font-size: .8rem; color: #7f1d1d; margin-top: .15rem; }
+  .dc-notif-chev { color: #dc2626; flex-shrink: 0; }
+</style>
+<a href="{% url 'site_car_list' %}?source=auctions" class="dc-notif">
+  <span class="dc-notif-pulse">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.73 4a2 2 0 00-3.46 0L3.33 16a2 2 0 001.74 3z"/>
+    </svg>
+  </span>
+  <div class="dc-notif-body">
+    <div class="dc-notif-title">
+      <span class="bilingual" data-lang-ar="سيارات مصدومة متاحة" data-lang-en="Damaged cars available" data-lang-es="Coches dañados disponibles" data-lang-ru="Поврежденные авто">سيارات مصدومة متاحة</span>
+      <span class="dc-notif-count">{{ damaged_cars_count }}</span>
+    </div>
+    <div class="dc-notif-sub bilingual" data-lang-ar="اضغط للاستعراض والحجز" data-lang-en="Tap to browse and reserve" data-lang-es="Toca para explorar y reservar" data-lang-ru="Нажмите, чтобы просмотреть">اضغط للاستعراض والحجز</div>
+  </div>
+  <svg class="dc-notif-chev" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+  </svg>
+</a>
+{% endif %}

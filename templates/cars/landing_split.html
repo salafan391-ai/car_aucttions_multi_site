@@ -244,6 +244,8 @@
     <!-- Right: Content -->
     <div class="panel-content">
 
+      {% include "cars/_damaged_cars_notif.html" %}
+
       <p class="tagline">
         <span class="typewriter-1" {% if site_tagline %}data-ar="{{ site_tagline }}"{% endif %} {% if site_tagline_en %}data-en="{{ site_tagline_en }}"{% endif %}></span>
         <span class="typewriter-2"></span>
