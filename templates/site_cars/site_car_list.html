@@ -8,13 +8,13 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
             <h1 class="text-3xl font-bold">
-                {% if is_auctions_tab %}سيارات مصدومة{% else %}سياراتنا{% endif %}
+                {% if is_auctions_tab %}<span class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-en="damaged cars" data-lang-es="coches dañados" data-lang-ru="поврежденные авто">سيارات مصدومة</span>{% else %}<span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="our cars" data-lang-es="nuestros coches" data-lang-ru="наши авто">سياراتنا</span>{% endif %}
             </h1>
             <p class="text-gray-500 mt-1">
                 {% if is_auctions_tab %}
-                    سيارات مستوردة بحالة ضرر من كوريا
+                    <span class="bilingual" data-lang-ar="سيارات مستوردة بحالة ضرر من كوريا" data-lang-en="cars imported from korea in damaged condition" data-lang-es="coches importados de corea en estado dañado" data-lang-ru="авто, импортированные из кореи в поврежденном состоянии">سيارات مستوردة بحالة ضرر من كوريا</span>
                 {% else %}
-                    سيارات للبيع المباشر من {{ site_name|default:"موقعنا" }}
+                    <span class="bilingual" data-lang-ar="سيارات للبيع المباشر من {{ site_name|default:'موقعنا' }}" data-lang-en="direct-sale cars from {{ site_name|default:'our site' }}" data-lang-es="coches en venta directa de {{ site_name|default:'nuestro sitio' }}" data-lang-ru="авто в прямой продаже от {{ site_name|default:'нашего сайта' }}">سيارات للبيع المباشر من {{ site_name|default:"موقعنا" }}</span>
                 {% endif %}
             </p>
         </div>
@@ -23,7 +23,7 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
-            إضافة سيارة
+            <span class="bilingual" data-lang-ar="إضافة سيارة" data-lang-en="add car" data-lang-es="añadir coche" data-lang-ru="добавить авто">إضافة سيارة</span>
         </a>
         {% endif %}
     </div>
@@ -31,11 +31,11 @@
     <!-- Source Tabs (Mine / Auctions) -->
     <div class="flex gap-2 mb-4 border-b border-gray-200">
         <a href="?source=mine" class="px-5 py-3 font-bold transition border-b-2 {% if not is_auctions_tab %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-            سياراتنا
+            <span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="our cars" data-lang-es="nuestros coches" data-lang-ru="наши авто">سياراتنا</span>
             <span class="ml-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ mine_total }}</span>
         </a>
         <a href="?source=auctions" class="px-5 py-3 font-bold transition border-b-2 {% if is_auctions_tab %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-            سيارات مصدومة
+            <span class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-en="damaged cars" data-lang-es="coches dañados" data-lang-ru="поврежденные авто">سيارات مصدومة</span>
             <span class="ml-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">{{ auctions_total }}</span>
         </a>
     </div>
@@ -43,15 +43,15 @@
     <!-- Status Tabs (within current source) -->
     <div class="flex gap-2 mb-6 border-b border-gray-200">
         <a href="?source={{ current_source }}&status=active" class="px-4 py-2 font-medium transition border-b-2 {% if current_status == 'active' or not current_status %}border-brand text-brand{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-            السيارات المتاحة
+            <span class="bilingual" data-lang-ar="السيارات المتاحة" data-lang-en="available cars" data-lang-es="coches disponibles" data-lang-ru="доступные авто">السيارات المتاحة</span>
             <span class="ml-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ active_count }}</span>
         </a>
         <a href="?source={{ current_source }}&status=sold" class="px-4 py-2 font-medium transition border-b-2 {% if current_status == 'sold' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-            السيارات المباعة
+            <span class="bilingual" data-lang-ar="السيارات المباعة" data-lang-en="sold cars" data-lang-es="coches vendidos" data-lang-ru="проданные авто">السيارات المباعة</span>
             <span class="ml-1 text-xs bg-gray-100 px-2 py-0.5 rounded-full">{{ sold_count }}</span>
         </a>
         <a href="?source={{ current_source }}&status=all" class="px-4 py-2 font-medium transition border-b-2 {% if current_status == 'all' %}border-gray-500 text-gray-700{% else %}border-transparent text-gray-500 hover:text-gray-700{% endif %}">
-            الكل
+            <span class="bilingual" data-lang-ar="الكل" data-lang-en="all" data-lang-es="todos" data-lang-ru="все">الكل</span>
         </a>
     </div>
 
@@ -61,85 +61,89 @@
         <input type="hidden" name="status" value="{{ current_status }}">
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
             <div class="col-span-2 md:col-span-2 lg:col-span-2">
-                <label class="block text-xs text-gray-500 mb-1">بحث</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="بحث" data-lang-en="search" data-lang-es="buscar" data-lang-ru="поиск">بحث</label>
                 <input type="text" name="q" value="{{ filter_q }}"
                     placeholder="العنوان أو الموديل أو رقم التسجيل"
+                    data-placeholder-ar="العنوان أو الموديل أو رقم التسجيل"
+                    data-placeholder-en="title, model or registration no"
+                    data-placeholder-es="título, modelo o número de matrícula"
+                    data-placeholder-ru="название, модель или рег. номер"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand">
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">الشركة المصنعة</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="الشركة المصنعة" data-lang-en="manufacturer" data-lang-es="fabricante" data-lang-ru="производитель">الشركة المصنعة</label>
                 <select name="make" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">كل الماركات</option>
+                    <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="all makes" data-lang-es="todas las marcas" data-lang-ru="все марки">كل الماركات</option>
                     {% for m in makes %}
                     <option value="{{ m }}" {% if filter_make == m %}selected{% endif %}>{{ m|pretty_en }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">الوقود</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="الوقود" data-lang-en="fuel" data-lang-es="combustible" data-lang-ru="топливо">الوقود</label>
                 <select name="fuel" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">الكل</option>
+                    <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="all" data-lang-es="todos" data-lang-ru="все">الكل</option>
                     {% for f in fuels %}
                     <option value="{{ f }}" {% if filter_fuel == f %}selected{% endif %}>{{ f|pretty_en }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">ناقل الحركة</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="ناقل الحركة" data-lang-en="transmission" data-lang-es="transmisión" data-lang-ru="коробка">ناقل الحركة</label>
                 <select name="transmission" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">الكل</option>
+                    <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="all" data-lang-es="todos" data-lang-ru="все">الكل</option>
                     {% for t in transmissions %}
                     <option value="{{ t }}" {% if filter_transmission == t %}selected{% endif %}>{{ t|pretty_en }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">الترتيب</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="الترتيب" data-lang-en="sort" data-lang-es="orden" data-lang-ru="сортировка">الترتيب</label>
                 <select name="sort" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="-created_at" {% if current_sort == "-created_at" %}selected{% endif %}>الأحدث</option>
-                    <option value="-year"       {% if current_sort == "-year" %}selected{% endif %}>السنة (الأحدث)</option>
-                    <option value="year"        {% if current_sort == "year" %}selected{% endif %}>السنة (الأقدم)</option>
-                    <option value="price"       {% if current_sort == "price" %}selected{% endif %}>السعر (الأقل)</option>
-                    <option value="-price"      {% if current_sort == "-price" %}selected{% endif %}>السعر (الأعلى)</option>
-                    <option value="mileage"     {% if current_sort == "mileage" %}selected{% endif %}>الكم (الأقل)</option>
-                    <option value="-mileage"    {% if current_sort == "-mileage" %}selected{% endif %}>الكم (الأعلى)</option>
-                    <option value="manufacturer"{% if current_sort == "manufacturer" %}selected{% endif %}>الشركة المصنعة</option>
+                    <option value="-created_at" {% if current_sort == "-created_at" %}selected{% endif %} class="bilingual" data-lang-ar="الأحدث" data-lang-en="newest" data-lang-es="más recientes" data-lang-ru="самые новые">الأحدث</option>
+                    <option value="-year"       {% if current_sort == "-year" %}selected{% endif %} class="bilingual" data-lang-ar="السنة (الأحدث)" data-lang-en="year (newest)" data-lang-es="año (más reciente)" data-lang-ru="год (новее)">السنة (الأحدث)</option>
+                    <option value="year"        {% if current_sort == "year" %}selected{% endif %} class="bilingual" data-lang-ar="السنة (الأقدم)" data-lang-en="year (oldest)" data-lang-es="año (más antiguo)" data-lang-ru="год (старее)">السنة (الأقدم)</option>
+                    <option value="price"       {% if current_sort == "price" %}selected{% endif %} class="bilingual" data-lang-ar="السعر (الأقل)" data-lang-en="price (lowest)" data-lang-es="precio (menor)" data-lang-ru="цена (ниже)">السعر (الأقل)</option>
+                    <option value="-price"      {% if current_sort == "-price" %}selected{% endif %} class="bilingual" data-lang-ar="السعر (الأعلى)" data-lang-en="price (highest)" data-lang-es="precio (mayor)" data-lang-ru="цена (выше)">السعر (الأعلى)</option>
+                    <option value="mileage"     {% if current_sort == "mileage" %}selected{% endif %} class="bilingual" data-lang-ar="الكم (الأقل)" data-lang-en="km (lowest)" data-lang-es="km (menor)" data-lang-ru="км (меньше)">الكم (الأقل)</option>
+                    <option value="-mileage"    {% if current_sort == "-mileage" %}selected{% endif %} class="bilingual" data-lang-ar="الكم (الأعلى)" data-lang-en="km (highest)" data-lang-es="km (mayor)" data-lang-ru="км (больше)">الكم (الأعلى)</option>
+                    <option value="manufacturer"{% if current_sort == "manufacturer" %}selected{% endif %} class="bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="manufacturer" data-lang-es="fabricante" data-lang-ru="производитель">الشركة المصنعة</option>
                 </select>
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">من سنة</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="من سنة" data-lang-en="from year" data-lang-es="desde año" data-lang-ru="с года">من سنة</label>
                 <input type="number" name="year_min" value="{{ filter_year_min }}" inputmode="numeric" min="1990" max="2030"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">إلى سنة</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="إلى سنة" data-lang-en="to year" data-lang-es="hasta año" data-lang-ru="по год">إلى سنة</label>
                 <input type="number" name="year_max" value="{{ filter_year_max }}" inputmode="numeric" min="1990" max="2030"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">أقل سعر (₩)</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="أقل سعر (₩)" data-lang-en="min price (₩)" data-lang-es="precio mín (₩)" data-lang-ru="мин. цена (₩)">أقل سعر (₩)</label>
                 <input type="number" name="price_min" value="{{ filter_price_min }}" inputmode="numeric" min="0"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">أعلى سعر (₩)</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="أعلى سعر (₩)" data-lang-en="max price (₩)" data-lang-es="precio máx (₩)" data-lang-ru="макс. цена (₩)">أعلى سعر (₩)</label>
                 <input type="number" name="price_max" value="{{ filter_price_max }}" inputmode="numeric" min="0"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
             <div>
-                <label class="block text-xs text-gray-500 mb-1">أقصى كم</label>
+                <label class="bilingual block text-xs text-gray-500 mb-1" data-lang-ar="أقصى كم" data-lang-en="max km" data-lang-es="km máx" data-lang-ru="макс. км">أقصى كم</label>
                 <input type="number" name="km_max" value="{{ filter_km_max }}" inputmode="numeric" min="0"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
             <div class="col-span-2 md:col-span-4 lg:col-span-6 flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100 mt-2">
-                <button type="submit" class="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-bold px-5 py-2 rounded-lg transition">
+                <button type="submit" class="bilingual inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-bold px-5 py-2 rounded-lg transition" data-lang-ar="تطبيق الفلاتر" data-lang-en="apply filters" data-lang-es="aplicar filtros" data-lang-ru="применить фильтры">
                     تطبيق الفلاتر
                 </button>
                 <a href="?source={{ current_source }}&status={{ current_status }}"
-                   class="text-sm text-gray-500 hover:text-gray-700 px-3 py-2">
+                   class="bilingual text-sm text-gray-500 hover:text-gray-700 px-3 py-2" data-lang-ar="إعادة تعيين" data-lang-en="reset" data-lang-es="restablecer" data-lang-ru="сбросить">
                     إعادة تعيين
                 </a>
-                <span class="ml-auto text-sm text-gray-500">
+                <span class="ml-auto text-sm text-gray-500 bilingual" data-lang-ar="{{ paginator.count }} نتيجة" data-lang-en="{{ paginator.count }} results" data-lang-es="{{ paginator.count }} resultados" data-lang-ru="{{ paginator.count }} результатов">
                     {{ paginator.count }} نتيجة
                 </span>
             </div>
@@ -165,27 +169,27 @@
                     </div>
                     {% endif %}
                     {% if car.is_featured %}
-                    <div class="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">مميزة</div>
+                    <div class="bilingual absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full" data-lang-ar="مميزة" data-lang-en="featured" data-lang-es="destacada" data-lang-ru="избранное">مميزة</div>
                     {% endif %}
                     {% if car.status == 'sold' %}
-                    <div class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">تم البيع</div>
+                    <div class="bilingual absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full" data-lang-ar="تم البيع" data-lang-en="sold" data-lang-es="vendido" data-lang-ru="продано">تم البيع</div>
                     {% elif car.source_status == '폐차' %}
-                    <div class="absolute top-3 left-3 bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full">تشليح</div>
+                    <div class="bilingual absolute top-3 left-3 bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full" data-lang-ar="تشليح" data-lang-en="scrap" data-lang-es="desguace" data-lang-ru="утиль">تشليح</div>
                     {% elif car.source_status == '구제' %}
-                    <div class="absolute top-3 left-3 bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full">مصدوم</div>
+                    <div class="bilingual absolute top-3 left-3 bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full" data-lang-ar="مصدوم" data-lang-en="damaged" data-lang-es="dañado" data-lang-ru="поврежден">مصدوم</div>
                     {% elif car.source_status == '부품' %}
-                    <div class="absolute top-3 left-3 bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full">قطع غيار</div>
+                    <div class="bilingual absolute top-3 left-3 bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full" data-lang-ar="قطع غيار" data-lang-en="parts" data-lang-es="piezas" data-lang-ru="запчасти">قطع غيار</div>
                     {% elif car.status == 'pending' %}
-                    <div class="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full">قيد الانتظار</div>
+                    <div class="bilingual absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full" data-lang-ar="قيد الانتظار" data-lang-en="pending" data-lang-es="pendiente" data-lang-ru="в ожидании">قيد الانتظار</div>
                     {% endif %}
                     {% if car.claims_count > 0 %}
                     <div class="absolute top-3 left-1/2 -translate-x-1/2 bg-red-100 text-red-700 border border-red-200 text-xs font-bold px-2 py-1 rounded-full">
-                        ⚠ {% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}
+                        ⚠ <span class="bilingual" data-lang-ar="{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}" data-lang-en="{% if car.claims_count == 1 %}1 accident{% else %}{{ car.claims_count }} accidents{% endif %}" data-lang-es="{% if car.claims_count == 1 %}1 accidente{% else %}{{ car.claims_count }} accidentes{% endif %}" data-lang-ru="{% if car.claims_count == 1 %}1 авария{% else %}{{ car.claims_count }} аварий{% endif %}">{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}</span>
                     </div>
                     {% endif %}
                     {% with photo_count=car.gallery.count %}
                     {% if photo_count %}
-                    <div class="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded-md">
+                    <div class="bilingual absolute bottom-3 right-3 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded-md" data-lang-ar="{{ photo_count }} صور" data-lang-en="{{ photo_count }} photos" data-lang-es="{{ photo_count }} fotos" data-lang-ru="{{ photo_count }} фото">
                         {{ photo_count }} صور
                     </div>
                     {% endif %}
@@ -209,7 +213,7 @@
                         <span class="bg-green-50 text-green-700 px-2 py-0.5 rounded-md">{{ car.fuel|pretty_en }}</span>
                         {% endif %}
                         {% if car.mileage %}
-                        <span class="bg-gray-100 px-2 py-0.5 rounded-md">{{ car.mileage|floatformat:0 }} كم</span>
+                        <span class="bilingual bg-gray-100 px-2 py-0.5 rounded-md" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span>
                         {% endif %}
                         {% if car.year %}
                         <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md">{{ car.year }}</span>
@@ -299,7 +303,7 @@
             <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
             </svg>
-            <p class="text-lg">لا توجد سيارات معروضة حالياً</p>
+            <p class="bilingual text-lg" data-lang-ar="لا توجد سيارات معروضة حالياً" data-lang-en="no cars currently listed" data-lang-es="no hay coches en la lista actualmente" data-lang-ru="нет выставленных авто">لا توجد سيارات معروضة حالياً</p>
         </div>
         {% endfor %}
     </div>
@@ -309,10 +313,10 @@
     <nav class="mt-8 flex flex-wrap items-center justify-center gap-1 text-sm" aria-label="صفحات">
         {% if page_obj.has_previous %}
         <a href="?{{ qs_base }}&page=1" class="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600">«</a>
-        <a href="?{{ qs_base }}&page={{ page_obj.previous_page_number }}" class="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600">السابق</a>
+        <a href="?{{ qs_base }}&page={{ page_obj.previous_page_number }}" class="bilingual px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600" data-lang-ar="السابق" data-lang-en="previous" data-lang-es="anterior" data-lang-ru="предыдущая">السابق</a>
         {% else %}
         <span class="px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed">«</span>
-        <span class="px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed">السابق</span>
+        <span class="bilingual px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed" data-lang-ar="السابق" data-lang-en="previous" data-lang-es="anterior" data-lang-ru="предыдущая">السابق</span>
         {% endif %}
 
         {% for p in paginator.page_range %}
@@ -326,14 +330,14 @@
         {% endfor %}
 
         {% if page_obj.has_next %}
-        <a href="?{{ qs_base }}&page={{ page_obj.next_page_number }}" class="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600">التالي</a>
+        <a href="?{{ qs_base }}&page={{ page_obj.next_page_number }}" class="bilingual px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600" data-lang-ar="التالي" data-lang-en="next" data-lang-es="siguiente" data-lang-ru="следующая">التالي</a>
         <a href="?{{ qs_base }}&page={{ paginator.num_pages }}" class="px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 text-gray-600">»</a>
         {% else %}
-        <span class="px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed">التالي</span>
+        <span class="bilingual px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed" data-lang-ar="التالي" data-lang-en="next" data-lang-es="siguiente" data-lang-ru="следующая">التالي</span>
         <span class="px-3 py-2 rounded-lg bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed">»</span>
         {% endif %}
 
-        <span class="ml-3 text-gray-500 text-xs">
+        <span class="ml-3 text-gray-500 text-xs bilingual" data-lang-ar="صفحة {{ page_obj.number }} من {{ paginator.num_pages }} · {{ paginator.count }} نتيجة" data-lang-en="page {{ page_obj.number }} of {{ paginator.num_pages }} · {{ paginator.count }} results" data-lang-es="página {{ page_obj.number }} de {{ paginator.num_pages }} · {{ paginator.count }} resultados" data-lang-ru="страница {{ page_obj.number }} из {{ paginator.num_pages }} · {{ paginator.count }} результатов">
             صفحة {{ page_obj.number }} من {{ paginator.num_pages }} · {{ paginator.count }} نتيجة
         </span>
     </nav>

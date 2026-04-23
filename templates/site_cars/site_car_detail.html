@@ -8,9 +8,9 @@
 <section class="max-w-7xl mx-auto px-4 py-8">
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <a href="{% url 'home' %}" class="text-brand-hover transition">الرئيسية</a>
+        <a href="{% url 'home' %}" class="bilingual text-brand-hover transition" data-lang-ar="الرئيسية" data-lang-en="home" data-lang-es="inicio" data-lang-ru="главная">الرئيسية</a>
         <span>/</span>
-        <a href="{% url 'site_car_list' %}" class="text-brand-hover transition">سياراتنا</a>
+        <a href="{% url 'site_car_list' %}" class="bilingual text-brand-hover transition" data-lang-ar="سياراتنا" data-lang-en="our cars" data-lang-es="nuestros coches" data-lang-ru="наши авто">سياراتنا</a>
         <span>/</span>
         <span class="text-gray-800">{{ car.title|pretty_en }}</span>
     </nav>
@@ -99,69 +99,69 @@
 
             <!-- Specs -->
             <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
-                <h2 class="text-xl font-bold mb-4">المواصفات</h2>
+                <h2 class="bilingual text-xl font-bold mb-4" data-lang-ar="المواصفات" data-lang-en="specifications" data-lang-es="especificaciones" data-lang-ru="характеристики">المواصفات</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">الشركة المصنعة</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="الشركة المصنعة" data-lang-en="manufacturer" data-lang-es="fabricante" data-lang-ru="производитель">الشركة المصنعة</div>
                         <div class="font-bold text-sm">{{ car.manufacturer|pretty_en }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">الموديل</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="الموديل" data-lang-en="model" data-lang-es="modelo" data-lang-ru="модель">الموديل</div>
                         <div class="font-bold text-sm">{{ car.model|pretty_en }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">سنة الصنع</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="سنة الصنع" data-lang-en="year" data-lang-es="año" data-lang-ru="год">سنة الصنع</div>
                         <div class="font-bold text-sm">{{ car.year }}{% if car.month %}<span class="text-gray-500 font-normal"> / {{ car.month }}</span>{% endif %}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">المسافة المقطوعة</div>
-                        <div class="font-bold text-sm">{{ car.mileage|floatformat:0 }} كم</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="المسافة المقطوعة" data-lang-en="mileage" data-lang-es="kilometraje" data-lang-ru="пробег">المسافة المقطوعة</div>
+                        <div class="font-bold text-sm"><span class="bilingual" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span></div>
                     </div>
                     {% if car.transmission %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">ناقل الحركة</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="ناقل الحركة" data-lang-en="transmission" data-lang-es="transmisión" data-lang-ru="коробка">ناقل الحركة</div>
                         <div class="font-bold text-sm">{{ car.transmission|pretty_en }}</div>
                     </div>
                     {% endif %}
                     {% if car.fuel %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">الوقود</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="الوقود" data-lang-en="fuel" data-lang-es="combustible" data-lang-ru="топливо">الوقود</div>
                         <div class="font-bold text-sm">{{ car.fuel|pretty_en }}</div>
                     </div>
                     {% endif %}
                     {% if car.engine_cc %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">حجم المحرك</div>
-                        <div class="font-bold text-sm">{{ car.engine_cc|floatformat:"0g" }} سي سي</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="حجم المحرك" data-lang-en="engine size" data-lang-es="motor" data-lang-ru="объём двигателя">حجم المحرك</div>
+                        <div class="font-bold text-sm"><span class="bilingual" data-lang-ar="{{ car.engine_cc|floatformat:'0g' }} سي سي" data-lang-en="{{ car.engine_cc|floatformat:'0g' }} cc" data-lang-es="{{ car.engine_cc|floatformat:'0g' }} cc" data-lang-ru="{{ car.engine_cc|floatformat:'0g' }} см³">{{ car.engine_cc|floatformat:"0g" }} سي سي</span></div>
                     </div>
                     {% endif %}
                     {% if car.trim %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">الطراز</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="الطراز" data-lang-en="trim" data-lang-es="versión" data-lang-ru="комплектация">الطراز</div>
                         <div class="font-bold text-sm">{{ car.trim }}</div>
                     </div>
                     {% endif %}
                     {% if car.color %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">اللون</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="اللون" data-lang-en="color" data-lang-es="color" data-lang-ru="цвет">اللون</div>
                         <div class="font-bold text-sm">{{ car.color }}</div>
                     </div>
                     {% endif %}
                     {% if car.body_type %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">نوع الهيكل</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="نوع الهيكل" data-lang-en="body type" data-lang-es="tipo de carrocería" data-lang-ru="тип кузова">نوع الهيكل</div>
                         <div class="font-bold text-sm">{{ car.body_type }}</div>
                     </div>
                     {% endif %}
                     {% if car.engine %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">المحرك</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="المحرك" data-lang-en="engine" data-lang-es="motor" data-lang-ru="двигатель">المحرك</div>
                         <div class="font-bold text-sm">{{ car.engine }}</div>
                     </div>
                     {% endif %}
                     {% if car.drive_wheel %}
                     <div class="bg-gray-50 rounded-xl p-4">
-                        <div class="text-xs text-gray-500 mb-1">نظام الدفع</div>
+                        <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="نظام الدفع" data-lang-en="drive system" data-lang-es="tracción" data-lang-ru="привод">نظام الدفع</div>
                         <div class="font-bold text-sm">{{ car.drive_wheel }}</div>
                     </div>
                     {% endif %}
@@ -170,7 +170,7 @@
 
             {% if car.description %}
             <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
-                <h2 class="text-xl font-bold mb-4">الوصف</h2>
+                <h2 class="bilingual text-xl font-bold mb-4" data-lang-ar="الوصف" data-lang-en="description" data-lang-es="descripción" data-lang-ru="описание">الوصف</h2>
                 <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ car.description }}</p>
             </div>
             {% endif %}
@@ -181,11 +181,11 @@
                     <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    تقرير الفحص
+                    <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-en="inspection report" data-lang-es="informe de inspección" data-lang-ru="отчёт о проверке">تقرير الفحص</span>
                 </h2>
                 <a href="{{ car.inspection_image.url }}" target="_blank" class="block group">
                     <img src="{{ car.inspection_image.url }}" alt="تقرير الفحص الفني" class="w-full rounded-xl border border-gray-200 object-contain max-h-[500px] group-hover:opacity-90 transition cursor-zoom-in">
-                    <p class="text-xs text-center text-gray-400 mt-2">اضغط لعرض الصورة كاملة</p>
+                    <p class="bilingual text-xs text-center text-gray-400 mt-2" data-lang-ar="اضغط لعرض الصورة كاملة" data-lang-en="click to view full image" data-lang-es="haga clic para ver la imagen completa" data-lang-ru="нажмите, чтобы увидеть полное изображение">اضغط لعرض الصورة كاملة</p>
                 </a>
             </div>
             {% endif %}
@@ -197,26 +197,26 @@
                 <h1 class="text-xl font-bold text-gray-900 mb-2">{{ car.title|pretty_en }}</h1>
 
                 {% if car.is_featured %}
-                <span class="inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-2">مميزة</span>
+                <span class="bilingual inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-2" data-lang-ar="مميزة" data-lang-en="featured" data-lang-es="destacada" data-lang-ru="избранное">مميزة</span>
                 {% endif %}
 
                 {% if car.status == 'sold' %}
-                <span class="inline-block bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full mb-4">تم البيع</span>
+                <span class="bilingual inline-block bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full mb-4" data-lang-ar="تم البيع" data-lang-en="sold" data-lang-es="vendido" data-lang-ru="продано">تم البيع</span>
                 {% elif car.source_status == '폐차' %}
-                <span class="inline-block bg-gray-800 text-white text-sm font-bold px-3 py-1 rounded-full mb-4">تشليح</span>
+                <span class="bilingual inline-block bg-gray-800 text-white text-sm font-bold px-3 py-1 rounded-full mb-4" data-lang-ar="تشليح" data-lang-en="scrap" data-lang-es="desguace" data-lang-ru="утиль">تشليح</span>
                 {% elif car.source_status == '구제' %}
-                <span class="inline-block bg-gray-800 text-white text-sm font-bold px-3 py-1 rounded-full mb-4">مصدوم</span>
+                <span class="bilingual inline-block bg-gray-800 text-white text-sm font-bold px-3 py-1 rounded-full mb-4" data-lang-ar="مصدوم" data-lang-en="damaged" data-lang-es="dañado" data-lang-ru="поврежден">مصدوم</span>
                 {% elif car.source_status == '부품' %}
-                <span class="inline-block bg-gray-800 text-white text-sm font-bold px-3 py-1 rounded-full mb-4">قطع غيار</span>
+                <span class="bilingual inline-block bg-gray-800 text-white text-sm font-bold px-3 py-1 rounded-full mb-4" data-lang-ar="قطع غيار" data-lang-en="parts" data-lang-es="piezas" data-lang-ru="запчасти">قطع غيار</span>
                 {% elif car.status == 'pending' %}
-                <span class="inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-4">قيد الانتظار</span>
+                <span class="bilingual inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-4" data-lang-ar="قيد الانتظار" data-lang-en="pending" data-lang-es="pendiente" data-lang-ru="в ожидании">قيد الانتظار</span>
                 {% else %}
-                <span class="inline-block bg-brand-light text-brand text-sm font-bold px-3 py-1 rounded-full mb-4">متاح</span>
+                <span class="bilingual inline-block bg-brand-light text-brand text-sm font-bold px-3 py-1 rounded-full mb-4" data-lang-ar="متاح" data-lang-en="available" data-lang-es="disponible" data-lang-ru="в наличии">متاح</span>
                 {% endif %}
 
                 {% if car.claims_count > 0 %}
                 <span class="inline-block bg-red-100 text-red-700 border border-red-200 text-sm font-bold px-3 py-1 rounded-full mb-4 ms-2">
-                    ⚠ {% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}
+                    ⚠ <span class="bilingual" data-lang-ar="{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}" data-lang-en="{% if car.claims_count == 1 %}1 accident{% else %}{{ car.claims_count }} accidents{% endif %}" data-lang-es="{% if car.claims_count == 1 %}1 accidente{% else %}{{ car.claims_count }} accidentes{% endif %}" data-lang-ru="{% if car.claims_count == 1 %}1 авария{% else %}{{ car.claims_count }} аварий{% endif %}">{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}</span>
                 </span>
                 {% endif %}
 
@@ -225,53 +225,53 @@
                 {% endif %}
 
                 <div class="border-t border-gray-100 pt-4 mb-4">
-                    <div class="text-sm text-gray-500 mb-1">السعر</div>
+                    <div class="bilingual text-sm text-gray-500 mb-1" data-lang-ar="السعر" data-lang-en="price" data-lang-es="precio" data-lang-ru="цена">السعر</div>
                     <div class="text-3xl font-extrabold text-brand" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
                 </div>
 
                 <div class="space-y-3 text-sm border-t border-gray-100 pt-4 mb-6">
                     <div class="flex justify-between">
-                        <span class="text-gray-500">سنة الصنع</span>
+                        <span class="bilingual text-gray-500" data-lang-ar="سنة الصنع" data-lang-en="year" data-lang-es="año" data-lang-ru="год">سنة الصنع</span>
                         <span class="font-medium">{{ car.year }}{% if car.month %} / {{ car.month }}{% endif %}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-500">المسافة</span>
-                        <span class="font-medium">{{ car.mileage|floatformat:0 }} كم</span>
+                        <span class="bilingual text-gray-500" data-lang-ar="المسافة" data-lang-en="distance" data-lang-es="distancia" data-lang-ru="пробег">المسافة</span>
+                        <span class="font-medium bilingual" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span>
                     </div>
                     {% if car.transmission %}
                     <div class="flex justify-between">
-                        <span class="text-gray-500">ناقل الحركة</span>
+                        <span class="bilingual text-gray-500" data-lang-ar="ناقل الحركة" data-lang-en="transmission" data-lang-es="transmisión" data-lang-ru="коробка">ناقل الحركة</span>
                         <span class="font-medium">{{ car.transmission|pretty_en }}</span>
                     </div>
                     {% endif %}
                     {% if car.fuel %}
                     <div class="flex justify-between">
-                        <span class="text-gray-500">الوقود</span>
+                        <span class="bilingual text-gray-500" data-lang-ar="الوقود" data-lang-en="fuel" data-lang-es="combustible" data-lang-ru="топливо">الوقود</span>
                         <span class="font-medium">{{ car.fuel|pretty_en }}</span>
                     </div>
                     {% endif %}
                     {% if car.engine_cc %}
                     <div class="flex justify-between">
-                        <span class="text-gray-500">حجم المحرك</span>
+                        <span class="bilingual text-gray-500" data-lang-ar="حجم المحرك" data-lang-en="engine size" data-lang-es="motor" data-lang-ru="объём двигателя">حجم المحرك</span>
                         <span class="font-medium">{{ car.engine_cc|floatformat:"0g" }} cc</span>
                     </div>
                     {% endif %}
                     {% if car.location %}
                     <div class="flex justify-between gap-2">
-                        <span class="text-gray-500">الموقع</span>
+                        <span class="bilingual text-gray-500" data-lang-ar="الموقع" data-lang-en="location" data-lang-es="ubicación" data-lang-ru="местоположение">الموقع</span>
                         <span class="font-medium text-end">{{ car.location }}</span>
                     </div>
                     {% endif %}
                     {% if car.auction_end %}
                     <div class="flex justify-between">
-                        <span class="text-gray-500">نهاية المزاد</span>
+                        <span class="bilingual text-gray-500" data-lang-ar="نهاية المزاد" data-lang-en="auction end" data-lang-es="fin de subasta" data-lang-ru="конец аукциона">نهاية المزاد</span>
                         <span class="font-medium">{{ car.auction_end|date:"H:i Y.m.d" }}</span>
                     </div>
                     {% endif %}
                     {% if car.source_url %}
                     <div class="pt-1">
                         <a href="{{ car.source_url }}" target="_blank" rel="noopener"
-                           class="text-xs text-brand hover:underline">
+                           class="bilingual text-xs text-brand hover:underline" data-lang-ar="↗ الإعلان الأصلي" data-lang-en="↗ original listing" data-lang-es="↗ anuncio original" data-lang-ru="↗ оригинальное объявление">
                             ↗ الإعلان الأصلي
                         </a>
                     </div>
@@ -287,7 +287,7 @@
                     {% endif %}
                     <div>
                         <div class="font-bold text-sm text-gray-900">{{ contact_person_name }}</div>
-                        <div class="text-xs text-gray-500">مسؤول المبيعات</div>
+                        <div class="bilingual text-xs text-gray-500" data-lang-ar="مسؤول المبيعات" data-lang-en="sales rep" data-lang-es="vendedor" data-lang-ru="менеджер по продажам">مسؤول المبيعات</div>
                     </div>
                 </div>
                 {% endif %}
@@ -301,7 +301,7 @@
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                         <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
                     </svg>
-                    تواصل عبر واتساب
+                    <span class="bilingual" data-lang-ar="تواصل عبر واتساب" data-lang-en="contact on whatsapp" data-lang-es="contactar por whatsapp" data-lang-ru="связаться в whatsapp">تواصل عبر واتساب</span>
                 </a>
                 {% elif whatsapp_phones %}
                 {% whatsapp_site_car_message car site_name as wa_msg %}
@@ -312,10 +312,10 @@
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
                         <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
                     </svg>
-                    تواصل عبر واتساب
+                    <span class="bilingual" data-lang-ar="تواصل عبر واتساب" data-lang-en="contact on whatsapp" data-lang-es="contactar por whatsapp" data-lang-ru="связаться в whatsapp">تواصل عبر واتساب</span>
                 </a>
                 {% else %}
-                <a href="{% url 'contact' %}" class="block w-full text-center bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition mb-3">
+                <a href="{% url 'contact' %}" class="bilingual block w-full text-center bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition mb-3" data-lang-ar="تواصل معنا" data-lang-en="contact us" data-lang-es="contáctenos" data-lang-ru="свяжитесь с нами">
                     تواصل معنا
                 </a>
                 {% endif %}
@@ -509,7 +509,7 @@ document.addEventListener('keydown', function(e) {
             </svg>
         </button>
     </div>
-    <div class="text-center mt-3 text-white/40 text-xs">اضغط ESC للإغلاق · استخدم ← → للتنقل</div>
+    <div class="bilingual text-center mt-3 text-white/40 text-xs" data-lang-ar="اضغط ESC للإغلاق · استخدم ← → للتنقل" data-lang-en="press ESC to close · use ← → to navigate" data-lang-es="presiona ESC para cerrar · usa ← → para navegar" data-lang-ru="нажмите ESC для закрытия · используйте ← → для навигации">اضغط ESC للإغلاق · استخدم ← → للتنقل</div>
 </div>
 
 {% endblock %}
