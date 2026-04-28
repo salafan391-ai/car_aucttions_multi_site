@@ -2849,14 +2849,19 @@ def car_report(request, lot_number):
 
 def car_availability_check(request, lot_number):
     """
-    Proxy Encar API to check whether a car lot is still available.
-    Returns JSON: { available: true|false|null }
-      true  → HTTP 200 from Encar  → still listed
-      false → HTTP 404 from Encar  → sold / removed
-      null  → network error or unexpected response
+    Proxy Encar API to check whether a car lot is still available, and
+    refresh our stored price when Encar's listing price has changed.
+
+    Returns JSON: { available, price, price_changed }
+      available     true|false|null  (200 / 404 / error)
+      price         current price in won (or null if unavailable)
+      price_changed true if we updated our DB price this call
     """
     try:
-        url = f"https://api.encar.com/v1/readside/clean-encar/vehicle/{lot_number}"
+        url = (
+            f"https://api.encar.com/v1/readside/vehicle/{lot_number}"
+            "?include=ADVERTISEMENT"
+        )
         req = urllib.request.Request(url, headers={
             'accept': '*/*',
             'origin': 'https://fem.encar.com',
@@ -2867,13 +2872,46 @@ def car_availability_check(request, lot_number):
                 'Chrome/124.0.0.0 Safari/537.36'
             ),
         })
+        payload = None
         try:
             with urllib.request.urlopen(req, timeout=6) as resp:
                 available = resp.status == 200
+                if available:
+                    payload = json.loads(resp.read().decode('utf-8'))
         except urllib.error.HTTPError as http_err:
             available = False if http_err.code == 404 else None
-        return JsonResponse({'available': available})
+
+        new_price = None
+        old_price = None
+        price_changed = False
+        if available and isinstance(payload, dict):
+            adv = payload.get('advertisement') or {}
+            raw_price = adv.get('price')
+            if isinstance(raw_price, (int, float)) and raw_price > 0:
+                new_price = int(raw_price) * 10000
+                from django_tenants.utils import schema_context, get_public_schema_name
+                with schema_context(get_public_schema_name()):
+                    try:
+                        car = ApiCar.objects.only('id', 'price').get(lot_number=lot_number)
+                        if car.price != new_price:
+                            old_price = car.price
+                            ApiCar.objects.filter(pk=car.pk).update(price=new_price)
+                            price_changed = True
+                    except ApiCar.DoesNotExist:
+                        pass
+
+        return JsonResponse({
+            'available': available,
+            'price': new_price,
+            'old_price': old_price,
+            'price_changed': price_changed,
+        })
     except Exception:
-        return JsonResponse({'available': None})
+        return JsonResponse({
+            'available': None,
+            'price': None,
+            'old_price': None,
+            'price_changed': False,
+        })
 
 

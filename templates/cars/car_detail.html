@@ -777,6 +777,36 @@
                             } else if (data.available === false) {
                                 document.getElementById('encar-badge-sold').classList.remove('hidden');
                             }
+                            if (data.price_changed && typeof data.price === 'number' && data.price > 0) {
+                                document.querySelectorAll('[data-price-krw]').forEach(function (el) {
+                                    el.setAttribute('data-price-krw', data.price);
+                                });
+                                var currency = (window.localStorage && localStorage.getItem('site_currency')) || 'SAR';
+                                if (typeof window.applyCurrency === 'function') {
+                                    window.applyCurrency(currency);
+                                }
+                                var banner = document.getElementById('price-change-banner');
+                                if (banner && typeof data.old_price === 'number' && data.old_price > 0) {
+                                    var oldEl = banner.querySelector('[data-old-price]');
+                                    var newEl = banner.querySelector('[data-new-price]');
+                                    if (oldEl) oldEl.setAttribute('data-price-krw', data.old_price);
+                                    if (newEl) newEl.setAttribute('data-price-krw', data.price);
+                                    var direction = data.price > data.old_price ? 'up' : 'down';
+                                    banner.classList.remove('hidden');
+                                    banner.classList.add('flex');
+                                    banner.classList.toggle('bg-rose-50', direction === 'up');
+                                    banner.classList.toggle('text-rose-700', direction === 'up');
+                                    banner.classList.toggle('border-rose-200', direction === 'up');
+                                    banner.classList.toggle('bg-emerald-50', direction === 'down');
+                                    banner.classList.toggle('text-emerald-700', direction === 'down');
+                                    banner.classList.toggle('border-emerald-200', direction === 'down');
+                                    var arrow = banner.querySelector('[data-arrow]');
+                                    if (arrow) arrow.textContent = direction === 'up' ? '↑' : '↓';
+                                    if (typeof window.applyCurrency === 'function') {
+                                        window.applyCurrency(currency);
+                                    }
+                                }
+                            }
                         })
                         .catch(function() {
                             document.getElementById('encar-badge-loading').classList.add('hidden');
@@ -788,6 +818,13 @@
                 <div class="border-t border-gray-100 pt-4 mb-4">
                     <div class="text-sm text-gray-500 mb-1 bilingual" data-lang-ar="السعر" data-lang-ru="цена" data-lang-es="el precio" data-lang-en="Price">السعر</div>
                     <div class="text-brand font-extrabold text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
+                    <div id="price-change-banner" class="hidden mt-2 border rounded-xl px-3 py-2 text-xs items-center gap-2">
+                        <span data-arrow class="font-bold text-base leading-none">↓</span>
+                        <span class="font-semibold bilingual" data-lang-ar="تم تحديث السعر" data-lang-ru="Цена обновлена" data-lang-es="Precio actualizado" data-lang-en="Price updated">تم تحديث السعر</span>
+                        <span class="opacity-70 line-through" data-old-price data-price-krw="0">—</span>
+                        <span>→</span>
+                        <span class="font-bold" data-new-price data-price-krw="0">—</span>
+                    </div>
                 </div>
 
                 {% if car.auction_date %}
