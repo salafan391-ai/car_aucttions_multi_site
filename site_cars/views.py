@@ -29,7 +29,7 @@ def _is_public_schema():
 @staff_member_required
 def dashboard(request):
     if _is_public_schema():
-        return redirect('home')
+        return _saas_owner_dashboard(request)
     now = timezone.now()
     thirty_days_ago = now - timezone.timedelta(days=30)
 
@@ -615,40 +615,47 @@ def send_email_view(request):
 @require_POST
 @staff_member_required
 def delete_expired_auctions(request):
-    if _is_public_schema():
+    if not _is_public_schema():
         return redirect('home')
 
     from django.db import connection
     from django.utils import timezone
     from django.contrib import messages as dj_messages
+    from tenants.models import Tenant
 
-    schema = connection.tenant.schema_name
     cutoff = timezone.now()
 
-    # Double-quote the schema name so hyphens (e.g. "hassan-trading") are valid.
-    quoted = f'"{schema}"'
+    # Build a UNION over every tenant schema's referencing tables so we don't
+    # try to delete an ApiCar that any tenant still has an order/rating/sold/
+    # question pointing at.
+    tenant_schemas = list(
+        Tenant.objects.exclude(schema_name='public')
+        .values_list('schema_name', flat=True)
+    )
 
-    # Use raw SQL with explicit schema-qualified table names so the DELETE
-    # runs entirely inside the tenant schema and bypasses Django ORM's
-    # cross-schema cascade collector (which causes FK violations).
+    if tenant_schemas:
+        union_parts = []
+        for schema in tenant_schemas:
+            quoted = f'"{schema}"'
+            union_parts.extend([
+                f"SELECT car_id FROM {quoted}.site_cars_siteorder",
+                f"SELECT car_id FROM {quoted}.site_cars_siterating",
+                f"SELECT car_id FROM {quoted}.site_cars_sitesoldcar",
+                f"SELECT car_id FROM {quoted}.site_cars_sitequestion WHERE car_id IS NOT NULL",
+            ])
+        referenced_sql = " UNION ALL ".join(union_parts)
+        not_in_clause = f"AND a.id NOT IN ({referenced_sql})"
+    else:
+        not_in_clause = ""
+
     with connection.cursor() as cur:
-        # 1. Collect IDs of expired available auction cars that have NO
-        #    references in any tenant-side FK table.
         cur.execute(f"""
             SELECT a.id FROM cars_apicar a
             INNER JOIN cars_category c ON c.id = a.category_id
             WHERE c.name = 'auction'
               AND a.auction_date < %s
               AND a.status = 'available'
-              AND a.id NOT IN (
-                  SELECT car_id FROM {quoted}.site_cars_siteorder
-                  UNION ALL
-                  SELECT car_id FROM {quoted}.site_cars_siterating
-                  UNION ALL
-                  SELECT car_id FROM {quoted}.site_cars_sitesoldcar
-                  UNION ALL
-                  SELECT car_id FROM {quoted}.site_cars_sitequestion WHERE car_id IS NOT NULL
-              )
+              {not_in_clause}
         """, [cutoff])
         ids_to_delete = [row[0] for row in cur.fetchall()]
 
@@ -673,7 +680,7 @@ def delete_expired_auctions(request):
 
 @staff_member_required
 def upload_auction_json(request):
-    if _is_public_schema():
+    if not _is_public_schema():
         return redirect('home')
     import json
     from datetime import datetime
@@ -1408,4 +1415,164 @@ def shipment_edit(request, pk, bill_pk):
         'bill': bill,
         'shipment': shipment,
         'status_choices': SiteShipment.STATUS_CHOICES,
+    })
+
+
+# ── Staff list pages (replacing Django admin for tenant staff) ─────────────
+
+@staff_member_required
+def staff_orders(request):
+    """Tenant-side orders list with filters and inline status update."""
+    if _is_public_schema():
+        return redirect('home')
+
+    qs = SiteOrder.objects.select_related('car', 'user').all()
+    status = (request.GET.get('status') or '').strip()
+    if status in dict(SiteOrder.STATUS_CHOICES):
+        qs = qs.filter(status=status)
+    q = (request.GET.get('q') or '').strip()
+    if q:
+        qs = qs.filter(
+            Q(user__username__icontains=q)
+            | Q(user__email__icontains=q)
+            | Q(notes__icontains=q)
+            | Q(admin_notes__icontains=q)
+        )
+
+    paginator = Paginator(qs, 25)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'site_cars/staff_orders.html', {
+        'page': page,
+        'status': status,
+        'q': q,
+        'status_choices': SiteOrder.STATUS_CHOICES,
+    })
+
+
+@staff_member_required
+@require_POST
+def staff_order_update(request, pk):
+    if _is_public_schema():
+        return redirect('home')
+    order = get_object_or_404(SiteOrder, pk=pk)
+    new_status = request.POST.get('status', '').strip()
+    if new_status in dict(SiteOrder.STATUS_CHOICES):
+        order.status = new_status
+        if new_status == 'completed' and not order.completed_at:
+            order.completed_at = timezone.now()
+    order.admin_notes = request.POST.get('admin_notes', order.admin_notes)
+    order.save()
+    messages.success(request, f'تم تحديث الطلب #{order.pk}.')
+    return redirect('staff_orders')
+
+
+@staff_member_required
+def staff_ratings(request):
+    """Tenant-side ratings list. Approve/reject use existing views."""
+    if _is_public_schema():
+        return redirect('home')
+
+    qs = SiteRating.objects.select_related('car', 'user').all()
+    status = (request.GET.get('status') or 'pending').strip()
+    if status == 'pending':
+        qs = qs.filter(is_approved=False)
+    elif status == 'approved':
+        qs = qs.filter(is_approved=True)
+    # 'all' → no filter
+
+    paginator = Paginator(qs, 25)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'site_cars/staff_ratings.html', {
+        'page': page,
+        'status': status,
+    })
+
+
+@staff_member_required
+def staff_questions(request):
+    """Tenant-side questions list."""
+    if _is_public_schema():
+        return redirect('home')
+
+    qs = SiteQuestion.objects.select_related('car', 'user').all()
+    status = (request.GET.get('status') or 'pending').strip()
+    if status == 'pending':
+        qs = qs.filter(is_answered=False)
+    elif status == 'answered':
+        qs = qs.filter(is_answered=True)
+
+    paginator = Paginator(qs, 25)
+    page = paginator.get_page(request.GET.get('page'))
+    return render(request, 'site_cars/staff_questions.html', {
+        'page': page,
+        'status': status,
+    })
+
+
+@staff_member_required
+@require_POST
+def staff_question_answer(request, pk):
+    if _is_public_schema():
+        return redirect('home')
+    question = get_object_or_404(SiteQuestion, pk=pk)
+    answer = (request.POST.get('answer') or '').strip()
+    if answer:
+        question.answer = answer
+        question.is_answered = True
+        question.save()
+        messages.success(request, 'تم إرسال الإجابة.')
+    else:
+        messages.error(request, 'الرجاء إدخال إجابة.')
+    return redirect('staff_questions')
+
+
+# ── SaaS-owner dashboard (public schema only) ──────────────────────────────
+
+def _saas_owner_dashboard(request):
+    """Overview of every tenant: subscription status + monthly revenue."""
+    from tenants.models import Tenant
+    from billing.models import Subscription
+
+    now = timezone.now()
+    tenants = (
+        Tenant.objects.exclude(schema_name="public")
+        .prefetch_related("domains")
+        .order_by("name")
+    )
+    subs_by_tenant = {
+        s.tenant_id: s for s in Subscription.objects.all()
+    }
+
+    rows = []
+    active_count = 0
+    overdue_count = 0
+    none_count = 0
+    monthly_revenue = 0  # sum of billing_amount_usd for tenants with active subs
+
+    for t in tenants:
+        sub = subs_by_tenant.get(t.id)
+        is_active = bool(sub and sub.is_active)
+        if is_active:
+            active_count += 1
+            monthly_revenue += float(t.billing_amount_usd or 0)
+        elif sub and sub.current_period_end and sub.current_period_end < now:
+            overdue_count += 1
+        else:
+            none_count += 1
+
+        primary_domain = t.domains.first()
+        rows.append({
+            "tenant": t,
+            "subscription": sub,
+            "is_active": is_active,
+            "primary_domain": primary_domain.domain if primary_domain else None,
+        })
+
+    return render(request, "site_cars/saas_dashboard.html", {
+        "rows": rows,
+        "total_tenants": len(rows),
+        "active_count": active_count,
+        "overdue_count": overdue_count,
+        "none_count": none_count,
+        "monthly_revenue": monthly_revenue,
     })

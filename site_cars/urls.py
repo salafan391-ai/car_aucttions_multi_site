@@ -31,4 +31,9 @@ urlpatterns = [
     path('upload-auction/delete-expired/', views.delete_expired_auctions, name='delete_expired_auctions'),
     path('dashboard/import-happycar/', views.import_happycar_view, name='import_happycar'),
     path('dashboard/damaged-cars/delete-unsold/', views.delete_unsold_damaged, name='delete_unsold_damaged'),
+    path('staff/orders/', views.staff_orders, name='staff_orders'),
+    path('staff/orders/<int:pk>/update/', views.staff_order_update, name='staff_order_update'),
+    path('staff/ratings/', views.staff_ratings, name='staff_ratings'),
+    path('staff/questions/', views.staff_questions, name='staff_questions'),
+    path('staff/questions/<int:pk>/answer/', views.staff_question_answer, name='staff_question_answer'),
 ]

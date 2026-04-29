@@ -26,6 +26,7 @@ from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from tenants.views import site_settings
+from billing.views import stripe_webhook
 
 
 handler404 = 'cars_multi_site.urls.custom_404'
@@ -135,6 +136,8 @@ urlpatterns = [
     path("robots.txt", robots_txt),
     path("admin/", admin.site.urls),
     path("settings/", site_settings, name="site_settings"),
+    path("billing/", include("billing.urls")),
+    path("stripe/webhook/", stripe_webhook, name="stripe_webhook"),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
 ]

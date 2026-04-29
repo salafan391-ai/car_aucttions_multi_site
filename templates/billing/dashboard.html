@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}الفوترة{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-6">الفوترة</h1>
+
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-gray-600">الموقع</span>
+            <span class="font-semibold">{{ tenant.name }}</span>
+        </div>
+        {% if subscription.current_period_end %}
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-gray-600">مدفوع حتى</span>
+            <span class="font-semibold
+                {% if subscription.is_active %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ subscription.current_period_end|date:"Y-m-d" }}
+            </span>
+        </div>
+        {% else %}
+        <div class="text-gray-600 mb-4">لم يتم تسجيل أي دفعة بعد.</div>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="text-3xl font-bold text-blue-600 mb-2">${{ price_amount|floatformat:"-2" }}<span class="text-base text-gray-500"> / شهرياً</span></div>
+        <p class="text-gray-600 mb-6">ادفع ${{ price_amount|floatformat:"-2" }} للحصول على وصول لمدة 30 يوماً.</p>
+
+        <form method="post" action="{% url 'billing:checkout' %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold w-full">
+                ادفع الآن
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

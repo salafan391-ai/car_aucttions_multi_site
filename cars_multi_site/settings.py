@@ -51,6 +51,7 @@ WEBHOOK_BASE_URL = os.environ.get("WEBHOOK_BASE_URL", "")
 SHARED_APPS = [
     "django_tenants",
     "tenants",
+    "billing",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -84,6 +85,7 @@ if DEBUG:
 MIDDLEWARE = [
     "tenants.middleware.QueryStringGuardMiddleware",
     "django_tenants.middleware.main.TenantMainMiddleware",
+    "tenants.middleware.BlockTenantAdminMiddleware",
     "tenants.middleware.TenantPublicSchemaMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -341,3 +343,15 @@ OFLEET_PASSWORD  = os.environ.get("OFLEET_PASSWORD",  "")
 R2_ACCOUNT_ID=os.environ.get("R2_ACCOUNT_ID", "")
 R2_ACCESS_KEY_ID=os.environ.get("R2_ACCESS_KEY_ID", "")
 R2_SECRET_ACCESS_KEY=os.environ.get("R2_SECRET_ACCESS_KEY", "")
+
+# ── Stripe billing ────────────────────────────────────────────────────────
+# Each non-public tenant must have an active subscription on this Price
+# ($400/month) to access their site. Configure via env vars:
+#   STRIPE_SECRET_KEY      — sk_live_... or sk_test_...
+#   STRIPE_PUBLIC_KEY      — pk_live_... or pk_test_...
+#   STRIPE_WEBHOOK_SECRET  — whsec_... (from the webhook endpoint dashboard)
+#   STRIPE_PRICE_ID        — price_... for the recurring $400/mo product
+STRIPE_SECRET_KEY     = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLIC_KEY     = os.environ.get("STRIPE_PUBLIC_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_ID       = os.environ.get("STRIPE_PRICE_ID", "")

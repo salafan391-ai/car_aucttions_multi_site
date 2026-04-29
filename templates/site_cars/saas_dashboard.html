@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}SaaS Overview{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">SaaS Overview</h1>
+            <p class="text-sm text-gray-500">Public schema — all tenants at a glance.</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/admin/tenants/tenant/" class="bg-brand text-white px-4 py-2 rounded-lg text-sm font-bold">إدارة المواقع</a>
+            <a href="/admin/billing/subscription/" class="border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50">الاشتراكات</a>
+            <a href="https://dashboard.stripe.com/" target="_blank" class="border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50">Stripe ↗</a>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="bg-white rounded-2xl shadow-sm p-4 mb-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <a href="{% url 'upload_auction_json' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 transition text-center">
+                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <span class="text-xs font-medium text-emerald-700">استيراد سيارات المزاد</span>
+            </a>
+            <a href="/admin/tenants/tenant/add/" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition text-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span class="text-xs font-medium text-blue-700">إضافة موقع جديد</span>
+            </a>
+            <a href="/admin/billing/subscription/" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition text-center">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span class="text-xs font-medium text-purple-700">الاشتراكات</span>
+            </a>
+            <a href="https://dashboard.stripe.com/" target="_blank" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 transition text-center">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                <span class="text-xs font-medium text-indigo-700">لوحة Stripe ↗</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="text-xs text-gray-500 mb-1">Total tenants</div>
+            <div class="text-3xl font-extrabold text-gray-900">{{ total_tenants }}</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="text-xs text-gray-500 mb-1">Paying</div>
+            <div class="text-3xl font-extrabold text-green-600">{{ active_count }}</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="text-xs text-gray-500 mb-1">Overdue / unpaid</div>
+            <div class="text-3xl font-extrabold text-red-600">{{ overdue_count|add:none_count }}</div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <div class="text-xs text-gray-500 mb-1">Monthly revenue (USD)</div>
+            <div class="text-3xl font-extrabold text-blue-600">${{ monthly_revenue|floatformat:"-2" }}</div>
+        </div>
+    </div>
+
+    <!-- One-off payment link (not tied to a tenant) -->
+    <div class="bg-white rounded-2xl shadow-sm p-5 mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <h2 class="font-bold">إنشاء رابط دفع لمرة واحدة</h2>
+                <p class="text-xs text-gray-500">لأي مبلغ ووصف — غير مرتبط بموقع. مفيد للعملاء المحتملين أو الرسوم المخصصة.</p>
+            </div>
+        </div>
+        <form method="post" action="{% url 'billing:payment_link_generic' %}" class="grid grid-cols-1 md:grid-cols-[1fr,140px,auto] gap-3 items-end">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">الوصف</label>
+                <input type="text" name="description" placeholder="رسوم الإعداد، استشارة، إلخ." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">المبلغ (USD)</label>
+                <input type="number" step="0.01" min="0.5" name="amount" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+            </div>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-bold whitespace-nowrap">إنشاء رابط</button>
+        </form>
+    </div>
+
+    <!-- Tenants table -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b">
+            <h2 class="font-bold">جميع المواقع</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 text-gray-600 text-xs">
+                    <tr>
+                        <th class="p-3 text-right">الموقع</th>
+                        <th class="p-3 text-right">النطاق</th>
+                        <th class="p-3 text-right">الفوترة مفعلة</th>
+                        <th class="p-3 text-right">المبلغ (USD)</th>
+                        <th class="p-3 text-right">الحالة</th>
+                        <th class="p-3 text-right">مدفوع حتى</th>
+                        <th class="p-3 text-right">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in rows %}
+                    <tr>
+                        <td class="p-3">
+                            <div class="font-semibold">{{ row.tenant.name }}</div>
+                            <div class="text-xs text-gray-500">{{ row.tenant.schema_name }}</div>
+                        </td>
+                        <td class="p-3">
+                            {% if row.primary_domain %}
+                            <a href="https://{{ row.primary_domain }}" target="_blank" class="text-brand hover:underline">{{ row.primary_domain }} ↗</a>
+                            {% else %}
+                            <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3">
+                            {% if row.tenant.billing_visible %}
+                            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">نعم</span>
+                            {% else %}
+                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">لا</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 font-semibold">${{ row.tenant.billing_amount_usd|floatformat:"-2" }}</td>
+                        <td class="p-3">
+                            {% if row.is_active %}
+                            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">{{ row.subscription.get_status_display }}</span>
+                            {% elif row.subscription %}
+                            <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs">{{ row.subscription.get_status_display }}</span>
+                            {% else %}
+                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">لم يدفع</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 text-xs text-gray-500">
+                            {% if row.subscription.current_period_end %}
+                            {{ row.subscription.current_period_end|date:"Y-m-d" }}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="p-3">
+                            <div class="flex items-center gap-3">
+                                <a href="/admin/tenants/tenant/{{ row.tenant.pk }}/change/" class="text-brand hover:underline text-xs font-bold">تعديل</a>
+                                <form method="post" action="{% url 'billing:payment_link' row.tenant.pk %}" class="inline-flex items-center gap-1">
+                                    {% csrf_token %}
+                                    <input type="number" step="0.01" min="0.5" name="amount" value="{{ row.tenant.billing_amount_usd|floatformat:'-2' }}" class="w-20 border border-gray-200 rounded px-2 py-1 text-xs">
+                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-bold whitespace-nowrap">رابط دفع</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="p-6 text-center text-gray-400">لا توجد مواقع.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

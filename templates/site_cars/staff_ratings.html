@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}إدارة التقييمات{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold">إدارة التقييمات</h1>
+        <a href="{% url 'site_dashboard' %}" class="text-brand text-sm">&rarr; لوحة التحكم</a>
+    </div>
+
+    <div class="flex gap-2 mb-4">
+        <a href="?status=pending" class="px-4 py-2 rounded-lg text-sm {% if status == 'pending' %}bg-brand text-white{% else %}bg-white text-gray-700{% endif %}">قيد المراجعة</a>
+        <a href="?status=approved" class="px-4 py-2 rounded-lg text-sm {% if status == 'approved' %}bg-brand text-white{% else %}bg-white text-gray-700{% endif %}">موافق عليها</a>
+        <a href="?status=all" class="px-4 py-2 rounded-lg text-sm {% if status == 'all' %}bg-brand text-white{% else %}bg-white text-gray-700{% endif %}">الكل</a>
+    </div>
+
+    <div class="space-y-3">
+        {% for rating in page %}
+        <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-bold">{{ rating.user.username }}</span>
+                        <span class="text-yellow-500">{% for _ in "12345"|slice:":5" %}{% if forloop.counter <= rating.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
+                        <span class="text-xs text-gray-500">{{ rating.created_at|date:"Y-m-d" }}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2">{{ rating.car }}</div>
+                    {% if rating.comment %}<p class="text-sm text-gray-700">{{ rating.comment }}</p>{% endif %}
+                </div>
+                <div class="flex flex-col gap-2">
+                    {% if not rating.is_approved %}
+                    <a href="{% url 'approve_rating' rating.pk %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded text-xs font-bold text-center">موافق</a>
+                    <a href="{% url 'reject_rating' rating.pk %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold text-center">رفض</a>
+                    {% else %}
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold">موافق عليه</span>
+                    <a href="{% url 'reject_rating' rating.pk %}" class="bg-gray-100 hover:bg-red-100 hover:text-red-700 text-gray-600 px-4 py-1.5 rounded text-xs font-bold text-center">حذف</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-xl shadow-sm p-8 text-center text-gray-400">لا توجد تقييمات.</div>
+        {% endfor %}
+    </div>
+
+    {% if page.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-center gap-2 mt-6">
+        {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&status={{ status }}" class="px-3 py-1 border rounded">السابق</a>{% endif %}
+        <span class="text-sm text-gray-500">صفحة {{ page.number }} من {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a href="?page={{ page.next_page_number }}&status={{ status }}" class="px-3 py-1 border rounded">التالي</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

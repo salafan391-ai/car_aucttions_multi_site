@@ -141,3 +141,22 @@ class TenantPublicSchemaMiddleware:
                         cursor.execute(f"SET search_path TO {current}, public")
                 connection._public_appended = True
         return self.get_response(request)
+
+
+class BlockTenantAdminMiddleware:
+    """Block /admin/ on tenant domains. Only the public (SaaS owner) domain
+    can reach Django admin. Tenant staff should use /dashboard/ + /settings/.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path_info
+        if path == "/admin" or path.startswith("/admin/"):
+            tenant = getattr(connection, "tenant", None)
+            if tenant and tenant.schema_name != "public":
+                return HttpResponseNotFound(
+                    "Not found.", content_type="text/plain"
+                )
+        return self.get_response(request)

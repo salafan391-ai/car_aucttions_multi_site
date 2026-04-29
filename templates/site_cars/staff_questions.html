@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}إدارة الأسئلة{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold">إدارة الأسئلة</h1>
+        <a href="{% url 'site_dashboard' %}" class="text-brand text-sm">&rarr; لوحة التحكم</a>
+    </div>
+
+    <div class="flex gap-2 mb-4">
+        <a href="?status=pending" class="px-4 py-2 rounded-lg text-sm {% if status == 'pending' %}bg-brand text-white{% else %}bg-white text-gray-700{% endif %}">بدون إجابة</a>
+        <a href="?status=answered" class="px-4 py-2 rounded-lg text-sm {% if status == 'answered' %}bg-brand text-white{% else %}bg-white text-gray-700{% endif %}">تمت الإجابة</a>
+        <a href="?status=all" class="px-4 py-2 rounded-lg text-sm {% if status == 'all' %}bg-brand text-white{% else %}bg-white text-gray-700{% endif %}">الكل</a>
+    </div>
+
+    <div class="space-y-3">
+        {% for q in page %}
+        <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="font-bold">{{ q.user.username }}</span>
+                <span class="text-xs text-gray-500">{{ q.created_at|date:"Y-m-d H:i" }}</span>
+                {% if q.car %}<span class="text-xs text-gray-500">— {{ q.car }}</span>{% endif %}
+                {% if q.is_answered %}
+                <span class="ml-auto bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs">تمت الإجابة</span>
+                {% else %}
+                <span class="ml-auto bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs">بدون إجابة</span>
+                {% endif %}
+            </div>
+            <p class="text-sm mb-3 bg-gray-50 p-3 rounded-lg">{{ q.question }}</p>
+            {% if q.answer %}
+            <div class="text-xs text-gray-500 mb-1">الإجابة:</div>
+            <p class="text-sm mb-3 bg-blue-50 p-3 rounded-lg">{{ q.answer }}</p>
+            {% endif %}
+            <form method="post" action="{% url 'staff_question_answer' q.pk %}" class="space-y-2">
+                {% csrf_token %}
+                <textarea name="answer" rows="2" placeholder="{% if q.is_answered %}تعديل الإجابة…{% else %}اكتب الإجابة…{% endif %}" class="w-full border border-gray-200 rounded-lg p-2 text-sm">{{ q.answer|default:"" }}</textarea>
+                <button type="submit" class="bg-brand text-white px-4 py-1.5 rounded-lg text-xs font-bold">{% if q.is_answered %}تحديث الإجابة{% else %}إرسال الإجابة{% endif %}</button>
+            </form>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-xl shadow-sm p-8 text-center text-gray-400">لا توجد أسئلة.</div>
+        {% endfor %}
+    </div>
+
+    {% if page.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-center gap-2 mt-6">
+        {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}&status={{ status }}" class="px-3 py-1 border rounded">السابق</a>{% endif %}
+        <span class="text-sm text-gray-500">صفحة {{ page.number }} من {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a href="?page={{ page.next_page_number }}&status={{ status }}" class="px-3 py-1 border rounded">التالي</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

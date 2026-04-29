@@ -109,6 +109,8 @@ def tenant_branding(request):
     "rate_eur": float(getattr(tenant, 'rate_eur', 0.00069)),
     # Eid overlays flag
     "eid_is_active": getattr(tenant, 'eid_is_active', False),
+    # Billing visibility (controlled by SaaS owner)
+    "billing_visible": getattr(tenant, 'billing_visible', False),
     }
     # Cache for 30 minutes — tenant branding never changes between deploys
     cache.set(_cache_key, result, 60 * 30)

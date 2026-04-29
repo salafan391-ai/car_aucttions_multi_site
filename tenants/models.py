@@ -117,6 +117,23 @@ class Tenant(TenantMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     eid_is_active = models.BooleanField(default=False, verbose_name="تفعيل زينة العيد", help_text="عند التفعيل تظهر زينة العيد (بالونات ونصوص متحركة) في جميع صفحات الموقع.")
 
+    # ── Billing visibility (controlled by SaaS owner only) ───────────────
+    # When False, /billing/ is inaccessible and the nav/dashboard links are
+    # hidden for this tenant. Toggle this from Django admin (public schema)
+    # to roll out billing tenant-by-tenant.
+    billing_visible = models.BooleanField(
+        default=False,
+        verbose_name="إظهار الفوترة",
+        help_text="عند التفعيل: تظهر صفحة الفوترة وروابطها لإداريي هذا الموقع.",
+    )
+    billing_amount_usd = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=400,
+        verbose_name="مبلغ الفوترة (USD)",
+        help_text="المبلغ الذي يدفعه هذا الموقع شهرياً بالدولار الأمريكي. الافتراضي 400$.",
+    )
+
     # ofleet PDF Export API credentials (per-tenant)
     ofleet_username     = models.CharField(max_length=150, blank=True, verbose_name="ofleet اسم المستخدم", help_text="اسم المستخدم لـ API تصدير PDF من ofleet0.com")
     ofleet_password     = models.CharField(max_length=255, blank=True, verbose_name="ofleet كلمة المرور", help_text="كلمة المرور لـ API تصدير PDF من ofleet0.com")
