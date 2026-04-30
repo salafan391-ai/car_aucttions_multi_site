@@ -687,6 +687,7 @@ def upload_auction_json(request):
     from django.core.exceptions import MultipleObjectsReturned
     from django.db import transaction
     from cars.models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Category
+    from cars.normalization import normalize_transmission, normalize_fuel
 
     def safe_get_or_create(manager, defaults=None, **kwargs):
         try:
@@ -930,11 +931,11 @@ def upload_auction_json(request):
                 "badge": badge,
                 "year": int(item.get("year") or 0),
                 "color": color,
-                "transmission": (item.get("mission") or "")[:100],
+                "transmission": (normalize_transmission(item.get("mission_en") or item.get("mission") or "") or "")[:100],
                 "power": parse_power(item.get("power")),
                 "price": int(item.get("price") or 0),
                 "mileage": parse_mileage(item.get("mileage")),
-                "fuel": (item.get("fuel_en") or item.get("fuel") or "")[:100],
+                "fuel": (normalize_fuel(item.get("fuel_en") or item.get("fuel") or "") or "")[:100],
                 "images": item.get("images") or [],
                 "inspection_image": item.get("inspection_image") or "",
                 "points": str(item.get("points") or item.get("score") or "")[:50],
@@ -1056,9 +1057,9 @@ def import_happycar_view(request):
             return redirect('import_happycar')
 
         cookie = (request.POST.get('cookie') or '').strip()
-        lang = request.POST.get('lang') or 'ar'
+        lang = request.POST.get('lang') or 'en'
         if lang not in ('ar', 'en', 'ko'):
-            lang = 'ar'
+            lang = 'en'
 
         cmd = [
             sys.executable, 'manage.py', 'import_happycar',

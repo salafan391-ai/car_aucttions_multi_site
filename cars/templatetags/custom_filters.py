@@ -290,3 +290,16 @@ def translate_body(value, lang='ar'):
     if lang == 'en':
         return pretty_en(name)
     return _extra_dict('body_types_dict', lang).get(name.lower()) or pretty_en(name)
+
+
+@register.filter(name='translate_location')
+def translate_location(value, lang='ar'):
+    """Translate a HappyCar Korean storage location (e.g. '전북 전주시') for
+    the requested language. Korean source values render correctly in en/ar/ko;
+    ru/es fall back to English transliteration. Non-Korean inputs (e.g. legacy
+    pre-translated rows) pass through unchanged.
+    """
+    if not isinstance(value, str) or not value:
+        return value
+    from site_cars.happycar import locations as _locations
+    return _locations.translate(value, lang)

@@ -281,8 +281,10 @@ class Command(BaseCommand):
         status_code = row.get("status", "")
         status = STATUS_MAP.get(status_code, "available")
 
+        # Store the Korean source location so templates can render it in any
+        # language at swap time via the translate_location filter; pre-translating
+        # would lock the value to one language.
         loc = row.get("storage_location") or row.get("location") or ""
-        loc_translated = _locations.translate(loc, lang) if lang != "ko" else loc
 
         price = row.get("min_bid_price_num") or 0
         try:
@@ -330,7 +332,7 @@ class Command(BaseCommand):
             "engine_cc": engine_cc,
             "status": status,
             "source_status": (status_code or "")[:20],
-            "location": (loc_translated or "")[:200],
+            "location": (loc or "")[:200],
             "registration_no": (row.get("registration_no") or "")[:50],
             "source_url": (row.get("detail_url") or "")[:500],
             "auction_end": _parse_auction_end(row.get("auction_end")),

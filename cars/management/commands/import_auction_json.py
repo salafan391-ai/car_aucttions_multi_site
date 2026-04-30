@@ -188,7 +188,7 @@ class Command(BaseCommand):
                 skipped += 1
                 continue
 
-            from cars.normalization import normalize_name
+            from cars.normalization import normalize_name, normalize_transmission
             # Manufacturer
             make_name = normalize_name(item.get("make_en"))
             if make_name not in manu_cache:
@@ -238,7 +238,7 @@ class Command(BaseCommand):
             mileage = self._parse_mileage(item.get("mileage"))
             power = int(item.get("power") or 0)
             fuel = normalize_name(item.get("fuel_en") or item.get("fuel") or "")
-            transmission = normalize_name(item.get("mission_en") or item.get("mission") or "")
+            transmission = normalize_transmission(item.get("mission_en") or item.get("mission") or "")
             auction_name = item.get("auction_name") or ""
             auction_date = self._parse_auction_date(item.get("auction_date"))
             image = item.get("image") or ""

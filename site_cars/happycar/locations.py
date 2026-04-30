@@ -215,9 +215,13 @@ def translate(loc: str, lang: str) -> str:
     """Translate e.g. '전북 전주시' → 'Jeonju, Jeonbuk' / 'جونجو، جيونبوك'.
 
     For Korean (`lang='ko'`) and unknown input, returns the input unchanged.
+    Languages outside {en, ar, ko} fall back to English transliteration so
+    ru/es users see Latin text instead of Hangul.
     """
     if not loc or lang == 'ko':
         return loc or ''
+    if lang not in ('en', 'ar'):
+        lang = 'en'
     parts = loc.strip().split(maxsplit=1)
     if len(parts) == 2:
         province, district = parts
@@ -228,11 +232,10 @@ def translate(loc: str, lang: str) -> str:
         if lang == 'ar':
             return f'{dn}، {pn}'  # Arabic comma U+060C
     # single-word location
-    if lang in ('en', 'ar'):
-        hit = _DISTRICT_BASES.get(loc.strip())
-        if hit:
-            return hit[lang]
-        hit = PROVINCES.get(loc.strip())
-        if hit:
-            return hit[lang]
+    hit = _DISTRICT_BASES.get(loc.strip())
+    if hit:
+        return hit[lang]
+    hit = PROVINCES.get(loc.strip())
+    if hit:
+        return hit[lang]
     return loc

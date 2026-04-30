@@ -197,7 +197,7 @@
                 </div>
                 <div class="p-4">
                     {% if car.manufacturer %}
-                    <div class="text-xs text-gray-500 mb-1">{{ car.manufacturer|pretty_en }}</div>
+                    <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
                     {% endif %}
                     <h3 class="font-bold text-gray-900 truncate">{{ car.title|pretty_en }}</h3>
                     {% if car.registration_no %}
@@ -207,10 +207,10 @@
                     {% endif %}
                     <div class="flex flex-wrap items-center gap-1 text-xs text-gray-600 mb-3">
                         {% if car.transmission %}
-                        <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md">{{ car.transmission|pretty_en }}</span>
+                        <span class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded-md bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                         {% endif %}
                         {% if car.fuel %}
-                        <span class="bg-green-50 text-green-700 px-2 py-0.5 rounded-md">{{ car.fuel|pretty_en }}</span>
+                        <span class="bg-green-50 text-green-700 px-2 py-0.5 rounded-md bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>
                         {% endif %}
                         {% if car.mileage %}
                         <span class="bilingual bg-gray-100 px-2 py-0.5 rounded-md" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span>
@@ -228,7 +228,7 @@
                     {% if car.location or car.auction_end %}
                     <div class="text-xs text-gray-500 space-y-0.5">
                         {% if car.location %}
-                        <div class="truncate">📍 {{ car.location }}</div>
+                        <div class="truncate bilingual" data-lang-ar="📍 {{ car.location|translate_location }}" data-lang-ru="📍 {{ car.location|translate_location:'ru' }}" data-lang-es="📍 {{ car.location|translate_location:'es' }}" data-lang-en="📍 {{ car.location|translate_location:'en' }}">📍 {{ car.location|translate_location }}</div>
                         {% endif %}
                         {% if car.auction_end %}
                         <div>🕐 {{ car.auction_end|date:"H:i Y.m.d" }}</div>

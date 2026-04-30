@@ -103,11 +103,11 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="الشركة المصنعة" data-lang-en="manufacturer" data-lang-es="fabricante" data-lang-ru="производитель">الشركة المصنعة</div>
-                        <div class="font-bold text-sm">{{ car.manufacturer|pretty_en }}</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="الموديل" data-lang-en="model" data-lang-es="modelo" data-lang-ru="модель">الموديل</div>
-                        <div class="font-bold text-sm">{{ car.model|pretty_en }}</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model|pretty_en }}">{{ car.model|translate_model }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="سنة الصنع" data-lang-en="year" data-lang-es="año" data-lang-ru="год">سنة الصنع</div>
@@ -120,13 +120,13 @@
                     {% if car.transmission %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="ناقل الحركة" data-lang-en="transmission" data-lang-es="transmisión" data-lang-ru="коробка">ناقل الحركة</div>
-                        <div class="font-bold text-sm">{{ car.transmission|pretty_en }}</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</div>
                     </div>
                     {% endif %}
                     {% if car.fuel %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="الوقود" data-lang-en="fuel" data-lang-es="combustible" data-lang-ru="топливо">الوقود</div>
-                        <div class="font-bold text-sm">{{ car.fuel|pretty_en }}</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</div>
                     </div>
                     {% endif %}
                     {% if car.engine_cc %}
@@ -144,13 +144,13 @@
                     {% if car.color %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="اللون" data-lang-en="color" data-lang-es="color" data-lang-ru="цвет">اللون</div>
-                        <div class="font-bold text-sm">{{ car.color }}</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.color|translate_color }}" data-lang-ru="{{ car.color|translate_color:'ru' }}" data-lang-es="{{ car.color|translate_color:'es' }}" data-lang-en="{{ car.color|pretty_en }}">{{ car.color|translate_color }}</div>
                     </div>
                     {% endif %}
                     {% if car.body_type %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="نوع الهيكل" data-lang-en="body type" data-lang-es="tipo de carrocería" data-lang-ru="тип кузова">نوع الهيكل</div>
-                        <div class="font-bold text-sm">{{ car.body_type }}</div>
+                        <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.body_type|translate_body }}" data-lang-ru="{{ car.body_type|translate_body:'ru' }}" data-lang-es="{{ car.body_type|translate_body:'es' }}" data-lang-en="{{ car.body_type|pretty_en }}">{{ car.body_type|translate_body }}</div>
                     </div>
                     {% endif %}
                     {% if car.engine %}
@@ -262,13 +262,13 @@
                     {% if car.transmission %}
                     <div class="flex justify-between">
                         <span class="bilingual text-gray-500" data-lang-ar="ناقل الحركة" data-lang-en="transmission" data-lang-es="transmisión" data-lang-ru="коробка">ناقل الحركة</span>
-                        <span class="font-medium">{{ car.transmission|pretty_en }}</span>
+                        <span class="font-medium bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     </div>
                     {% endif %}
                     {% if car.fuel %}
                     <div class="flex justify-between">
                         <span class="bilingual text-gray-500" data-lang-ar="الوقود" data-lang-en="fuel" data-lang-es="combustible" data-lang-ru="топливо">الوقود</span>
-                        <span class="font-medium">{{ car.fuel|pretty_en }}</span>
+                        <span class="font-medium bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>
                     </div>
                     {% endif %}
                     {% if car.engine_cc %}
@@ -280,7 +280,7 @@
                     {% if car.location %}
                     <div class="flex justify-between gap-2">
                         <span class="bilingual text-gray-500" data-lang-ar="الموقع" data-lang-en="location" data-lang-es="ubicación" data-lang-ru="местоположение">الموقع</span>
-                        <span class="font-medium text-end">{{ car.location }}</span>
+                        <span class="font-medium text-end bilingual" data-lang-ar="{{ car.location|translate_location }}" data-lang-ru="{{ car.location|translate_location:'ru' }}" data-lang-es="{{ car.location|translate_location:'es' }}" data-lang-en="{{ car.location|translate_location:'en' }}">{{ car.location|translate_location }}</span>
                     </div>
                     {% endif %}
                     {% if car.auction_end %}

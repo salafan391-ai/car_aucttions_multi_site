@@ -13,6 +13,10 @@ BODY_SYNONYMS = {
 TRANSMISSION_SYNONYMS = {
     'أوتوماتيك': 'automatic',
     'يدوي': 'manual',
+    'ناقل حركة ذو تعشيق مستمر': 'cvt',
+    'نصف-أوتوماتيك': 'semi-automatic',
+    'آخر': 'other',
+    'غير معروف': 'unknown',
 }
 
 FUEL_SYNONYMS = {}
