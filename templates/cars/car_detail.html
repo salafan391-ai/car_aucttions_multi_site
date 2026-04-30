@@ -161,7 +161,7 @@
         <div class="lg:col-span-2">
             <!-- Main Image with Slider -->
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-4 relative group">
-                <div class="aspect-[16/10] bg-gray-100 relative" id="image-slider">
+                <div class="aspect-[16/10] bg-gray-100 relative car-img-wm" id="image-slider">
                     {% if car.image or car.images %}
                     <!-- Main Image -->
                     {% if car.image %}
@@ -951,7 +951,7 @@
         <a href="{% url 'car_detail' similar.slug %}"
            class="flex-shrink-0 w-[44vw] sm:w-64 snap-start bg-white rounded-xl shadow-sm hover:shadow-md overflow-hidden block group border border-transparent hover:border-brand/20 transition-all">
             <!-- Image -->
-            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative car-img-wm">
                 {% if similar.image %}
                 <img src="{{ similar.image|img_small }}" alt="{{ similar.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width="300" height="225" loading="lazy" decoding="async">
                 {% elif similar.images and similar.images|length > 0 %}

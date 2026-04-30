@@ -690,27 +690,6 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سيارات مصدومة" data-lang-ru="Поврежденные" data-lang-es="Dañados" data-lang-en="Damaged">سيارات مصدومة</div>
         </a>
         {% endif %}
-        <a href="{% url 'post_list' %}" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30 overflow-hidden">
-            {% if posts_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3 z-10"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-orange-500"></span></span>{% endif %}
-            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-orange-50 group-hover:bg-orange-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
-                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-orange-500 group-hover:text-orange-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-            </div>
-            {% if posts_count %}
-            <div class="text-2xl sm:text-3xl font-extrabold text-orange-600">{{ posts_count|intcomma }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المنشورات" data-lang-ru="Публикации" data-lang-es="Publicaciones" data-lang-en="Posts">المنشورات</div>
-            {% if latest_post %}
-            <div class="mt-2 pt-2 border-t border-gray-100">
-                <div class="bilingual text-[9px] sm:text-xs text-gray-400 mb-1" data-lang-ar="آخر منشور:" data-lang-ru="Последняя запись:" data-lang-es="Última publicación:" data-lang-en="Latest post:">آخر منشور:</div>
-                <div class="text-[10px] sm:text-xs font-medium text-orange-600 line-clamp-2 leading-tight">
-                    {{ latest_post.title_ar|default:latest_post.title }}
-                </div>
-            </div>
-            {% endif %}
-            {% else %}
-            <div class="text-sm sm:text-base font-extrabold text-gray-400">0</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المنشورات" data-lang-ru="Публикации" data-lang-es="Publicaciones" data-lang-en="Posts">المنشورات</div>
-            {% endif %}
-        </a>
         </div>
     </div>
 </section>
@@ -791,7 +770,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="cars-scroll">
         {% for car in latest_cars %}
         <a href="{% url 'car_detail' car.slug %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
-            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative car-img-wm">
                 {% if car.image %}
                 <img src="{{ car.image|img_small }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="400" height="300" {% if forloop.first %}fetchpriority="high" loading="eager"{% else %}loading="lazy" decoding="async"{% endif %}>
                 {% elif car.images %}
@@ -866,7 +845,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="auctions-scroll">
         {% for car in latest_auctions %}
         <a href="{% url 'car_detail' car.slug %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
-            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative car-img-wm">
                 {% if car.image %}
                 <img src="{{ car.image|img_small }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="400" height="300" loading="lazy" decoding="async">
                 {% elif car.images and car.images|length > 0 %}
@@ -956,7 +935,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="site-cars-scroll">
         {% for car in site_cars %}
         <a href="{% url 'site_car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block border-2 border-transparent hover:border-brand/20">
-            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative car-img-wm">
                 {% if car.image %}
                 <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.gallery.first %}

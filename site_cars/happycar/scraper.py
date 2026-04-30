@@ -248,6 +248,19 @@ def scrape_list(
     return list(records.values()), total
 
 
+class HappyCarAuthError(RuntimeError):
+    """Raised when HappyCar returns the login redirect instead of car detail HTML."""
+
+
+def _looks_like_login_redirect(data: bytes) -> bool:
+    # The login wall is a ~220-byte HTML stub that JS-redirects to /member/login.html.
+    # Real detail pages are tens of KB.
+    if len(data) >= 5000:
+        return False
+    head = data[:600].lower()
+    return b"/member/login.html" in head or b"location.href=" in head and b"login" in head
+
+
 def scrape_details(
     idxs: Iterable[str],
     cookie: str,
@@ -261,6 +274,14 @@ def scrape_details(
         if p.exists() and p.stat().st_size > 5000:
             return idx, p.stat().st_size
         data = fetch(f"{DETAIL_URL}?idx={idx}", cookie)
+        if _looks_like_login_redirect(data):
+            # Don't poison the cache with a login stub.
+            raise HappyCarAuthError(
+                "HappyCar returned a login redirect — the session cookie is expired "
+                "or missing. Open happycar.co.kr in a browser, copy a fresh PHPSESSID "
+                "from devtools → Application → Cookies, and paste it into the import "
+                "form (or set HAPPYCAR_COOKIE)."
+            )
         p.write_bytes(data)
         return idx, len(data)
 

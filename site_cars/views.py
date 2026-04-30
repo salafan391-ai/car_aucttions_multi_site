@@ -1035,23 +1035,66 @@ def import_happycar_view(request):
     cache_key = f"happycar_import:{schema}"
     state = cache.get(cache_key) or {}
 
-    # Detect stale state (process exited or host rebooted).
+    # Detect stale state (process exited or host rebooted). os.kill(pid, 0)
+    # alone isn't enough: the subprocess we spawned with Popen+start_new_session
+    # gets reparented but is never wait()'d, so on Linux/macOS it lingers as a
+    # zombie that os.kill still reports as alive until the gunicorn worker exits.
+    # Treat zombies/defunct states as dead, and also fall back to log-content
+    # markers ("Done. " / Python tracebacks) so a stuck cache entry self-heals.
     def _pid_alive(pid):
         if not pid:
             return False
         try:
             os.kill(pid, 0)
-            return True
         except (ProcessLookupError, PermissionError):
             return False
+        # Check process state — Z (zombie) / X (dead) means it finished.
+        try:
+            ps = subprocess.run(
+                ['ps', '-p', str(pid), '-o', 'state='],
+                capture_output=True, text=True, timeout=2,
+            )
+            state_char = (ps.stdout or '').strip()[:1]
+            if state_char in ('Z', 'X'):
+                return False
+        except (subprocess.SubprocessError, OSError):
+            pass
+        return True
+
+    def _log_indicates_finished(path):
+        if not path or not os.path.exists(path):
+            return False
+        try:
+            with open(path, 'rb') as f:
+                try:
+                    f.seek(-4096, os.SEEK_END)
+                except OSError:
+                    f.seek(0)
+                tail = f.read().decode('utf-8', errors='replace')
+        except OSError:
+            return False
+        return ('Done. ' in tail
+                or 'HappyCarAuthError' in tail
+                or 'CommandError' in tail
+                or 'Traceback (most recent call last)' in tail)
 
     running = _pid_alive(state.get('pid'))
+    if running and _log_indicates_finished(state.get('log_path')):
+        running = False
     if state and not running:
         # Process finished — clear state so the form re-appears on next GET,
         # but keep the final log visible for this one render.
         cache.delete(cache_key)
 
     if request.method == 'POST':
+        # Manual reset escape hatch for stuck cache entries (zombie subprocess,
+        # crashed worker, etc). The cache_key value can also be cleared via the
+        # Django shell, but a button is friendlier.
+        if request.POST.get('action') == 'reset':
+            cache.delete(cache_key)
+            messages.success(request, "تم إعادة تعيين حالة الاستيراد.")
+            return redirect('import_happycar')
+
         if running:
             messages.info(request, "استيراد جارٍ بالفعل، الرجاء الانتظار حتى ينتهي.")
             return redirect('import_happycar')

@@ -154,7 +154,7 @@
         {% for car in site_cars %}
         <div class="car-card bg-white rounded-2xl shadow-sm hover:shadow-lg overflow-hidden relative group">
             <a href="{% url 'site_car_detail' car.id %}" class="block">
-                <div class="aspect-4/3 bg-gray-100 overflow-hidden relative">
+                <div class="aspect-4/3 bg-gray-100 overflow-hidden relative car-img-wm">
                     {% if car.image %}
                     <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" loading="lazy">
                     {% elif car.gallery.first %}

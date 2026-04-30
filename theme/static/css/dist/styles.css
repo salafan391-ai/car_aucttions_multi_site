@@ -105,6 +105,7 @@
     --color-pink-700: oklch(52.5% 0.223 3.958);
     --color-rose-50: oklch(96.9% 0.015 12.422);
     --color-rose-100: oklch(94.1% 0.03 12.58);
+    --color-rose-200: oklch(89.2% 0.058 10.001);
     --color-rose-400: oklch(71.2% 0.194 13.428);
     --color-rose-600: oklch(58.6% 0.253 17.585);
     --color-rose-700: oklch(51.4% 0.222 16.935);
@@ -687,6 +688,9 @@
   .hidden {
     display: none;
   }
+  .inline {
+    display: inline;
+  }
   .inline-block {
     display: inline-block;
   }
@@ -1001,6 +1005,9 @@
   }
   .min-w-\[150px\] {
     min-width: 150px;
+  }
+  .min-w-\[200px\] {
+    min-width: 200px;
   }
   .min-w-full {
     min-width: 100%;
@@ -1419,6 +1426,9 @@
   .border-red-300 {
     border-color: var(--color-red-300);
   }
+  .border-rose-200 {
+    border-color: var(--color-rose-200);
+  }
   .border-transparent {
     border-color: transparent;
   }
@@ -1595,12 +1605,6 @@
   }
   .bg-orange-100 {
     background-color: var(--color-orange-100);
-  }
-  .bg-orange-400 {
-    background-color: var(--color-orange-400);
-  }
-  .bg-orange-500 {
-    background-color: var(--color-orange-500);
   }
   .bg-pink-50 {
     background-color: var(--color-pink-50);
@@ -2278,9 +2282,6 @@
   .text-orange-400 {
     color: var(--color-orange-400);
   }
-  .text-orange-500 {
-    color: var(--color-orange-500);
-  }
   .text-orange-600 {
     color: var(--color-orange-600);
   }
@@ -2404,6 +2405,9 @@
   .text-yellow-400 {
     color: var(--color-yellow-400);
   }
+  .text-yellow-500 {
+    color: var(--color-yellow-500);
+  }
   .text-yellow-600 {
     color: var(--color-yellow-600);
   }
@@ -2450,6 +2454,9 @@
   }
   .opacity-60 {
     opacity: 60%;
+  }
+  .opacity-70 {
+    opacity: 70%;
   }
   .opacity-75 {
     opacity: 75%;
@@ -2706,13 +2713,6 @@
     &:is(:where(.group):hover *) {
       @media (hover: hover) {
         background-color: var(--color-green-100);
-      }
-    }
-  }
-  .group-hover\:bg-orange-100 {
-    &:is(:where(.group):hover *) {
-      @media (hover: hover) {
-        background-color: var(--color-orange-100);
       }
     }
   }
@@ -4250,6 +4250,11 @@
   .md\:grid-cols-4 {
     @media (width >= 48rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .md\:grid-cols-\[1fr\,140px\,auto\] {
+    @media (width >= 48rem) {
+      grid-template-columns: 1fr,140px,auto;
     }
   }
   .md\:flex-row {
