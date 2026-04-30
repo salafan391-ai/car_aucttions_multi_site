@@ -1,0 +1,388 @@
+{% load static tailwind_tags django_htmx %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root" data-theme="luxury">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_name|default:"سيارات" }}{% endblock %}</title>
+    {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+
+    <meta name="description" content="{% block meta_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+
+    <meta property="og:title" content="{% block og_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% if site_logo %}{{ request.scheme }}://{{ request.get_host }}{{ site_logo }}{% else %}{% static 'images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if site_logo %}{{ request.scheme }}://{{ request.get_host }}{{ site_logo }}{% else %}{% static 'images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+    {% tailwind_css %}
+    {% htmx_script %}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --lux-bg: #0a0a0a;
+            --lux-bg-soft: #14110d;
+            --lux-gold: #c9a45a;
+            --lux-gold-bright: #e9c87a;
+            --lux-line: rgba(201, 164, 90, 0.18);
+            --lux-text: #ece4d3;
+            --lux-text-dim: #a89a7a;
+        }
+        html, body { background: var(--lux-bg); color: var(--lux-text); }
+        body { font-family: 'Playfair Display', 'Tajawal', serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+
+        .lux-nav {
+            position: sticky; top: 0; z-index: 50;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: saturate(150%) blur(8px);
+            border-bottom: 1px solid var(--lux-line);
+        }
+        .lux-nav-inner {
+            max-width: 1320px; margin: 0 auto;
+            display: flex; align-items: center; gap: 2rem;
+            padding: 1.25rem 1.5rem;
+        }
+        .lux-brand {
+            display: flex; align-items: center; gap: 0.75rem;
+            color: var(--lux-text); text-decoration: none;
+            font-size: 1.1rem; letter-spacing: 0.15em; text-transform: uppercase;
+        }
+        .lux-brand img { height: 36px; width: auto; }
+        .lux-nav-links { display: flex; gap: 2rem; flex: 1; }
+        .lux-nav-link {
+            color: var(--lux-text-dim); text-decoration: none;
+            font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase;
+            padding: 0.5rem 0; position: relative;
+            transition: color 0.2s ease;
+        }
+        .lux-nav-link::after {
+            content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+            height: 1px; background: var(--lux-gold);
+            transform: scaleX(0); transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+        .lux-nav-link:hover, .lux-nav-link.active { color: var(--lux-gold); }
+        .lux-nav-link:hover::after, .lux-nav-link.active::after { transform: scaleX(1); transform-origin: left; }
+
+        .lux-nav-actions { display: flex; gap: 0.75rem; align-items: center; }
+        .lux-nav-action {
+            color: var(--lux-text-dim); text-decoration: none;
+            font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+            padding: 0.5rem 1rem; border: 1px solid var(--lux-line);
+            transition: all 0.2s ease;
+        }
+        .lux-nav-action:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+        .lux-nav-action.primary { border-color: var(--lux-gold); color: var(--lux-gold); }
+        .lux-nav-action.primary:hover { background: var(--lux-gold); color: var(--lux-bg); }
+
+        .lux-nav-toggle { display: none; background: transparent; border: none; color: var(--lux-text); font-size: 1.5rem; cursor: pointer; }
+        @media (max-width: 768px) {
+            .lux-nav-links, .lux-nav-actions { display: none; }
+            .lux-nav-toggle { display: block; margin-left: auto; }
+            .lux-nav-mobile-open .lux-nav-links,
+            .lux-nav-mobile-open .lux-nav-actions {
+                display: flex; flex-direction: column; gap: 1rem;
+                position: absolute; top: 100%; left: 0; right: 0;
+                background: var(--lux-bg); padding: 1.5rem;
+                border-bottom: 1px solid var(--lux-line);
+            }
+            .lux-nav-mobile-open .lux-nav-actions { top: calc(100% + 1px); padding-top: 0; }
+        }
+
+        main.lux-main { flex: 1; }
+
+        .lux-footer {
+            background: var(--lux-bg-soft);
+            border-top: 1px solid var(--lux-line);
+            padding: 4rem 1.5rem 2rem;
+            color: var(--lux-text-dim);
+        }
+        .lux-footer-grid {
+            max-width: 1320px; margin: 0 auto;
+            display: grid; gap: 3rem;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+        }
+        @media (max-width: 768px) { .lux-footer-grid { grid-template-columns: 1fr 1fr; } }
+        .lux-footer-col h4 { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin: 0 0 1rem; font-weight: 500; }
+        .lux-footer-col a { color: var(--lux-text-dim); text-decoration: none; display: block; padding: 0.35rem 0; font-size: 0.85rem; transition: color 0.2s ease; }
+        .lux-footer-col a:hover { color: var(--lux-gold); }
+        .lux-footer-about { color: var(--lux-text-dim); font-size: 0.9rem; line-height: 1.7; margin: 0 0 1.5rem; max-width: 32em; }
+        .lux-footer-brand { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; color: var(--lux-text); font-size: 1.1rem; letter-spacing: 0.15em; text-transform: uppercase; }
+        .lux-footer-brand img { height: 32px; }
+        .lux-footer-bottom {
+            max-width: 1320px; margin: 3rem auto 0; padding-top: 2rem;
+            border-top: 1px solid var(--lux-line);
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+            color: var(--lux-text-dim); font-size: 0.75rem; letter-spacing: 0.1em;
+        }
+        .lux-social { display: flex; gap: 0.75rem; }
+        .lux-social a {
+            width: 2.25rem; height: 2.25rem; border: 1px solid var(--lux-line);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--lux-text-dim); text-decoration: none; padding: 0;
+        }
+        .lux-social a:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+        .lux-social svg { width: 1rem; height: 1rem; }
+
+        .lux-auth-page { padding: 4rem 1.5rem; min-height: 70vh; display: flex; align-items: center; justify-content: center; }
+        .lux-auth-card {
+            width: 100%; max-width: 460px;
+            background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+            border: 1px solid var(--lux-line);
+            padding: 3rem 2.5rem;
+        }
+        .lux-auth-card.wide { max-width: 760px; }
+        .lux-auth-head { text-align: center; margin-bottom: 2.5rem; }
+        .lux-auth-eyebrow { color: var(--lux-gold); letter-spacing: 0.4em; text-transform: uppercase; font-size: 0.7rem; margin-bottom: 0.75rem; }
+        .lux-auth-title { font-size: 2rem; font-weight: 400; margin: 0 0 0.5rem; }
+        .lux-auth-sub { color: var(--lux-text-dim); font-size: 0.9rem; margin: 0; }
+
+        .lux-field-row { margin-bottom: 1.25rem; }
+        .lux-field-row label {
+            display: block; color: var(--lux-text-dim);
+            font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .lux-field-row .req { color: var(--lux-gold); }
+        .lux-field-row input,
+        .lux-field-row textarea,
+        .lux-field-row select {
+            width: 100%; background: transparent; border: 1px solid var(--lux-line);
+            color: var(--lux-text); padding: 0.85rem 1rem; font-size: 0.95rem;
+            font-family: 'Tajawal', 'Playfair Display', serif; box-sizing: border-box;
+        }
+        .lux-field-row input:focus,
+        .lux-field-row textarea:focus,
+        .lux-field-row select:focus { outline: none; border-color: var(--lux-gold); }
+        .lux-field-row textarea { resize: vertical; min-height: 140px; }
+
+        .lux-row-2 { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 600px) { .lux-row-2 { grid-template-columns: 1fr; } }
+
+        .lux-submit {
+            width: 100%; padding: 1rem; margin-top: 1.5rem;
+            background: var(--lux-gold); color: var(--lux-bg);
+            border: 1px solid var(--lux-gold); cursor: pointer;
+            letter-spacing: 0.3em; text-transform: uppercase; font-size: 0.8rem; font-weight: 600;
+            font-family: inherit; transition: all 0.3s ease;
+        }
+        .lux-submit:hover { background: var(--lux-gold-bright); border-color: var(--lux-gold-bright); }
+
+        .lux-form-foot { text-align: center; color: var(--lux-text-dim); font-size: 0.85rem; margin-top: 1.75rem; }
+        .lux-form-foot a { color: var(--lux-gold); text-decoration: none; letter-spacing: 0.05em; }
+        .lux-form-foot a:hover { color: var(--lux-gold-bright); }
+
+        .lux-alert {
+            border-left: 2px solid var(--lux-gold);
+            background: rgba(201,164,90,0.08);
+            color: var(--lux-text); padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem; font-size: 0.85rem;
+        }
+        .lux-alert.error { border-left-color: #c97a5a; background: rgba(201,122,90,0.08); }
+        .lux-alert p { margin: 0.25rem 0; }
+
+        .lux-info-grid {
+            display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            margin-bottom: 2.5rem;
+        }
+        .lux-info-card {
+            padding: 1.5rem; border: 1px solid var(--lux-line); text-align: center;
+            background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        }
+        .lux-info-label { color: var(--lux-gold); font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .lux-info-value { color: var(--lux-text); font-size: 0.95rem; word-break: break-word; }
+        .lux-info-value a { color: inherit; text-decoration: none; }
+        .lux-info-value a:hover { color: var(--lux-gold); }
+
+        /* Lang/Currency switcher (gold-on-black, mirrors required DOM ids/classes) */
+        .lux-switcher { position: relative; }
+        .lux-switcher-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.45rem 0.85rem;
+            background: transparent; color: var(--lux-text-dim);
+            border: 1px solid var(--lux-line); cursor: pointer;
+            font-family: inherit; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+        .lux-switcher-btn:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+        .lux-menu {
+            position: absolute; top: calc(100% + 0.5rem); right: 0;
+            min-width: 170px;
+            background: #0f0d0a; border: 1px solid var(--lux-line);
+            padding: 0.4rem 0; z-index: 60;
+        }
+        .lux-menu.hidden { display: none; }
+        .lux-menu-item {
+            display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+            width: 100%; padding: 0.6rem 1rem;
+            background: transparent; border: 0; cursor: pointer;
+            color: var(--lux-text-dim); font-family: inherit; font-size: 0.8rem;
+            text-align: right; letter-spacing: 0.05em;
+            transition: all 0.15s ease;
+        }
+        .lux-menu-item:hover { background: rgba(201,164,90,0.08); color: var(--lux-gold); }
+        .lux-menu-item.lux-menu-active { color: var(--lux-gold); background: rgba(201,164,90,0.12); }
+        .lux-menu-item .lang-check-icon,
+        .lux-menu-item .currency-check-icon { color: var(--lux-gold); font-size: 0.75rem; }
+        .lux-menu-item .lang-check-icon.hidden,
+        .lux-menu-item .currency-check-icon.hidden { display: none; }
+        .lux-cur-sym { font-size: 0.8em; opacity: 0.85; margin-right: 0.15em; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+
+<nav class="lux-nav" id="lux-nav">
+    <div class="lux-nav-inner">
+        <a href="{% url 'home' %}" class="lux-brand">
+            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
+            <span>{{ site_name|default:"Premium Motors" }}</span>
+        </a>
+        <button type="button" class="lux-nav-toggle" onclick="document.getElementById('lux-nav').classList.toggle('lux-nav-mobile-open')">☰</button>
+        <div class="lux-nav-links">
+            <a href="{% url 'home' %}" class="lux-nav-link bilingual {% if request.resolver_match.url_name == 'home' %}active{% endif %}" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="lux-nav-link bilingual {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}" data-lang-ar="السيارات" data-lang-en="Collection" data-lang-es="Colección" data-lang-ru="Коллекция">السيارات</a>
+            <a href="{% url 'car_list' %}?car_type=auction" class="lux-nav-link bilingual" data-lang-ar="المزادات" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">المزادات</a>
+            <a href="{% url 'wishlist' %}" class="lux-nav-link bilingual {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
+            <a href="{% url 'contact' %}" class="lux-nav-link bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل معنا</a>
+        </div>
+        <div class="lux-nav-actions">
+            <div class="lux-switcher" id="lang-dropdown">
+                <button type="button" class="lux-switcher-btn" onclick="document.getElementById('lang-menu').classList.toggle('hidden'); document.getElementById('currency-menu')?.classList.add('hidden');">
+                    <span id="lang-flag">🇸🇦</span>
+                    <span id="lang-label">العربية</span>
+                </button>
+                <div id="lang-menu" class="lux-menu hidden">
+                    <button type="button" data-lang-code="ar" onclick="setLang('ar')" class="lang-menu-item lux-menu-item">العربية <span class="lang-check-icon hidden">✓</span></button>
+                    <button type="button" data-lang-code="en" onclick="setLang('en')" class="lang-menu-item lux-menu-item">English <span class="lang-check-icon hidden">✓</span></button>
+                    <button type="button" data-lang-code="es" onclick="setLang('es')" class="lang-menu-item lux-menu-item">Español <span class="lang-check-icon hidden">✓</span></button>
+                    <button type="button" data-lang-code="ru" onclick="setLang('ru')" class="lang-menu-item lux-menu-item">Русский <span class="lang-check-icon hidden">✓</span></button>
+                </div>
+            </div>
+
+            <div class="lux-switcher" id="currency-dropdown">
+                <button type="button" class="lux-switcher-btn" onclick="document.getElementById('currency-menu').classList.toggle('hidden'); document.getElementById('lang-menu')?.classList.add('hidden');">
+                    <span id="currency-label">﷼ SAR</span>
+                </button>
+                <div id="currency-menu" class="lux-menu hidden">
+                    <button type="button" data-currency-code="KRW" onclick="setCurrency('KRW')" class="currency-menu-item lux-menu-item">₩ KRW <span class="currency-check-icon hidden">✓</span></button>
+                    <button type="button" data-currency-code="USD" onclick="setCurrency('USD')" class="currency-menu-item lux-menu-item">$ USD <span class="currency-check-icon hidden">✓</span></button>
+                    <button type="button" data-currency-code="SAR" onclick="setCurrency('SAR')" class="currency-menu-item lux-menu-item">﷼ SAR <span class="currency-check-icon hidden">✓</span></button>
+                    <button type="button" data-currency-code="AED" onclick="setCurrency('AED')" class="currency-menu-item lux-menu-item">د.إ AED <span class="currency-check-icon hidden">✓</span></button>
+                    <button type="button" data-currency-code="EUR" onclick="setCurrency('EUR')" class="currency-menu-item lux-menu-item">€ EUR <span class="currency-check-icon hidden">✓</span></button>
+                </div>
+            </div>
+
+            {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="lux-nav-action bilingual" data-lang-ar="خروج" data-lang-en="Sign Out" data-lang-es="Cerrar sesión" data-lang-ru="Выйти">خروج</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="lux-nav-action bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</a>
+            <a href="{% url 'register' %}" class="lux-nav-action primary bilingual" data-lang-ar="حساب جديد" data-lang-en="Register" data-lang-es="Registro" data-lang-ru="Регистрация">حساب جديد</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main class="lux-main">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="lux-footer">
+    <div class="lux-footer-grid">
+        <div class="lux-footer-col">
+            <div class="lux-footer-brand">
+                {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
+                <span>{{ site_name|default:"Premium Motors" }}</span>
+            </div>
+            <p class="lux-footer-about">{{ site_about|default:"A curated selection of exceptional vehicles, sourced and presented with the discernment they deserve." }}</p>
+            {% if site_instagram or site_facebook or site_twitter or site_youtube %}
+            <div class="lux-social">
+                {% if site_instagram %}<a href="{{ site_instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4 1 .5.4.8.8 1 1.4.2.4.4 1 .4 2.2.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-1 1.4-.4.5-.8.8-1.4 1-.4.2-1 .4-2.2.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-1-.5-.4-.8-.8-1-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 1-1.4.4-.5.8-.8 1.4-1 .4-.2 1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 3.6c-3.4 0-6.2 2.8-6.2 6.2s2.8 6.2 6.2 6.2 6.2-2.8 6.2-6.2-2.8-6.2-6.2-6.2zm0 10.2c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4zm6.4-10.5c-.8 0-1.4.6-1.4 1.4s.6 1.4 1.4 1.4 1.4-.6 1.4-1.4-.6-1.4-1.4-1.4z"/></svg></a>{% endif %}
+                {% if site_facebook %}<a href="{{ site_facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.5-4.5-10-10-10S2 6.5 2 12c0 5 3.7 9.1 8.4 9.9V14.9H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2V8.6h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7C18.3 21.1 22 17 22 12z"/></svg></a>{% endif %}
+                {% if site_twitter %}<a href="{{ site_twitter }}" target="_blank" rel="noopener" aria-label="Twitter"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>{% endif %}
+                {% if site_youtube %}<a href="{{ site_youtube }}" target="_blank" rel="noopener" aria-label="YouTube"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M23.5 6.2c-.3-1-1-1.8-2-2-1.8-.5-9.5-.5-9.5-.5s-7.7 0-9.5.5c-1 .3-1.8 1-2 2C0 8 0 12 0 12s0 4 .5 5.8c.3 1 1 1.8 2 2 1.8.5 9.5.5 9.5.5s7.7 0 9.5-.5c1-.3 1.8-1 2-2C24 16 24 12 24 12s0-4-.5-5.8zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="lux-footer-col">
+            <h4 class="bilingual" data-lang-ar="تصفح" data-lang-en="Browse" data-lang-es="Explorar" data-lang-ru="Просмотр">تصفح</h4>
+            <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="السيارات" data-lang-en="Collection" data-lang-es="Colección" data-lang-ru="Коллекция">السيارات</a>
+            <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">المزادات</a>
+            <a href="{% url 'wishlist' %}" class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
+        </div>
+
+        <div class="lux-footer-col">
+            <h4 class="bilingual" data-lang-ar="تواصل" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل</h4>
+            {% if site_phone %}<a href="tel:{{ site_phone }}">{{ site_phone }}</a>{% endif %}
+            {% if site_whatsapp %}<a href="https://wa.me/{{ site_whatsapp }}" class="bilingual" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp">واتساب</a>{% endif %}
+            {% if site_email %}<a href="mailto:{{ site_email }}">{{ site_email }}</a>{% endif %}
+            <a href="{% url 'contact' %}" class="bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Form" data-lang-es="Formulario" data-lang-ru="Форма">تواصل معنا</a>
+        </div>
+
+        <div class="lux-footer-col">
+            <h4 class="bilingual" data-lang-ar="الحساب" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">الحساب</h4>
+            {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="bilingual" data-lang-ar="خروج" data-lang-en="Sign Out" data-lang-es="Cerrar sesión" data-lang-ru="Выйти">خروج</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</a>
+            <a href="{% url 'register' %}" class="bilingual" data-lang-ar="حساب جديد" data-lang-en="Register" data-lang-es="Registro" data-lang-ru="Регистрация">حساب جديد</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="lux-footer-bottom">
+        <span class="bilingual" data-lang-ar="© {% now 'Y' %} {{ site_name|default:'سيارات' }}. جميع الحقوق محفوظة." data-lang-en="© {% now 'Y' %} {{ site_name|default:'Premium Motors' }}. All rights reserved." data-lang-es="© {% now 'Y' %} {{ site_name|default:'Premium Motors' }}. Todos los derechos reservados." data-lang-ru="© {% now 'Y' %} {{ site_name|default:'Premium Motors' }}. Все права защищены.">© {% now "Y" %} {{ site_name|default:"سيارات" }}. جميع الحقوق محفوظة.</span>
+        {% if site_address %}<span>{{ site_address }}</span>{% endif %}
+    </div>
+</footer>
+
+{% include "partials/lang_currency_script.html" %}
+
+<script>
+function getCookie(name) {
+    let v = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(function(c) {
+            c = c.trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(c.substring(name.length + 1));
+            }
+        });
+    }
+    return v;
+}
+
+function toggleWishlist(carId) {
+    fetch('/wishlist/toggle/' + carId + '/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) {
+            window.location.href = data.redirect || '/login/?next=' + encodeURIComponent(window.location.pathname);
+        } else {
+            location.reload();
+        }
+    })
+    .catch(function(e) { console.error(e); });
+}
+</script>
+{% block extra_js %}{% endblock %}
+{% block mobile_bottom_nav %}{% endblock %}
+</body>
+</html>

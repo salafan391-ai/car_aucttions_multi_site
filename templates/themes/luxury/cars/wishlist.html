@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters %}
+
+{% block title %}Wishlist — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --lux-bg: #0a0a0a; --lux-bg-soft: #14110d;
+        --lux-gold: #c9a45a; --lux-gold-bright: #e9c87a;
+        --lux-line: rgba(201,164,90,0.18);
+        --lux-text: #ece4d3; --lux-text-dim: #a89a7a;
+    }
+    .lux-page { background: var(--lux-bg); color: var(--lux-text); min-height: 100vh; padding: 4rem 1.5rem; }
+    .lux-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+    .lux-wrap { max-width: 1280px; margin: 0 auto; }
+
+    .lux-head {
+        text-align: center; padding-bottom: 2.5rem; margin-bottom: 3rem;
+        border-bottom: 1px solid var(--lux-line);
+    }
+    .lux-eyebrow { color: var(--lux-gold); letter-spacing: 0.5em; text-transform: uppercase; font-size: 0.7rem; margin-bottom: 0.75rem; }
+    .lux-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; margin: 0; }
+    .lux-count { color: var(--lux-text-dim); margin-top: 0.75rem; font-size: 0.9rem; letter-spacing: 0.1em; }
+
+    .lux-grid {
+        display: grid; gap: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    .lux-card {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line); overflow: hidden;
+        text-decoration: none; color: inherit; display: block;
+        transition: all 0.4s ease; position: relative;
+    }
+    .lux-card:hover { border-color: var(--lux-gold); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(201,164,90,0.15); }
+    .lux-card-img { aspect-ratio: 4/3; background: #000; overflow: hidden; }
+    .lux-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; filter: brightness(0.92); }
+    .lux-card:hover .lux-card-img img { transform: scale(1.05); filter: brightness(1); }
+    .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
+    .lux-card-make { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-card-name { color: var(--lux-text); font-size: 1.1rem; margin: 0 0 0.75rem; font-weight: 400; }
+    .lux-card-price { color: var(--lux-gold-bright); font-size: 1.2rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: 0.05em; }
+    .lux-card-meta { display: flex; gap: 1rem; color: var(--lux-text-dim); font-size: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--lux-line); }
+
+    .lux-remove {
+        position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2;
+        width: 2rem; height: 2rem; border-radius: 50%;
+        background: rgba(10,10,10,0.7); border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 0.9rem; backdrop-filter: blur(4px);
+    }
+    .lux-remove:hover { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
+
+    .lux-empty {
+        text-align: center; padding: 6rem 2rem; border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim);
+    }
+    .lux-empty h2 { color: var(--lux-text); font-weight: 400; font-size: 1.5rem; margin: 0 0 0.5rem; }
+    .lux-empty p { margin: 0 0 2rem; font-style: italic; }
+    .lux-cta {
+        display: inline-block; padding: 1rem 2.5rem; border: 1px solid var(--lux-gold);
+        color: var(--lux-gold); text-decoration: none; letter-spacing: 0.2em; text-transform: uppercase;
+        font-size: 0.85rem; transition: all 0.3s ease;
+    }
+    .lux-cta:hover { background: var(--lux-gold); color: var(--lux-bg); }
+
+    .lux-pager { display: flex; justify-content: center; gap: 0.5rem; margin-top: 4rem; }
+    .lux-pager a, .lux-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 0.75rem;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+        text-decoration: none; font-size: 0.85rem;
+    }
+    .lux-pager a:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-pager .current { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
+</style>
+
+<div class="lux-page">
+    <div class="lux-wrap">
+        <header class="lux-head">
+            <div class="lux-eyebrow bilingual" data-lang-ar="مختاراتك المحفوظة" data-lang-en="Saved Selections" data-lang-es="Selecciones guardadas" data-lang-ru="Сохранённое">مختاراتك المحفوظة</div>
+            <h1 class="lux-title bilingual" data-lang-ar="قائمة المفضلة" data-lang-en="Your Wishlist" data-lang-es="Tu lista de deseos" data-lang-ru="Список желаний">قائمة المفضلة</h1>
+            {% if wishlist_count %}
+            <div class="lux-count bilingual" data-lang-ar="{{ wishlist_count|intcomma }} سيارة محفوظة" data-lang-en="{{ wishlist_count|intcomma }} vehicles saved" data-lang-es="{{ wishlist_count|intcomma }} vehículos guardados" data-lang-ru="{{ wishlist_count|intcomma }} автомобилей сохранено">{{ wishlist_count|intcomma }} سيارة محفوظة</div>
+            {% endif %}
+        </header>
+
+        {% if wishlist_items %}
+        <div class="lux-grid">
+            {% for item in wishlist_items %}
+            <div style="position: relative;">
+                <button onclick="event.preventDefault(); toggleWishlist({{ item.car.id }}); this.closest('.lux-card-wrap').remove();" class="lux-remove" title="Remove">×</button>
+                <a href="{% url 'car_detail' item.car.slug %}" class="lux-card">
+                    <div class="lux-card-img car-img-wm">
+                        {% if item.car.image %}<img src="{{ item.car.image }}" alt="{{ item.car.title }}" loading="lazy">{% endif %}
+                    </div>
+                    <div class="lux-card-body">
+                        <div class="lux-card-make">
+                            {% if item.car.manufacturer %}<span class="bilingual" data-lang-ar="{{ item.car.manufacturer|translate_manufacturer }}" data-lang-en="{{ item.car.manufacturer|translate_manufacturer:'en' }}">{{ item.car.manufacturer|translate_manufacturer }}</span>{% endif %}
+                            {% if item.car.year %} · {{ item.car.year }}{% endif %}
+                        </div>
+                        <h3 class="lux-card-name">{% if item.car.model %}<span class="bilingual" data-lang-ar="{{ item.car.model|translate_model }}" data-lang-en="{{ item.car.model|translate_model:'en' }}">{{ item.car.model|translate_model }}</span>{% else %}{{ item.car.title }}{% endif %}</h3>
+                        {% if item.car.price %}<div class="lux-card-price" data-price-krw="{{ item.car.price }}">{{ item.car.price|intcomma }} ₩</div>{% endif %}
+                        <div class="lux-card-meta">
+                            {% if item.car.mileage %}<span class="bilingual" data-lang-ar="{{ item.car.mileage|intcomma }} كم" data-lang-en="{{ item.car.mileage|intcomma }} km" data-lang-es="{{ item.car.mileage|intcomma }} km" data-lang-ru="{{ item.car.mileage|intcomma }} км">{{ item.car.mileage|intcomma }} كم</span>{% endif %}
+                            {% if item.car.transmission %}<span class="bilingual" data-lang-ar="{{ item.car.transmission|translate_transmission }}" data-lang-en="{{ item.car.transmission|translate_transmission:'en' }}" data-lang-es="{{ item.car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ item.car.transmission|translate_transmission:'ru' }}">{{ item.car.transmission|translate_transmission }}</span>{% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if wishlist_items.has_other_pages %}
+        {% spaceless %}
+        <nav class="lux-pager">
+            {% if wishlist_items.has_previous %}
+            <a href="?page={{ wishlist_items.previous_page_number }}">‹ Prev</a>
+            {% endif %}
+            {% for n in wishlist_items.paginator.page_range %}
+                {% if n == wishlist_items.number %}
+                <span class="current">{{ n }}</span>
+                {% else %}
+                <a href="?page={{ n }}">{{ n }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if wishlist_items.has_next %}
+            <a href="?page={{ wishlist_items.next_page_number }}">Next ›</a>
+            {% endif %}
+        </nav>
+        {% endspaceless %}
+        {% endif %}
+
+        {% else %}
+        <div class="lux-empty">
+            <h2 class="bilingual" data-lang-ar="قائمتك في انتظارك" data-lang-en="Your wishlist awaits" data-lang-es="Tu lista te espera" data-lang-ru="Ваш список ждёт">قائمتك في انتظارك</h2>
+            <p class="bilingual" data-lang-ar="احفظ سياراتك المفضلة لتجد قائمتك المنتقاة في مكان واحد." data-lang-en="Save vehicles to build a curated shortlist of your favorites." data-lang-es="Guarda vehículos para crear tu lista de favoritos." data-lang-ru="Сохраняйте автомобили, чтобы собрать свой список избранного.">احفظ سياراتك المفضلة لتجد قائمتك المنتقاة في مكان واحد.</p>
+            <a href="{% url 'car_list' %}" class="lux-cta bilingual" data-lang-ar="استعرض المجموعة" data-lang-en="Browse Collection" data-lang-es="Explorar colección" data-lang-ru="Смотреть коллекцию">استعرض المجموعة</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

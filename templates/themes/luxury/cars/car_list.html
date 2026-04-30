@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters %}
+
+{% block title %}Collection — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --lux-bg: #0a0a0a; --lux-bg-soft: #14110d;
+        --lux-gold: #c9a45a; --lux-gold-bright: #e9c87a;
+        --lux-line: rgba(201,164,90,0.18);
+        --lux-text: #ece4d3; --lux-text-dim: #a89a7a;
+    }
+    .lux-page { background: var(--lux-bg); color: var(--lux-text); min-height: 100vh; padding: 4rem 1.5rem; }
+    .lux-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+    .lux-wrap { max-width: 1320px; margin: 0 auto; }
+
+    .lux-toolbar {
+        display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+        padding-bottom: 2rem; border-bottom: 1px solid var(--lux-line); margin-bottom: 2.5rem;
+    }
+    .lux-h1 { font-size: 2.25rem; font-weight: 400; margin: 0; flex: 1; min-width: 280px; }
+    .lux-h1 small { display: block; color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-tabs { display: flex; gap: 0; border: 1px solid var(--lux-line); }
+    .lux-tab {
+        padding: 0.65rem 1.25rem; color: var(--lux-text-dim); text-decoration: none;
+        font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
+        border-right: 1px solid var(--lux-line);
+    }
+    .lux-tab:last-child { border-right: none; }
+    .lux-tab.active { background: var(--lux-gold); color: var(--lux-bg); }
+
+    .lux-layout { display: grid; gap: 2.5rem; grid-template-columns: 280px minmax(0, 1fr); }
+    @media (max-width: 900px) { .lux-layout { grid-template-columns: 1fr; } }
+
+    .lux-side {
+        padding: 1.75rem; border: 1px solid var(--lux-line);
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        align-self: start; position: sticky; top: 1rem;
+    }
+    .lux-side-title { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin: 0 0 1.5rem; }
+    .lux-field { margin-bottom: 1.5rem; }
+    .lux-label { display: block; color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-input, .lux-select {
+        width: 100%; background: transparent; border: 1px solid var(--lux-line);
+        color: var(--lux-text); padding: 0.6rem 0.75rem; font-size: 0.85rem;
+        font-family: inherit;
+    }
+    .lux-input:focus, .lux-select:focus { outline: none; border-color: var(--lux-gold); }
+    .lux-select option { background: var(--lux-bg); color: var(--lux-text); }
+    .lux-range-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .lux-side-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .lux-btn {
+        flex: 1; padding: 0.7rem; text-align: center; text-decoration: none;
+        border: 1px solid var(--lux-gold); color: var(--lux-gold);
+        letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.7rem;
+        background: transparent; cursor: pointer; font-family: inherit;
+    }
+    .lux-btn:hover { background: var(--lux-gold); color: var(--lux-bg); }
+    .lux-btn-ghost { border-color: var(--lux-line); color: var(--lux-text-dim); }
+    .lux-btn-ghost:hover { border-color: var(--lux-text-dim); background: transparent; color: var(--lux-text); }
+
+    .lux-grid {
+        display: grid; gap: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+    .lux-card {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line); overflow: hidden;
+        text-decoration: none; color: inherit; display: block;
+        transition: all 0.4s ease;
+    }
+    .lux-card:hover { border-color: var(--lux-gold); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(201,164,90,0.15); }
+    .lux-card-img { aspect-ratio: 4/3; background: #000; overflow: hidden; }
+    .lux-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; filter: brightness(0.92); }
+    .lux-card:hover .lux-card-img img { transform: scale(1.05); filter: brightness(1); }
+    .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
+    .lux-card-make { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-card-name { color: var(--lux-text); font-size: 1.1rem; margin: 0 0 0.75rem; font-weight: 400; }
+    .lux-card-price { color: var(--lux-gold-bright); font-size: 1.2rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: 0.05em; }
+    .lux-card-meta { display: flex; gap: 1rem; color: var(--lux-text-dim); font-size: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--lux-line); }
+
+    .lux-empty { text-align: center; color: var(--lux-text-dim); padding: 5rem; font-style: italic; grid-column: 1/-1; }
+
+    .lux-pager { display: flex; justify-content: center; gap: 0.5rem; margin-top: 4rem; }
+    .lux-pager a, .lux-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 0.75rem;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+        text-decoration: none; font-size: 0.85rem; letter-spacing: 0.1em;
+    }
+    .lux-pager a:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-pager .current { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
+
+    .lux-results-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; color: var(--lux-text-dim); font-size: 0.8rem; letter-spacing: 0.1em; }
+
+    /* Multi-select chip checkboxes */
+    .lux-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; max-height: 180px; overflow-y: auto; padding: 0.15rem; }
+    .lux-chips::-webkit-scrollbar { width: 6px; }
+    .lux-chips::-webkit-scrollbar-track { background: transparent; }
+    .lux-chips::-webkit-scrollbar-thumb { background: var(--lux-line); border-radius: 3px; }
+    .lux-chip-input { position: absolute; opacity: 0; pointer-events: none; }
+    .lux-chip {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        padding: 0.35rem 0.7rem; border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); cursor: pointer; user-select: none;
+        font-size: 0.75rem; letter-spacing: 0.05em;
+        transition: all 0.15s ease; white-space: nowrap;
+    }
+    .lux-chip:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-chip-input:checked + .lux-chip { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
+    .lux-chip-input:focus-visible + .lux-chip { outline: 1px solid var(--lux-gold-bright); outline-offset: 2px; }
+    .lux-chip-count { color: var(--lux-text-dim); font-size: 0.65rem; margin-left: 0.35rem; opacity: 0.7; }
+
+    /* Active filter chips above results */
+    .lux-active-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
+    .lux-active-chip {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.35rem 0.65rem 0.35rem 0.85rem;
+        background: rgba(201,164,90,0.1); border: 1px solid var(--lux-line);
+        color: var(--lux-gold); font-size: 0.75rem; letter-spacing: 0.05em;
+        text-decoration: none; transition: all 0.15s ease;
+    }
+    .lux-active-chip:hover { background: rgba(201,164,90,0.2); border-color: var(--lux-gold); }
+    .lux-active-chip .x { color: var(--lux-text-dim); font-size: 0.9rem; line-height: 1; }
+    .lux-active-clear {
+        padding: 0.35rem 0.85rem; background: transparent;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+        font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+        text-decoration: none; transition: all 0.15s ease;
+    }
+    .lux-active-clear:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+
+    /* Mobile filter drawer */
+    .lux-filter-trigger { display: none; }
+    .lux-filter-trigger-bar {
+        display: none;
+        align-items: center; gap: 0.75rem;
+        padding: 0.75rem 1rem; margin-bottom: 1.25rem;
+        border: 1px solid var(--lux-line);
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        color: var(--lux-text); cursor: pointer;
+        font-family: inherit; width: 100%;
+        letter-spacing: 0.15em; text-transform: uppercase; font-size: 0.75rem;
+    }
+    .lux-filter-trigger-bar:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-filter-trigger-bar .badge {
+        margin-left: auto; padding: 0.15rem 0.55rem;
+        background: var(--lux-gold); color: var(--lux-bg);
+        font-size: 0.7rem; letter-spacing: 0.05em;
+    }
+    .lux-filter-trigger-bar svg { width: 1rem; height: 1rem; }
+    .lux-filter-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+        z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .lux-filter-backdrop.open { opacity: 1; pointer-events: auto; }
+    .lux-filter-close {
+        display: none;
+        position: absolute; top: 1rem; right: 1rem;
+        width: 2.5rem; height: 2.5rem; border: 1px solid var(--lux-line);
+        background: transparent; color: var(--lux-text-dim); cursor: pointer;
+        font-size: 1.3rem; font-family: inherit;
+        align-items: center; justify-content: center;
+    }
+    .lux-filter-close:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+
+    @media (max-width: 900px) {
+        .lux-filter-trigger-bar { display: flex; }
+        .lux-filter-close { display: flex; }
+        .lux-side {
+            position: fixed; inset: 0;
+            margin: 0; border-radius: 0;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            overflow-y: auto; z-index: 100;
+            padding: 4rem 1.5rem 1rem;
+            border: 0; border-top: 1px solid var(--lux-gold);
+            box-shadow: 0 -20px 40px rgba(0,0,0,0.6);
+        }
+        .lux-side.open { transform: translateY(0); }
+        .lux-side-actions {
+            position: sticky; bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, #0f0d0a 30%);
+            margin-left: -1.5rem; margin-right: -1.5rem; padding: 1rem 1.5rem;
+        }
+    }
+</style>
+
+<div class="lux-page">
+    <div class="lux-wrap">
+        <div class="lux-toolbar">
+            <div class="lux-h1">
+                <small class="bilingual" data-lang-ar="المجموعة" data-lang-en="The Collection" data-lang-es="La colección" data-lang-ru="Коллекция">المجموعة</small>
+                {% if request.GET.q %}<span class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</span> · "{{ request.GET.q }}"{% else %}<span class="bilingual" data-lang-ar="جميع السيارات" data-lang-en="All Vehicles" data-lang-es="Todos los vehículos" data-lang-ru="Все автомобили">جميع السيارات</span>{% endif %}
+            </div>
+            <div class="lux-tabs">
+                <a href="?{% if request.GET.q %}q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if not request.GET.car_type %}active{% endif %}" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todo" data-lang-ru="Все">الكل</a>
+                <a href="?car_type=cars{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if request.GET.car_type == 'cars' %}active{% endif %}" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</a>
+                <a href="?car_type=auction{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if request.GET.car_type == 'auction' %}active{% endif %}" data-lang-ar="مزادات" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزادات</a>
+            </div>
+        </div>
+
+        <button type="button" class="lux-filter-trigger-bar" onclick="luxOpenFilters()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            <span class="bilingual" data-lang-ar="الفلاتر" data-lang-en="Filters" data-lang-es="Filtros" data-lang-ru="Фильтры">الفلاتر</span>
+            {% if sel_manufacturers or sel_models or sel_badges or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+            <span class="badge">●</span>
+            {% endif %}
+        </button>
+
+        <div class="lux-filter-backdrop" id="lux-filter-backdrop" onclick="luxCloseFilters()"></div>
+
+        <div class="lux-layout">
+            <aside class="lux-side" id="lux-side">
+                <button type="button" class="lux-filter-close" onclick="luxCloseFilters()" aria-label="Close">×</button>
+                <h3 class="lux-side-title bilingual" data-lang-ar="تصفية" data-lang-en="Refine" data-lang-es="Refinar" data-lang-ru="Фильтр">تصفية</h3>
+                <form method="get">
+                    {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>
+                        <input type="search" name="q" value="{{ request.GET.q|default:'' }}" data-placeholder-ar="الماركة، الموديل…" data-placeholder-en="Make, model…" data-placeholder-es="Marca, modelo…" data-placeholder-ru="Марка, модель…" placeholder="الماركة، الموديل…" class="lux-input">
+                    </div>
+
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">الشركة المصنعة</label>
+                        <div class="lux-chips" id="lux-mfr-chips">
+                            {% for m in manufacturers %}
+                            <label>
+                                <input type="checkbox" name="manufacturer" value="{{ m.id }}" {% if m.id|stringformat:"d" in sel_manufacturers %}checked{% endif %} class="lux-chip-input lux-mfr-cb">
+                                <span class="lux-chip bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="lux-field" id="lux-model-field" {% if not sel_manufacturers %}style="display:none;"{% endif %}>
+                        <label class="lux-label bilingual" data-lang-ar="الموديل" data-lang-en="Model" data-lang-es="Modelo" data-lang-ru="Модель">الموديل</label>
+                        <div class="lux-chips" id="lux-model-chips">
+                            {% for m in models %}{% if m.id|stringformat:"d" in sel_models %}
+                            <label>
+                                <input type="checkbox" name="model" value="{{ m.id }}" checked class="lux-chip-input lux-model-cb">
+                                <span class="lux-chip bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m|translate_model:'en' }}" data-lang-es="{{ m|translate_model:'en' }}" data-lang-ru="{{ m|translate_model:'en' }}">{{ m|translate_model }}</span>
+                            </label>
+                            {% endif %}{% endfor %}
+                            <span class="lux-chip-loading" style="color:var(--lux-text-dim);font-size:0.75rem;display:none;">…</span>
+                        </div>
+                    </div>
+
+                    <div class="lux-field" id="lux-badge-field" {% if not sel_models %}style="display:none;"{% endif %}>
+                        <label class="lux-label bilingual" data-lang-ar="العلامة" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">العلامة</label>
+                        <div class="lux-chips" id="lux-badge-chips">
+                            {% for b in badges %}{% if b.id|stringformat:"d" in sel_badges %}
+                            <label>
+                                <input type="checkbox" name="badge" value="{{ b.id }}" checked class="lux-chip-input lux-badge-cb">
+                                <span class="lux-chip">{{ b.name }}</span>
+                            </label>
+                            {% endif %}{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="السنة" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">السنة</label>
+                        <div class="lux-range-pair">
+                            <input type="number" name="year_from" value="{{ request.GET.year_from|default:'' }}" data-placeholder-ar="من" data-placeholder-en="From" data-placeholder-es="Desde" data-placeholder-ru="От" placeholder="من" class="lux-input">
+                            <input type="number" name="year_to" value="{{ request.GET.year_to|default:'' }}" data-placeholder-ar="إلى" data-placeholder-en="To" data-placeholder-es="Hasta" data-placeholder-ru="До" placeholder="إلى" class="lux-input">
+                        </div>
+                    </div>
+
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="السعر (₩)" data-lang-en="Price (₩)" data-lang-es="Precio (₩)" data-lang-ru="Цена (₩)">السعر (₩)</label>
+                        <div class="lux-range-pair">
+                            <input type="number" name="price_min" value="{{ request.GET.price_min|default:'' }}" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="lux-input">
+                            <input type="number" name="price_max" value="{{ request.GET.price_max|default:'' }}" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="lux-input">
+                        </div>
+                    </div>
+
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="المسافة (كم)" data-lang-en="Mileage (km)" data-lang-es="Kilometraje (km)" data-lang-ru="Пробег (км)">المسافة (كم)</label>
+                        <div class="lux-range-pair">
+                            <input type="number" name="mileage_min" value="{{ request.GET.mileage_min|default:'' }}" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="lux-input">
+                            <input type="number" name="mileage_max" value="{{ request.GET.mileage_max|default:'' }}" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="lux-input">
+                        </div>
+                    </div>
+
+                    {% if transmissions %}
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">ناقل الحركة</label>
+                        <div class="lux-chips">
+                            {% for t in transmissions %}
+                            <label>
+                                <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if fuels %}
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</label>
+                        <div class="lux-chips">
+                            {% for f in fuels %}
+                            <label>
+                                <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if colors %}
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</label>
+                        <div class="lux-chips">
+                            {% for c in colors %}
+                            <label>
+                                <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if body_types %}
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Кузов">نوع الهيكل</label>
+                        <div class="lux-chips">
+                            {% for b in body_types %}
+                            <label>
+                                <input type="checkbox" name="body_type" value="{{ b }}" {% if b in sel_body_types %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="الترتيب" data-lang-en="Sort" data-lang-es="Ordenar" data-lang-ru="Сортировка">الترتيب</label>
+                        <select name="sort" class="lux-select">
+                            <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %} class="bilingual" data-lang-ar="الأحدث" data-lang-en="Newest" data-lang-es="Más reciente" data-lang-ru="Новейшие">الأحدث</option>
+                            <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %} class="bilingual" data-lang-ar="السعر · الأرخص" data-lang-en="Price · Low to High" data-lang-es="Precio · Asc" data-lang-ru="Цена · по возр.">السعر · الأرخص</option>
+                            <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %} class="bilingual" data-lang-ar="السعر · الأغلى" data-lang-en="Price · High to Low" data-lang-es="Precio · Desc" data-lang-ru="Цена · по убыв.">السعر · الأغلى</option>
+                            <option value="-year" {% if request.GET.sort == '-year' %}selected{% endif %} class="bilingual" data-lang-ar="السنة · الأحدث" data-lang-en="Year · Newest" data-lang-es="Año · Reciente" data-lang-ru="Год · новые">السنة · الأحدث</option>
+                            <option value="mileage" {% if request.GET.sort == 'mileage' %}selected{% endif %} class="bilingual" data-lang-ar="المسافة · الأقل" data-lang-en="Mileage · Low to High" data-lang-es="Km · Asc" data-lang-ru="Пробег · по возр.">المسافة · الأقل</option>
+                        </select>
+                    </div>
+
+                    <div class="lux-side-actions">
+                        <button type="submit" class="lux-btn bilingual" data-lang-ar="تطبيق" data-lang-en="Apply" data-lang-es="Aplicar" data-lang-ru="Применить">تطبيق</button>
+                        <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="lux-btn lux-btn-ghost bilingual" data-lang-ar="مسح" data-lang-en="Reset" data-lang-es="Restablecer" data-lang-ru="Сброс">مسح</a>
+                    </div>
+                </form>
+            </aside>
+
+            <div>
+                {% if sel_manufacturers or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
+                <div class="lux-active-filters">
+                    {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'manufacturer' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for f in sel_fuels %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'fuel' or v != f %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% for t in sel_transmissions %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'transmission' or v != t %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% for m in models %}{% if m.id|stringformat:"d" in sel_models %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'model' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m|translate_model:'en' }}">{{ m|translate_model }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for b in badges %}{% if b.id|stringformat:"d" in sel_badges %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'badge' or v != b.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="lux-active-chip">{{ b.name }} <span class="x">×</span></a>
+                    {% endif %}{% endfor %}
+                    {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'color' or v != c.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for b in sel_body_types %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'body_type' or v != b %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% if request.GET.year_from %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_from' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="من {{ request.GET.year_from }}" data-lang-en="from {{ request.GET.year_from }}">من {{ request.GET.year_from }}</span> <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.year_to %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_to' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="lux-active-chip">
+                        <span class="bilingual" data-lang-ar="إلى {{ request.GET.year_to }}" data-lang-en="to {{ request.GET.year_to }}">إلى {{ request.GET.year_to }}</span> <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.price_min %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_min' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="lux-active-chip">
+                        ≥ {{ request.GET.price_min }}₩ <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.price_max %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="lux-active-chip">
+                        ≤ {{ request.GET.price_max }}₩ <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.mileage_min %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_min' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="lux-active-chip">
+                        ≥ {{ request.GET.mileage_min }}km <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.mileage_max %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="lux-active-chip">
+                        ≤ {{ request.GET.mileage_max }}km <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.q %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'q' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="lux-active-chip">
+                        "{{ request.GET.q }}" <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="lux-active-clear bilingual" data-lang-ar="مسح الكل" data-lang-en="Clear All" data-lang-es="Limpiar todo" data-lang-ru="Очистить все">مسح الكل</a>
+                </div>
+                {% endif %}
+
+                <div class="lux-results-head">
+                    <span class="bilingual" data-lang-ar="{{ page_obj.paginator.count|intcomma }} نتيجة" data-lang-en="{{ page_obj.paginator.count|intcomma }} vehicles" data-lang-es="{{ page_obj.paginator.count|intcomma }} vehículos" data-lang-ru="{{ page_obj.paginator.count|intcomma }} автомобилей">{{ page_obj.paginator.count|intcomma }} نتيجة</span>
+                    {% if page_obj.paginator.num_pages > 1 %}
+                    <span class="bilingual" data-lang-ar="صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}" data-lang-en="Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}" data-lang-es="Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}" data-lang-ru="Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="lux-grid">
+                    {% for car in page_obj %}
+                    <a href="{% url 'car_detail' car.slug %}" class="lux-card">
+                        <div class="lux-card-img car-img-wm">
+                            {% if car.image %}<img src="{{ car.image }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                        </div>
+                        <div class="lux-card-body">
+                            <div class="lux-card-make">
+                                {% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}
+                                {% if car.year %} · {{ car.year }}{% endif %}
+                            </div>
+                            <h3 class="lux-card-name">
+                                {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
+                            </h3>
+                            {% if car.price %}<div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
+                            <div class="lux-card-meta">
+                                {% if car.mileage %}<span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>{% endif %}
+                                {% if car.transmission %}<span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                                {% if car.fuel %}<span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="lux-empty bilingual" data-lang-ar="لا توجد سيارات تطابق بحثك." data-lang-en="No vehicles match your search." data-lang-es="No hay vehículos que coincidan." data-lang-ru="Нет автомобилей по вашему запросу.">لا توجد سيارات تطابق بحثك.</div>
+                    {% endfor %}
+                </div>
+
+                {% if page_obj.has_other_pages %}
+                {% spaceless %}
+                <nav class="lux-pager">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">‹ Prev</a>
+                    {% endif %}
+                    {% for n in page_obj.paginator.page_range %}
+                        {% if n == page_obj.number %}
+                        <span class="current">{{ n }}</span>
+                        {% elif n >= page_obj.number|add:'-2' and n <= page_obj.number|add:'2' %}
+                        <a href="?page={{ n }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">{{ n }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for k, v in request.GET.items %}{% if k != 'page' %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Next ›</a>
+                    {% endif %}
+                </nav>
+                {% endspaceless %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.luxOpenFilters = function() {
+    document.getElementById('lux-side').classList.add('open');
+    document.getElementById('lux-filter-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.luxCloseFilters = function() {
+    document.getElementById('lux-side').classList.remove('open');
+    document.getElementById('lux-filter-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+};
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('lux-side')?.classList.contains('open')) {
+        luxCloseFilters();
+    }
+});
+</script>
+
+<script>
+(function() {
+    var carType = '{{ request.GET.car_type|default:"" }}';
+    var modelField = document.getElementById('lux-model-field');
+    var modelChips = document.getElementById('lux-model-chips');
+    var badgeField = document.getElementById('lux-badge-field');
+    var badgeChips = document.getElementById('lux-badge-chips');
+
+    function selectedManufacturerIds() {
+        return Array.from(document.querySelectorAll('.lux-mfr-cb:checked')).map(function(cb) { return cb.value; });
+    }
+    function selectedModelIds() {
+        return Array.from(document.querySelectorAll('.lux-model-cb:checked')).map(function(cb) { return cb.value; });
+    }
+
+    function fetchJSON(url) {
+        return fetch(url, { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; });
+    }
+
+    function renderChip(name, value, label, checked, langs) {
+        var lab = document.createElement('label');
+        var input = document.createElement('input');
+        input.type = 'checkbox'; input.name = name; input.value = value;
+        input.className = 'lux-chip-input lux-' + name + '-cb';
+        if (checked) input.checked = true;
+        var span = document.createElement('span');
+        span.className = 'lux-chip';
+        if (langs) {
+            span.classList.add('bilingual');
+            if (langs.ar) span.setAttribute('data-lang-ar', langs.ar);
+            if (langs.en) span.setAttribute('data-lang-en', langs.en);
+            if (langs.es) span.setAttribute('data-lang-es', langs.es);
+            if (langs.ru) span.setAttribute('data-lang-ru', langs.ru);
+        }
+        var curLang = (typeof localStorage !== 'undefined' && localStorage.getItem('site_lang')) || 'ar';
+        span.textContent = (langs && langs[curLang]) || label;
+        lab.appendChild(input); lab.appendChild(span);
+        return lab;
+    }
+
+    function refreshModels() {
+        var mfrs = selectedManufacturerIds();
+        if (!mfrs.length) {
+            modelField.style.display = 'none';
+            modelChips.innerHTML = '';
+            badgeField.style.display = 'none';
+            badgeChips.innerHTML = '';
+            return;
+        }
+        modelField.style.display = '';
+        var keepSelected = new Set(selectedModelIds());
+        var lang = (localStorage.getItem('site_lang') || 'ar');
+        var qsCarType = carType ? '&car_type=' + encodeURIComponent(carType) : '';
+        var promises = mfrs.map(function(mid) {
+            return fetchJSON('/api/models/?manufacturer_id=' + encodeURIComponent(mid) + qsCarType + '&lang=' + lang);
+        });
+        Promise.all(promises).then(function(results) {
+            var seen = new Set();
+            var merged = [];
+            results.forEach(function(arr) {
+                arr.forEach(function(m) {
+                    if (!seen.has(m.id)) { seen.add(m.id); merged.push(m); }
+                });
+            });
+            modelChips.innerHTML = '';
+            merged.forEach(function(m) {
+                var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
+                modelChips.appendChild(renderChip('model', m.id, m.name, keepSelected.has(String(m.id)), langs));
+            });
+            attachModelHandlers();
+            refreshBadges();
+            var curLang = localStorage.getItem('site_lang') || 'ar';
+            if (curLang !== 'ar' && typeof applyLang === 'function') applyLang(curLang);
+        });
+    }
+
+    function refreshBadges() {
+        var mdls = selectedModelIds();
+        if (!mdls.length) {
+            badgeField.style.display = 'none';
+            badgeChips.innerHTML = '';
+            return;
+        }
+        badgeField.style.display = '';
+        var keepSelected = new Set(Array.from(badgeChips.querySelectorAll('input:checked')).map(function(cb) { return cb.value; }));
+        var qsCarType = carType ? '&car_type=' + encodeURIComponent(carType) : '';
+        var promises = mdls.map(function(mid) {
+            return fetchJSON('/api/badges/?model_id=' + encodeURIComponent(mid) + qsCarType);
+        });
+        Promise.all(promises).then(function(results) {
+            var seen = new Set();
+            var merged = [];
+            results.forEach(function(arr) {
+                arr.forEach(function(b) {
+                    if (!seen.has(b.id)) { seen.add(b.id); merged.push(b); }
+                });
+            });
+            badgeChips.innerHTML = '';
+            merged.forEach(function(b) {
+                badgeChips.appendChild(renderChip('badge', b.id, b.name, keepSelected.has(String(b.id))));
+            });
+            // Re-translate any new chips immediately if a non-default lang is active.
+            var curLang = localStorage.getItem('site_lang') || 'ar';
+            if (curLang !== 'ar' && typeof applyLang === 'function') applyLang(curLang);
+        });
+    }
+
+    function attachModelHandlers() {
+        document.querySelectorAll('.lux-model-cb').forEach(function(cb) {
+            cb.removeEventListener('change', refreshBadges);
+            cb.addEventListener('change', refreshBadges);
+        });
+    }
+
+    document.querySelectorAll('.lux-mfr-cb').forEach(function(cb) {
+        cb.addEventListener('change', refreshModels);
+    });
+    attachModelHandlers();
+
+    if (selectedManufacturerIds().length) refreshModels();
+})();
+</script>
+{% endblock %}

@@ -32,6 +32,18 @@ class Tenant(TenantMixin):
         help_text="اختر تصميم صفحة الدخول الرئيسية للموقع",
     )
 
+    TEMPLATE_THEME_CHOICES = [
+        ('default', 'Default (الافتراضي)'),
+        ('luxury',  '✨ Luxury (فخم — ذهبي/أسود)'),
+    ]
+    template_theme = models.CharField(
+        max_length=20,
+        choices=TEMPLATE_THEME_CHOICES,
+        default='default',
+        verbose_name="ثيم القوالب",
+        help_text="ثيم كامل يبدّل قوالب الموقع (HTML) كلياً، وليس مجرد ألوان. الافتراضي يستخدم القوالب القياسية.",
+    )
+
     CAR_DISPLAY_CHOICES = [
         ('classic', '🃏 Classic (بطاقات بيضاء)'),
         ('dark',    '🌙 Dark (بطاقات داكنة)'),

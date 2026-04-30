@@ -1,0 +1,678 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters %}
+
+{% block title %}{{ car.year }} {{ car.manufacturer.name }} {{ car.model.name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --lux-bg: #0a0a0a; --lux-bg-soft: #14110d;
+        --lux-gold: #c9a45a; --lux-gold-bright: #e9c87a;
+        --lux-line: rgba(201,164,90,0.18);
+        --lux-text: #ece4d3; --lux-text-dim: #a89a7a;
+    }
+    .lux-page { background: var(--lux-bg); color: var(--lux-text); min-height: 100vh; padding: 3rem 1.5rem; }
+    .lux-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+    .lux-wrap { max-width: 1280px; margin: 0 auto; }
+
+    .lux-back { color: var(--lux-text-dim); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2rem; display: inline-block; }
+    .lux-back:hover { color: var(--lux-gold); }
+
+    .lux-detail-grid {
+        display: grid; gap: 3rem; align-items: start;
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    }
+    @media (max-width: 900px) { .lux-detail-grid { grid-template-columns: 1fr; } }
+
+    .lux-gallery-main {
+        aspect-ratio: 16/10; background: #000; overflow: hidden;
+        border: 1px solid var(--lux-line); margin-bottom: 1rem;
+    }
+    .lux-gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+    .lux-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .lux-thumb {
+        aspect-ratio: 4/3; background: #000; overflow: hidden; cursor: pointer;
+        border: 1px solid var(--lux-line); transition: border-color 0.2s ease;
+    }
+    .lux-thumb:hover, .lux-thumb.active { border-color: var(--lux-gold); }
+    .lux-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: opacity 0.2s ease; }
+    .lux-thumb:hover img, .lux-thumb.active img { opacity: 1; }
+
+    .lux-aside { padding: 2rem; border: 1px solid var(--lux-line); background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%); }
+    .lux-make { color: var(--lux-gold); font-size: 0.75rem; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .lux-model { font-size: 2rem; font-weight: 400; margin: 0 0 0.5rem; line-height: 1.1; }
+    .lux-year { color: var(--lux-text-dim); font-size: 1rem; margin-bottom: 2rem; }
+    .lux-price-block { padding: 1.5rem 0; border-top: 1px solid var(--lux-line); border-bottom: 1px solid var(--lux-line); margin-bottom: 2rem; }
+    .lux-price-label { color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-price { color: var(--lux-gold-bright); font-size: 2rem; font-weight: 600; letter-spacing: 0.05em; }
+
+    .lux-specs { list-style: none; padding: 0; margin: 0 0 2rem; }
+    .lux-specs li { display: flex; justify-content: space-between; padding: 0.85rem 0; border-bottom: 1px solid var(--lux-line); font-size: 0.9rem; }
+    .lux-specs li span:first-child { color: var(--lux-text-dim); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.75rem; }
+    .lux-specs li span:last-child { color: var(--lux-text); }
+
+    .lux-cta {
+        display: block; width: 100%; padding: 1rem; text-align: center;
+        border: 1px solid var(--lux-gold); color: var(--lux-gold);
+        text-decoration: none; letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.85rem;
+        transition: all 0.3s ease; margin-bottom: 0.75rem;
+    }
+    .lux-cta:hover { background: var(--lux-gold); color: var(--lux-bg); }
+    .lux-cta-solid { background: var(--lux-gold); color: var(--lux-bg); }
+    .lux-cta-solid:hover { background: var(--lux-gold-bright); }
+
+    .lux-similar { margin-top: 5rem; padding-top: 4rem; border-top: 1px solid var(--lux-line); }
+    .lux-similar h2 { font-size: 1.5rem; font-weight: 400; margin: 0 0 2rem; }
+    .lux-similar h2 small { display: block; color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-similar-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .lux-similar-card { display: block; text-decoration: none; color: inherit; border: 1px solid var(--lux-line); transition: border-color 0.3s ease; }
+    .lux-similar-card:hover { border-color: var(--lux-gold); }
+    .lux-similar-img { aspect-ratio: 4/3; background: #000; overflow: hidden; }
+    .lux-similar-img img { width: 100%; height: 100%; object-fit: cover; }
+    .lux-similar-body { padding: 1rem 1.25rem 1.25rem; }
+    .lux-similar-make { color: var(--lux-gold); font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.4rem; }
+    .lux-similar-name { font-size: 0.95rem; margin: 0 0 0.5rem; }
+    .lux-similar-price { color: var(--lux-gold-bright); font-size: 1rem; font-weight: 600; }
+
+    /* Status / lot pills */
+    .lux-status-pill {
+        display: inline-block; padding: 0.3rem 0.75rem;
+        font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+        border: 1px solid var(--lux-line); margin-bottom: 0.5rem;
+    }
+    .lux-status-sold { background: rgba(180, 60, 60, 0.18); color: #d97777; border-color: rgba(217,119,119,0.4); }
+    .lux-status-pending { background: rgba(201,164,90,0.15); color: var(--lux-gold); border-color: var(--lux-gold); }
+    .lux-lot { color: var(--lux-text-dim); font-size: 0.75rem; letter-spacing: 0.2em; margin-bottom: 1rem; }
+
+    /* Full-width sections below the gallery+aside row */
+    .lux-section-block {
+        margin-top: 3rem; padding: 2rem 2.25rem;
+        border: 1px solid var(--lux-line);
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+    }
+    .lux-section-block h2 {
+        font-size: 1.4rem; font-weight: 400; margin: 0 0 1.5rem;
+        padding-bottom: 1rem; border-bottom: 1px solid var(--lux-line);
+        letter-spacing: 0.05em;
+    }
+    .lux-section-block h2 small {
+        display: block; color: var(--lux-gold); font-size: 0.65rem;
+        letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.4rem;
+    }
+
+    /* Comprehensive specs grid (full-width) */
+    .lux-specs-grid {
+        display: grid; gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+    .lux-spec-card {
+        padding: 1rem 1.25rem; border: 1px solid var(--lux-line);
+        background: rgba(0,0,0,0.25);
+    }
+    .lux-spec-card .label {
+        color: var(--lux-gold); font-size: 0.65rem;
+        letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.4rem;
+    }
+    .lux-spec-card .value { color: var(--lux-text); font-size: 0.95rem; }
+
+    /* Description */
+    .lux-desc { color: var(--lux-text); line-height: 1.8; white-space: pre-line; font-size: 0.95rem; }
+
+    /* Inspection diagram (positioned damage badges) */
+    .lux-inspection-img { width: 100%; max-height: 600px; object-fit: contain; background: #000; border: 1px solid var(--lux-line); }
+    .insp-diagram { position: relative; width: 100%; user-select: none; background: #fff; border: 1px solid var(--lux-line); border-radius: 4px; overflow: hidden; }
+    .insp-diagram img { width: 100%; display: block; }
+    .insp-badge {
+        position: absolute; width: 5.5%; aspect-ratio: 1/1; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: clamp(8px, 1.4vw, 13px); font-weight: 800; color: #fff;
+        transform: translate(-50%, -50%); box-shadow: 0 2px 6px #0004; cursor: default; transition: transform .15s;
+    }
+    .insp-badge:hover { transform: translate(-50%, -50%) scale(1.3); }
+    .insp-badge::after {
+        content: attr(data-tip); position: absolute; bottom: 120%; left: 50%;
+        transform: translateX(-50%); background: #222; color: #fff; font-size: 11px;
+        white-space: nowrap; padding: 4px 8px; border-radius: 4px; pointer-events: none;
+        opacity: 0; transition: opacity .15s; z-index: 10;
+    }
+    .insp-badge:hover::after { opacity: 1; }
+    .insp-badge.X { background: #e53935; } .insp-badge.W { background: #1e88e5; }
+    .insp-badge.C { background: #fb8c00; } .insp-badge.A { background: #7cb9e8; }
+    .insp-badge.U { background: #6d7c47; } .insp-badge.T { background: #9e9e9e; }
+    .insp-lb {
+        width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+        align-items: center; justify-content: center; font-size: 10px; font-weight: 800;
+        color: #fff; flex-shrink: 0;
+    }
+    .insp-lb.X { background: #e53935; } .insp-lb.W { background: #1e88e5; }
+    .insp-lb.C { background: #fb8c00; } .insp-lb.A { background: #7cb9e8; }
+    .insp-lb.U { background: #6d7c47; } .insp-lb.T { background: #9e9e9e; }
+    .insp-rank { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+    .insp-rank-1 { background: rgba(229,57,53,.18); color: #e57373; }
+    .insp-rank-2 { background: rgba(251,140,0,.18); color: #fb8c00; }
+
+    .lux-inspection-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 700px) { .lux-inspection-grid { grid-template-columns: 1fr; } }
+    .lux-insp-title { color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 0.6rem; }
+    .lux-insp-legend { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem 0; border-top: 1px solid var(--lux-line); margin-top: 1.5rem; color: var(--lux-text-dim); font-size: 0.8rem; }
+    .lux-insp-legend > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .lux-insp-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.85rem; }
+    .lux-insp-table thead th {
+        text-align: left; padding: 0.6rem 0.85rem; color: var(--lux-gold);
+        font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+        border-bottom: 1px solid var(--lux-line); font-weight: 500;
+    }
+    .lux-insp-table tbody td { padding: 0.6rem 0.85rem; border-bottom: 1px solid rgba(201,164,90,0.08); color: var(--lux-text); }
+    /* Override inline styles emitted by the server-rendered table rows */
+    .lux-insp-table-wrap table tr,
+    .lux-insp-table-wrap table td,
+    .lux-insp-table-wrap table th { background: transparent !important; color: var(--lux-text) !important; border-color: var(--lux-line) !important; }
+
+    /* Features grid */
+    .lux-features-grid { display: grid; gap: 0.65rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .lux-feature-pill {
+        padding: 0.55rem 0.9rem; border: 1px solid var(--lux-line);
+        background: rgba(201,164,90,0.06); color: var(--lux-text);
+        font-size: 0.85rem; text-align: center;
+    }
+    .lux-features-icons { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .lux-feature-card {
+        padding: 1rem; border: 1px solid var(--lux-line);
+        background: rgba(0,0,0,0.25); text-align: center;
+        display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    }
+    .lux-feature-card img { width: 48px; height: 48px; object-fit: contain; filter: brightness(0.85) saturate(0.7); }
+    .lux-feature-card span { color: var(--lux-text); font-size: 0.85rem; }
+
+    /* Insurance / Vehicle history */
+    .lux-history-stats { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 1.5rem; }
+    .lux-history-stat {
+        padding: 1.25rem; border: 1px solid var(--lux-line); text-align: center;
+        background: rgba(0,0,0,0.25);
+    }
+    .lux-history-stat .label { color: var(--lux-text-dim); font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-history-stat .value { font-size: 1.85rem; font-weight: 600; color: var(--lux-text); }
+    .lux-history-stat.alert .value { color: #e57373; }
+    .lux-history-stat.warn .value { color: var(--lux-gold); }
+    .lux-history-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .lux-history-tag {
+        padding: 0.4rem 0.85rem; border: 1px solid var(--lux-line);
+        background: rgba(201,164,90,0.08); color: var(--lux-text);
+        font-size: 0.8rem; letter-spacing: 0.05em;
+    }
+    .lux-history-tag.alert { background: rgba(229,57,53,0.12); border-color: rgba(229,57,53,0.4); color: #e57373; }
+    .lux-history-list { border: 1px solid var(--lux-line); }
+    .lux-history-item { display: flex; justify-content: space-between; padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(201,164,90,0.1); font-size: 0.85rem; }
+    .lux-history-item:last-child { border-bottom: 0; }
+    .lux-history-item .date { color: var(--lux-text-dim); margin-right: 1rem; min-width: 6rem; }
+    .lux-history-item .cost { color: #e57373; font-weight: 600; }
+
+    /* Lightbox */
+    .lux-gallery-main img,
+    .lux-thumb img,
+    .lux-similar-img img { cursor: zoom-in; }
+    .lux-lightbox {
+        position: fixed; inset: 0; z-index: 100;
+        background: rgba(5, 5, 5, 0.96);
+        display: none; align-items: center; justify-content: center;
+        padding: 2rem;
+    }
+    .lux-lightbox.open { display: flex; }
+    .lux-lightbox-img {
+        max-width: 92vw; max-height: 88vh;
+        object-fit: contain;
+        border: 1px solid var(--lux-line);
+        box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+    }
+    .lux-lightbox-close,
+    .lux-lightbox-prev,
+    .lux-lightbox-next {
+        position: absolute; background: transparent; border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); cursor: pointer;
+        width: 3rem; height: 3rem;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; font-family: inherit;
+        transition: all 0.2s ease;
+    }
+    .lux-lightbox-close:hover,
+    .lux-lightbox-prev:hover,
+    .lux-lightbox-next:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-lightbox-close { top: 1.5rem; right: 1.5rem; }
+    .lux-lightbox-prev { left: 1.5rem; top: 50%; transform: translateY(-50%); }
+    .lux-lightbox-next { right: 1.5rem; top: 50%; transform: translateY(-50%); }
+    .lux-lightbox-counter {
+        position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+        color: var(--lux-text-dim); font-size: 0.8rem; letter-spacing: 0.2em;
+    }
+    .lux-lightbox-counter span { color: var(--lux-gold); }
+    @media (max-width: 600px) {
+        .lux-lightbox-prev, .lux-lightbox-next { width: 2.5rem; height: 2.5rem; font-size: 1.1rem; }
+        .lux-lightbox-prev { left: 0.5rem; }
+        .lux-lightbox-next { right: 0.5rem; }
+    }
+</style>
+
+<div class="lux-page">
+    <div class="lux-wrap">
+        <a href="{% url 'car_list' %}" class="lux-back bilingual" data-lang-ar="← المجموعة" data-lang-en="← Collection" data-lang-es="← Colección" data-lang-ru="← Коллекция">← المجموعة</a>
+
+        <div class="lux-detail-grid">
+            <div>
+                <div class="lux-gallery-main car-img-wm">
+                    {% if car.image %}<img id="lux-main-img" src="{{ car.image }}" alt="{{ car.title }}" onclick="luxOpenLightbox(0)">{% endif %}
+                </div>
+                {% if car.images %}
+                <div class="lux-thumbs">
+                    {% if car.image %}
+                    <div class="lux-thumb active" data-lux-idx="0" onclick="luxSelectThumb(this); document.getElementById('lux-main-img').src='{{ car.image }}'; luxOpenLightbox(0);"><img src="{{ car.image }}" alt=""></div>
+                    {% endif %}
+                    {% for img in car.images %}
+                    <div class="lux-thumb" data-lux-idx="{% if car.image %}{{ forloop.counter }}{% else %}{{ forloop.counter0 }}{% endif %}" onclick="luxSelectThumb(this); document.getElementById('lux-main-img').src='{{ img }}'; luxOpenLightbox(this.dataset.luxIdx);"><img src="{{ img }}" alt=""></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <aside class="lux-aside">
+                {% if car.status == 'sold' %}
+                <div class="lux-status-pill lux-status-sold bilingual" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продано">تم البيع</div>
+                {% elif car.status == 'pending' %}
+                <div class="lux-status-pill lux-status-pending bilingual" data-lang-ar="قيد الانتظار" data-lang-en="Pending" data-lang-es="Pendiente" data-lang-ru="В ожидании">قيد الانتظار</div>
+                {% endif %}
+                <div class="lux-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                <h1 class="lux-model">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h1>
+                <div class="lux-year">{{ car.year }}{% if car.badge.name %} · {{ car.badge.name }}{% endif %}</div>
+                {% if car.lot_number %}
+                <div class="lux-lot"><span class="bilingual" data-lang-ar="رقم القطعة" data-lang-en="Lot #" data-lang-es="Lote #" data-lang-ru="Лот #">رقم القطعة</span>: {{ car.lot_number }}</div>
+                {% elif car.entry %}
+                <div class="lux-lot"><span class="bilingual" data-lang-ar="رقم الإعلان" data-lang-en="Listing #" data-lang-es="Anuncio #" data-lang-ru="Объявление #">رقم الإعلان</span>: {{ car.entry }}</div>
+                {% endif %}
+
+                {% if car.price %}
+                <div class="lux-price-block">
+                    <div class="lux-price-label bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</div>
+                    <div class="lux-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                </div>
+                {% endif %}
+
+                <ul class="lux-specs">
+                    {% if car.mileage %}<li><span class="bilingual" data-lang-ar="المسافة" data-lang-en="Mileage" data-lang-es="Kilometraje" data-lang-ru="Пробег">المسافة</span><span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span></li>{% endif %}
+                    {% if car.transmission %}<li><span class="bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">ناقل الحركة</span><span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span></li>{% endif %}
+                    {% if car.fuel %}<li><span class="bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</span><span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span></li>{% endif %}
+                    {% if car.color %}<li><span class="bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</span><span class="bilingual" data-lang-ar="{{ car.color|translate_color }}" data-lang-en="{{ car.color|translate_color:'en' }}" data-lang-es="{{ car.color|translate_color:'es' }}" data-lang-ru="{{ car.color|translate_color:'ru' }}">{{ car.color|translate_color }}</span></li>{% endif %}
+                    {% if car.body_type %}<li><span class="bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body" data-lang-es="Carrocería" data-lang-ru="Кузов">نوع الهيكل</span><span class="bilingual" data-lang-ar="{{ car.body_type|translate_body }}" data-lang-en="{{ car.body_type|translate_body:'en' }}" data-lang-es="{{ car.body_type|translate_body:'es' }}" data-lang-ru="{{ car.body_type|translate_body:'ru' }}">{{ car.body_type|translate_body }}</span></li>{% endif %}
+                    {% if car.address %}<li><span class="bilingual" data-lang-ar="الموقع" data-lang-en="Location" data-lang-es="Ubicación" data-lang-ru="Расположение">الموقع</span><span class="bilingual" data-lang-ar="{{ car.address|ar_address }}" data-lang-en="{{ car.address|en_address }}" data-lang-es="{{ car.address|translate_address:'es' }}" data-lang-ru="{{ car.address|translate_address:'ru' }}">{{ car.address|ar_address }}</span></li>{% endif %}
+                </ul>
+
+                {% if site_whatsapp %}
+                <a href="https://wa.me/{{ site_whatsapp }}?text={{ car.title }}" class="lux-cta lux-cta-solid bilingual" data-lang-ar="استفسار عبر واتساب" data-lang-en="Inquire via WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить через WhatsApp">استفسار عبر واتساب</a>
+                {% endif %}
+                {% if site_phone %}
+                <a href="tel:{{ site_phone }}" class="lux-cta bilingual" data-lang-ar="اتصل {{ site_phone }}" data-lang-en="Call {{ site_phone }}" data-lang-es="Llamar {{ site_phone }}" data-lang-ru="Позвонить {{ site_phone }}">اتصل {{ site_phone }}</a>
+                {% endif %}
+            </aside>
+        </div>
+
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="التفاصيل الكاملة" data-lang-en="Full Details" data-lang-es="Detalles completos" data-lang-ru="Полные данные">التفاصيل الكاملة</small>
+                <span class="bilingual" data-lang-ar="المواصفات" data-lang-en="Specifications" data-lang-es="Especificaciones" data-lang-ru="Технические характеристики">المواصفات</span>
+            </h2>
+            <div class="lux-specs-grid">
+                {% if car.manufacturer %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">الشركة المصنعة</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</div>
+                </div>
+                {% endif %}
+                {% if car.model %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="الموديل" data-lang-en="Model" data-lang-es="Modelo" data-lang-ru="Модель">الموديل</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</div>
+                </div>
+                {% endif %}
+                {% if car.badge.name %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="تفاصيل الموديل" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">تفاصيل الموديل</div>
+                    <div class="value">{{ car.badge.name }}</div>
+                </div>
+                {% endif %}
+                {% if car.year %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع</div>
+                    <div class="value">{{ car.year }}</div>
+                </div>
+                {% endif %}
+                {% if car.mileage %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="المسافة المقطوعة" data-lang-en="Mileage" data-lang-es="Kilometraje" data-lang-ru="Пробег">المسافة المقطوعة</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</div>
+                </div>
+                {% endif %}
+                {% if car.transmission %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">ناقل الحركة</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</div>
+                </div>
+                {% endif %}
+                {% if car.fuel %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</div>
+                </div>
+                {% endif %}
+                {% if car.color %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.color.name|translate_color }}" data-lang-en="{{ car.color.name|translate_color:'en' }}" data-lang-es="{{ car.color.name|translate_color:'es' }}" data-lang-ru="{{ car.color.name|translate_color:'ru' }}">{{ car.color.name|translate_color }}</div>
+                </div>
+                {% endif %}
+                {% if car.seat_color %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="لون المقاعد" data-lang-en="Seat Color" data-lang-es="Color del asiento" data-lang-ru="Цвет сиденья">لون المقاعد</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.seat_color.name|translate_color }}" data-lang-en="{{ car.seat_color.name|translate_color:'en' }}" data-lang-es="{{ car.seat_color.name|translate_color:'es' }}" data-lang-ru="{{ car.seat_color.name|translate_color:'ru' }}">{{ car.seat_color.name|translate_color }}</div>
+                </div>
+                {% endif %}
+                {% if car.seat_count and car.seat_count != '0' %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="عدد المقاعد" data-lang-en="Seats" data-lang-es="Asientos" data-lang-ru="Сидений">عدد المقاعد</div>
+                    <div class="value">{{ car.seat_count }}</div>
+                </div>
+                {% endif %}
+                {% if car.body %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Кузов">نوع الهيكل</div>
+                    <div class="value">{{ car.body.name }}</div>
+                </div>
+                {% endif %}
+                {% if car.power %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</div>
+                    <div class="value">{{ car.power }} cc</div>
+                </div>
+                {% elif car.points %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</div>
+                    <div class="value">{{ car.points }}</div>
+                </div>
+                {% endif %}
+                {% if car.engine %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="نوع المحرك" data-lang-en="Engine Type" data-lang-es="Tipo de motor" data-lang-ru="Тип двигателя">نوع المحرك</div>
+                    <div class="value">{{ car.engine }}</div>
+                </div>
+                {% endif %}
+                {% if car.drive_wheel %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="نظام الدفع" data-lang-en="Drive" data-lang-es="Tracción" data-lang-ru="Привод">نظام الدفع</div>
+                    <div class="value">{{ car.drive_wheel }}</div>
+                </div>
+                {% endif %}
+                {% if car.address %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="الموقع" data-lang-en="Location" data-lang-es="Ubicación" data-lang-ru="Расположение">الموقع</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.address|ar_address }}" data-lang-en="{{ car.address|en_address }}" data-lang-es="{{ car.address|translate_address:'es' }}" data-lang-ru="{{ car.address|translate_address:'ru' }}">{{ car.address|ar_address }}</div>
+                </div>
+                {% endif %}
+                {% if car.lot_number %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="رقم القطعة" data-lang-en="Lot #" data-lang-es="Lote #" data-lang-ru="Лот #">رقم القطعة</div>
+                    <div class="value">{{ car.lot_number }}</div>
+                </div>
+                {% endif %}
+                {% if car.entry %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="رقم الإعلان" data-lang-en="Listing #" data-lang-es="Anuncio #" data-lang-ru="Объявление #">رقم الإعلان</div>
+                    <div class="value">{{ car.entry }}</div>
+                </div>
+                {% endif %}
+                {% if car.auction_date %}
+                <div class="lux-spec-card">
+                    <div class="label bilingual" data-lang-ar="موعد المزاد" data-lang-en="Auction Date" data-lang-es="Fecha de subasta" data-lang-ru="Дата аукциона">موعد المزاد</div>
+                    <div class="value">{{ car.auction_date|date:"Y-m-d H:i" }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if car.description %}
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="عن السيارة" data-lang-en="About this vehicle" data-lang-es="Sobre el vehículo" data-lang-ru="Об автомобиле">عن السيارة</small>
+                <span class="bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</span>
+            </h2>
+            <p class="lux-desc">{{ car.description }}</p>
+        </section>
+        {% endif %}
+
+        {% with rec=car.extra_features.record autohub_opts=car.autohub_options %}
+
+        {% if car.options.standard or autohub_opts %}
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="مزايا السيارة" data-lang-en="What's Included" data-lang-es="Lo incluido" data-lang-ru="Что включено">مزايا السيارة</small>
+                <span class="bilingual" data-lang-ar="المميزات" data-lang-en="Features" data-lang-es="Características" data-lang-ru="Функции">المميزات</span>
+            </h2>
+            {% if car.options.standard %}
+            <div class="lux-features-grid">
+                {% for opt in car.options.standard %}
+                <span class="lux-feature-pill bilingual"
+                      data-lang-ar="{{ opt|translate_option }}"
+                      data-lang-en="{{ opt|translate_option_en }}"
+                      data-lang-es="{{ opt|translate_option:'es' }}"
+                      data-lang-ru="{{ opt|translate_option:'ru' }}">{{ opt|translate_option }}</span>
+                {% endfor %}
+            </div>
+            {% elif autohub_opts %}
+            <div class="lux-features-icons">
+                {% for opt in autohub_opts %}
+                {% with fallback=opt.name_ar|default:opt.ctDtlNm %}
+                <div class="lux-feature-card">
+                    {% if opt.url %}<img src="{{ opt.url }}" alt="{{ fallback }}" loading="lazy">{% endif %}
+                    <span class="bilingual"
+                          data-lang-ar="{{ opt.name_ar|default:fallback }}"
+                          data-lang-en="{{ opt.name_en|default:fallback }}"
+                          data-lang-es="{{ opt.name_es|default:fallback }}"
+                          data-lang-ru="{{ opt.name_ru|default:fallback }}">{{ fallback }}</span>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if insp.has_inspection %}
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="موثوق" data-lang-en="Verified" data-lang-es="Verificado" data-lang-ru="Проверено">موثوق</small>
+                <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-en="Inspection Report" data-lang-es="Informe de inspección" data-lang-ru="Отчет об инспекции">تقرير الفحص</span>
+            </h2>
+            {% if not insp.has_outer %}
+            <div class="lux-history-tag" style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(76,175,80,0.12);border-color:rgba(76,175,80,0.4);color:#7fc785;margin-bottom:1.25rem;">
+                <span class="bilingual" data-lang-ar="لا توجد أضرار مُسجَّلة على هيكل هذه السيارة" data-lang-en="No damage recorded on this vehicle's body" data-lang-es="No se han registrado daños en la carrocería" data-lang-ru="Повреждений кузова не зафиксировано">لا توجد أضرار مُسجَّلة على هيكل هذه السيارة</span>
+            </div>
+            {% endif %}
+            <div class="lux-inspection-grid" dir="ltr">
+                <div>
+                    <div class="lux-insp-title">Outer Panel{% if insp.has_outer %} — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}{% endif %}</div>
+                    <div class="insp-diagram">
+                        <img src="{{ insp.sedan_img }}" alt="Outer panel">
+                        {{ insp.outer_badges_html|safe }}
+                    </div>
+                </div>
+                <div>
+                    <div class="lux-insp-title">Structural</div>
+                    <div class="insp-diagram">
+                        <img src="{{ insp.truck_img }}" alt="Structural">
+                        {{ insp.structural_badges_html|safe }}
+                    </div>
+                </div>
+            </div>
+            {% if insp.has_outer %}
+            <div class="lux-insp-legend">
+                <span><span class="insp-lb X">X</span><span class="bilingual" data-lang-ar="تغيير" data-lang-en="Replaced" data-lang-es="Cambio" data-lang-ru="Замена">تغيير</span></span>
+                <span><span class="insp-lb W">W</span><span class="bilingual" data-lang-ar="رش" data-lang-en="Paint" data-lang-es="Pintura" data-lang-ru="Покраска">رش</span></span>
+                <span><span class="insp-lb C">C</span><span class="bilingual" data-lang-ar="صدأ" data-lang-en="Rust" data-lang-es="Óxido" data-lang-ru="Ржавчина">صدأ</span></span>
+                <span><span class="insp-lb A">A</span><span class="bilingual" data-lang-ar="خدش" data-lang-en="Scratch" data-lang-es="Rasguño" data-lang-ru="Царапина">خدش</span></span>
+                <span><span class="insp-lb U">U</span><span class="bilingual" data-lang-ar="انبعاج" data-lang-en="Dent" data-lang-es="Bulto" data-lang-ru="Вмятина">انبعاج</span></span>
+                <span><span class="insp-lb T">T</span><span class="bilingual" data-lang-ar="تلف" data-lang-en="Damage" data-lang-es="Daño" data-lang-ru="Повреждение">تلف</span></span>
+            </div>
+            <div class="lux-insp-table-wrap">
+                <table class="lux-insp-table">
+                    <thead><tr>
+                        <th class="bilingual" data-lang-ar="القطعة" data-lang-en="Part" data-lang-es="Parte" data-lang-ru="Деталь">القطعة</th>
+                        <th class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition" data-lang-es="Condición" data-lang-ru="Состояние">الحالة</th>
+                        <th class="bilingual" data-lang-ar="الدرجة" data-lang-en="Rank" data-lang-es="Grado" data-lang-ru="Степень">الدرجة</th>
+                    </tr></thead>
+                    <tbody>{{ insp.table_rows_html|safe }}</tbody>
+                </table>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if rec.openData %}
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="السجل الرسمي" data-lang-en="Official Record" data-lang-es="Registro oficial" data-lang-ru="Официальная запись">السجل الرسمي</small>
+                <span class="bilingual" data-lang-ar="سجل التأمين" data-lang-en="Insurance History" data-lang-es="Historial de seguros" data-lang-ru="Страховая история">سجل التأمين</span>
+            </h2>
+            <div class="lux-history-stats">
+                <div class="lux-history-stat {% if rec.accidentCnt %}alert{% endif %}">
+                    <div class="label bilingual" data-lang-ar="إجمالي الحوادث" data-lang-en="Total Accidents" data-lang-es="Accidentes" data-lang-ru="Аварий">إجمالي الحوادث</div>
+                    <div class="value">{{ rec.accidentCnt|default:"0" }}</div>
+                </div>
+                <div class="lux-history-stat">
+                    <div class="label bilingual" data-lang-ar="حوادث من جانبي" data-lang-en="My-Side" data-lang-es="De mi parte" data-lang-ru="С моей стороны">حوادث من جانبي</div>
+                    <div class="value">{{ rec.myAccidentCnt|default:"0" }}</div>
+                </div>
+                <div class="lux-history-stat">
+                    <div class="label bilingual" data-lang-ar="حوادث الطرف الآخر" data-lang-en="Other-Party" data-lang-es="Otra parte" data-lang-ru="Другой стороны">حوادث الطرف الآخر</div>
+                    <div class="value">{{ rec.otherAccidentCnt|default:"0" }}</div>
+                </div>
+                <div class="lux-history-stat {% if rec.ownerChangeCnt and rec.ownerChangeCnt > 1 %}warn{% endif %}">
+                    <div class="label bilingual" data-lang-ar="تغييرات الملكية" data-lang-en="Owner Changes" data-lang-es="Cambios de dueño" data-lang-ru="Смена владельца">تغييرات الملكية</div>
+                    <div class="value">{{ rec.ownerChangeCnt|default:"0" }}</div>
+                </div>
+            </div>
+
+            {% if rec.totalLossCnt or rec.floodTotalLossCnt or rec.floodDate or rec.robberCnt or rec.carNoChangeCnt or rec.loan %}
+            <div class="lux-history-tags">
+                {% if rec.totalLossCnt %}<span class="lux-history-tag alert"><span class="bilingual" data-lang-ar="خسارة كلية" data-lang-en="Total loss" data-lang-es="Pérdida total" data-lang-ru="Полная гибель">خسارة كلية</span>: {{ rec.totalLossCnt }}</span>{% endif %}
+                {% if rec.floodTotalLossCnt %}<span class="lux-history-tag alert"><span class="bilingual" data-lang-ar="فيضان (خسارة كلية)" data-lang-en="Flood loss" data-lang-es="Inundación" data-lang-ru="Наводнение">فيضان (خسارة كلية)</span>: {{ rec.floodTotalLossCnt }}</span>{% endif %}
+                {% if rec.floodDate %}<span class="lux-history-tag"><span class="bilingual" data-lang-ar="تاريخ الفيضان" data-lang-en="Flood date" data-lang-es="Fecha inundación" data-lang-ru="Дата наводнения">تاريخ الفيضان</span>: {{ rec.floodDate }}</span>{% endif %}
+                {% if rec.robberCnt %}<span class="lux-history-tag"><span class="bilingual" data-lang-ar="سرقة" data-lang-en="Theft" data-lang-es="Robo" data-lang-ru="Кража">سرقة</span>: {{ rec.robberCnt }}</span>{% endif %}
+                {% if rec.carNoChangeCnt %}<span class="lux-history-tag"><span class="bilingual" data-lang-ar="تغيير اللوحة" data-lang-en="Plate changes" data-lang-es="Cambios de placa" data-lang-ru="Смена номера">تغيير اللوحة</span>: {{ rec.carNoChangeCnt }}</span>{% endif %}
+                {% if rec.loan %}<span class="lux-history-tag bilingual" data-lang-ar="يوجد رهن/قرض" data-lang-en="Has lien/loan" data-lang-es="Tiene gravamen" data-lang-ru="Есть залог/кредит">يوجد رهن/قرض</span>{% endif %}
+            </div>
+            {% endif %}
+
+            {% if rec.accidents %}
+            <div class="lux-insp-title bilingual" data-lang-ar="سجل الحوادث" data-lang-en="Accident History" data-lang-es="Historial de accidentes" data-lang-ru="История аварий" style="margin-top:1.25rem;">سجل الحوادث</div>
+            <div class="lux-history-list">
+                {% for a in rec.accidents %}
+                <div class="lux-history-item">
+                    <div>
+                        <span class="date">{{ a.date }}</span>
+                        {% if a.type == "1" %}<span class="bilingual" data-lang-ar="حادث (تحمّلت التكلفة)" data-lang-en="Accident (my cost)" data-lang-es="Accidente (yo pagué)" data-lang-ru="Авария (мой расход)">حادث (تحمّلت التكلفة)</span>
+                        {% elif a.type == "2" %}<span class="bilingual" data-lang-ar="حادث (الطرف الآخر تحمّل)" data-lang-en="Accident (other-party cost)" data-lang-es="Accidente (otra parte)" data-lang-ru="Авария (другая сторона)">حادث (الطرف الآخر تحمّل)</span>
+                        {% else %}<span class="bilingual" data-lang-ar="حادث آخر" data-lang-en="Other accident" data-lang-es="Otro accidente" data-lang-ru="Другая авария">حادث آخر</span>{% endif %}
+                    </div>
+                    <span class="cost">{{ a.insuranceBenefit|default:"—" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if rec.ownerChanges %}
+            <div class="lux-insp-title bilingual" data-lang-ar="تاريخ تغيير الملكية" data-lang-en="Ownership Change History" data-lang-es="Historial de propietarios" data-lang-ru="История смены владельца" style="margin-top:1.5rem;">تاريخ تغيير الملكية</div>
+            <div class="lux-history-tags">
+                {% for d in rec.ownerChanges %}
+                <span class="lux-history-tag">{{ d }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% endwith %}
+
+        {% if similar_cars %}
+        <section class="lux-similar">
+            <h2><small class="bilingual" data-lang-ar="قد يعجبك أيضاً" data-lang-en="You May Also Consider" data-lang-es="También te puede interesar" data-lang-ru="Возможно, вам понравится">قد يعجبك أيضاً</small><span class="bilingual" data-lang-ar="سيارات مشابهة" data-lang-en="Similar Vehicles" data-lang-es="Vehículos similares" data-lang-ru="Похожие автомобили">سيارات مشابهة</span></h2>
+            <div class="lux-similar-grid">
+                {% for s in similar_cars %}
+                <a href="{% url 'car_detail' s.slug %}" class="lux-similar-card">
+                    <div class="lux-similar-img car-img-wm">
+                        {% if s.image %}<img src="{{ s.image }}" alt="{{ s.title }}" loading="lazy">{% endif %}
+                    </div>
+                    <div class="lux-similar-body">
+                        <div class="lux-similar-make">
+                            {% if s.manufacturer %}<span class="bilingual" data-lang-ar="{{ s.manufacturer|translate_manufacturer }}" data-lang-en="{{ s.manufacturer|translate_manufacturer:'en' }}">{{ s.manufacturer|translate_manufacturer }}</span>{% endif %}
+                            · {{ s.year }}
+                        </div>
+                        <h3 class="lux-similar-name">{% if s.model %}<span class="bilingual" data-lang-ar="{{ s.model|translate_model }}" data-lang-en="{{ s.model|translate_model:'en' }}">{{ s.model|translate_model }}</span>{% else %}{{ s.title }}{% endif %}</h3>
+                        {% if s.price %}<div class="lux-similar-price" data-price-krw="{{ s.price }}">{{ s.price|intcomma }} ₩</div>{% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+</div>
+
+<div id="lux-lightbox" class="lux-lightbox" onclick="if (event.target === this) luxCloseLightbox()">
+    <button type="button" class="lux-lightbox-close" onclick="luxCloseLightbox()" aria-label="Close">×</button>
+    <button type="button" class="lux-lightbox-prev" onclick="luxLightboxNav(-1)" aria-label="Previous">‹</button>
+    <img id="lux-lightbox-img" class="lux-lightbox-img" src="" alt="">
+    <button type="button" class="lux-lightbox-next" onclick="luxLightboxNav(1)" aria-label="Next">›</button>
+    <div class="lux-lightbox-counter"><span id="lux-lightbox-current">1</span> / <span id="lux-lightbox-total">1</span></div>
+</div>
+
+<script>
+(function() {
+    var luxImages = [
+        {% if car.image %}"{{ car.image|escapejs }}"{% if car.images %},{% endif %}{% endif %}
+        {% for img in car.images %}"{{ img|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+    var luxIdx = 0;
+    var lb = document.getElementById('lux-lightbox');
+    var lbImg = document.getElementById('lux-lightbox-img');
+    var lbCur = document.getElementById('lux-lightbox-current');
+    var lbTot = document.getElementById('lux-lightbox-total');
+
+    window.luxOpenLightbox = function(i) {
+        if (!luxImages.length) return;
+        luxIdx = (parseInt(i, 10) || 0) % luxImages.length;
+        if (luxIdx < 0) luxIdx = luxImages.length - 1;
+        lbImg.src = luxImages[luxIdx];
+        lbCur.textContent = luxIdx + 1;
+        lbTot.textContent = luxImages.length;
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    };
+    window.luxCloseLightbox = function() {
+        lb.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+    window.luxLightboxNav = function(dir) {
+        luxIdx = (luxIdx + dir + luxImages.length) % luxImages.length;
+        lbImg.src = luxImages[luxIdx];
+        lbCur.textContent = luxIdx + 1;
+    };
+    window.luxSelectThumb = function(el) {
+        document.querySelectorAll('.lux-thumb').forEach(function(t) { t.classList.remove('active'); });
+        el.classList.add('active');
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (!lb.classList.contains('open')) return;
+        if (e.key === 'Escape') luxCloseLightbox();
+        else if (e.key === 'ArrowLeft') luxLightboxNav(-1);
+        else if (e.key === 'ArrowRight') luxLightboxNav(1);
+    });
+})();
+</script>
+{% endblock %}

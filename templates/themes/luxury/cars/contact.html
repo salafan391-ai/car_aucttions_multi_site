@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Contact — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section style="max-width: 900px; margin: 0 auto; padding: 4rem 1.5rem;">
+    <header class="lux-auth-head" style="margin-bottom: 3rem;">
+        <div class="lux-auth-eyebrow bilingual" data-lang-ar="خدمة الكونسيرج" data-lang-en="Concierge" data-lang-es="Conserjería" data-lang-ru="Консьерж">خدمة الكونسيرج</div>
+        <h1 class="lux-auth-title bilingual" data-lang-ar="تواصل معنا" data-lang-en="Get in Touch" data-lang-es="Contáctanos" data-lang-ru="Связаться">تواصل معنا</h1>
+        <p class="lux-auth-sub bilingual" data-lang-ar="أخبرنا عما تبحث عنه — نرد عادة خلال يوم عمل واحد." data-lang-en="Tell us what you're looking for. We typically respond within a business day." data-lang-es="Cuéntanos qué buscas. Solemos responder en un día laborable." data-lang-ru="Расскажите, что вы ищете — обычно отвечаем в течение рабочего дня.">أخبرنا عما تبحث عنه — نرد عادة خلال يوم عمل واحد.</p>
+    </header>
+
+    {% if site_phone or site_whatsapp or site_email or site_address %}
+    <div class="lux-info-grid">
+        {% if site_phone %}
+        <div class="lux-info-card">
+            <div class="lux-info-label bilingual" data-lang-ar="الهاتف" data-lang-en="Phone" data-lang-es="Teléfono" data-lang-ru="Телефон">الهاتف</div>
+            <div class="lux-info-value"><a href="tel:{{ site_phone }}">{{ site_phone }}</a></div>
+        </div>
+        {% endif %}
+        {% if site_whatsapp %}
+        <div class="lux-info-card">
+            <div class="lux-info-label bilingual" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp">واتساب</div>
+            <div class="lux-info-value"><a href="https://wa.me/{{ site_whatsapp }}" target="_blank" rel="noopener">{{ site_whatsapp }}</a></div>
+        </div>
+        {% endif %}
+        {% if site_email %}
+        <div class="lux-info-card">
+            <div class="lux-info-label bilingual" data-lang-ar="البريد الإلكتروني" data-lang-en="Email" data-lang-es="Correo" data-lang-ru="Эл. почта">البريد الإلكتروني</div>
+            <div class="lux-info-value"><a href="mailto:{{ site_email }}">{{ site_email }}</a></div>
+        </div>
+        {% endif %}
+        {% if site_address %}
+        <div class="lux-info-card">
+            <div class="lux-info-label bilingual" data-lang-ar="العنوان" data-lang-en="Address" data-lang-es="Dirección" data-lang-ru="Адрес">العنوان</div>
+            <div class="lux-info-value">{{ site_address }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="lux-auth-card wide" style="max-width: none;">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="lux-alert{% if message.tags == 'error' %} error{% endif %}"><p>{{ message }}</p></div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="lux-row-2">
+                <div class="lux-field-row">
+                    <label class="bilingual" data-lang-ar="الاسم" data-lang-en="Name" data-lang-es="Nombre" data-lang-ru="Имя">الاسم</label> <span class="req">*</span>
+                    <input type="text" name="name" required data-placeholder-ar="الاسم الكامل" data-placeholder-en="Full name" data-placeholder-es="Nombre completo" data-placeholder-ru="Полное имя" placeholder="الاسم الكامل">
+                </div>
+                <div class="lux-field-row">
+                    <label class="bilingual" data-lang-ar="البريد الإلكتروني" data-lang-en="Email" data-lang-es="Correo" data-lang-ru="Эл. почта">البريد الإلكتروني</label> <span class="req">*</span>
+                    <input type="email" name="email" required placeholder="example@email.com">
+                </div>
+            </div>
+
+            <div class="lux-field-row">
+                <label class="bilingual" data-lang-ar="رقم الجوال" data-lang-en="Phone" data-lang-es="Teléfono" data-lang-ru="Телефон">رقم الجوال</label> <span class="req">*</span>
+                <input type="tel" name="phone" required placeholder="+966 5x xxx xxxx">
+            </div>
+
+            <div class="lux-field-row">
+                <label class="bilingual" data-lang-ar="الرسالة" data-lang-en="Message" data-lang-es="Mensaje" data-lang-ru="Сообщение">الرسالة</label> <span class="req">*</span>
+                <textarea name="message" rows="6" required data-placeholder-ar="أخبرنا عما تبحث عنه…" data-placeholder-en="Tell us what you're looking for…" data-placeholder-es="Cuéntanos qué buscas…" data-placeholder-ru="Расскажите, что вы ищете…" placeholder="أخبرنا عما تبحث عنه…"></textarea>
+            </div>
+
+            <button type="submit" class="lux-submit bilingual" data-lang-ar="إرسال الرسالة" data-lang-en="Send Message" data-lang-es="Enviar mensaje" data-lang-ru="Отправить">إرسال الرسالة</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

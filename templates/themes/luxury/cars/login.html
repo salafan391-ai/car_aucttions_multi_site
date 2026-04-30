@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="lux-auth-page">
+    <div class="lux-auth-card">
+        <header class="lux-auth-head">
+            <div class="lux-auth-eyebrow bilingual" data-lang-ar="للأعضاء" data-lang-en="Members Only" data-lang-es="Solo miembros" data-lang-ru="Для участников">للأعضاء</div>
+            <h1 class="lux-auth-title bilingual" data-lang-ar="تسجيل الدخول" data-lang-en="Sign In" data-lang-es="Iniciar sesión" data-lang-ru="Вход">تسجيل الدخول</h1>
+            <p class="lux-auth-sub bilingual" data-lang-ar="أدخل بياناتك للوصول إلى حسابك" data-lang-en="Enter your credentials to access your account" data-lang-es="Introduce tus credenciales para acceder a tu cuenta" data-lang-ru="Введите данные для входа в аккаунт">أدخل بياناتك للوصول إلى حسابك</p>
+        </header>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="lux-alert error">
+                <p class="bilingual" data-lang-ar="اسم المستخدم أو كلمة المرور غير صحيحة." data-lang-en="Invalid username or password." data-lang-es="Usuario o contraseña no válidos." data-lang-ru="Неверное имя пользователя или пароль.">اسم المستخدم أو كلمة المرور غير صحيحة.</p>
+            </div>
+            {% endif %}
+
+            <div class="lux-field-row">
+                <label class="bilingual" data-lang-ar="اسم المستخدم" data-lang-en="Username" data-lang-es="Usuario" data-lang-ru="Имя пользователя">اسم المستخدم</label> <span class="req">*</span>
+                <input type="text" name="username" required autofocus data-placeholder-ar="اسم المستخدم" data-placeholder-en="Username" data-placeholder-es="Usuario" data-placeholder-ru="Имя пользователя" placeholder="اسم المستخدم">
+            </div>
+
+            <div class="lux-field-row">
+                <label class="bilingual" data-lang-ar="كلمة المرور" data-lang-en="Password" data-lang-es="Contraseña" data-lang-ru="Пароль">كلمة المرور</label> <span class="req">*</span>
+                <input type="password" name="password" required placeholder="••••••••">
+            </div>
+
+            <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 0.5rem;">
+                <a href="{% url 'password_reset' %}" class="bilingual" data-lang-ar="نسيت كلمة المرور؟" data-lang-en="Forgot password?" data-lang-es="¿Olvidaste tu contraseña?" data-lang-ru="Забыли пароль?" style="color: var(--lux-gold); font-size: 0.75rem; letter-spacing: 0.1em; text-decoration: none;">نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" class="lux-submit bilingual" data-lang-ar="تسجيل الدخول" data-lang-en="Sign In" data-lang-es="Iniciar sesión" data-lang-ru="Войти">تسجيل الدخول</button>
+
+            <p class="lux-form-foot">
+                <span class="bilingual" data-lang-ar="ليس لديك حساب؟" data-lang-en="Don't have an account?" data-lang-es="¿No tienes una cuenta?" data-lang-ru="Нет аккаунта?">ليس لديك حساب؟</span>
+                <a href="{% url 'register' %}" class="bilingual" data-lang-ar="إنشاء حساب" data-lang-en="Create one" data-lang-es="Crear una" data-lang-ru="Создать">إنشاء حساب</a>
+            </p>
+        </form>
+    </div>
+</section>
+{% endblock %}

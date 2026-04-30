@@ -1,0 +1,216 @@
+{% comment %}
+Shared language + currency switcher script.
+Required DOM (any base that includes this must provide these IDs/classes):
+  - #lang-menu, #currency-menu  (dropdown panels — toggled with .hidden class)
+  - #lang-label, #lang-flag, #mobile-lang-label, #mobile-lang-flag
+  - #currency-label, #mobile-currency-label
+  - .lang-menu-item[data-lang-code], .currency-menu-item[data-currency-code]
+  - .lang-check-icon, .currency-check-icon (optional active markers)
+Pricing: any element with [data-price-krw] is converted at runtime.
+Localization: elements with .bilingual + data-lang-<code> get swapped; plain text
+in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
+{% endcomment %}
+<script>
+    var LANGS = {
+        ar: { flag: '🇸🇦', label: 'العربية', dir: 'rtl', font: "'Tajawal', sans-serif" },
+        en: { flag: '🇬🇧', label: 'English', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+        es: { flag: '🇪🇸', label: 'Español', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+        ru: { flag: '🇷🇺', label: 'Русский', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+    };
+    var LANG_ORDER = ['ar', 'en', 'es', 'ru'];
+
+    var TRANSLATIONS = {
+        'الرئيسية': { en: 'Home', es: 'Hogar', ru: 'Дом' },
+        'السيارات': { en: 'Cars', es: 'coches', ru: 'Автомобили' },
+        'سياراتنا': { en: 'Our Cars', es: 'Nuestros coches', ru: 'Наши автомобили' },
+        'المباعة': { en: 'Sold', es: 'Vendido', ru: 'Продал' },
+        'طلب سيارة': { en: 'Request Car', es: 'Solicitar coche', ru: 'Запросить автомобиль' },
+        'تواصل معنا': { en: 'Contact Us', es: 'Contáctanos', ru: 'Связаться с нами' },
+        'طلباتي': { en: 'My Orders', es: 'Mis pedidos', ru: 'Мои заказы' },
+        'الرسائل': { en: 'Messages', es: 'Mensajes', ru: 'Сообщения' },
+        'لوحة التحكم': { en: 'Dashboard', es: 'Panel', ru: 'Панель управления' },
+        'خروج': { en: 'Logout', es: 'Cerrar sesión', ru: 'Выйти' },
+        'دخول': { en: 'Login', es: 'Acceso', ru: 'Авторизоваться' },
+        'حساب جديد': { en: 'Register', es: 'Registro', ru: 'Регистрация' },
+        'تسجيل الدخول': { en: 'Login', es: 'Acceso', ru: 'Авторизоваться' },
+        'إنشاء حساب': { en: 'Create Account', es: 'Crear una cuenta', ru: 'Зарегистрироваться' },
+        'تسجيل الخروج': { en: 'Logout', es: 'Cerrar sesión', ru: 'Выйти' },
+        'السيارات المباعة': { en: 'Sold Cars', es: 'Autos vendidos', ru: 'Проданные автомобили' },
+        'بحث': { en: 'Search', es: 'Buscar', ru: 'Поиск' },
+        'الشركة المصنعة': { en: 'Manufacturer', es: 'Fabricante', ru: 'Производитель' },
+        'سنة الصنع': { en: 'Year', es: 'Año', ru: 'Год' },
+        'الكل': { en: 'All', es: 'Todo', ru: 'Все' },
+        'سيارات': { en: 'Cars', es: 'coches', ru: 'Автомобили' },
+        'مزادات': { en: 'Auctions', es: 'Subastas', ru: 'Аукционы' },
+        'المواصفات': { en: 'Specifications', es: 'Especificaciones', ru: 'Технические характеристики' },
+        'الموديل': { en: 'Model', es: 'Modelo', ru: 'Модель' },
+        'المسافة المقطوعة': { en: 'Mileage', es: 'Kilometraje', ru: 'Пробег' },
+        'المسافة': { en: 'Mileage', es: 'Kilometraje', ru: 'Пробег' },
+        'ناقل الحركة': { en: 'Transmission', es: 'Transmisión', ru: 'Передача' },
+        'الوقود': { en: 'Fuel', es: 'Combustible', ru: 'Топливо' },
+        'اللون': { en: 'Color', es: 'Color', ru: 'Цвет' },
+        'السعر': { en: 'Price', es: 'Precio', ru: 'Цена' },
+        'الموقع': { en: 'Location', es: 'Ubicación', ru: 'Расположение' },
+        'الاسم الكامل': { en: 'Full Name', es: 'Nombre completo', ru: 'Полное имя' },
+        'رقم الجوال': { en: 'Phone Number', es: 'Número de teléfono', ru: 'Номер телефона' },
+        'البريد الإلكتروني': { en: 'Email', es: 'Correo electrónico', ru: 'Электронная почта' },
+        'الرسالة': { en: 'Message', es: 'Mensaje', ru: 'Сообщение' },
+        'إرسال': { en: 'Send', es: 'Enviar', ru: 'Отправить' },
+        'قائمة الأمنيات': { en: 'Wishlist', es: 'Lista de deseos', ru: 'Список желаний' },
+        'المفضلة': { en: 'Favorites', es: 'Favoritos', ru: 'Избранное' },
+        'حسابي': { en: 'My Account', es: 'Mi cuenta', ru: 'Мой счет' },
+        'اللغة': { en: 'Language', es: 'Idioma', ru: 'Язык' },
+        'العملة': { en: 'Currency', es: 'Divisa', ru: 'Валюта' },
+    };
+
+    function t(text, lang) {
+        var entry = TRANSLATIONS[text];
+        if (!entry) return text;
+        if (typeof entry === 'string') return lang === 'en' ? entry : text;
+        return entry[lang] || entry.en || text;
+    }
+
+    function setLang(lang) {
+        localStorage.setItem('site_lang', lang);
+        applyLang(lang);
+        var m = document.getElementById('lang-menu'); if (m) m.classList.add('hidden');
+    }
+
+    function cycleLang() {
+        var cur = localStorage.getItem('site_lang') || 'ar';
+        var idx = (LANG_ORDER.indexOf(cur) + 1) % LANG_ORDER.length;
+        setLang(LANG_ORDER[idx]);
+    }
+
+    function applyLang(lang) {
+        var cfg = LANGS[lang];
+        var root = document.getElementById('html-root') || document.documentElement;
+        root.setAttribute('lang', lang);
+        root.setAttribute('dir', cfg.dir);
+        document.body.style.fontFamily = cfg.font;
+
+        function setEl(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+        setEl('lang-flag', cfg.flag);
+        setEl('lang-label', cfg.label);
+        setEl('mobile-lang-flag', cfg.flag);
+        setEl('mobile-lang-label', cfg.label);
+
+        document.querySelectorAll('.bilingual').forEach(function(el) {
+            var val = el.getAttribute('data-lang-' + lang) || el.getAttribute('data-lang-en') || el.getAttribute('data-lang-ar');
+            if (val) el.textContent = val;
+        });
+        document.querySelectorAll('[data-placeholder-ar], [data-placeholder-en]').forEach(function(el) {
+            var val = el.getAttribute('data-placeholder-' + lang) || el.getAttribute('data-placeholder-en') || el.getAttribute('data-placeholder-ar');
+            if (val !== null) el.setAttribute('placeholder', val);
+        });
+        document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: lang } }));
+
+        var TEXT_NODE_SELECTOR = 'a, span, button, h1, h2, h3, h4, h5, h6, p, div, label, li, option, td, th';
+        if (lang !== 'ar') {
+            document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(function(el) {
+                if (el.classList.contains('bilingual')) return;
+                el.childNodes.forEach(function(node) {
+                    if (node.nodeType === 3) {
+                        var orig = node._origText || node.textContent.trim();
+                        if (!node._origText && orig) node._origText = orig;
+                        if (orig) {
+                            var translated = t(orig, lang);
+                            if (translated !== orig) node.textContent = node.textContent.replace(orig, translated);
+                        }
+                    }
+                });
+            });
+        } else {
+            document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(function(el) {
+                if (el.classList.contains('bilingual')) return;
+                el.childNodes.forEach(function(node) {
+                    if (node.nodeType === 3 && node._origText) {
+                        node.textContent = node.textContent.replace(node.textContent.trim(), node._origText);
+                    }
+                });
+            });
+        }
+
+        syncLangCurrencyMenuActive();
+    }
+
+    function syncLangCurrencyMenuActive() {
+        var curLang = localStorage.getItem('site_lang') || 'ar';
+        document.querySelectorAll('.lang-menu-item').forEach(function(btn) {
+            var active = btn.dataset.langCode === curLang;
+            btn.classList.toggle('lux-menu-active', active);
+            var check = btn.querySelector('.lang-check-icon');
+            if (check) check.classList.toggle('hidden', !active);
+        });
+        var curCurrency = localStorage.getItem('site_currency') || 'SAR';
+        document.querySelectorAll('.currency-menu-item').forEach(function(btn) {
+            var active = btn.dataset.currencyCode === curCurrency;
+            btn.classList.toggle('lux-menu-active', active);
+            var check = btn.querySelector('.currency-check-icon');
+            if (check) check.classList.toggle('hidden', !active);
+        });
+    }
+
+    var CURRENCIES = {
+        KRW: { symbol: '₩',   label: '₩ KRW',   rate: 1 },
+        USD: { symbol: '$',   label: '$ USD',   rate: {{ rate_usd|default:"0.00067" }} },
+        SAR: { symbol: '﷼',   label: '﷼ SAR',   rate: {{ rate_sar|default:"0.00250" }} },
+        AED: { symbol: 'د.إ', label: 'د.إ AED', rate: {{ rate_aed|default:"0.00272" }} },
+        EUR: { symbol: '€',   label: '€ EUR',   rate: {{ rate_eur|default:"0.00069" }} },
+    };
+    var CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
+
+    function setCurrency(code) {
+        localStorage.setItem('site_currency', code);
+        applyCurrency(code);
+        var m = document.getElementById('currency-menu'); if (m) m.classList.add('hidden');
+        syncLangCurrencyMenuActive();
+    }
+
+    function cycleCurrency() {
+        var cur = localStorage.getItem('site_currency') || 'SAR';
+        var idx = (CURRENCY_ORDER.indexOf(cur) + 1) % CURRENCY_ORDER.length;
+        setCurrency(CURRENCY_ORDER[idx]);
+    }
+
+    function applyCurrency(code) {
+        var cfg = CURRENCIES[code];
+        if (!cfg) return;
+        function setEl(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+        setEl('currency-label', cfg.label);
+        setEl('mobile-currency-label', cfg.label);
+        document.querySelectorAll('[data-price-krw]').forEach(function(el) {
+            var krw = parseFloat(el.getAttribute('data-price-krw'));
+            if (isNaN(krw)) return;
+            var converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate);
+            el.innerHTML = converted.toLocaleString() + ' <span class="lux-cur-sym">' + cfg.symbol + '</span>';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var lang = localStorage.getItem('site_lang') || 'ar';
+        var currency = localStorage.getItem('site_currency') || 'SAR';
+        if (lang !== 'ar') applyLang(lang);
+        else {
+            var cfg = LANGS[lang];
+            function setEl(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+            setEl('lang-flag', cfg.flag);
+            setEl('lang-label', cfg.label);
+            setEl('mobile-lang-flag', cfg.flag);
+            setEl('mobile-lang-label', cfg.label);
+        }
+        applyCurrency(currency);
+        syncLangCurrencyMenuActive();
+    });
+
+    document.addEventListener('click', function(e) {
+        var ld = document.getElementById('lang-dropdown');
+        var cd = document.getElementById('currency-dropdown');
+        if (ld && !ld.contains(e.target)) {
+            var m = document.getElementById('lang-menu'); if (m) m.classList.add('hidden');
+        }
+        if (cd && !cd.contains(e.target)) {
+            var m = document.getElementById('currency-menu'); if (m) m.classList.add('hidden');
+        }
+    });
+</script>

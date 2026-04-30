@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters %}
+
+{% block title %}{{ site_name|default:"سيارات" }} — Premium Selection{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --lux-bg: #0a0a0a;
+        --lux-bg-soft: #14110d;
+        --lux-gold: #c9a45a;
+        --lux-gold-bright: #e9c87a;
+        --lux-line: rgba(201, 164, 90, 0.18);
+        --lux-text: #ece4d3;
+        --lux-text-dim: #a89a7a;
+    }
+    .lux-page { background: var(--lux-bg); color: var(--lux-text); font-family: 'Playfair Display', 'Tajawal', serif; }
+    .lux-page * { font-family: inherit; }
+    .lux-hero {
+        position: relative;
+        background:
+            radial-gradient(circle at 20% 30%, rgba(201,164,90,0.25), transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(233,200,122,0.15), transparent 55%),
+            linear-gradient(180deg, #0a0a0a 0%, #14110d 100%);
+        padding: 8rem 1.5rem 6rem;
+        text-align: center;
+        overflow: hidden;
+    }
+    .lux-hero::before, .lux-hero::after {
+        content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+        width: min(900px, 80vw); height: 1px;
+        background: linear-gradient(90deg, transparent, var(--lux-gold), transparent);
+    }
+    .lux-hero::before { top: 4rem; }
+    .lux-hero::after { bottom: 4rem; }
+    .lux-eyebrow {
+        letter-spacing: 0.5em; text-transform: uppercase;
+        color: var(--lux-gold); font-size: 0.75rem; margin-bottom: 1.5rem;
+    }
+    .lux-title {
+        font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 400; line-height: 1.05;
+        background: linear-gradient(180deg, #fff 0%, var(--lux-gold) 100%);
+        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        margin: 0 0 1.5rem;
+    }
+    .lux-sub { color: var(--lux-text-dim); font-size: 1.1rem; max-width: 600px; margin: 0 auto 2.5rem; line-height: 1.6; }
+    .lux-cta {
+        display: inline-block; padding: 1rem 2.5rem; border: 1px solid var(--lux-gold);
+        color: var(--lux-gold); text-decoration: none; letter-spacing: 0.2em; text-transform: uppercase;
+        font-size: 0.85rem; transition: all 0.3s ease;
+    }
+    .lux-cta:hover { background: var(--lux-gold); color: var(--lux-bg); }
+
+    .lux-section { padding: 5rem 1.5rem; max-width: 1280px; margin: 0 auto; }
+    .lux-section-head { text-align: center; margin-bottom: 3rem; }
+    .lux-section-eyebrow { color: var(--lux-gold); letter-spacing: 0.4em; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .lux-section-title { font-size: 2.25rem; font-weight: 400; color: var(--lux-text); margin: 0; }
+
+    .lux-grid {
+        display: grid; gap: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    .lux-card {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line); border-radius: 4px;
+        overflow: hidden; transition: all 0.4s ease; text-decoration: none; color: inherit;
+        display: block;
+    }
+    .lux-card:hover { border-color: var(--lux-gold); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(201,164,90,0.15); }
+    .lux-card-img { aspect-ratio: 4/3; background: #000; overflow: hidden; position: relative; }
+    .lux-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; filter: brightness(0.92); }
+    .lux-card:hover .lux-card-img img { transform: scale(1.05); filter: brightness(1); }
+    .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
+    .lux-card-make { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-card-name { color: var(--lux-text); font-size: 1.15rem; margin: 0 0 1rem; font-weight: 400; }
+    .lux-card-meta { display: flex; gap: 1rem; color: var(--lux-text-dim); font-size: 0.8rem; padding-top: 1rem; border-top: 1px solid var(--lux-line); }
+    .lux-card-price { color: var(--lux-gold-bright); font-size: 1.25rem; font-weight: 600; margin-top: 0.75rem; letter-spacing: 0.05em; }
+
+    .lux-empty { text-align: center; color: var(--lux-text-dim); padding: 3rem; font-style: italic; }
+</style>
+
+<div class="lux-page">
+    <section class="lux-hero">
+        <div class="lux-eyebrow bilingual" data-lang-ar="{{ site_tagline|default:'تميز سيارات منتقاة بعناية' }}" data-lang-en="{{ site_tagline_en|default:'Curated Automotive Excellence' }}" data-lang-es="Excelencia automotriz seleccionada" data-lang-ru="Подобранное автомобильное совершенство">{{ site_tagline|default:"تميز سيارات منتقاة بعناية" }}</div>
+        <h1 class="lux-title">{{ site_name|default:"سيارات" }}</h1>
+        <p class="lux-sub bilingual" data-lang-ar="مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها." data-lang-en="A handpicked selection of exceptional vehicles, sourced and presented with the discernment they deserve." data-lang-es="Una selección de vehículos excepcionales, presentados con la atención que merecen." data-lang-ru="Тщательно подобранная коллекция исключительных автомобилей.">مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها.</p>
+        <a href="{% url 'car_list' %}" class="lux-cta bilingual" data-lang-ar="استعرض المجموعة" data-lang-en="Browse Collection" data-lang-es="Explorar colección" data-lang-ru="Смотреть коллекцию">استعرض المجموعة</a>
+    </section>
+
+    {% if latest_cars %}
+    <section class="lux-section">
+        <div class="lux-section-head">
+            <div class="lux-section-eyebrow bilingual" data-lang-ar="أحدث الوافدات" data-lang-en="Latest Arrivals" data-lang-es="Últimas llegadas" data-lang-ru="Новые поступления">أحدث الوافدات</div>
+            <h2 class="lux-section-title bilingual" data-lang-ar="جديد في المعرض" data-lang-en="New to the Floor" data-lang-es="Nuevo en el showroom" data-lang-ru="Новые в салоне">جديد في المعرض</h2>
+        </div>
+        <div class="lux-grid">
+            {% for car in latest_cars|slice:":8" %}
+            <a href="{% url 'car_detail' car.slug %}" class="lux-card">
+                <div class="lux-card-img car-img-wm">
+                    {% if car.image %}
+                    <img src="{{ car.image }}" alt="{{ car.title }}" loading="lazy">
+                    {% endif %}
+                </div>
+                <div class="lux-card-body">
+                    <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                    <h3 class="lux-card-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
+                    {% if car.price %}
+                    <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                    {% endif %}
+                    <div class="lux-card-meta">
+                        {% if car.year %}<span>{{ car.year }}</span>{% endif %}
+                        {% if car.mileage %}<span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>{% endif %}
+                        {% if car.transmission %}<span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if latest_auctions %}
+    <section class="lux-section" style="border-top: 1px solid var(--lux-line);">
+        <div class="lux-section-head">
+            <div class="lux-section-eyebrow bilingual" data-lang-ar="بالمزاد" data-lang-en="By Auction" data-lang-es="Por subasta" data-lang-ru="С аукциона">بالمزاد</div>
+            <h2 class="lux-section-title bilingual" data-lang-ar="دار المزادات" data-lang-en="Auction House" data-lang-es="Casa de subastas" data-lang-ru="Аукционный дом">دار المزادات</h2>
+        </div>
+        <div class="lux-grid">
+            {% for car in latest_auctions|slice:":8" %}
+            <a href="{% url 'car_detail' car.slug %}" class="lux-card">
+                <div class="lux-card-img car-img-wm">
+                    {% if car.image %}<img src="{{ car.image }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                </div>
+                <div class="lux-card-body">
+                    <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                    <h3 class="lux-card-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
+                    {% if car.price %}<div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
+                    <div class="lux-card-meta">
+                        {% if car.year %}<span>{{ car.year }}</span>{% endif %}
+                        {% if car.mileage %}<span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>{% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

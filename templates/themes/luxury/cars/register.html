@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Register — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="lux-auth-page">
+    <div class="lux-auth-card wide">
+        <header class="lux-auth-head">
+            <div class="lux-auth-eyebrow bilingual" data-lang-ar="انضم إلى المجموعة" data-lang-en="Join the Collection" data-lang-es="Únete a la colección" data-lang-ru="Присоединяйтесь">انضم إلى المجموعة</div>
+            <h1 class="lux-auth-title bilingual" data-lang-ar="إنشاء حساب" data-lang-en="Create an Account" data-lang-es="Crear una cuenta" data-lang-ru="Создать аккаунт">إنشاء حساب</h1>
+            <p class="lux-auth-sub bilingual" data-lang-ar="احفظ السيارات وتابع استفساراتك وصِل للعروض الحصرية" data-lang-en="Save vehicles, track inquiries, and access exclusive listings" data-lang-es="Guarda vehículos, sigue tus consultas y accede a listados exclusivos" data-lang-ru="Сохраняйте автомобили, отслеживайте запросы, получайте эксклюзивные предложения">احفظ السيارات وتابع استفساراتك وصِل للعروض الحصرية</p>
+        </header>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="lux-alert error">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="lux-field-row">
+                <label class="bilingual" data-lang-ar="اسم المستخدم" data-lang-en="Username" data-lang-es="Usuario" data-lang-ru="Имя пользователя">اسم المستخدم</label> <span class="req">*</span>
+                <input type="text" name="username" value="{{ form.username.value|default:'' }}" required data-placeholder-ar="اسم المستخدم" data-placeholder-en="Username" data-placeholder-es="Usuario" data-placeholder-ru="Имя пользователя" placeholder="اسم المستخدم">
+            </div>
+
+            <div class="lux-row-2">
+                <div class="lux-field-row">
+                    <label class="bilingual" data-lang-ar="الاسم الأول" data-lang-en="First Name" data-lang-es="Nombre" data-lang-ru="Имя">الاسم الأول</label>
+                    <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" data-placeholder-ar="الاسم الأول" data-placeholder-en="First name" data-placeholder-es="Nombre" data-placeholder-ru="Имя" placeholder="الاسم الأول">
+                </div>
+                <div class="lux-field-row">
+                    <label class="bilingual" data-lang-ar="الاسم الأخير" data-lang-en="Last Name" data-lang-es="Apellido" data-lang-ru="Фамилия">الاسم الأخير</label>
+                    <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" data-placeholder-ar="الاسم الأخير" data-placeholder-en="Last name" data-placeholder-es="Apellido" data-placeholder-ru="Фамилия" placeholder="الاسم الأخير">
+                </div>
+            </div>
+
+            <div class="lux-field-row">
+                <label class="bilingual" data-lang-ar="البريد الإلكتروني" data-lang-en="Email" data-lang-es="Correo electrónico" data-lang-ru="Электронная почта">البريد الإلكتروني</label>
+                <input type="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="example@email.com">
+            </div>
+
+            <div class="lux-row-2">
+                <div class="lux-field-row">
+                    <label class="bilingual" data-lang-ar="كلمة المرور" data-lang-en="Password" data-lang-es="Contraseña" data-lang-ru="Пароль">كلمة المرور</label> <span class="req">*</span>
+                    <input type="password" name="password1" required placeholder="••••••••">
+                </div>
+                <div class="lux-field-row">
+                    <label class="bilingual" data-lang-ar="تأكيد كلمة المرور" data-lang-en="Confirm Password" data-lang-es="Confirmar contraseña" data-lang-ru="Подтвердите пароль">تأكيد كلمة المرور</label> <span class="req">*</span>
+                    <input type="password" name="password2" required placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" class="lux-submit bilingual" data-lang-ar="إنشاء الحساب" data-lang-en="Create Account" data-lang-es="Crear cuenta" data-lang-ru="Создать аккаунт">إنشاء الحساب</button>
+
+            <p class="lux-form-foot">
+                <span class="bilingual" data-lang-ar="لديك حساب بالفعل؟" data-lang-en="Already have an account?" data-lang-es="¿Ya tienes una cuenta?" data-lang-ru="Уже есть аккаунт?">لديك حساب بالفعل؟</span>
+                <a href="{% url 'login' %}" class="bilingual" data-lang-ar="تسجيل الدخول" data-lang-en="Sign in" data-lang-es="Iniciar sesión" data-lang-ru="Войти">تسجيل الدخول</a>
+            </p>
+        </form>
+    </div>
+</section>
+{% endblock %}
