@@ -916,7 +916,7 @@ def car_list(request):
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
         _mfr_cache_suffix = {'cars': 'cars', 'truck': 'truck'}.get(car_type, 'all')
-        _mfr_cache_key = f"car_list_v2:manufacturers_{_mfr_cache_suffix}"
+        _mfr_cache_key = f"car_list_v3:manufacturers_{_mfr_cache_suffix}"
         manufacturers = cache.get(_mfr_cache_key)
         if manufacturers is None:
             if car_type == 'truck':
@@ -927,6 +927,7 @@ def car_list(request):
                 _mfr_count_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
             manufacturers = list(
                 Manufacturer.objects.annotate(car_count=Count('apicar', filter=_mfr_count_filter))
+                .filter(car_count__gt=0)
                 .order_by('-car_count')
             )
             cache.set(_mfr_cache_key, manufacturers, 60 * 15)
@@ -1125,7 +1126,7 @@ def car_list(request):
 
     # Popular manufacturers – auction path already set above; non-auction handled here
     if car_type != 'auction':
-        _pop_mfr_key = f"car_list_v2:popular_manufacturers:{schema}"
+        _pop_mfr_key = f"car_list_v3:popular_manufacturers:{schema}"
         popular_manufacturers = cache.get(_pop_mfr_key)
         if popular_manufacturers is None:
             popular_manufacturers = list(
@@ -1134,7 +1135,9 @@ def car_list(request):
                         'apicar',
                         filter=~Q(apicar__category__name='auction', apicar__auction_date__lt=now),
                     )
-                ).order_by('-car_count')
+                )
+                .filter(car_count__gt=0)
+                .order_by('-car_count')
             )
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     context = {

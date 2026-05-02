@@ -663,14 +663,19 @@ def delete_expired_auctions(request):
         dj_messages.info(request, 'لا توجد سيارات مزاد منتهية للحذف.')
         return redirect('upload_auction_json')
 
-    # 2. Delete in batches using ORM (safe now — none of these IDs have FK refs)
-    from cars.models import ApiCar
+    # 2. Delete in batches with raw SQL to bypass Django's collector — the
+    # ORM cascade would walk reverse FKs (SiteOrder/SiteRating/...) whose
+    # tables live in tenant schemas, not public, and crash here.
     deleted_count = 0
     batch_size = 200
     for i in range(0, len(ids_to_delete), batch_size):
         batch = ids_to_delete[i:i + batch_size]
-        count, _ = ApiCar.objects.filter(id__in=batch).delete()
-        deleted_count += count
+        with connection.cursor() as cur:
+            cur.execute(
+                "DELETE FROM cars_apicar WHERE id = ANY(%s)",
+                [batch],
+            )
+            deleted_count += cur.rowcount
 
     dj_messages.success(request, f'تم حذف {deleted_count} سيارة مزاد منتهية الصلاحية بنجاح.')
     return redirect('upload_auction_json')

@@ -71,9 +71,21 @@
         transition: all 0.4s ease;
     }
     .lux-card:hover { border-color: var(--lux-gold); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(201,164,90,0.15); }
-    .lux-card-img { aspect-ratio: 4/3; background: #000; overflow: hidden; }
+    .lux-card-img { aspect-ratio: 4/3; background: #000; overflow: hidden; position: relative; }
     .lux-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; filter: brightness(0.92); }
     .lux-card:hover .lux-card-img img { transform: scale(1.05); filter: brightness(1); }
+    .lux-wishlist-btn {
+        position: absolute; top: 0.75rem; right: 0.75rem; z-index: 5;
+        width: 36px; height: 36px; border-radius: 50%;
+        background: rgba(10,10,10,0.65); border: 1px solid var(--lux-line);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.3s ease; pointer-events: auto;
+    }
+    .lux-wishlist-btn:hover { border-color: var(--lux-gold); background: rgba(10,10,10,0.85); }
+    .lux-wishlist-btn svg { width: 16px; height: 16px; color: var(--lux-text-dim); transition: color 0.3s ease; }
+    .lux-wishlist-btn:hover svg { color: var(--lux-gold-bright); }
+    .lux-wishlist-btn.active svg { color: #e84a4a; fill: #e84a4a; }
     .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
     .lux-card-make { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
     .lux-card-name { color: var(--lux-text); font-size: 1.1rem; margin: 0 0 0.75rem; font-weight: 400; }
@@ -451,6 +463,15 @@
                     <a href="{% url 'car_detail' car.slug %}" class="lux-card">
                         <div class="lux-card-img car-img-wm">
                             {% if car.image %}<img src="{{ car.image }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                            <button type="button"
+                                    onclick="event.preventDefault(); event.stopPropagation(); toggleLuxWishlist({{ car.id }});"
+                                    class="lux-wishlist-btn wishlist-btn"
+                                    data-car-id="{{ car.id }}"
+                                    aria-label="Wishlist">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                            </button>
                         </div>
                         <div class="lux-card-body">
                             <div class="lux-card-make">
@@ -636,5 +657,34 @@ document.addEventListener('keydown', function(e) {
 
     if (selectedManufacturerIds().length) refreshModels();
 })();
+</script>
+
+<script>
+function toggleLuxWishlist(carId) {
+    var btn = document.querySelector('.lux-wishlist-btn[data-car-id="' + carId + '"]');
+    if (!btn) return;
+    fetch('/wishlist/toggle/' + carId + '/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) {
+            window.location.href = data.redirect || ('/login/?next=' + encodeURIComponent(window.location.pathname));
+            return;
+        }
+        if (data.in_wishlist) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+        if (window.updateWishlistCount) window.updateWishlistCount();
+    })
+    .catch(function(err) { console.error('Wishlist error:', err); });
+}
 </script>
 {% endblock %}
