@@ -18,11 +18,42 @@
     .lux-back { color: var(--lux-text-dim); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2rem; display: inline-block; }
     .lux-back:hover { color: var(--lux-gold); }
 
+    /* Compact preview header above the gallery */
+    .lux-preview {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1.5rem; flex-wrap: wrap;
+        padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+        border: 1px solid var(--lux-line);
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+    }
+    .lux-preview-text { min-width: 0; }
+    .lux-preview-make {
+        color: var(--lux-gold); font-size: 0.7rem;
+        letter-spacing: 0.35em; text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+    .lux-preview-name {
+        color: var(--lux-text); font-size: 1.25rem; line-height: 1.3;
+        display: inline-flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .lux-preview-trim {
+        padding: 0.15rem 0.55rem;
+        border: 1px solid var(--lux-line);
+        color: var(--lux-gold); font-size: 0.65rem;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        background: rgba(201,164,90,0.08);
+    }
+    .lux-preview-price {
+        color: var(--lux-gold-bright); font-size: 1.4rem; font-weight: 600;
+        letter-spacing: 0.05em; white-space: nowrap;
+    }
+
     .lux-detail-grid {
         display: grid; gap: 3rem; align-items: start;
         grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
     }
-    @media (max-width: 900px) { .lux-detail-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 900px) { .lux-detail-grid { grid-template-columns: minmax(0, 1fr); } }
+    .lux-detail-grid > * { min-width: 0; }
 
     .lux-gallery-main {
         aspect-ratio: 16/10; background: #000; overflow: hidden;
@@ -30,19 +61,24 @@
     }
     .lux-gallery-main img { width: 100%; height: 100%; object-fit: cover; }
     .lux-thumbs {
-        display: flex; gap: 0.4rem;
+        display: flex; flex-wrap: nowrap; gap: 0.4rem;
+        width: 100%; max-width: 100%; min-width: 0;
         overflow-x: auto; overflow-y: hidden;
         padding: 0.15rem 0 0.5rem;
         scrollbar-width: thin; scrollbar-color: var(--lux-line) transparent;
         scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+        overscroll-behavior-x: contain;
     }
     .lux-thumbs::-webkit-scrollbar { height: 6px; }
     .lux-thumbs::-webkit-scrollbar-track { background: transparent; }
     .lux-thumbs::-webkit-scrollbar-thumb { background: var(--lux-line); border-radius: 3px; }
     .lux-thumbs::-webkit-scrollbar-thumb:hover { background: var(--lux-gold); }
     .lux-thumb {
-        flex: 0 0 auto;
-        width: 5.25rem; aspect-ratio: 4/3;
+        flex: 0 0 5.25rem;
+        width: 5.25rem; height: 4rem;
+        aspect-ratio: 4/3;
         background: #000; overflow: hidden; cursor: pointer;
         border: 1px solid var(--lux-line); transition: border-color 0.2s ease;
         scroll-snap-align: start;
@@ -313,8 +349,20 @@
         .lux-page { padding: 1.5rem 1rem 2.5rem; }
         .lux-back { margin-bottom: 1.25rem; font-size: 0.7rem; }
 
+        .lux-preview { padding: 0.85rem 1rem; gap: 0.85rem; margin-bottom: 1rem; }
+        .lux-preview-make { font-size: 0.62rem; letter-spacing: 0.25em; margin-bottom: 0.25rem; }
+        .lux-preview-name { font-size: 1.05rem; gap: 0.45rem; }
+        .lux-preview-price { font-size: 1.1rem; }
+
         .lux-detail-grid { gap: 1.5rem; }
-        .lux-gallery-main { aspect-ratio: 4/3; margin-bottom: 0.75rem; }
+        .lux-gallery-main {
+            aspect-ratio: auto;
+            height: auto; max-height: 50vh;
+            margin-bottom: 0.75rem;
+        }
+        .lux-gallery-main img { height: auto; max-height: 50vh; object-fit: contain; }
+        .lux-thumbs { gap: 0.35rem; padding: 0.1rem 0 0.4rem; }
+        .lux-thumb { flex: 0 0 4.25rem; width: 4.25rem; height: 3.25rem; }
 
         .lux-aside { padding: 1.25rem; }
         .lux-make { font-size: 0.7rem; letter-spacing: 0.3em; margin-bottom: 0.5rem; }
@@ -366,6 +414,22 @@
 <div class="lux-page">
     <div class="lux-wrap">
         <a href="{% url 'car_list' %}" class="lux-back bilingual" data-lang-ar="← المجموعة" data-lang-en="← Collection" data-lang-es="← Colección" data-lang-ru="← Коллекция">← المجموعة</a>
+
+        <div class="lux-preview">
+            <div class="lux-preview-text">
+                <div class="lux-preview-make">
+                    {% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'en' }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}
+                    {% if car.year %} · {{ car.year }}{% endif %}
+                </div>
+                <div class="lux-preview-name">
+                    {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}" data-lang-es="{{ car.model|translate_model:'en' }}" data-lang-ru="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
+                    {% if car.badge.name %}<span class="lux-preview-trim">{{ car.badge.name }}</span>{% endif %}
+                </div>
+            </div>
+            {% if car.price %}
+            <div class="lux-preview-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+            {% endif %}
+        </div>
 
         <div class="lux-detail-grid">
             <div>
