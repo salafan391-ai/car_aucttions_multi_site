@@ -88,15 +88,37 @@
         .lux-nav-action.primary { border-color: var(--lux-gold); color: var(--lux-gold); }
         .lux-nav-action.primary:hover { background: var(--lux-gold); color: var(--lux-bg); }
 
-        .lux-nav-toggle { display: none; background: transparent; border: none; color: var(--lux-text); font-size: 1.5rem; cursor: pointer; }
+        .lux-nav-toggle {
+            display: none;
+            width: 2.5rem; height: 2.5rem;
+            align-items: center; justify-content: center;
+            background: transparent;
+            border: 1px solid var(--lux-line);
+            color: var(--lux-text); cursor: pointer;
+            padding: 0; font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        .lux-nav-toggle:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+        .lux-nav-toggle svg { width: 1.1rem; height: 1.1rem; transition: transform 0.25s ease; }
+        .lux-nav-toggle .lux-icon-close { display: none; }
+        .lux-nav-mobile-open .lux-nav-toggle { border-color: var(--lux-gold); color: var(--lux-gold); }
+        .lux-nav-mobile-open .lux-nav-toggle .lux-icon-burger { display: none; }
+        .lux-nav-mobile-open .lux-nav-toggle .lux-icon-close { display: block; }
+
         @media (max-width: 768px) {
+            .lux-nav-inner { gap: 0.75rem; padding: 0.85rem 1rem; }
+            .lux-brand { font-size: 1rem; letter-spacing: 0.12em; }
+            .lux-brand img { height: 30px; }
             .lux-nav-links, .lux-nav-actions { display: none; }
-            .lux-nav-toggle { display: block; margin-left: auto; }
+            .lux-nav-toggle {
+                display: inline-flex;
+                margin-inline-start: auto; flex-shrink: 0;
+            }
             .lux-nav-mobile-open .lux-nav-links,
             .lux-nav-mobile-open .lux-nav-actions {
                 display: flex; flex-direction: column; gap: 1rem;
-                position: absolute; top: 100%; left: 0; right: 0;
-                background: var(--lux-bg); padding: 1.5rem;
+                position: absolute; top: 100%; inset-inline-start: 0; inset-inline-end: 0;
+                background: var(--lux-bg); padding: 1.25rem 1rem;
                 border-bottom: 1px solid var(--lux-line);
             }
             .lux-nav-mobile-open .lux-nav-actions { top: calc(100% + 1px); padding-top: 0; }
@@ -251,7 +273,10 @@
             {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
             <span>{{ site_name|default:"Premium Motors" }}</span>
         </a>
-        <button type="button" class="lux-nav-toggle" onclick="document.getElementById('lux-nav').classList.toggle('lux-nav-mobile-open')">☰</button>
+        <button type="button" class="lux-nav-toggle" onclick="document.getElementById('lux-nav').classList.toggle('lux-nav-mobile-open')" aria-label="Menu">
+            <svg class="lux-icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+            <svg class="lux-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+        </button>
         <div class="lux-nav-links">
             <a href="{% url 'home' %}" class="lux-nav-link bilingual {% if request.resolver_match.url_name == 'home' %}active{% endif %}" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
             <a href="{% url 'car_list' %}" class="lux-nav-link bilingual {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}" data-lang-ar="السيارات" data-lang-en="Collection" data-lang-es="Colección" data-lang-ru="Коллекция">السيارات</a>
