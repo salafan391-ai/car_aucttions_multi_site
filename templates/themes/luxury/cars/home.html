@@ -72,7 +72,15 @@
     .lux-card:hover .lux-card-img img { transform: scale(1.05); filter: brightness(1); }
     .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
     .lux-card-make { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .lux-card-name { color: var(--lux-text); font-size: 1.15rem; margin: 0 0 1rem; font-weight: 400; }
+    .lux-card-name { color: var(--lux-text); font-size: 1.15rem; margin: 0 0 0.5rem; font-weight: 400; }
+    .lux-card-trim {
+        display: inline-block; margin-bottom: 0.85rem;
+        padding: 0.15rem 0.6rem;
+        border: 1px solid var(--lux-line);
+        color: var(--lux-gold); font-size: 0.65rem;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        background: rgba(201,164,90,0.08);
+    }
     .lux-card-meta { display: flex; gap: 1rem; color: var(--lux-text-dim); font-size: 0.8rem; padding-top: 1rem; border-top: 1px solid var(--lux-line); }
     .lux-card-price { color: var(--lux-gold-bright); font-size: 1.25rem; font-weight: 600; margin-top: 0.75rem; letter-spacing: 0.05em; }
 
@@ -98,12 +106,15 @@
             <a href="{% url 'car_detail' car.slug %}" class="lux-card">
                 <div class="lux-card-img car-img-wm">
                     {% if car.image %}
-                    <img src="{{ car.image }}" alt="{{ car.title }}" loading="lazy">
+                    <img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">
+                    {% elif car.images and car.images|length > 0 %}
+                    <img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">
                     {% endif %}
                 </div>
                 <div class="lux-card-body">
                     <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
                     <h3 class="lux-card-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
+                    {% if car.badge.name %}<div class="lux-card-trim">{{ car.badge.name }}</div>{% endif %}
                     {% if car.price %}
                     <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
                     {% endif %}
@@ -129,11 +140,12 @@
             {% for car in latest_auctions|slice:":8" %}
             <a href="{% url 'car_detail' car.slug %}" class="lux-card">
                 <div class="lux-card-img car-img-wm">
-                    {% if car.image %}<img src="{{ car.image }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                    {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
                 </div>
                 <div class="lux-card-body">
                     <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
                     <h3 class="lux-card-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
+                    {% if car.badge.name %}<div class="lux-card-trim">{{ car.badge.name }}</div>{% endif %}
                     {% if car.price %}<div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
                     <div class="lux-card-meta">
                         {% if car.year %}<span>{{ car.year }}</span>{% endif %}

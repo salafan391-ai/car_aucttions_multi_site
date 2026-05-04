@@ -39,7 +39,15 @@
     .lux-card:hover .lux-card-img img { transform: scale(1.05); filter: brightness(1); }
     .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
     .lux-card-make { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .lux-card-name { color: var(--lux-text); font-size: 1.1rem; margin: 0 0 0.75rem; font-weight: 400; }
+    .lux-card-name { color: var(--lux-text); font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 400; }
+    .lux-card-trim {
+        display: inline-block; margin-bottom: 0.65rem;
+        padding: 0.15rem 0.55rem;
+        border: 1px solid var(--lux-line);
+        color: var(--lux-gold); font-size: 0.65rem;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        background: rgba(201,164,90,0.08);
+    }
     .lux-card-price { color: var(--lux-gold-bright); font-size: 1.2rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: 0.05em; }
     .lux-card-meta { display: flex; gap: 1rem; color: var(--lux-text-dim); font-size: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--lux-line); }
 
@@ -93,7 +101,7 @@
                 <button onclick="event.preventDefault(); toggleWishlist({{ item.car.id }}); this.closest('.lux-card-wrap').remove();" class="lux-remove" title="Remove">×</button>
                 <a href="{% url 'car_detail' item.car.slug %}" class="lux-card">
                     <div class="lux-card-img car-img-wm">
-                        {% if item.car.image %}<img src="{{ item.car.image }}" alt="{{ item.car.title }}" loading="lazy">{% endif %}
+                        {% if item.car.image %}<img src="{{ item.car.image|img_small }}" alt="{{ item.car.title }}" loading="lazy">{% elif item.car.images and item.car.images|length > 0 %}<img src="{{ item.car.images.0|img_small }}" alt="{{ item.car.title }}" loading="lazy">{% endif %}
                     </div>
                     <div class="lux-card-body">
                         <div class="lux-card-make">
@@ -101,6 +109,7 @@
                             {% if item.car.year %} · {{ item.car.year }}{% endif %}
                         </div>
                         <h3 class="lux-card-name">{% if item.car.model %}<span class="bilingual" data-lang-ar="{{ item.car.model|translate_model }}" data-lang-en="{{ item.car.model|translate_model:'en' }}">{{ item.car.model|translate_model }}</span>{% else %}{{ item.car.title }}{% endif %}</h3>
+                        {% if item.car.badge.name %}<div class="lux-card-trim">{{ item.car.badge.name }}</div>{% endif %}
                         {% if item.car.price %}<div class="lux-card-price" data-price-krw="{{ item.car.price }}">{{ item.car.price|intcomma }} ₩</div>{% endif %}
                         <div class="lux-card-meta">
                             {% if item.car.mileage %}<span class="bilingual" data-lang-ar="{{ item.car.mileage|intcomma }} كم" data-lang-en="{{ item.car.mileage|intcomma }} km" data-lang-es="{{ item.car.mileage|intcomma }} km" data-lang-ru="{{ item.car.mileage|intcomma }} км">{{ item.car.mileage|intcomma }} كم</span>{% endif %}

@@ -29,10 +29,23 @@
         border: 1px solid var(--lux-line); margin-bottom: 1rem;
     }
     .lux-gallery-main img { width: 100%; height: 100%; object-fit: cover; }
-    .lux-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .lux-thumbs {
+        display: flex; gap: 0.4rem;
+        overflow-x: auto; overflow-y: hidden;
+        padding: 0.15rem 0 0.5rem;
+        scrollbar-width: thin; scrollbar-color: var(--lux-line) transparent;
+        scroll-snap-type: x proximity;
+    }
+    .lux-thumbs::-webkit-scrollbar { height: 6px; }
+    .lux-thumbs::-webkit-scrollbar-track { background: transparent; }
+    .lux-thumbs::-webkit-scrollbar-thumb { background: var(--lux-line); border-radius: 3px; }
+    .lux-thumbs::-webkit-scrollbar-thumb:hover { background: var(--lux-gold); }
     .lux-thumb {
-        aspect-ratio: 4/3; background: #000; overflow: hidden; cursor: pointer;
+        flex: 0 0 auto;
+        width: 5.25rem; aspect-ratio: 4/3;
+        background: #000; overflow: hidden; cursor: pointer;
         border: 1px solid var(--lux-line); transition: border-color 0.2s ease;
+        scroll-snap-align: start;
     }
     .lux-thumb:hover, .lux-thumb.active { border-color: var(--lux-gold); }
     .lux-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: opacity 0.2s ease; }
@@ -64,14 +77,39 @@
     .lux-similar { margin-top: 5rem; padding-top: 4rem; border-top: 1px solid var(--lux-line); }
     .lux-similar h2 { font-size: 1.5rem; font-weight: 400; margin: 0 0 2rem; }
     .lux-similar h2 small { display: block; color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .lux-similar-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-    .lux-similar-card { display: block; text-decoration: none; color: inherit; border: 1px solid var(--lux-line); transition: border-color 0.3s ease; }
+    .lux-similar-grid {
+        display: flex; gap: 1.25rem;
+        overflow-x: auto; overflow-y: hidden;
+        padding: 0.25rem 0.25rem 1rem;
+        scrollbar-width: thin; scrollbar-color: var(--lux-line) transparent;
+        scroll-snap-type: x proximity;
+        scroll-padding-left: 0.25rem;
+    }
+    .lux-similar-grid::-webkit-scrollbar { height: 6px; }
+    .lux-similar-grid::-webkit-scrollbar-track { background: transparent; }
+    .lux-similar-grid::-webkit-scrollbar-thumb { background: var(--lux-line); border-radius: 3px; }
+    .lux-similar-grid::-webkit-scrollbar-thumb:hover { background: var(--lux-gold); }
+    .lux-similar-card {
+        flex: 0 0 240px;
+        display: block; text-decoration: none; color: inherit;
+        border: 1px solid var(--lux-line); transition: border-color 0.3s ease;
+        scroll-snap-align: start;
+    }
+    @media (max-width: 600px) { .lux-similar-card { flex-basis: 70vw; } }
     .lux-similar-card:hover { border-color: var(--lux-gold); }
     .lux-similar-img { aspect-ratio: 4/3; background: #000; overflow: hidden; }
     .lux-similar-img img { width: 100%; height: 100%; object-fit: cover; }
     .lux-similar-body { padding: 1rem 1.25rem 1.25rem; }
     .lux-similar-make { color: var(--lux-gold); font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.4rem; }
-    .lux-similar-name { font-size: 0.95rem; margin: 0 0 0.5rem; }
+    .lux-similar-name { font-size: 0.95rem; margin: 0 0 0.35rem; }
+    .lux-similar-trim {
+        display: inline-block; margin-bottom: 0.5rem;
+        padding: 0.1rem 0.5rem;
+        border: 1px solid var(--lux-line);
+        color: var(--lux-gold); font-size: 0.6rem;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        background: rgba(201,164,90,0.08);
+    }
     .lux-similar-price { color: var(--lux-gold-bright); font-size: 1rem; font-weight: 600; }
 
     /* Status / lot pills */
@@ -119,7 +157,26 @@
     .lux-desc { color: var(--lux-text); line-height: 1.8; white-space: pre-line; font-size: 0.95rem; }
 
     /* Inspection diagram (positioned damage badges) */
-    .lux-inspection-img { width: 100%; max-height: 600px; object-fit: contain; background: #000; border: 1px solid var(--lux-line); }
+    .lux-inspection-img { width: 100%; max-height: 600px; object-fit: contain; background: #fff; border: 1px solid var(--lux-line); margin-bottom: 1rem; }
+    .lux-inspection-legend {
+        display: grid; gap: 0.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+        padding: 1rem; margin-top: 0.5rem;
+        border: 1px solid var(--lux-line);
+        background: rgba(201,164,90,0.04);
+    }
+    .lux-inspection-legend-item {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        font-size: 0.8rem; color: var(--lux-text);
+    }
+    .lux-inspection-code {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2rem; padding: 0.15rem 0.45rem;
+        border: 1px solid var(--lux-gold);
+        color: var(--lux-gold); font-weight: 600;
+        font-size: 0.7rem; letter-spacing: 0.1em;
+        background: rgba(201,164,90,0.1);
+    }
     .insp-diagram { position: relative; width: 100%; user-select: none; background: #fff; border: 1px solid var(--lux-line); border-radius: 4px; overflow: hidden; }
     .insp-diagram img { width: 100%; display: block; }
     .insp-badge {
@@ -250,6 +307,60 @@
         .lux-lightbox-prev { left: 0.5rem; }
         .lux-lightbox-next { right: 0.5rem; }
     }
+
+    /* Phone-mode tweaks: tighten spacing, reflow grids, soften type */
+    @media (max-width: 700px) {
+        .lux-page { padding: 1.5rem 1rem 2.5rem; }
+        .lux-back { margin-bottom: 1.25rem; font-size: 0.7rem; }
+
+        .lux-detail-grid { gap: 1.5rem; }
+        .lux-gallery-main { aspect-ratio: 4/3; margin-bottom: 0.75rem; }
+
+        .lux-aside { padding: 1.25rem; }
+        .lux-make { font-size: 0.7rem; letter-spacing: 0.3em; margin-bottom: 0.5rem; }
+        .lux-model { font-size: 1.5rem; }
+        .lux-year { font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .lux-price-block { padding: 1rem 0; margin-bottom: 1.5rem; }
+        .lux-price { font-size: 1.6rem; }
+        .lux-specs li { padding: 0.7rem 0; font-size: 0.85rem; }
+        .lux-cta { padding: 0.85rem; font-size: 0.78rem; }
+
+        .lux-section-block {
+            margin-top: 1.75rem;
+            padding: 1.25rem 1.1rem;
+        }
+        .lux-section-block h2 { font-size: 1.15rem; margin-bottom: 1rem; padding-bottom: 0.75rem; }
+        .lux-section-block h2 small { letter-spacing: 0.3em; font-size: 0.6rem; }
+
+        .lux-specs-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        .lux-spec-card { padding: 0.75rem 0.85rem; }
+        .lux-spec-card .label { font-size: 0.6rem; letter-spacing: 0.2em; }
+        .lux-spec-card .value { font-size: 0.85rem; }
+
+        .lux-features-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .lux-features-icons { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+        .lux-feature-card { padding: 0.65rem 0.4rem; }
+        .lux-feature-card img { width: 36px; height: 36px; }
+        .lux-feature-card span { font-size: 0.72rem; }
+        .lux-feature-pill { padding: 0.45rem 0.7rem; font-size: 0.78rem; }
+
+        .lux-history-stats { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        .lux-history-stat { padding: 0.85rem; }
+        .lux-history-stat .value { font-size: 1.35rem; }
+        .lux-history-item { padding: 0.7rem 0.9rem; font-size: 0.8rem; }
+        .lux-history-item .date { min-width: 4.5rem; margin-right: 0.5rem; }
+
+        .lux-inspection-img { max-height: 420px; }
+        .lux-inspection-legend { grid-template-columns: 1fr 1fr; padding: 0.75rem; }
+        .lux-inspection-legend-item { font-size: 0.72rem; }
+
+        .lux-insp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .lux-insp-table { min-width: 32rem; font-size: 0.78rem; }
+
+        .lux-similar { margin-top: 2.5rem; padding-top: 2rem; }
+        .lux-similar h2 { font-size: 1.2rem; margin-bottom: 1rem; }
+        .lux-similar h2 small { font-size: 0.6rem; letter-spacing: 0.3em; }
+    }
 </style>
 
 <div class="lux-page">
@@ -259,15 +370,15 @@
         <div class="lux-detail-grid">
             <div>
                 <div class="lux-gallery-main car-img-wm">
-                    {% if car.image %}<img id="lux-main-img" src="{{ car.image }}" alt="{{ car.title }}" onclick="luxOpenLightbox(0)">{% endif %}
+                    {% if car.image %}<img id="lux-main-img" src="{{ car.image|https_url }}" alt="{{ car.title }}" onclick="luxOpenLightbox(0)">{% elif car.images and car.images|length > 0 %}<img id="lux-main-img" src="{{ car.images.0|https_url }}" alt="{{ car.title }}" onclick="luxOpenLightbox(0)">{% endif %}
                 </div>
                 {% if car.images %}
                 <div class="lux-thumbs">
                     {% if car.image %}
-                    <div class="lux-thumb active" data-lux-idx="0" onclick="luxSelectThumb(this); document.getElementById('lux-main-img').src='{{ car.image }}'; luxOpenLightbox(0);"><img src="{{ car.image }}" alt=""></div>
+                    <div class="lux-thumb active" data-lux-idx="0" onclick="luxSelectThumb(this); document.getElementById('lux-main-img').src='{{ car.image|https_url|escapejs }}'; luxOpenLightbox(0);"><img src="{{ car.image|https_url }}" alt=""></div>
                     {% endif %}
                     {% for img in car.images %}
-                    <div class="lux-thumb" data-lux-idx="{% if car.image %}{{ forloop.counter }}{% else %}{{ forloop.counter0 }}{% endif %}" onclick="luxSelectThumb(this); document.getElementById('lux-main-img').src='{{ img }}'; luxOpenLightbox(this.dataset.luxIdx);"><img src="{{ img }}" alt=""></div>
+                    <div class="lux-thumb{% if not car.image and forloop.first %} active{% endif %}" data-lux-idx="{% if car.image %}{{ forloop.counter }}{% else %}{{ forloop.counter0 }}{% endif %}" onclick="luxSelectThumb(this); document.getElementById('lux-main-img').src='{{ img|https_url|escapejs }}'; luxOpenLightbox(this.dataset.luxIdx);"><img src="{{ img|https_url }}" alt=""></div>
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -482,6 +593,26 @@
         </section>
         {% endif %}
 
+        {% if car.inspection_image %}
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="مرفق" data-lang-en="Attached" data-lang-es="Adjunto" data-lang-ru="Приложено">مرفق</small>
+                <span class="bilingual" data-lang-ar="صورة الفحص" data-lang-en="Inspection Sheet" data-lang-es="Hoja de inspección" data-lang-ru="Лист осмотра">صورة الفحص</span>
+            </h2>
+            <img src="{{ car.inspection_image|https_url }}" alt="Inspection sheet" class="lux-inspection-img" loading="lazy">
+            {% if inspection_legend %}
+            <div class="lux-inspection-legend">
+                {% for code, label_ar, label_en in inspection_legend %}
+                <div class="lux-inspection-legend-item">
+                    <span class="lux-inspection-code">{{ code }}</span>
+                    <span class="bilingual" data-lang-ar="{{ label_ar }}" data-lang-en="{{ label_en }}">{{ label_ar }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
         {% if insp.has_inspection %}
         <section class="lux-section-block">
             <h2>
@@ -605,7 +736,7 @@
                 {% for s in similar_cars %}
                 <a href="{% url 'car_detail' s.slug %}" class="lux-similar-card">
                     <div class="lux-similar-img car-img-wm">
-                        {% if s.image %}<img src="{{ s.image }}" alt="{{ s.title }}" loading="lazy">{% endif %}
+                        {% if s.image %}<img src="{{ s.image|img_small }}" alt="{{ s.title }}" loading="lazy">{% elif s.images and s.images|length > 0 %}<img src="{{ s.images.0|img_small }}" alt="{{ s.title }}" loading="lazy">{% endif %}
                     </div>
                     <div class="lux-similar-body">
                         <div class="lux-similar-make">
@@ -613,6 +744,7 @@
                             · {{ s.year }}
                         </div>
                         <h3 class="lux-similar-name">{% if s.model %}<span class="bilingual" data-lang-ar="{{ s.model|translate_model }}" data-lang-en="{{ s.model|translate_model:'en' }}">{{ s.model|translate_model }}</span>{% else %}{{ s.title }}{% endif %}</h3>
+                        {% if s.badge.name %}<div class="lux-similar-trim">{{ s.badge.name }}</div>{% endif %}
                         {% if s.price %}<div class="lux-similar-price" data-price-krw="{{ s.price }}">{{ s.price|intcomma }} ₩</div>{% endif %}
                     </div>
                 </a>
@@ -634,8 +766,8 @@
 <script>
 (function() {
     var luxImages = [
-        {% if car.image %}"{{ car.image|escapejs }}"{% if car.images %},{% endif %}{% endif %}
-        {% for img in car.images %}"{{ img|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+        {% if car.image %}"{{ car.image|https_url|escapejs }}"{% if car.images %},{% endif %}{% endif %}
+        {% for img in car.images %}"{{ img|https_url|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
     ];
     var luxIdx = 0;
     var lb = document.getElementById('lux-lightbox');
@@ -665,6 +797,9 @@
     window.luxSelectThumb = function(el) {
         document.querySelectorAll('.lux-thumb').forEach(function(t) { t.classList.remove('active'); });
         el.classList.add('active');
+        if (typeof el.scrollIntoView === 'function') {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
     };
 
     document.addEventListener('keydown', function(e) {
