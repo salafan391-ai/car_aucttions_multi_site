@@ -278,52 +278,85 @@
     }
     .lux-filter-close:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
 
+    /* Page-scroll lock used while the filter drawer is open. Position-fixes the
+       body so iOS doesn't keep scrolling underneath, while leaving the drawer's
+       own overflow:auto free to receive touch events. */
+    body.lux-modal-open {
+        position: fixed; left: 0; right: 0;
+        width: 100%;
+    }
+
     @media (max-width: 900px) {
         .lux-filter-trigger-bar { display: flex; }
         .lux-filter-close { display: flex; }
         .lux-side {
-            position: fixed; inset: 0;
+            position: fixed; left: 0; right: 0; top: 0;
+            height: 100vh; height: 100dvh;
             margin: 0; border-radius: 0;
             transform: translateY(100%);
             transition: transform 0.3s ease;
-            overflow-y: auto; z-index: 100;
-            padding: 4rem 1.25rem 1rem;
+            overflow-x: hidden; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            z-index: 100;
+            padding: 3.5rem 1.1rem calc(5rem + env(safe-area-inset-bottom));
             border: 0; border-top: 1px solid var(--lux-gold);
             box-shadow: 0 -20px 40px rgba(0,0,0,0.6);
         }
         .lux-side.open { transform: translateY(0); }
+        .lux-side-title { margin-bottom: 1rem; }
         .lux-side-actions {
-            position: sticky; bottom: 0;
-            background: linear-gradient(180deg, transparent 0%, #0f0d0a 30%);
-            margin-left: -1.25rem; margin-right: -1.25rem; padding: 1rem 1.25rem;
+            position: sticky; bottom: -1px;
+            margin-left: -1.1rem; margin-right: -1.1rem;
+            margin-top: 1rem;
+            padding: 1rem 1.1rem calc(1rem + env(safe-area-inset-bottom));
+            background: linear-gradient(180deg, rgba(15,13,10,0) 0%, #0f0d0a 35%);
+            display: flex; gap: 0.6rem;
         }
+        .lux-side-actions .lux-btn { padding: 0.85rem; font-size: 0.72rem; }
 
         /* Mobile-tuned filter sections */
-        .lux-field { margin-bottom: 1rem; }
+        .lux-field { margin-bottom: 0.5rem; }
         .lux-field-toggle .lux-label {
-            padding: 0.85rem 0.25rem; margin-bottom: 0;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.95rem 0.15rem; margin-bottom: 0;
             border-bottom: 1px solid var(--lux-line);
-            font-size: 0.8rem;
+            font-size: 0.85rem; letter-spacing: 0.2em;
+            color: var(--lux-text);
+            min-height: 2.75rem;
         }
-        .lux-field-toggle:not(.is-collapsed) .lux-label { margin-bottom: 0.65rem; }
-        .lux-toggle-icon { width: 0.9rem; height: 0.9rem; }
+        .lux-field-toggle .lux-label:hover { color: var(--lux-gold); }
+        .lux-field-toggle:not(.is-collapsed) .lux-label {
+            margin-bottom: 0.85rem;
+            color: var(--lux-gold);
+        }
+        .lux-toggle-icon { width: 1rem; height: 1rem; flex-shrink: 0; }
+
+        /* Body padding under expanded sections */
+        .lux-field-toggle:not(.is-collapsed) > .lux-chips,
+        .lux-field-toggle:not(.is-collapsed) > .lux-tree,
+        .lux-field-toggle:not(.is-collapsed) > .lux-range-pair { padding-bottom: 0.85rem; }
 
         /* Larger touch targets on chip rows */
-        .lux-chips { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: 0.5rem; }
-        .lux-chip { padding: 0.6rem 0.7rem; font-size: 0.82rem; }
+        .lux-chips { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 0; }
+        .lux-chip { padding: 0.7rem 0.6rem; font-size: 0.8rem; min-height: 2.6rem; }
 
         /* Tree fills the drawer; the drawer itself scrolls */
-        .lux-tree { max-height: none; overflow-y: visible; }
-        .lux-tree-row { padding: 0.55rem 0.6rem; }
-        .lux-tree-name { font-size: 0.85rem; }
-        .lux-tree-toggle { width: 1.65rem; height: 1.65rem; }
+        .lux-tree { max-height: none; overflow-y: visible; padding: 0; gap: 0.35rem; }
+        .lux-tree-row { padding: 0.7rem 0.7rem; min-height: 2.75rem; }
+        .lux-tree-name { font-size: 0.88rem; }
+        .lux-tree-toggle { width: 1.85rem; height: 1.85rem; }
         .lux-tree-toggle svg { width: 0.85rem; height: 0.85rem; }
-        .lux-tree-children { padding-left: 0.85rem; margin-left: 0.4rem; }
+        .lux-tree-children { padding-left: 0.85rem; margin-left: 0.4rem; gap: 0.35rem; }
         [dir="rtl"] .lux-tree-children { padding-right: 0.85rem; margin-right: 0.4rem; }
+
+        /* Range inputs sized for touch */
+        .lux-range-pair { gap: 0.5rem; }
+        .lux-input { padding: 0.75rem 0.75rem; font-size: 0.9rem; }
     }
 
-    @media (max-width: 480px) {
-        .lux-chips { grid-template-columns: repeat(2, 1fr); }
+    @media (min-width: 481px) and (max-width: 900px) {
+        .lux-chips { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
     }
 </style>
 
@@ -682,21 +715,30 @@
 </div>
 
 <script>
-window.luxOpenFilters = function() {
-    document.getElementById('lux-side').classList.add('open');
-    document.getElementById('lux-filter-backdrop').classList.add('open');
-    document.body.style.overflow = 'hidden';
-};
-window.luxCloseFilters = function() {
-    document.getElementById('lux-side').classList.remove('open');
-    document.getElementById('lux-filter-backdrop').classList.remove('open');
-    document.body.style.overflow = '';
-};
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && document.getElementById('lux-side')?.classList.contains('open')) {
-        luxCloseFilters();
-    }
-});
+(function() {
+    var lockedScroll = 0;
+    window.luxOpenFilters = function() {
+        document.getElementById('lux-side').classList.add('open');
+        document.getElementById('lux-filter-backdrop').classList.add('open');
+        // Lock the page scroll without using body{overflow:hidden}, which can
+        // suppress touch events on fixed drawers on iOS Safari.
+        lockedScroll = window.scrollY || window.pageYOffset || 0;
+        document.body.classList.add('lux-modal-open');
+        document.body.style.top = '-' + lockedScroll + 'px';
+    };
+    window.luxCloseFilters = function() {
+        document.getElementById('lux-side').classList.remove('open');
+        document.getElementById('lux-filter-backdrop').classList.remove('open');
+        document.body.classList.remove('lux-modal-open');
+        document.body.style.top = '';
+        if (lockedScroll) window.scrollTo(0, lockedScroll);
+    };
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('lux-side')?.classList.contains('open')) {
+            luxCloseFilters();
+        }
+    });
+})();
 </script>
 
 <script>
