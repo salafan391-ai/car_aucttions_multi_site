@@ -2,8 +2,11 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from . import api_views
+from .ingest_view import ingest_from_r2
 
 urlpatterns = [
+    # Token-protected R2 ingest endpoint — replaces `railway run python manage.py import_auction_json ...`
+    path('ingest/r2/', ingest_from_r2, name='ingest_from_r2'),
     # Public JSON API (for external websites)
     path('api/car/<str:lot_number>/', api_views.api_car_by_lot, name='api_car_by_lot'),
     path('api/car/slug/<slug:slug>/', api_views.api_car_by_slug, name='api_car_by_slug'),
