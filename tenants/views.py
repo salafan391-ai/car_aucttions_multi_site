@@ -89,15 +89,6 @@ def site_settings(request):
         tenant.email_use_tls = 'email_use_tls' in request.POST
         tenant.email_from_name = request.POST.get('email_from_name', tenant.email_from_name)
 
-        # Update currency exchange rates
-        for field in ('rate_usd', 'rate_sar', 'rate_aed', 'rate_eur'):
-            val = request.POST.get(field, '').strip()
-            if val:
-                try:
-                    setattr(tenant, field, float(val))
-                except ValueError:
-                    pass
-
         tenant.save()
         
         # Handle multiple phone numbers

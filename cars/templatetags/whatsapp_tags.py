@@ -12,7 +12,8 @@ def krw_to_sar(value, rate):
 
     Usage in templates:
         {{ car.price|krw_to_sar:rate_sar }}
-    where `rate_sar` is exposed by the tenant context processor (SAR per 1 KRW).
+    where `rate_sar` is exposed by the tenant context processor (SAR per 1 KRW,
+    sourced from the global GlobalExchangeRates singleton).
     """
     try:
         if value is None:
@@ -67,18 +68,17 @@ def whatsapp_order_message(context, car, site_name=""):
     message_parts.append(car_name)
 
     if hasattr(car, 'price') and car.price:
-        # Convert stored price (KRW) to SAR using tenant rate (rate_sar is per 1 KRW)
+        # Convert stored price (KRW) to SAR using the global rate (rate_sar is per 1 KRW)
         rate_sar = None
         try:
             rate_sar = float(context.get('rate_sar'))
         except Exception:
             rate_sar = None
         if rate_sar is None:
-            # fallback: try to read from request.tenant or use a sensible default
+            # fallback: read from the global singleton (shared across all tenants)
             try:
-                req = context.get('request')
-                tenant = getattr(req, 'tenant', None)
-                rate_sar = float(getattr(tenant, 'rate_sar', 0.00250)) if tenant is not None else 0.00250
+                from tenants.models import GlobalExchangeRates
+                rate_sar = float(GlobalExchangeRates.get_solo().rate_sar)
             except Exception:
                 rate_sar = 0.00250
 
@@ -129,7 +129,7 @@ def whatsapp_car_message(context, car, site_name=""):
 
     # Price if available
     if hasattr(car, 'price') and car.price:
-        # Convert stored price (KRW) to SAR using tenant rate (rate_sar is per 1 KRW)
+        # Convert stored price (KRW) to SAR using the global rate (rate_sar is per 1 KRW)
         rate_sar = None
         try:
             rate_sar = float(context.get('rate_sar'))
@@ -137,9 +137,8 @@ def whatsapp_car_message(context, car, site_name=""):
             rate_sar = None
         if rate_sar is None:
             try:
-                req = context.get('request')
-                tenant = getattr(req, 'tenant', None)
-                rate_sar = float(getattr(tenant, 'rate_sar', 0.00250)) if tenant is not None else 0.00250
+                from tenants.models import GlobalExchangeRates
+                rate_sar = float(GlobalExchangeRates.get_solo().rate_sar)
             except Exception:
                 rate_sar = 0.00250
 

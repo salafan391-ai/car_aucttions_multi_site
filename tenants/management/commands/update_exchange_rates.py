@@ -3,7 +3,7 @@ from decimal import Decimal
 import requests
 from django.core.management.base import BaseCommand, CommandError
 
-from tenants.models import Tenant
+from tenants.models import GlobalExchangeRates
 
 
 API_URL = "https://open.er-api.com/v6/latest/KRW"
@@ -16,13 +16,9 @@ FIELD_MAP = {
 
 
 class Command(BaseCommand):
-    help = "Fetch latest KRW-based exchange rates and update all tenants."
+    help = "Fetch latest KRW-based exchange rates and update the global singleton (shared by all tenants)."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--tenant",
-            help="Only update a tenant with this schema_name (default: all).",
-        )
         parser.add_argument(
             "--dry-run",
             action="store_true",
@@ -57,9 +53,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Dry run — no changes written."))
             return
 
-        qs = Tenant.objects.all()
-        if opts["tenant"]:
-            qs = qs.filter(schema_name=opts["tenant"])
-
-        count = qs.update(**updates)
-        self.stdout.write(self.style.SUCCESS(f"Updated {count} tenant(s)."))
+        obj = GlobalExchangeRates.get_solo()
+        for field, value in updates.items():
+            setattr(obj, field, value)
+        obj.save()
+        self.stdout.write(self.style.SUCCESS("Updated global exchange rates."))

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django_tenants.admin import TenantAdminMixin
-from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage
+from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage, GlobalExchangeRates
 
 from cars.models import CarImage, Manufacturer, BodyType
 
@@ -44,3 +44,14 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
 @admin.register(Domain)
 class DomainAdmin(admin.ModelAdmin):
     list_display = ("domain", "tenant", "is_primary")
+
+
+@admin.register(GlobalExchangeRates)
+class GlobalExchangeRatesAdmin(admin.ModelAdmin):
+    list_display = ("rate_usd", "rate_sar", "rate_aed", "rate_eur", "updated_at")
+
+    def has_add_permission(self, request):
+        return not GlobalExchangeRates.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False

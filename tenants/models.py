@@ -179,6 +179,44 @@ class Domain(DomainMixin):
     pass
 
 
+class GlobalExchangeRates(models.Model):
+    """
+    Singleton holding currency exchange rates shared by all tenants.
+    Rates are expressed per 1 KRW. Use `GlobalExchangeRates.get_solo()`.
+    """
+    rate_usd = models.DecimalField(max_digits=10, decimal_places=6, default=0.00067, verbose_name="سعر الدولار USD")
+    rate_sar = models.DecimalField(max_digits=10, decimal_places=6, default=0.00250, verbose_name="سعر الريال SAR")
+    rate_aed = models.DecimalField(max_digits=10, decimal_places=6, default=0.00272, verbose_name="سعر الدرهم AED")
+    rate_eur = models.DecimalField(max_digits=10, decimal_places=6, default=0.00069, verbose_name="سعر اليورو EUR")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "أسعار صرف العملات (عام)"
+        verbose_name_plural = "أسعار صرف العملات (عام)"
+
+    def __str__(self):
+        return f"Global rates (USD={self.rate_usd}, SAR={self.rate_sar}, AED={self.rate_aed}, EUR={self.rate_eur})"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+        from django.core.cache import cache
+        cache.delete("global_exchange_rates")
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def get_solo(cls):
+        from django.core.cache import cache
+        cached = cache.get("global_exchange_rates")
+        if cached:
+            return cached
+        obj, _ = cls.objects.get_or_create(pk=1)
+        cache.set("global_exchange_rates", obj, 60 * 30)
+        return obj
+
+
 class TenantHeroImage(models.Model):
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='hero_images', verbose_name="الموقع")
     image = models.ImageField(upload_to='tenant_hero/', verbose_name="الصورة")

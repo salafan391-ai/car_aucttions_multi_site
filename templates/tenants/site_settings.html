@@ -432,38 +432,34 @@
                 </div>
             </div>
 
-            <!-- Currency Exchange Rates Section -->
+            <!-- Currency Exchange Rates Section (read-only — managed centrally) -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">أسعار صرف العملات</h2>
-                <p class="text-sm text-gray-500 mb-4">القيمة = سعر 1 وون كوري (KRW) بالعملة المختارة — مثلاً USD: 0.00067 يعني 1 ₩ = 0.00067 $</p>
+                <p class="text-sm text-gray-500 mb-4">تُحدَّث هذه الأسعار مركزياً لجميع المواقع تلقائياً (سعر 1 وون كوري KRW بالعملة المختارة).</p>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">دولار أمريكي (USD)</label>
-                        <input type="number" name="rate_usd" step="0.000001" min="0"
-                               value="{{ tenant.rate_usd }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" value="{{ rate_usd }}" readonly
+                               class="w-full px-4 py-2 border border-gray-200 bg-gray-50 text-gray-600 rounded-lg cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">ريال سعودي (SAR)</label>
-                        <input type="number" name="rate_sar" step="0.000001" min="0"
-                               value="{{ tenant.rate_sar }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" value="{{ rate_sar }}" readonly
+                               class="w-full px-4 py-2 border border-gray-200 bg-gray-50 text-gray-600 rounded-lg cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">درهم إماراتي (AED)</label>
-                        <input type="number" name="rate_aed" step="0.000001" min="0"
-                               value="{{ tenant.rate_aed }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" value="{{ rate_aed }}" readonly
+                               class="w-full px-4 py-2 border border-gray-200 bg-gray-50 text-gray-600 rounded-lg cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">يورو (EUR)</label>
-                        <input type="number" name="rate_eur" step="0.000001" min="0"
-                               value="{{ tenant.rate_eur }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" value="{{ rate_eur }}" readonly
+                               class="w-full px-4 py-2 border border-gray-200 bg-gray-50 text-gray-600 rounded-lg cursor-not-allowed">
                     </div>
                 </div>
             </div>
-            
+
             <!-- Submit Button -->
             <div class="flex justify-end gap-4">
                 <a href="{% url 'site_dashboard' %}" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">

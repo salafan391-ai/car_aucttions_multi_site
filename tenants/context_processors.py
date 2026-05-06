@@ -1,6 +1,24 @@
 from django.db import connection
 from django.core.cache import cache
-from .models import TenantHeroImage
+from .models import TenantHeroImage, GlobalExchangeRates
+
+
+def _global_rates():
+    try:
+        rates = GlobalExchangeRates.get_solo()
+    except Exception:
+        return {
+            "rate_usd": 0.00067,
+            "rate_sar": 0.00250,
+            "rate_aed": 0.00272,
+            "rate_eur": 0.00069,
+        }
+    return {
+        "rate_usd": float(rates.rate_usd),
+        "rate_sar": float(rates.rate_sar),
+        "rate_aed": float(rates.rate_aed),
+        "rate_eur": float(rates.rate_eur),
+    }
 
 
 def tenant_branding(request):
@@ -15,7 +33,9 @@ def tenant_branding(request):
     _cache_key = f"tenant_branding:{schema}"
     cached = cache.get(_cache_key)
     if cached:
-        return cached
+        # Always overlay live global rates so singleton edits apply immediately,
+        # without invalidating every tenant's branding cache.
+        return {**cached, **_global_rates()}
 
     # Get all phone numbers for the tenant
     phone_numbers = []
@@ -102,16 +122,13 @@ def tenant_branding(request):
         "primary_phone": primary_phone,
         "sales_phones": sales_phones,
         "whatsapp_phones": whatsapp_phones,
-    # Currency rates (per 1 KRW)
-    "rate_usd": float(getattr(tenant, 'rate_usd', 0.00067)),
-    "rate_sar": float(getattr(tenant, 'rate_sar', 0.00250)),
-    "rate_aed": float(getattr(tenant, 'rate_aed', 0.00272)),
-    "rate_eur": float(getattr(tenant, 'rate_eur', 0.00069)),
     # Eid overlays flag
     "eid_is_active": getattr(tenant, 'eid_is_active', False),
     # Billing visibility (controlled by SaaS owner)
     "billing_visible": getattr(tenant, 'billing_visible', False),
     }
-    # Cache for 30 minutes — tenant branding never changes between deploys
+    # Cache for 30 minutes — tenant branding rarely changes.
+    # Currency rates are NOT in this dict; they are merged in at request time
+    # from the global singleton so cross-tenant rate updates apply immediately.
     cache.set(_cache_key, result, 60 * 30)
-    return result
+    return {**result, **_global_rates()}
