@@ -187,9 +187,61 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
         });
     }
 
+    /* Detect a supported language from the browser locale, fall back to 'ar'. */
+    function detectBrowserLang() {
+        var navLangs = (navigator.languages && navigator.languages.length)
+            ? navigator.languages
+            : [navigator.language || navigator.userLanguage || ''];
+        for (var i = 0; i < navLangs.length; i++) {
+            var code = (navLangs[i] || '').toLowerCase().split('-')[0];
+            if (LANG_ORDER.indexOf(code) !== -1) return code;
+        }
+        return 'ar';
+    }
+
+    /* Map ISO country code -> one of our supported currencies. */
+    var COUNTRY_TO_CURRENCY = {
+        SA: 'SAR',
+        AE: 'AED', QA: 'AED', OM: 'AED', BH: 'AED', KW: 'AED',
+        US: 'USD', CA: 'USD', GB: 'USD', AU: 'USD', NZ: 'USD',
+        KR: 'KRW',
+        DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR',
+        BE: 'EUR', AT: 'EUR', PT: 'EUR', IE: 'EUR', FI: 'EUR',
+        GR: 'EUR', LU: 'EUR', SK: 'EUR', SI: 'EUR', EE: 'EUR',
+        LV: 'EUR', LT: 'EUR', CY: 'EUR', MT: 'EUR', HR: 'EUR',
+    };
+
+    /* Map a language code to a sensible currency, used when geo lookup fails. */
+    var LANG_TO_CURRENCY = { ar: 'SAR', en: 'USD', es: 'EUR', ru: 'USD' };
+
+    /* Async: ask ipapi.co (no key, free tier) for the visitor's country
+       so we can pick a currency. Cached in localStorage so we only ask once. */
+    function detectGeoCurrency(callback) {
+        var cached = localStorage.getItem('site_geo_country');
+        if (cached) { callback(COUNTRY_TO_CURRENCY[cached] || null); return; }
+        try {
+            fetch('https://ipapi.co/json/', { method: 'GET' })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    var cc = data && (data.country_code || data.country);
+                    if (cc) {
+                        cc = String(cc).toUpperCase();
+                        localStorage.setItem('site_geo_country', cc);
+                        callback(COUNTRY_TO_CURRENCY[cc] || null);
+                    } else {
+                        callback(null);
+                    }
+                })
+                .catch(function () { callback(null); });
+        } catch (e) { callback(null); }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        var lang = localStorage.getItem('site_lang') || 'ar';
-        var currency = localStorage.getItem('site_currency') || 'SAR';
+        /* Language: prefer saved choice; otherwise auto-detect from browser. */
+        var savedLang = localStorage.getItem('site_lang');
+        var lang = savedLang || detectBrowserLang();
+        if (!savedLang) localStorage.setItem('site_lang', lang);
+
         if (lang !== 'ar') applyLang(lang);
         else {
             var cfg = LANGS[lang];
@@ -199,8 +251,28 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
             setEl('mobile-lang-flag', cfg.flag);
             setEl('mobile-lang-label', cfg.label);
         }
-        applyCurrency(currency);
-        syncLangCurrencyMenuActive();
+
+        /* Currency: prefer saved choice; otherwise pick from geo (or language). */
+        var savedCurrency = localStorage.getItem('site_currency');
+        if (savedCurrency) {
+            applyCurrency(savedCurrency);
+            syncLangCurrencyMenuActive();
+        } else {
+            /* Apply a quick best-guess from language so prices aren't blank
+               while the geo fetch is in flight, then upgrade once it lands. */
+            var firstGuess = LANG_TO_CURRENCY[lang] || 'SAR';
+            applyCurrency(firstGuess);
+            syncLangCurrencyMenuActive();
+
+            detectGeoCurrency(function (geoCurrency) {
+                var finalCurrency = geoCurrency || firstGuess;
+                localStorage.setItem('site_currency', finalCurrency);
+                if (finalCurrency !== firstGuess) {
+                    applyCurrency(finalCurrency);
+                    syncLangCurrencyMenuActive();
+                }
+            });
+        }
     });
 
     document.addEventListener('click', function(e) {

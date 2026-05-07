@@ -294,7 +294,8 @@ def home(request):
             from site_cars.models import SiteCar
             site_cars = list(
                 SiteCar.objects.only(
-                    'id', 'title', 'image', 'manufacturer', 'model',
+                    'id', 'title', 'image', 'external_image_url',
+                    'manufacturer', 'model',
                     'year', 'price', 'status', 'is_featured', 'mileage',
                     'transmission',
                 ).prefetch_related('gallery').order_by('-created_at')[:8]
@@ -314,10 +315,24 @@ def home(request):
             .first()
         )
 
+        # Order home sections by most-recently-added entry, descending.
+        _section_recency = [
+            ('site_cars',      site_cars[0].created_at      if site_cars      else None),
+            ('latest_cars',    latest_cars[0].created_at    if latest_cars    else None),
+            ('latest_auctions', latest_auctions[0].created_at if latest_auctions else None),
+        ]
+        home_sections_order = [
+            key for key, _ in sorted(
+                (s for s in _section_recency if s[1] is not None),
+                key=lambda s: s[1], reverse=True,
+            )
+        ]
+
         context = {
             'latest_cars': latest_cars,
             'latest_auctions': latest_auctions,
             'site_cars': site_cars,
+            'home_sections_order': home_sections_order,
             'damaged_cars_count': damaged_cars_count,
             'manufacturers': manufacturers,
             'body_types': body_types,

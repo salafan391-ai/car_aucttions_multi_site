@@ -66,6 +66,7 @@
     .lux-cta:hover { background: var(--lux-gold); color: var(--lux-bg); }
 
     .lux-section { padding: 5rem 1.5rem; max-width: 1280px; margin: 0 auto; }
+    .lux-section.lux-section--bordered { border-top: 1px solid var(--lux-line); }
     .lux-section-head { text-align: center; margin-bottom: 3rem; }
     .lux-section-eyebrow { color: var(--lux-gold); letter-spacing: 0.4em; font-size: 0.7rem; text-transform: uppercase; margin-bottom: 0.75rem; }
     .lux-section-title { font-size: 2.25rem; font-weight: 400; color: var(--lux-text); margin: 0; }
@@ -74,6 +75,37 @@
         display: grid; gap: 1.5rem;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
+    .lux-scroll-row {
+        display: flex; gap: 1.25rem;
+        overflow-x: auto; overflow-y: hidden;
+        scroll-snap-type: x proximity;
+        padding: 0.25rem 0.25rem 1.25rem;
+        scrollbar-width: thin; scrollbar-color: var(--lux-line) transparent;
+        scroll-padding-inline-start: 0.25rem;
+    }
+    .lux-scroll-row::-webkit-scrollbar { height: 6px; }
+    .lux-scroll-row::-webkit-scrollbar-track { background: transparent; }
+    .lux-scroll-row::-webkit-scrollbar-thumb { background: var(--lux-line); border-radius: 3px; }
+    .lux-scroll-row::-webkit-scrollbar-thumb:hover { background: var(--lux-gold); }
+    .lux-scroll-row > .lux-card {
+        flex: 0 0 280px; scroll-snap-align: start;
+    }
+    @media (max-width: 600px) {
+        .lux-scroll-row > .lux-card { flex-basis: 76vw; }
+    }
+    .lux-section-head-row {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        gap: 1rem; flex-wrap: wrap; text-align: start; margin-bottom: 2rem;
+    }
+    .lux-section-head-row .lux-section-eyebrow,
+    .lux-section-head-row .lux-section-title { text-align: start; }
+    .lux-view-all {
+        color: var(--lux-gold); text-decoration: none;
+        font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+        padding: 0.6rem 1rem; border: 1px solid var(--lux-line);
+        transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .lux-view-all:hover { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
     .lux-card {
         background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
         border: 1px solid var(--lux-line); border-radius: 4px;
@@ -95,7 +127,10 @@
         letter-spacing: 0.18em; text-transform: uppercase;
         background: rgba(201,164,90,0.08);
     }
-    .lux-card-meta { display: flex; gap: 1rem; color: var(--lux-text-dim); font-size: 0.8rem; padding-top: 1rem; border-top: 1px solid var(--lux-line); }
+    .lux-card-meta { display: flex; flex-wrap: wrap; gap: 0.85rem; color: var(--lux-text-dim); font-size: 0.78rem; padding-top: 1rem; border-top: 1px solid var(--lux-line); }
+    .lux-card-meta-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .lux-card-meta-ico { flex-shrink: 0; width: 0.85rem; height: 0.85rem; color: var(--lux-gold); display: inline-flex; }
+    .lux-card-meta-ico svg { width: 100%; height: 100%; display: block; }
     .lux-card-price { color: var(--lux-gold-bright); font-size: 1.25rem; font-weight: 600; margin-top: 0.75rem; letter-spacing: 0.05em; }
 
     .lux-empty { text-align: center; color: var(--lux-text-dim); padding: 3rem; font-style: italic; }
@@ -113,13 +148,74 @@
         <a href="{% url 'car_list' %}" class="lux-cta bilingual" data-lang-ar="استعرض المجموعة" data-lang-en="Browse Collection" data-lang-es="Explorar colección" data-lang-ru="Смотреть коллекцию">استعرض المجموعة</a>
     </section>
 
-    {% if latest_cars %}
-    <section class="lux-section">
-        <div class="lux-section-head">
-            <div class="lux-section-eyebrow bilingual" data-lang-ar="أحدث الوافدات" data-lang-en="Latest Arrivals" data-lang-es="Últimas llegadas" data-lang-ru="Новые поступления">أحدث الوافدات</div>
-            <h2 class="lux-section-title bilingual" data-lang-ar="جديد في المعرض" data-lang-en="New to the Floor" data-lang-es="Nuevo en el showroom" data-lang-ru="Новые в салоне">جديد في المعرض</h2>
+    {% for section_key in home_sections_order %}
+    {% if section_key == 'site_cars' and site_cars %}
+    <section class="lux-section {% if not forloop.first %}lux-section--bordered{% endif %}">
+        <div class="lux-section-head-row">
+            <div>
+                <div class="lux-section-eyebrow bilingual" data-lang-ar="من معرضنا" data-lang-en="From Our Showroom" data-lang-es="De nuestro showroom" data-lang-ru="Из нашего салона">من معرضنا</div>
+                <h2 class="lux-section-title bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</h2>
+            </div>
+            <a href="{% url 'site_car_list' %}" class="lux-view-all bilingual" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
         </div>
-        <div class="lux-grid">
+        <div class="lux-scroll-row">
+            {% for car in site_cars %}
+            <a href="{% url 'site_car_detail' car.id %}" class="lux-card">
+                <div class="lux-card-img car-img-wm">
+                    {% if car.image %}
+                    <img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">
+                    {% elif car.gallery.first %}
+                    <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" loading="lazy">
+                    {% elif car.external_image_url %}
+                    <img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(201,164,90,0.25);">
+                        <svg style="width:3rem;height:3rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="lux-card-body">
+                    <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                    <h3 class="lux-card-name">{{ car.title|pretty_en }}</h3>
+                    {% if car.price %}
+                    <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                    {% endif %}
+                    <div class="lux-card-meta">
+                        {% if car.year %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                            <span>{{ car.year }}</span>
+                        </span>
+                        {% endif %}
+                        {% if car.mileage %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                            <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                        </span>
+                        {% endif %}
+                        {% if car.transmission %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                            <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% if section_key == 'latest_cars' and latest_cars %}
+    <section class="lux-section {% if not forloop.first %}lux-section--bordered{% endif %}">
+        <div class="lux-section-head-row">
+            <div>
+                <div class="lux-section-eyebrow bilingual" data-lang-ar="أحدث الوافدات" data-lang-en="Latest Arrivals" data-lang-es="Últimas llegadas" data-lang-ru="Новые поступления">أحدث الوافدات</div>
+                <h2 class="lux-section-title bilingual" data-lang-ar="جديد في المعرض" data-lang-en="New to the Floor" data-lang-es="Nuevo en el showroom" data-lang-ru="Новые в салоне">جديد في المعرض</h2>
+            </div>
+            <a href="{% url 'car_list' %}" class="lux-view-all bilingual" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
+        </div>
+        <div class="lux-scroll-row">
             {% for car in latest_cars|slice:":8" %}
             <a href="{% url 'car_detail' car.slug %}" class="lux-card">
                 <div class="lux-card-img car-img-wm">
@@ -137,9 +233,24 @@
                     <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
                     {% endif %}
                     <div class="lux-card-meta">
-                        {% if car.year %}<span>{{ car.year }}</span>{% endif %}
-                        {% if car.mileage %}<span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                        {% if car.transmission %}<span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                        {% if car.year %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                            <span>{{ car.year }}</span>
+                        </span>
+                        {% endif %}
+                        {% if car.mileage %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                            <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                        </span>
+                        {% endif %}
+                        {% if car.transmission %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                            <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
+                        </span>
+                        {% endif %}
                     </div>
                 </div>
             </a>
@@ -147,14 +258,16 @@
         </div>
     </section>
     {% endif %}
-
-    {% if latest_auctions %}
-    <section class="lux-section" style="border-top: 1px solid var(--lux-line);">
-        <div class="lux-section-head">
-            <div class="lux-section-eyebrow bilingual" data-lang-ar="بالمزاد" data-lang-en="By Auction" data-lang-es="Por subasta" data-lang-ru="С аукциона">بالمزاد</div>
-            <h2 class="lux-section-title bilingual" data-lang-ar="دار المزادات" data-lang-en="Auction House" data-lang-es="Casa de subastas" data-lang-ru="Аукционный дом">دار المزادات</h2>
+    {% if section_key == 'latest_auctions' and latest_auctions %}
+    <section class="lux-section {% if not forloop.first %}lux-section--bordered{% endif %}">
+        <div class="lux-section-head-row">
+            <div>
+                <div class="lux-section-eyebrow bilingual" data-lang-ar="بالمزاد" data-lang-en="By Auction" data-lang-es="Por subasta" data-lang-ru="С аукциона">بالمزاد</div>
+                <h2 class="lux-section-title bilingual" data-lang-ar="دار المزادات" data-lang-en="Auction House" data-lang-es="Casa de subastas" data-lang-ru="Аукционный дом">دار المزادات</h2>
+            </div>
+            <a href="{% url 'car_list' %}?car_type=auction" class="lux-view-all bilingual" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
         </div>
-        <div class="lux-grid">
+        <div class="lux-scroll-row">
             {% for car in latest_auctions|slice:":8" %}
             <a href="{% url 'car_detail' car.slug %}" class="lux-card">
                 <div class="lux-card-img car-img-wm">
@@ -166,8 +279,18 @@
                     {% if car.badge.name %}<div class="lux-card-trim">{{ car.badge.name }}</div>{% endif %}
                     {% if car.price %}<div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
                     <div class="lux-card-meta">
-                        {% if car.year %}<span>{{ car.year }}</span>{% endif %}
-                        {% if car.mileage %}<span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>{% endif %}
+                        {% if car.year %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                            <span>{{ car.year }}</span>
+                        </span>
+                        {% endif %}
+                        {% if car.mileage %}
+                        <span class="lux-card-meta-item">
+                            <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                            <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} км</span>
+                        </span>
+                        {% endif %}
                     </div>
                 </div>
             </a>
@@ -175,5 +298,6 @@
         </div>
     </section>
     {% endif %}
+    {% endfor %}
 </div>
 {% endblock %}

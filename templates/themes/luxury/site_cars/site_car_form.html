@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'add' %}إضافة سيارة{% else %}تعديل سيارة{% endif %} — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    .lux-form-page { padding: 3rem 1.5rem; max-width: 1100px; margin: 0 auto; }
+    .lux-form-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+
+    .lux-form-back {
+        color: var(--lux-text-dim); text-decoration: none;
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase;
+        margin-bottom: 1.5rem; transition: color 0.2s ease;
+    }
+    .lux-form-back:hover { color: var(--lux-gold); }
+    .lux-form-back svg { width: 1rem; height: 1rem; }
+
+    .lux-form-head { margin-bottom: 2.5rem; }
+    .lux-form-head .eyebrow {
+        color: var(--lux-gold); font-size: 0.7rem;
+        letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5rem;
+    }
+    .lux-form-head h1 {
+        font-size: 2.2rem; font-weight: 400; margin: 0;
+        letter-spacing: 0.05em;
+    }
+
+    .lux-form-card {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line);
+    }
+    .lux-form-section { padding: 2rem 2.25rem; border-bottom: 1px solid var(--lux-line); }
+    .lux-form-section:last-of-type { border-bottom: 0; }
+    .lux-form-section-title {
+        color: var(--lux-gold); font-size: 0.7rem;
+        letter-spacing: 0.4em; text-transform: uppercase;
+        margin-bottom: 1.5rem; padding-bottom: 0.85rem;
+        border-bottom: 1px solid var(--lux-line);
+    }
+
+    .lux-form-grid { display: grid; gap: 1.25rem; }
+    .lux-form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .lux-form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .lux-form-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 768px) {
+        .lux-form-grid.cols-2,
+        .lux-form-grid.cols-3 { grid-template-columns: 1fr; }
+        .lux-form-grid .span-2 { grid-column: span 1; }
+        .lux-form-page { padding: 2rem 1rem; }
+        .lux-form-section { padding: 1.5rem 1.25rem; }
+        .lux-form-head h1 { font-size: 1.75rem; }
+    }
+
+    .lux-form-page label {
+        display: block; color: var(--lux-text-dim);
+        font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .lux-form-page label .req { color: var(--lux-gold); margin-inline-start: 0.25rem; }
+
+    .lux-input,
+    .lux-form-page input[type="text"],
+    .lux-form-page input[type="number"],
+    .lux-form-page input[type="email"],
+    .lux-form-page select,
+    .lux-form-page textarea {
+        width: 100%; box-sizing: border-box;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--lux-line);
+        color: var(--lux-text);
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem; font-family: 'Tajawal', 'Playfair Display', serif;
+        transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .lux-form-page input:focus,
+    .lux-form-page select:focus,
+    .lux-form-page textarea:focus {
+        outline: none; border-color: var(--lux-gold);
+        background: rgba(201,164,90,0.04);
+    }
+    .lux-form-page textarea { min-height: 140px; resize: vertical; }
+    .lux-form-page select option { background: #0f0d0a; color: var(--lux-text); }
+
+    .lux-checkbox {
+        display: inline-flex; align-items: center; gap: 0.6rem; cursor: pointer;
+        color: var(--lux-text); font-size: 0.85rem; letter-spacing: 0.05em;
+        margin-top: 0.5rem;
+    }
+    .lux-checkbox input { appearance: none; -webkit-appearance: none; width: 1.1rem; height: 1.1rem; border: 1px solid var(--lux-line); background: transparent; cursor: pointer; position: relative; flex-shrink: 0; }
+    .lux-checkbox input:checked { border-color: var(--lux-gold); background: var(--lux-gold); }
+    .lux-checkbox input:checked::after {
+        content: ''; position: absolute; left: 3px; top: 0px;
+        width: 4px; height: 8px; border: solid var(--lux-bg);
+        border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+
+    .lux-file {
+        display: block; width: 100%; box-sizing: border-box;
+        padding: 0.85rem 1rem;
+        background: rgba(255,255,255,0.02);
+        border: 1px dashed var(--lux-line);
+        color: var(--lux-text-dim);
+        font-size: 0.85rem; cursor: pointer;
+    }
+    .lux-file:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-file::-webkit-file-upload-button,
+    .lux-file::file-selector-button {
+        background: transparent; border: 1px solid var(--lux-line);
+        color: var(--lux-gold);
+        padding: 0.4rem 0.85rem; font-size: 0.7rem;
+        letter-spacing: 0.2em; text-transform: uppercase;
+        cursor: pointer; margin-inline-end: 0.85rem;
+        font-family: inherit;
+    }
+    .lux-file::-webkit-file-upload-button:hover,
+    .lux-file::file-selector-button:hover { border-color: var(--lux-gold); background: rgba(201,164,90,0.08); }
+    .lux-file-hint { color: var(--lux-text-dim); font-size: 0.75rem; margin-top: 0.5rem; letter-spacing: 0.05em; }
+
+    .lux-current-img {
+        margin-bottom: 0.75rem;
+        display: inline-block; border: 1px solid var(--lux-line); padding: 4px;
+        background: rgba(0,0,0,0.4);
+    }
+    .lux-current-img img { display: block; width: 9rem; height: 6.5rem; object-fit: cover; }
+
+    .lux-gallery-current { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .lux-gallery-current-item {
+        position: relative;
+        border: 1px solid var(--lux-line); padding: 4px;
+        background: rgba(0,0,0,0.4);
+        transition: border-color 0.2s ease;
+    }
+    .lux-gallery-current-item:hover { border-color: var(--lux-gold); }
+    .lux-gallery-current-item img { display: block; width: 6rem; height: 5rem; object-fit: cover; }
+    .lux-gallery-remove {
+        position: absolute; top: -0.5rem; inset-inline-end: -0.5rem;
+        width: 1.5rem; height: 1.5rem;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--lux-bg); border: 1px solid var(--lux-line);
+        color: #d97777; text-decoration: none;
+        font-size: 0.85rem; line-height: 1;
+        opacity: 0; transition: opacity 0.2s ease, border-color 0.2s ease;
+    }
+    .lux-gallery-current-item:hover .lux-gallery-remove { opacity: 1; }
+    .lux-gallery-remove:hover { border-color: #d97777; }
+
+    .lux-image-preview { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.85rem; }
+    .lux-image-preview.hidden { display: none; }
+    .lux-image-preview-item {
+        position: relative;
+        border: 1px solid var(--lux-line); padding: 4px;
+    }
+    .lux-image-preview-item img { display: block; width: 6rem; height: 5rem; object-fit: cover; }
+    .lux-image-preview-item .idx {
+        position: absolute; top: -0.5rem; inset-inline-start: -0.5rem;
+        width: 1.5rem; height: 1.5rem;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--lux-gold); color: var(--lux-bg);
+        font-size: 0.7rem; font-weight: 700;
+    }
+
+    .lux-progress-wrap { margin-top: 0.85rem; }
+    .lux-progress-wrap.hidden { display: none; }
+    .lux-progress-bar { height: 2px; background: rgba(201,164,90,0.15); overflow: hidden; }
+    .lux-progress-bar > span { display: block; height: 100%; width: 0%; background: var(--lux-gold); transition: width 0.3s ease; }
+    .lux-progress-text { color: var(--lux-text-dim); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.5rem; text-align: center; }
+
+    .lux-form-actions {
+        display: flex; gap: 1rem; align-items: stretch;
+        padding: 2rem 2.25rem;
+    }
+    .lux-form-actions .lux-submit {
+        flex: 1; margin-top: 0;
+        padding: 1.1rem 1.5rem;
+    }
+    .lux-form-actions .lux-submit:disabled {
+        opacity: 0.55; cursor: not-allowed;
+        background: var(--lux-gold); color: var(--lux-bg);
+    }
+    .lux-cancel {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 1.1rem 2rem;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+        text-decoration: none;
+        font-size: 0.8rem; letter-spacing: 0.3em; text-transform: uppercase;
+        transition: all 0.2s ease;
+    }
+    .lux-cancel:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    @media (max-width: 600px) {
+        .lux-form-actions { flex-direction: column; padding: 1.5rem 1.25rem; }
+        .lux-cancel { padding: 1rem; }
+    }
+</style>
+
+<section class="lux-form-page">
+    <a href="{% url 'site_car_list' %}" class="lux-form-back">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <span class="bilingual" data-lang-ar="العودة إلى القائمة" data-lang-en="Back to Inventory" data-lang-es="Volver al inventario" data-lang-ru="Назад к списку">العودة إلى القائمة</span>
+    </a>
+
+    <div class="lux-form-head">
+        <div class="eyebrow bilingual"
+             data-lang-ar="{% if action == 'add' %}سيارة جديدة{% else %}تحرير{% endif %}"
+             data-lang-en="{% if action == 'add' %}New Vehicle{% else %}Edit Vehicle{% endif %}"
+             data-lang-es="{% if action == 'add' %}Vehículo nuevo{% else %}Editar vehículo{% endif %}"
+             data-lang-ru="{% if action == 'add' %}Новый автомобиль{% else %}Редактирование{% endif %}">
+            {% if action == 'add' %}سيارة جديدة{% else %}تحرير{% endif %}
+        </div>
+        <h1 class="bilingual"
+            data-lang-ar="{% if action == 'add' %}إضافة سيارة جديدة{% else %}تعديل السيارة{% endif %}"
+            data-lang-en="{% if action == 'add' %}Add a New Vehicle{% else %}Edit Vehicle{% endif %}"
+            data-lang-es="{% if action == 'add' %}Añadir un vehículo nuevo{% else %}Editar vehículo{% endif %}"
+            data-lang-ru="{% if action == 'add' %}Добавить новый автомобиль{% else %}Редактировать автомобиль{% endif %}">
+            {% if action == 'add' %}إضافة سيارة جديدة{% else %}تعديل السيارة{% endif %}
+        </h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="lux-form-card">
+        {% csrf_token %}
+
+        <div class="lux-form-section">
+            <div class="lux-form-section-title bilingual" data-lang-ar="المعلومات الأساسية" data-lang-en="Basic Information" data-lang-es="Información básica" data-lang-ru="Основная информация">المعلومات الأساسية</div>
+            <div class="lux-form-grid cols-2">
+                <div class="span-2">
+                    <label class="bilingual" data-lang-ar="العنوان" data-lang-en="Title" data-lang-es="Título" data-lang-ru="Название">العنوان<span class="req">*</span></label>
+                    <input type="text" name="title" value="{{ car.title|default:'' }}" required>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">الشركة المصنعة<span class="req">*</span></label>
+                    <input type="text" name="manufacturer" id="manufacturer-input" value="{{ car.manufacturer|default:'' }}" required list="manufacturers-list">
+                    <datalist id="manufacturers-list">
+                        {% for m in manufacturers %}
+                        <option value="{{ m.name }}">{{ m.name_ar|default:m.name }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الموديل" data-lang-en="Model" data-lang-es="Modelo" data-lang-ru="Модель">الموديل<span class="req">*</span></label>
+                    <input type="text" name="model" id="model-input" value="{{ car.model|default:'' }}" required list="models-list">
+                    <datalist id="models-list">
+                        {% for m in car_models %}
+                        <option value="{{ m.name }}" data-manufacturer="{{ m.manufacturer.name }}">{{ m.name }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع<span class="req">*</span></label>
+                    <input type="number" name="year" value="{{ car.year|default:2024 }}" min="1900" max="2030" required>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</label>
+                    <input type="text" name="color" value="{{ car.color|default:'' }}">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="رقم الشاسيه (VIN)" data-lang-en="VIN" data-lang-es="VIN" data-lang-ru="VIN">رقم الشاسيه (VIN)</label>
+                    <input type="text" name="vin" value="{{ car.vin|default:'' }}" maxlength="64" placeholder="—">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="رقم اللوحة" data-lang-en="Plate Number" data-lang-es="Matrícula" data-lang-ru="Номер">رقم اللوحة</label>
+                    <input type="text" name="plate_number" value="{{ car.plate_number|default:'' }}" maxlength="32" placeholder="—">
+                </div>
+            </div>
+        </div>
+
+        <div class="lux-form-section">
+            <div class="lux-form-section-title bilingual" data-lang-ar="المواصفات" data-lang-en="Specifications" data-lang-es="Especificaciones" data-lang-ru="Характеристики">المواصفات</div>
+            <div class="lux-form-grid cols-3">
+                <div>
+                    <label class="bilingual" data-lang-ar="المسافة المقطوعة (كم)" data-lang-en="Mileage (km)" data-lang-es="Kilometraje (km)" data-lang-ru="Пробег (км)">المسافة المقطوعة (كم)</label>
+                    <input type="number" name="mileage" value="{{ car.mileage|default:0 }}" min="0">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">ناقل الحركة</label>
+                    <select name="transmission">
+                        <option value="">—</option>
+                        <option value="أوتوماتيك" {% if car.transmission == 'أوتوماتيك' %}selected{% endif %}>أوتوماتيك</option>
+                        <option value="مانيوال" {% if car.transmission == 'مانيوال' %}selected{% endif %}>مانيوال</option>
+                        <option value="CVT" {% if car.transmission == 'CVT' %}selected{% endif %}>CVT</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</label>
+                    <select name="fuel">
+                        <option value="">—</option>
+                        <option value="بنزين" {% if car.fuel == 'بنزين' %}selected{% endif %}>بنزين</option>
+                        <option value="ديزل" {% if car.fuel == 'ديزل' %}selected{% endif %}>ديزل</option>
+                        <option value="هايبرد" {% if car.fuel == 'هايبرد' %}selected{% endif %}>هايبرد</option>
+                        <option value="كهربائي" {% if car.fuel == 'كهربائي' %}selected{% endif %}>كهربائي</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Тип кузова">نوع الهيكل</label>
+                    <select name="body_type">
+                        <option value="">—</option>
+                        <option value="سيدان" {% if car.body_type == 'سيدان' %}selected{% endif %}>سيدان</option>
+                        <option value="SUV" {% if car.body_type == 'SUV' %}selected{% endif %}>SUV</option>
+                        <option value="هاتشباك" {% if car.body_type == 'هاتشباك' %}selected{% endif %}>هاتشباك</option>
+                        <option value="كوبيه" {% if car.body_type == 'كوبيه' %}selected{% endif %}>كوبيه</option>
+                        <option value="فان" {% if car.body_type == 'فان' %}selected{% endif %}>فان</option>
+                        <option value="بيك أب" {% if car.body_type == 'بيك أب' %}selected{% endif %}>بيك أب</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</label>
+                    <input type="text" name="engine" value="{{ car.engine|default:'' }}" placeholder="2.0L">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="نظام الدفع" data-lang-en="Drivetrain" data-lang-es="Tracción" data-lang-ru="Привод">نظام الدفع</label>
+                    <select name="drive_wheel">
+                        <option value="">—</option>
+                        <option value="أمامي" {% if car.drive_wheel == 'أمامي' %}selected{% endif %}>دفع أمامي</option>
+                        <option value="خلفي" {% if car.drive_wheel == 'خلفي' %}selected{% endif %}>دفع خلفي</option>
+                        <option value="رباعي" {% if car.drive_wheel == 'رباعي' %}selected{% endif %}>دفع رباعي</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="lux-form-section">
+            <div class="lux-form-section-title bilingual" data-lang-ar="السعر والحالة" data-lang-en="Price & Status" data-lang-es="Precio y estado" data-lang-ru="Цена и статус">السعر والحالة</div>
+            <div class="lux-form-grid cols-3">
+                <div>
+                    <label class="bilingual" data-lang-ar="السعر (₩)" data-lang-en="Price (₩)" data-lang-es="Precio (₩)" data-lang-ru="Цена (₩)">السعر (₩)<span class="req">*</span></label>
+                    <input type="number" name="price" value="{{ car.price|default:0 }}" min="0" required>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الحالة" data-lang-en="Status" data-lang-es="Estado" data-lang-ru="Статус">الحالة</label>
+                    <select name="status">
+                        <option value="available" {% if car.status == 'available' %}selected{% endif %}>متاح</option>
+                        <option value="pending" {% if car.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                        <option value="sold" {% if car.status == 'sold' %}selected{% endif %}>تم البيع</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="مميزة" data-lang-en="Featured" data-lang-es="Destacado" data-lang-ru="Избранное">مميزة</label>
+                    <label class="lux-checkbox">
+                        <input type="checkbox" name="is_featured" {% if car.is_featured %}checked{% endif %}>
+                        <span class="bilingual" data-lang-ar="عرض كسيارة مميزة" data-lang-en="Show as featured" data-lang-es="Mostrar como destacado" data-lang-ru="Показать как избранное">عرض كسيارة مميزة</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="lux-form-section">
+            <div class="lux-form-section-title bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</div>
+            <textarea name="description" placeholder="—" rows="4">{{ car.description|default:'' }}</textarea>
+        </div>
+
+        <div class="lux-form-section">
+            <div class="lux-form-section-title bilingual" data-lang-ar="الصور" data-lang-en="Imagery" data-lang-es="Imágenes" data-lang-ru="Изображения">الصور</div>
+
+            <div class="lux-form-grid">
+                <div>
+                    <label class="bilingual" data-lang-ar="الصورة الرئيسية" data-lang-en="Main Image" data-lang-es="Imagen principal" data-lang-ru="Основное фото">الصورة الرئيسية</label>
+                    {% if car.image %}
+                    <div class="lux-current-img"><img src="{{ car.image.url }}" alt="Current image"></div>
+                    {% endif %}
+                    <input type="file" name="image" accept="image/*" class="lux-file">
+                </div>
+
+                <div>
+                    <label class="bilingual" data-lang-ar="معرض الصور" data-lang-en="Gallery" data-lang-es="Galería" data-lang-ru="Галерея">معرض الصور</label>
+                    {% if car.gallery.all %}
+                    <div class="lux-gallery-current">
+                        {% for img in car.gallery.all %}
+                        <div class="lux-gallery-current-item">
+                            <img src="{{ img.image.url }}" alt="Gallery image">
+                            <a href="{% url 'site_car_delete_image' car.pk img.pk %}"
+                               onclick="return confirm('هل أنت متأكد من حذف هذه الصورة؟')"
+                               class="lux-gallery-remove" aria-label="Remove">×</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="gallery" accept="image/*" multiple id="gallery-input" class="lux-file">
+                    <p class="lux-file-hint bilingual" data-lang-ar="حد أقصى 20 صورة. حجم كل صورة حتى 10 ميجابايت." data-lang-en="Up to 20 images, 10MB each." data-lang-es="Hasta 20 imágenes, máx. 10 MB cada una." data-lang-ru="До 20 изображений, по 10 МБ.">حد أقصى 20 صورة. حجم كل صورة حتى 10 ميجابايت.</p>
+                    <div id="image-preview" class="lux-image-preview hidden"></div>
+                    <div id="upload-progress" class="lux-progress-wrap hidden">
+                        <div class="lux-progress-bar"><span id="progress-bar"></span></div>
+                        <div class="lux-progress-text" id="progress-text">جاري الرفع...</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="bilingual" data-lang-ar="صورة الفحص" data-lang-en="Inspection Image" data-lang-es="Inspección" data-lang-ru="Инспекция">صورة الفحص</label>
+                    {% if car.inspection_image %}
+                    <div class="lux-current-img"><a href="{{ car.inspection_image.url }}" target="_blank"><img src="{{ car.inspection_image.url }}" alt="Inspection"></a></div>
+                    {% endif %}
+                    <input type="file" name="inspection_image" accept="image/*" class="lux-file">
+                    <p class="lux-file-hint bilingual" data-lang-ar="تقرير الفحص الفني (اختياري)" data-lang-en="Mechanical inspection report (optional)" data-lang-es="Informe de inspección (opcional)" data-lang-ru="Отчёт об осмотре (необязательно)">تقرير الفحص الفني (اختياري)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="lux-form-actions">
+            <button type="submit" id="submit-btn" class="lux-submit bilingual"
+                    data-lang-ar="{% if action == 'add' %}إضافة السيارة{% else %}حفظ التغييرات{% endif %}"
+                    data-lang-en="{% if action == 'add' %}Add Vehicle{% else %}Save Changes{% endif %}"
+                    data-lang-es="{% if action == 'add' %}Añadir vehículo{% else %}Guardar cambios{% endif %}"
+                    data-lang-ru="{% if action == 'add' %}Добавить{% else %}Сохранить{% endif %}">
+                {% if action == 'add' %}إضافة السيارة{% else %}حفظ التغييرات{% endif %}
+            </button>
+            <a href="{% url 'site_car_list' %}" class="lux-cancel bilingual" data-lang-ar="إلغاء" data-lang-en="Cancel" data-lang-es="Cancelar" data-lang-ru="Отмена">إلغاء</a>
+        </div>
+    </form>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var galleryInput = document.getElementById('gallery-input');
+    var imagePreview = document.getElementById('image-preview');
+    var form = document.querySelector('form.lux-form-card');
+    var submitBtn = document.getElementById('submit-btn');
+    var uploadProgress = document.getElementById('upload-progress');
+    var progressBar = document.getElementById('progress-bar');
+    var progressText = document.getElementById('progress-text');
+
+    var MAX_IMAGES = 20;
+    var MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+    if (galleryInput) {
+        galleryInput.addEventListener('change', function(e) {
+            var files = Array.from(e.target.files);
+
+            if (files.length > MAX_IMAGES) {
+                alert('يمكنك رفع ' + MAX_IMAGES + ' صورة كحد أقصى في المرة الواحدة');
+                e.target.value = '';
+                return;
+            }
+
+            var oversized = files.filter(function(f){ return f.size > MAX_FILE_SIZE; });
+            if (oversized.length > 0) {
+                alert('بعض الصور تتجاوز الحد الأقصى للحجم (10 ميجابايت). سيتم تجاهلها.');
+            }
+
+            imagePreview.innerHTML = '';
+
+            if (files.length > 0) {
+                imagePreview.classList.remove('hidden');
+                files.forEach(function(file, index) {
+                    if (file.size <= MAX_FILE_SIZE) {
+                        var reader = new FileReader();
+                        reader.onload = function(ev) {
+                            var div = document.createElement('div');
+                            div.className = 'lux-image-preview-item';
+                            div.innerHTML =
+                                '<img src="' + ev.target.result + '" alt="">' +
+                                '<span class="idx">' + (index + 1) + '</span>';
+                            imagePreview.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                progressText.textContent = 'تم اختيار ' + files.filter(function(f){ return f.size <= MAX_FILE_SIZE; }).length + ' صورة';
+            } else {
+                imagePreview.classList.add('hidden');
+            }
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function() {
+            var files = galleryInput ? galleryInput.files : [];
+            if (files.length > 0) {
+                uploadProgress.classList.remove('hidden');
+                submitBtn.disabled = true;
+                var progress = 0;
+                var interval = setInterval(function() {
+                    progress += 5;
+                    if (progress >= 90) clearInterval(interval);
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = 'جاري الرفع... ' + progress + '%';
+                }, 100);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

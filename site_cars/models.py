@@ -41,6 +41,14 @@ class SiteCar(models.Model):
         max_length=50, blank=True, default='', db_index=True,
         verbose_name="رقم التسجيل",
     )
+    vin = models.CharField(
+        max_length=64, null=True, blank=True, db_index=True,
+        verbose_name="رقم الشاسيه (VIN)",
+    )
+    plate_number = models.CharField(
+        max_length=32, null=True, blank=True, db_index=True,
+        verbose_name="رقم اللوحة",
+    )
     source_url = models.URLField(
         max_length=500, blank=True, default='',
         verbose_name="رابط الإعلان المصدر",

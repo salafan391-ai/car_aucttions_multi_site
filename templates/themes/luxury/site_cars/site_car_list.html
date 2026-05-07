@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}{% if is_auctions_tab %}سيارات مصدومة{% else %}سياراتنا{% endif %} — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    .lux-page { background: var(--lux-bg); color: var(--lux-text); min-height: 100vh; padding: 3.5rem 1.5rem; }
+    .lux-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+    .lux-wrap { max-width: 1320px; margin: 0 auto; }
+
+    .lux-hero {
+        display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-end;
+        padding-bottom: 2rem; border-bottom: 1px solid var(--lux-line); margin-bottom: 2rem;
+    }
+    .lux-hero-text { flex: 1; min-width: 260px; }
+    .lux-hero-eyebrow { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.4rem; }
+    .lux-hero h1 { font-size: 2.25rem; font-weight: 400; margin: 0 0 0.4rem; letter-spacing: 0.04em; }
+    .lux-hero p { color: var(--lux-text-dim); font-size: 0.9rem; margin: 0; line-height: 1.5; }
+
+    .lux-add-btn {
+        display: inline-flex; align-items: center; gap: 0.55rem;
+        padding: 0.85rem 1.5rem;
+        background: var(--lux-gold); color: var(--lux-bg);
+        text-decoration: none; border: 1px solid var(--lux-gold);
+        font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .lux-add-btn:hover { background: var(--lux-gold-bright); border-color: var(--lux-gold-bright); }
+    .lux-add-btn svg { width: 0.9rem; height: 0.9rem; }
+
+    .lux-tabs-row {
+        display: flex; gap: 0; border: 1px solid var(--lux-line);
+        margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .lux-tab {
+        padding: 0.7rem 1.25rem; color: var(--lux-text-dim); text-decoration: none;
+        font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+        border-right: 1px solid var(--lux-line);
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    .lux-tab:last-child { border-right: none; }
+    .lux-tab:hover { color: var(--lux-gold); }
+    .lux-tab.active { background: var(--lux-gold); color: var(--lux-bg); }
+    .lux-tab-count {
+        background: rgba(201,164,90,0.15); color: var(--lux-gold);
+        padding: 0.05rem 0.5rem;
+        font-size: 0.65rem; letter-spacing: 0.05em;
+    }
+    .lux-tab.active .lux-tab-count { background: rgba(10,10,10,0.2); color: var(--lux-bg); }
+
+    .lux-status-row {
+        display: flex; gap: 0.5rem; flex-wrap: wrap;
+        margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--lux-line);
+    }
+    .lux-status-tab {
+        padding: 0.45rem 1rem; text-decoration: none;
+        font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+        transition: all 0.2s ease;
+    }
+    .lux-status-tab:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-status-tab.active { background: rgba(201,164,90,0.14); border-color: var(--lux-gold); color: var(--lux-gold-bright); }
+
+    .lux-filter-form {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line);
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 2rem;
+    }
+    .lux-filter-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .lux-filter-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 700px) { .lux-filter-grid .span-2 { grid-column: span 1; } }
+    .lux-filter-form label {
+        display: block; color: var(--lux-text-dim);
+        font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    .lux-filter-form input,
+    .lux-filter-form select {
+        width: 100%; box-sizing: border-box;
+        background: transparent; border: 1px solid var(--lux-line);
+        color: var(--lux-text); padding: 0.6rem 0.75rem;
+        font-size: 0.85rem; font-family: inherit;
+        transition: border-color 0.2s ease;
+    }
+    .lux-filter-form input:focus,
+    .lux-filter-form select:focus { outline: none; border-color: var(--lux-gold); }
+    .lux-filter-form select option { background: #0f0d0a; color: var(--lux-text); }
+    .lux-filter-actions {
+        display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+        padding-top: 1.25rem; margin-top: 1.25rem; border-top: 1px solid var(--lux-line);
+    }
+    .lux-filter-submit {
+        padding: 0.7rem 1.5rem;
+        background: var(--lux-gold); color: var(--lux-bg);
+        border: 1px solid var(--lux-gold); cursor: pointer;
+        font-family: inherit; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .lux-filter-submit:hover { background: var(--lux-gold-bright); border-color: var(--lux-gold-bright); }
+    .lux-filter-reset {
+        padding: 0.7rem 1.25rem; text-decoration: none;
+        color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+        border: 1px solid var(--lux-line); transition: all 0.2s ease;
+    }
+    .lux-filter-reset:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-filter-count { margin-inline-start: auto; color: var(--lux-text-dim); font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; }
+
+    .lux-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .lux-card {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line); overflow: hidden;
+        text-decoration: none; color: inherit; display: block;
+        transition: all 0.4s ease; position: relative;
+    }
+    .lux-card:hover { border-color: var(--lux-gold); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(201,164,90,0.15); }
+    .lux-card-link { display: block; text-decoration: none; color: inherit; }
+    .lux-card-img { aspect-ratio: 4/3; background: #000; overflow: hidden; position: relative; }
+    .lux-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; filter: brightness(0.92); }
+    .lux-card:hover .lux-card-img img { transform: scale(1.05); filter: brightness(1); }
+    .lux-card-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(201,164,90,0.25); }
+    .lux-card-img-placeholder svg { width: 4rem; height: 4rem; }
+
+    .lux-card-badge {
+        position: absolute; top: 0.75rem;
+        padding: 0.25rem 0.65rem;
+        font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+        background: rgba(10,10,10,0.75); border: 1px solid var(--lux-line);
+        backdrop-filter: blur(6px);
+    }
+    .lux-card-badge.featured { color: var(--lux-gold-bright); border-color: rgba(201,164,90,0.5); inset-inline-end: 0.75rem; }
+    .lux-card-badge.status { inset-inline-start: 0.75rem; }
+    .lux-card-badge.status-sold { color: #d97777; border-color: rgba(217,119,119,0.45); }
+    .lux-card-badge.status-pending { color: var(--lux-gold); }
+    .lux-card-badge.status-damaged { color: #d99a77; border-color: rgba(217,154,119,0.45); }
+    .lux-card-badge.accidents {
+        top: 0.75rem; inset-inline: 0; margin: 0 auto;
+        width: max-content; color: #d97777; border-color: rgba(217,119,119,0.45);
+    }
+    .lux-card-photos {
+        position: absolute; bottom: 0.75rem; inset-inline-end: 0.75rem;
+        background: rgba(10,10,10,0.75); border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); padding: 0.2rem 0.5rem;
+        font-size: 0.65rem; letter-spacing: 0.1em;
+    }
+
+    .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
+    .lux-card-make { color: var(--lux-gold); font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.4rem; }
+    .lux-card-name { color: var(--lux-text); font-size: 1.05rem; margin: 0 0 0.4rem; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lux-card-reg { color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.1em; margin-bottom: 0.7rem; }
+    .lux-card-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.85rem; }
+    .lux-card-tag {
+        padding: 0.18rem 0.5rem; border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); font-size: 0.65rem; letter-spacing: 0.1em;
+        background: rgba(255,255,255,0.02);
+    }
+    .lux-card-price { color: var(--lux-gold-bright); font-size: 1.15rem; font-weight: 600; letter-spacing: 0.05em; padding-top: 0.75rem; border-top: 1px solid var(--lux-line); }
+    .lux-card-foot { color: var(--lux-text-dim); font-size: 0.72rem; margin-top: 0.5rem; line-height: 1.5; }
+
+    /* Admin actions on the card */
+    .lux-card-admin {
+        position: absolute; top: 0.75rem; inset-inline-start: 0.75rem;
+        display: flex; gap: 0.4rem; opacity: 0; z-index: 5;
+        transition: opacity 0.25s ease;
+    }
+    .lux-card:hover .lux-card-admin { opacity: 1; }
+    .lux-card-admin a, .lux-card-admin .disabled-action {
+        width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(10,10,10,0.85); border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); text-decoration: none;
+        backdrop-filter: blur(6px);
+        transition: all 0.2s ease;
+    }
+    .lux-card-admin a:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-card-admin a.danger:hover { border-color: #d97777; color: #d97777; }
+    .lux-card-admin .disabled-action { opacity: 0.4; cursor: not-allowed; }
+    .lux-card-admin svg { width: 0.9rem; height: 0.9rem; }
+
+    .lux-card-status-btn {
+        position: absolute; bottom: 4.25rem; inset-inline-start: 0.75rem;
+        z-index: 5; opacity: 0; transition: opacity 0.25s ease;
+    }
+    .lux-card:hover .lux-card-status-btn { opacity: 1; }
+    .lux-card-status-toggle {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.3rem 0.7rem;
+        background: rgba(10,10,10,0.85); border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); cursor: pointer; font-family: inherit;
+        font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+        backdrop-filter: blur(6px);
+    }
+    .lux-card-status-toggle:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-card-status-toggle .dot { width: 0.4rem; height: 0.4rem; border-radius: 50%; flex-shrink: 0; }
+    .lux-card-status-toggle .dot.dot-available { background: #7dd17d; }
+    .lux-card-status-toggle .dot.dot-pending { background: var(--lux-gold); }
+    .lux-card-status-toggle .dot.dot-sold { background: #d97777; }
+    .lux-card-status-toggle svg { width: 0.6rem; height: 0.6rem; }
+    .lux-status-menu {
+        position: absolute; bottom: calc(100% + 0.4rem); inset-inline-start: 0;
+        background: #0f0d0a; border: 1px solid var(--lux-line);
+        min-width: 9rem; padding: 0.3rem 0;
+    }
+    .lux-status-menu.hidden { display: none; }
+    .lux-status-menu button {
+        width: 100%; text-align: start;
+        padding: 0.55rem 0.9rem;
+        background: transparent; border: 0; cursor: pointer;
+        font-family: inherit; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+        color: var(--lux-text-dim);
+        display: flex; align-items: center; gap: 0.5rem;
+        transition: all 0.15s ease;
+    }
+    .lux-status-menu button:hover { background: rgba(201,164,90,0.08); color: var(--lux-gold); }
+    .lux-status-menu button.is-current { color: var(--lux-gold-bright); }
+
+    .lux-empty {
+        text-align: center; color: var(--lux-text-dim);
+        padding: 5rem 2rem; grid-column: 1/-1;
+        border: 1px dashed var(--lux-line);
+        font-style: italic; letter-spacing: 0.1em;
+    }
+    .lux-empty svg { width: 3rem; height: 3rem; margin: 0 auto 1rem; color: rgba(201,164,90,0.3); }
+
+    .lux-pager { display: flex; justify-content: center; gap: 0.4rem; margin-top: 3rem; flex-wrap: wrap; }
+    .lux-pager a, .lux-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 0.85rem;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+        text-decoration: none; font-size: 0.8rem; letter-spacing: 0.1em;
+    }
+    .lux-pager a:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-pager .current { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
+    .lux-pager .disabled { opacity: 0.4; }
+    .lux-pager-info { width: 100%; text-align: center; color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.5rem; }
+
+    @media (max-width: 600px) {
+        .lux-page { padding: 2rem 1rem; }
+        .lux-hero h1 { font-size: 1.6rem; }
+        .lux-tab { padding: 0.55rem 0.9rem; font-size: 0.65rem; letter-spacing: 0.15em; }
+    }
+</style>
+
+<section class="lux-page">
+    <div class="lux-wrap">
+        <div class="lux-hero">
+            <div class="lux-hero-text">
+                <div class="lux-hero-eyebrow bilingual" data-lang-ar="مجموعتنا" data-lang-en="Our Collection" data-lang-es="Nuestra colección" data-lang-ru="Наша коллекция">مجموعتنا</div>
+                <h1>
+                    {% if is_auctions_tab %}
+                    <span class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-en="Damaged Cars" data-lang-es="Coches dañados" data-lang-ru="Поврежденные авто">سيارات مصدومة</span>
+                    {% else %}
+                    <span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</span>
+                    {% endif %}
+                </h1>
+                <p>
+                    {% if is_auctions_tab %}
+                    <span class="bilingual" data-lang-ar="سيارات مستوردة بحالة ضرر من كوريا" data-lang-en="Cars imported from Korea in damaged condition" data-lang-es="Coches importados de Corea en estado dañado" data-lang-ru="Авто, импортированные из Кореи в поврежденном состоянии">سيارات مستوردة بحالة ضرر من كوريا</span>
+                    {% else %}
+                    <span class="bilingual" data-lang-ar="سيارات للبيع المباشر من {{ site_name|default:'موقعنا' }}" data-lang-en="Direct-sale cars from {{ site_name|default:'our site' }}" data-lang-es="Coches en venta directa de {{ site_name|default:'nuestro sitio' }}" data-lang-ru="Авто в прямой продаже от {{ site_name|default:'нашего сайта' }}">سيارات للبيع المباشر من {{ site_name|default:"موقعنا" }}</span>
+                    {% endif %}
+                </p>
+            </div>
+            {% if user.is_staff and not is_auctions_tab %}
+            <a href="{% url 'site_car_add' %}" class="lux-add-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir coche" data-lang-ru="Добавить авто">أضف سيارة</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="lux-tabs-row">
+            <a href="?source=mine" class="lux-tab {% if not is_auctions_tab %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</span>
+                <span class="lux-tab-count">{{ mine_total }}</span>
+            </a>
+            <a href="?source=auctions" class="lux-tab {% if is_auctions_tab %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-en="Damaged" data-lang-es="Dañados" data-lang-ru="Повреждённые">سيارات مصدومة</span>
+                <span class="lux-tab-count">{{ auctions_total }}</span>
+            </a>
+        </div>
+
+        <div class="lux-status-row">
+            <a href="?source={{ current_source }}&status=active" class="lux-status-tab {% if current_status == 'active' or not current_status %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="المتاحة" data-lang-en="Available" data-lang-es="Disponibles" data-lang-ru="Доступные">المتاحة</span>
+                · {{ active_count }}
+            </a>
+            <a href="?source={{ current_source }}&status=sold" class="lux-status-tab {% if current_status == 'sold' %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="المباعة" data-lang-en="Sold" data-lang-es="Vendidos" data-lang-ru="Проданные">المباعة</span>
+                · {{ sold_count }}
+            </a>
+            <a href="?source={{ current_source }}&status=all" class="lux-status-tab {% if current_status == 'all' %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</span>
+            </a>
+        </div>
+
+        <form method="get" class="lux-filter-form">
+            <input type="hidden" name="source" value="{{ current_source }}">
+            <input type="hidden" name="status" value="{{ current_status }}">
+            <div class="lux-filter-grid">
+                <div class="span-2">
+                    <label class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>
+                    <input type="text" name="q" value="{{ filter_q }}"
+                        placeholder="—"
+                        data-placeholder-ar="العنوان أو الموديل أو رقم التسجيل"
+                        data-placeholder-en="Title, model, or registration"
+                        data-placeholder-es="Título, modelo o matrícula"
+                        data-placeholder-ru="Название, модель или рег. номер">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الشركة" data-lang-en="Make" data-lang-es="Marca" data-lang-ru="Марка">الشركة</label>
+                    <select name="make">
+                        <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All makes" data-lang-es="Todas" data-lang-ru="Все марки">كل الماركات</option>
+                        {% for m in makes %}
+                        <option value="{{ m }}" {% if filter_make == m %}selected{% endif %}>{{ m|pretty_en }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</label>
+                    <select name="fuel">
+                        <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</option>
+                        {% for f in fuels %}
+                        <option value="{{ f }}" {% if filter_fuel == f %}selected{% endif %}>{{ f|pretty_en }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Коробка">ناقل الحركة</label>
+                    <select name="transmission">
+                        <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</option>
+                        {% for t in transmissions %}
+                        <option value="{{ t }}" {% if filter_transmission == t %}selected{% endif %}>{{ t|pretty_en }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الترتيب" data-lang-en="Sort" data-lang-es="Orden" data-lang-ru="Сорт.">الترتيب</label>
+                    <select name="sort">
+                        <option value="-created_at" {% if current_sort == "-created_at" %}selected{% endif %} class="bilingual" data-lang-ar="الأحدث" data-lang-en="Newest" data-lang-es="Recientes" data-lang-ru="Новые">الأحدث</option>
+                        <option value="-year" {% if current_sort == "-year" %}selected{% endif %} class="bilingual" data-lang-ar="السنة (الأحدث)" data-lang-en="Year ↓" data-lang-es="Año ↓" data-lang-ru="Год ↓">السنة (الأحدث)</option>
+                        <option value="year" {% if current_sort == "year" %}selected{% endif %} class="bilingual" data-lang-ar="السنة (الأقدم)" data-lang-en="Year ↑" data-lang-es="Año ↑" data-lang-ru="Год ↑">السنة (الأقدم)</option>
+                        <option value="price" {% if current_sort == "price" %}selected{% endif %} class="bilingual" data-lang-ar="السعر (الأقل)" data-lang-en="Price ↑" data-lang-es="Precio ↑" data-lang-ru="Цена ↑">السعر (الأقل)</option>
+                        <option value="-price" {% if current_sort == "-price" %}selected{% endif %} class="bilingual" data-lang-ar="السعر (الأعلى)" data-lang-en="Price ↓" data-lang-es="Precio ↓" data-lang-ru="Цена ↓">السعر (الأعلى)</option>
+                        <option value="mileage" {% if current_sort == "mileage" %}selected{% endif %} class="bilingual" data-lang-ar="الكم (الأقل)" data-lang-en="Km ↑" data-lang-es="Km ↑" data-lang-ru="Км ↑">الكم (الأقل)</option>
+                        <option value="-mileage" {% if current_sort == "-mileage" %}selected{% endif %} class="bilingual" data-lang-ar="الكم (الأعلى)" data-lang-en="Km ↓" data-lang-es="Km ↓" data-lang-ru="Км ↓">الكم (الأعلى)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="من سنة" data-lang-en="From Year" data-lang-es="Desde" data-lang-ru="С года">من سنة</label>
+                    <input type="number" name="year_min" value="{{ filter_year_min }}" min="1990" max="2030">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="إلى سنة" data-lang-en="To Year" data-lang-es="Hasta" data-lang-ru="По год">إلى سنة</label>
+                    <input type="number" name="year_max" value="{{ filter_year_max }}" min="1990" max="2030">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="أقل سعر (₩)" data-lang-en="Min ₩" data-lang-es="Mín ₩" data-lang-ru="Мин ₩">أقل سعر (₩)</label>
+                    <input type="number" name="price_min" value="{{ filter_price_min }}" min="0">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="أعلى سعر (₩)" data-lang-en="Max ₩" data-lang-es="Máx ₩" data-lang-ru="Макс ₩">أعلى سعر (₩)</label>
+                    <input type="number" name="price_max" value="{{ filter_price_max }}" min="0">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="أقصى كم" data-lang-en="Max Km" data-lang-es="Km máx" data-lang-ru="Макс км">أقصى كم</label>
+                    <input type="number" name="km_max" value="{{ filter_km_max }}" min="0">
+                </div>
+            </div>
+            <div class="lux-filter-actions">
+                <button type="submit" class="lux-filter-submit bilingual" data-lang-ar="تطبيق" data-lang-en="Apply" data-lang-es="Aplicar" data-lang-ru="Применить">تطبيق</button>
+                <a href="?source={{ current_source }}&status={{ current_status }}" class="lux-filter-reset bilingual" data-lang-ar="إعادة تعيين" data-lang-en="Reset" data-lang-es="Restablecer" data-lang-ru="Сбросить">إعادة تعيين</a>
+                <span class="lux-filter-count bilingual" data-lang-ar="{{ paginator.count }} نتيجة" data-lang-en="{{ paginator.count }} Results" data-lang-es="{{ paginator.count }} Resultados" data-lang-ru="{{ paginator.count }} результ.">{{ paginator.count }} نتيجة</span>
+            </div>
+        </form>
+
+        <div class="lux-grid">
+            {% for car in site_cars %}
+            <div class="lux-card">
+                <a href="{% url 'site_car_detail' car.id %}" class="lux-card-link">
+                    <div class="lux-card-img car-img-wm">
+                        {% if car.image %}
+                            <img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">
+                        {% elif car.gallery.first %}
+                            <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" loading="lazy">
+                        {% elif car.external_image_url %}
+                            <img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">
+                        {% else %}
+                            <div class="lux-card-img-placeholder">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
+                        {% endif %}
+
+                        {% if car.is_featured %}
+                        <div class="lux-card-badge featured bilingual" data-lang-ar="مميزة" data-lang-en="Featured" data-lang-es="Destacada" data-lang-ru="Избранное">مميزة</div>
+                        {% endif %}
+
+                        {% if car.status == 'sold' %}
+                        <div class="lux-card-badge status status-sold bilingual" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продано">تم البيع</div>
+                        {% elif car.source_status == '폐차' %}
+                        <div class="lux-card-badge status status-damaged bilingual" data-lang-ar="تشليح" data-lang-en="Scrap" data-lang-es="Desguace" data-lang-ru="Утиль">تشليح</div>
+                        {% elif car.source_status == '구제' %}
+                        <div class="lux-card-badge status status-damaged bilingual" data-lang-ar="مصدوم" data-lang-en="Damaged" data-lang-es="Dañado" data-lang-ru="Повреждён">مصدوم</div>
+                        {% elif car.source_status == '부품' %}
+                        <div class="lux-card-badge status status-damaged bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Piezas" data-lang-ru="Запчасти">قطع غيار</div>
+                        {% elif car.status == 'pending' %}
+                        <div class="lux-card-badge status status-pending bilingual" data-lang-ar="قيد الانتظار" data-lang-en="Pending" data-lang-es="Pendiente" data-lang-ru="В ожидании">قيد الانتظار</div>
+                        {% endif %}
+
+                        {% if car.claims_count > 0 %}
+                        <div class="lux-card-badge accidents">
+                            ⚠ <span class="bilingual" data-lang-ar="{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}" data-lang-en="{% if car.claims_count == 1 %}1 accident{% else %}{{ car.claims_count }} accidents{% endif %}" data-lang-es="{% if car.claims_count == 1 %}1 accidente{% else %}{{ car.claims_count }} accidentes{% endif %}" data-lang-ru="{% if car.claims_count == 1 %}1 авария{% else %}{{ car.claims_count }} аварий{% endif %}">{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}</span>
+                        </div>
+                        {% endif %}
+
+                        {% with photo_count=car.gallery.count %}
+                        {% if photo_count %}
+                        <div class="lux-card-photos bilingual" data-lang-ar="{{ photo_count }} صور" data-lang-en="{{ photo_count }} photos" data-lang-es="{{ photo_count }} fotos" data-lang-ru="{{ photo_count }} фото">{{ photo_count }} صور</div>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                    <div class="lux-card-body">
+                        {% if car.manufacturer %}
+                        <div class="lux-card-make bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
+                        {% endif %}
+                        <div class="lux-card-name">{{ car.title|pretty_en }}</div>
+                        {% if car.registration_no %}<div class="lux-card-reg">#{{ car.registration_no }}</div>{% endif %}
+                        <div class="lux-card-meta">
+                            {% if car.year %}<span class="lux-card-tag">{{ car.year }}</span>{% endif %}
+                            {% if car.transmission %}<span class="lux-card-tag bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                            {% if car.fuel %}<span class="lux-card-tag bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                            {% if car.mileage %}<span class="lux-card-tag bilingual" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span>{% endif %}
+                            {% if car.engine_cc %}<span class="lux-card-tag">{{ car.engine_cc|floatformat:"0g" }}cc</span>{% endif %}
+                        </div>
+                        <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} ₩</div>
+                        {% if car.location or car.auction_end %}
+                        <div class="lux-card-foot">
+                            {% if car.location %}<div class="bilingual" data-lang-ar="📍 {{ car.location|translate_location }}" data-lang-ru="📍 {{ car.location|translate_location:'ru' }}" data-lang-es="📍 {{ car.location|translate_location:'es' }}" data-lang-en="📍 {{ car.location|translate_location:'en' }}">📍 {{ car.location|translate_location }}</div>{% endif %}
+                            {% if car.auction_end %}<div>🕐 {{ car.auction_end|date:"H:i Y.m.d" }}</div>{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+
+                {% if user.is_staff and not is_auctions_tab %}
+                <div class="lux-card-admin">
+                    <a href="{% url 'site_car_edit' car.id %}" title="Edit" aria-label="Edit">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    {% if car.status != 'sold' %}
+                    <a href="{% url 'site_car_delete' car.id %}" class="danger" title="Delete" aria-label="Delete">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </a>
+                    {% else %}
+                    <span class="disabled-action" title="Sold cars cannot be deleted">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="lux-card-status-btn">
+                    <button type="button" class="lux-card-status-toggle" onclick="luxToggleStatusMenu(this, event)">
+                        <span class="dot {% if car.status == 'available' %}dot-available{% elif car.status == 'pending' %}dot-pending{% else %}dot-sold{% endif %}"></span>
+                        <span>{{ car.get_status_display }}</span>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="lux-status-menu hidden">
+                        <form action="{% url 'site_car_change_status' car.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" name="status" value="available" class="{% if car.status == 'available' %}is-current{% endif %}">
+                                <span class="dot dot-available"></span>
+                                <span class="bilingual" data-lang-ar="متاح" data-lang-en="Available" data-lang-es="Disponible" data-lang-ru="Доступно">متاح</span>
+                            </button>
+                            <button type="submit" name="status" value="pending" class="{% if car.status == 'pending' %}is-current{% endif %}">
+                                <span class="dot dot-pending"></span>
+                                <span class="bilingual" data-lang-ar="قيد الانتظار" data-lang-en="Pending" data-lang-es="Pendiente" data-lang-ru="В ожидании">قيد الانتظار</span>
+                            </button>
+                            <button type="submit" name="status" value="sold" class="{% if car.status == 'sold' %}is-current{% endif %}">
+                                <span class="dot dot-sold"></span>
+                                <span class="bilingual" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продано">تم البيع</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="lux-empty">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <p class="bilingual" data-lang-ar="لا توجد سيارات معروضة حالياً" data-lang-en="No cars currently listed" data-lang-es="No hay coches en la lista actualmente" data-lang-ru="Нет выставленных авто">لا توجد سيارات معروضة حالياً</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if paginator.num_pages > 1 %}
+        <nav class="lux-pager" aria-label="Pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{{ qs_base }}&page=1">«</a>
+            <a href="?{{ qs_base }}&page={{ page_obj.previous_page_number }}" class="bilingual" data-lang-ar="السابق" data-lang-en="Prev" data-lang-es="Ant" data-lang-ru="Назад">السابق</a>
+            {% else %}
+            <span class="disabled">«</span>
+            {% endif %}
+            {% for p in paginator.page_range %}
+                {% if p == page_obj.number %}
+                <span class="current">{{ p }}</span>
+                {% elif p == 1 or p == paginator.num_pages or p|add:"-2" <= page_obj.number and p|add:"2" >= page_obj.number %}
+                <a href="?{{ qs_base }}&page={{ p }}">{{ p }}</a>
+                {% elif p == 2 or p|add:"1" == paginator.num_pages %}
+                <span class="disabled">…</span>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?{{ qs_base }}&page={{ page_obj.next_page_number }}" class="bilingual" data-lang-ar="التالي" data-lang-en="Next" data-lang-es="Sig" data-lang-ru="Далее">التالي</a>
+            <a href="?{{ qs_base }}&page={{ paginator.num_pages }}">»</a>
+            {% else %}
+            <span class="disabled">»</span>
+            {% endif %}
+            <span class="lux-pager-info bilingual"
+                  data-lang-ar="صفحة {{ page_obj.number }} من {{ paginator.num_pages }} · {{ paginator.count }} نتيجة"
+                  data-lang-en="Page {{ page_obj.number }} of {{ paginator.num_pages }} · {{ paginator.count }} results"
+                  data-lang-es="Página {{ page_obj.number }} de {{ paginator.num_pages }} · {{ paginator.count }} resultados"
+                  data-lang-ru="Стр. {{ page_obj.number }} из {{ paginator.num_pages }} · {{ paginator.count }} результатов">
+                صفحة {{ page_obj.number }} من {{ paginator.num_pages }} · {{ paginator.count }} نتيجة
+            </span>
+        </nav>
+        {% endif %}
+    </div>
+</section>
+
+{% if user.is_staff %}
+<script>
+function luxToggleStatusMenu(btn, ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    document.querySelectorAll('.lux-status-menu').forEach(function(menu) {
+        if (menu !== btn.nextElementSibling) menu.classList.add('hidden');
+    });
+    btn.nextElementSibling.classList.toggle('hidden');
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.lux-status-menu') && !e.target.closest('.lux-card-status-toggle')) {
+        document.querySelectorAll('.lux-status-menu').forEach(function(menu) { menu.classList.add('hidden'); });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

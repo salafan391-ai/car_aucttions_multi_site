@@ -230,6 +230,8 @@ def site_car_add(request):
             drive_wheel=request.POST.get('drive_wheel', ''),
             status=request.POST.get('status', 'available'),
             is_featured=request.POST.get('is_featured') == 'on',
+            vin=(request.POST.get('vin') or '').strip() or None,
+            plate_number=(request.POST.get('plate_number') or '').strip() or None,
         )
         
         # Handle main image with optimization
@@ -286,7 +288,9 @@ def site_car_edit(request, pk):
         car.drive_wheel = request.POST.get('drive_wheel', car.drive_wheel)
         car.status = request.POST.get('status', car.status)
         car.is_featured = request.POST.get('is_featured') == 'on'
-        
+        car.vin = (request.POST.get('vin') or '').strip() or None
+        car.plate_number = (request.POST.get('plate_number') or '').strip() or None
+
         # Handle main image with optimization
         if 'image' in request.FILES:
             car.image = optimize_image(request.FILES['image'])
@@ -1263,6 +1267,8 @@ def save_public_car(request, api_car_id):
         external_id=external_id,
         external_image_url=first_image,
         source_url='',
+        vin=(api_car.vin or '').strip() or None,
+        plate_number=(api_car.plate_number or '').strip() or None,
     )
     messages.success(request, 'تم حفظ السيارة في سياراتك.')
     return redirect('site_car_detail', pk=site_car.pk)

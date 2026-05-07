@@ -98,7 +98,10 @@
         background: rgba(201,164,90,0.08);
     }
     .lux-card-price { color: var(--lux-gold-bright); font-size: 1.2rem; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: 0.05em; }
-    .lux-card-meta { display: flex; gap: 1rem; color: var(--lux-text-dim); font-size: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--lux-line); }
+    .lux-card-meta { display: flex; flex-wrap: wrap; gap: 0.85rem; color: var(--lux-text-dim); font-size: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--lux-line); }
+    .lux-card-meta-item { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .lux-card-meta-ico { flex-shrink: 0; width: 0.85rem; height: 0.85rem; color: var(--lux-gold); display: inline-flex; }
+    .lux-card-meta-ico svg { width: 100%; height: 100%; display: block; }
 
     .lux-empty { text-align: center; color: var(--lux-text-dim); padding: 5rem; font-style: italic; grid-column: 1/-1; }
 
@@ -392,37 +395,45 @@
         .lux-tab { flex: 1; padding: 0.55rem 0.75rem; font-size: 0.65rem; letter-spacing: 0.15em; text-align: center; }
 
         .lux-filter-trigger-bar {
-            padding: 0.85rem 1rem; margin-bottom: 1rem;
-            font-size: 0.7rem; letter-spacing: 0.25em;
+            padding: 0.6rem 0.85rem; margin-bottom: 0.85rem;
+            font-size: 0.7rem; letter-spacing: 0.18em;
+            background: transparent;
+            justify-content: center;
         }
+        .lux-filter-trigger-bar svg { width: 0.85rem; height: 0.85rem; }
 
-        .lux-active-filters { gap: 0.3rem; margin-bottom: 1rem; }
+        .lux-active-filters { gap: 0.3rem; margin-bottom: 0.85rem; }
         .lux-active-chip, .lux-active-clear { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
 
         .lux-results-head {
-            flex-direction: column;
-            align-items: stretch;
+            flex-direction: row;
+            align-items: center; justify-content: space-between;
             gap: 0.65rem;
-            margin-bottom: 1.1rem;
-            padding: 0.85rem 1rem;
-            border: 1px solid var(--lux-line);
-            background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
-            font-size: 0.72rem;
+            margin-bottom: 1rem;
+            padding: 0; border: 0; background: transparent;
+            font-size: 0.7rem;
         }
         .lux-results-info {
-            justify-content: space-between;
-            font-size: 0.72rem;
-            gap: 0.5rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.15rem; font-size: 0.7rem;
+            min-width: 0; flex: 1;
+        }
+        .lux-results-info > span:nth-child(2) {
+            color: var(--lux-text-dim); opacity: 0.7;
+            font-size: 0.62rem; letter-spacing: 0.15em;
         }
         .lux-sort {
-            display: flex; width: 100%;
-            align-items: center; justify-content: space-between;
-            gap: 0.75rem;
-            padding-top: 0.55rem;
-            border-top: 1px solid var(--lux-line);
+            display: inline-flex; flex-shrink: 0;
+            align-items: center; gap: 0;
+            padding: 0; border: 0;
         }
-        .lux-sort-label { font-size: 0.65rem; letter-spacing: 0.25em; }
-        .lux-sort-select { flex: 1; padding: 0.55rem 0.7rem; font-size: 0.78rem; }
+        .lux-sort-label { display: none; }
+        .lux-sort-select {
+            padding: 0.4rem 0.6rem; font-size: 0.72rem;
+            min-width: 0; max-width: 9.5rem;
+            text-overflow: ellipsis;
+        }
 
         .lux-grid { gap: 1rem; grid-template-columns: 1fr; }
     }
@@ -439,12 +450,13 @@
                 <a href="?{% if request.GET.q %}q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if not request.GET.car_type %}active{% endif %}" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todo" data-lang-ru="Все">الكل</a>
                 <a href="?car_type=cars{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if request.GET.car_type == 'cars' %}active{% endif %}" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</a>
                 <a href="?car_type=auction{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if request.GET.car_type == 'auction' %}active{% endif %}" data-lang-ar="مزادات" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزادات</a>
+                <a href="{% url 'site_car_list' %}" class="lux-tab bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</a>
             </div>
         </div>
 
         <button type="button" class="lux-filter-trigger-bar" onclick="luxOpenFilters()">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-            <span class="bilingual" data-lang-ar="الفلاتر" data-lang-en="Filters" data-lang-es="Filtros" data-lang-ru="Фильтры">الفلاتر</span>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3M10.5 17a6.5 6.5 0 110-13 6.5 6.5 0 010 13z"/></svg>
+            <span class="bilingual" data-lang-ar="ابحث عن سيارتك المثالية" data-lang-en="Find Your Perfect Car" data-lang-es="Encuentra tu coche ideal" data-lang-ru="Найдите свой идеальный авто">ابحث عن سيارتك المثالية</span>
             {% if sel_manufacturers or sel_models or sel_badges or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
             <span class="badge">●</span>
             {% endif %}
@@ -747,9 +759,24 @@
                             {% if car.badge.name %}<div class="lux-card-trim">{{ car.badge.name }}</div>{% endif %}
                             {% if car.price %}<div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
                             <div class="lux-card-meta">
-                                {% if car.mileage %}<span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>{% endif %}
-                                {% if car.transmission %}<span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
-                                {% if car.fuel %}<span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                                {% if car.mileage %}
+                                <span class="lux-card-meta-item">
+                                    <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                                </span>
+                                {% endif %}
+                                {% if car.transmission %}
+                                <span class="lux-card-meta-item">
+                                    <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
+                                </span>
+                                {% endif %}
+                                {% if car.fuel %}
+                                <span class="lux-card-meta-item">
+                                    <span class="lux-card-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>
+                                </span>
+                                {% endif %}
                             </div>
                         </div>
                     </a>

@@ -159,6 +159,125 @@ def translate_option_en(value):
     return OPTION_TRANSLATIONS.get('en', {}).get(value, value)
 
 
+# Icon SVGs (24x24 viewBox, stroke="currentColor"). Picked from Heroicons-style
+# vocabulary; the mapping below assigns one to each Encar option code.
+_OPTION_ICON_SVGS = {
+    'shield': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.4-8 9-4.6-.6-8-4.5-8-9V6l8-3z"/><path d="M9.5 12.5l2 2 3.5-4"/></svg>',
+    'seat': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h6a3 3 0 013 3v6h-6a3 3 0 01-3-3V4z"/><path d="M5 13h11v4a3 3 0 01-3 3H8a3 3 0 01-3-3v-4z"/><path d="M16 9h2a2 2 0 012 2v3"/></svg>',
+    'flame': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s4 4 4 8a4 4 0 11-8 0c0-2 1-3 1-3s-2 1-2 4a6 6 0 0012 0c0-5-7-9-7-9z"/></svg>',
+    'fan': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-3 1.5-6 4.5-6 1.5 0 2.5 1 2.5 2.5 0 3-3 4.5-7 4.5z"/><path d="M14 12c3 0 6 1.5 6 4.5 0 1.5-1 2.5-2.5 2.5-3 0-4.5-3-4.5-7z"/><path d="M12 14c0 3-1.5 6-4.5 6C6 20 5 19 5 17.5c0-3 3-4.5 7-4.5z"/><path d="M10 12c-3 0-6-1.5-6-4.5C4 6 5 5 6.5 5c3 0 4.5 3 4.5 7z"/></svg>',
+    'snowflake': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/></svg>',
+    'lock': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="1.5"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>',
+    'key': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="4"/><path d="M11 12l9-9M16 8l3 3"/></svg>',
+    'wireless': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9c5-5 13-5 18 0M6 12c3.5-3.5 9-3.5 12 0M9 15a4 4 0 016 0"/><circle cx="12" cy="19" r="1.2"/></svg>',
+    'mirror': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14l-2 8H7L5 6z"/><path d="M9 14v5h6v-5"/></svg>',
+    'camera': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7l1.5-3h3L15 7"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
+    'around': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>',
+    'sensor': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16c2.5-2.5 6-4 9-4s6.5 1.5 9 4"/><path d="M6 13c2-2 4-3 6-3s4 1 6 3"/><circle cx="12" cy="17" r="1.2"/></svg>',
+    'tpms': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/><circle cx="18" cy="18" r="1.2"/></svg>',
+    'wheel': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v6M12 21v-6M3 12h6M21 12h-6"/></svg>',
+    'steering': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 9.5V3M9.5 14.5L4 18M14.5 14.5L20 18"/></svg>',
+    'paddle': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M7 6v12M17 6v12M5 18h14"/><circle cx="12" cy="12" r="2"/></svg>',
+    'brake': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 8h3a2.5 2.5 0 010 5h-3v4M9 8v9"/></svg>',
+    'cruise': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13a9 9 0 10-18 0"/><path d="M12 13l4-4"/><circle cx="12" cy="13" r="1"/></svg>',
+    'lightbulb': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M9 14a5 5 0 116 0v2H9v-2z"/></svg>',
+    'sun': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+    'window': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="1"/><path d="M4 12h16M12 5v14"/></svg>',
+    'door': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4a1 1 0 011-1h10a1 1 0 011 1v17"/><path d="M4 21h16"/><circle cx="15" cy="13" r="0.8"/></svg>',
+    'curtain': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16M5 4c0 8 2 14 5 16M19 4c0 8-2 14-5 16M9 4c1 7 1 14 0 16M15 4c-1 7-1 14 0 16"/></svg>',
+    'trunk': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18V8a4 4 0 014-4h8a4 4 0 014 4v10"/><path d="M2 18h20M8 13h8"/></svg>',
+    'rack': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h18M3 11h18M3 14h18M5 8V6M19 8V6M5 14v2M19 14v2"/></svg>',
+    'tv': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>',
+    'disc': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>',
+    'plug': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v6M15 3v6"/><rect x="6" y="9" width="12" height="6" rx="1"/><path d="M12 15v3a3 3 0 003 3"/></svg>',
+    'usb': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="20" r="2"/><path d="M12 18V8M12 8l-3 3M12 8l3 3"/><path d="M9 14h2v3M15 12h-2v5"/></svg>',
+    'bluetooth': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>',
+    'map': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3V6z"/><path d="M9 3v15M15 6v15"/></svg>',
+    'rain': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 13a4 4 0 011-7.9 5 5 0 019.9 1.1A4 4 0 0117 13H7z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/></svg>',
+    'lane': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l4 17M19 4l-4 17M11 6v3M11 13v3M11 20v0"/></svg>',
+    'bell': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h12l-1.5-2V11a4.5 4.5 0 10-9 0v5L6 18z"/><path d="M10 20a2 2 0 004 0"/></svg>',
+    'massage': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h2M9 9h2M9 15h2M13 7h2M13 17h2M17 12h2"/><path d="M3 12h2M19 12h2"/></svg>',
+    'hud': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="9" rx="1.5"/><path d="M8 10h2M14 10h2M9 13h6"/><path d="M5 18l-1 2M19 18l1 2"/></svg>',
+    'toll': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18M5 11v9h14v-9M5 11l7-7 7 7"/><path d="M11 14h2v3h-2z"/></svg>',
+    'memory': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v17l-5-3-5 3V4z"/></svg>',
+    'sparkle': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/></svg>',
+    'check': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5L15.5 9.5"/></svg>',
+}
+
+# Each Encar option code → icon key. Anything not listed falls back to "check".
+_OPTION_ICON_MAP = {
+    '001': 'brake',     # ABS
+    '002': 'shield',    # ECS
+    '003': 'disc',      # CD player
+    '004': 'tv',        # Front AV monitor
+    '005': 'map',       # Navigation
+    '006': 'lock',      # Power door lock
+    '007': 'window',    # Power Windows
+    '008': 'steering',  # Power steering wheel
+    '010': 'sun',       # Sunroof
+    '014': 'seat',      # Leather seat
+    '015': 'wireless',  # Wireless door lock
+    '017': 'wheel',     # Aluminum wheel
+    '019': 'shield',    # TCS Anti-slip
+    '020': 'shield',    # Side airbag
+    '021': 'seat',      # Electric driver seat
+    '022': 'flame',     # Heated front seats
+    '023': 'snowflake', # Auto AC
+    '024': 'mirror',    # Electric folding mirrors
+    '026': 'shield',    # Driver airbag
+    '027': 'shield',    # Passenger airbag
+    '029': 'flame',     # Heated steering
+    '030': 'mirror',    # ECM mirror
+    '031': 'steering',  # Steering wheel remote
+    '032': 'sensor',    # Rear parking sensor
+    '033': 'tpms',      # TPMS
+    '034': 'fan',       # Vent driver seat
+    '035': 'seat',      # Electric passenger seat
+    '051': 'memory',    # Memory driver seat
+    '054': 'tv',        # Rear AV monitor
+    '055': 'shield',    # ESC
+    '056': 'shield',    # Curtain airbag
+    '057': 'key',       # Smart key
+    '058': 'camera',    # Rear camera
+    '059': 'trunk',     # Power trunk
+    '062': 'rack',      # Roof rack
+    '063': 'flame',     # Rear heated seats
+    '068': 'cruise',    # Cruise control
+    '071': 'plug',      # AUX
+    '072': 'usb',       # USB
+    '074': 'toll',      # High pass
+    '075': 'lightbulb', # LED Headlamp
+    '077': 'fan',       # Vent passenger seat
+    '078': 'memory',    # Memory passenger seat
+    '079': 'cruise',    # Adaptive cruise
+    '080': 'door',      # Ghost door closing
+    '081': 'rain',      # Rain sensor
+    '082': 'flame',     # Thermal steering
+    '083': 'steering',  # Electric steering
+    '084': 'paddle',    # Paddle shift
+    '085': 'sensor',    # Front parking sensor
+    '086': 'bell',      # Rear alarm
+    '087': 'around',    # 360 view
+    '088': 'lane',      # Lane departure
+    '089': 'seat',      # Rear electric seat
+    '090': 'fan',       # Rear vent seat
+    '091': 'massage',   # Massage seat
+    '092': 'curtain',   # Rear curtain
+    '093': 'curtain',   # Rear blind
+    '094': 'brake',     # EPB
+    '095': 'hud',       # HUD
+    '096': 'bluetooth', # Bluetooth
+    '097': 'lightbulb', # Auto light
+}
+
+
+@register.filter
+def option_icon(value):
+    """Inline SVG icon for an Encar option code (e.g. '001' → ABS shield)."""
+    key = _OPTION_ICON_MAP.get(str(value).strip(), 'check')
+    return _OPTION_ICON_SVGS.get(key, _OPTION_ICON_SVGS['check'])
+
+
 
 @register.filter
 def ar_address(value):

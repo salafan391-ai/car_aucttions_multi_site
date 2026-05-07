@@ -27,6 +27,19 @@
     {% tailwind_css %}
     {% htmx_script %}
 
+    <script>
+    /* Apply saved/preferred mode before paint to avoid flash. */
+    (function () {
+        try {
+            var saved = localStorage.getItem('site_theme_mode');
+            var prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            if (saved === 'light' || (!saved && prefers)) {
+                document.documentElement.classList.add('lux-light');
+            }
+        } catch (e) {}
+    })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -87,6 +100,8 @@
         .lux-nav-action:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
         .lux-nav-action.primary { border-color: var(--lux-gold); color: var(--lux-gold); }
         .lux-nav-action.primary:hover { background: var(--lux-gold); color: var(--lux-bg); }
+        .lux-nav-action-icon { display: inline-flex; align-items: center; gap: 0.45rem; }
+        .lux-nav-action-icon svg { width: 0.85rem; height: 0.85rem; }
 
         .lux-nav-toggle {
             display: none;
@@ -262,6 +277,91 @@
         .lux-menu-item .lang-check-icon.hidden,
         .lux-menu-item .currency-check-icon.hidden { display: none; }
         .lux-cur-sym { font-size: 0.8em; opacity: 0.85; margin-right: 0.15em; }
+
+        /* ───── Light-luxury mode ─────
+           Palette aimed at "showroom in daylight" — warm cream background,
+           bronze gold accents, deep brown text. Selectors use `:root.lux-light`
+           so they outrank the per-template `:root { --lux-* }` blocks. */
+        :root.lux-light {
+            --lux-bg: #f5efe1;
+            --lux-bg-soft: #ebe1c8;
+            --lux-gold: #8a6a25;
+            --lux-gold-bright: #6a4f17;
+            --lux-line: rgba(138, 106, 37, 0.28);
+            --lux-text: #2a1f12;
+            --lux-text-dim: #6e5e3f;
+        }
+        /* Re-skin panels that hard-code the dark gradient. Specific class chains
+           keep us from needing !important. */
+        .lux-light .lux-aside,
+        .lux-light .lux-section-block,
+        .lux-light .lux-card,
+        .lux-light .lux-similar-card,
+        .lux-light .lux-side,
+        .lux-light .lux-info-card,
+        .lux-light .lux-form-card,
+        .lux-light .lux-auth-card,
+        .lux-light .lux-preview,
+        .lux-light .lux-spec-card,
+        .lux-light .lux-feature-card,
+        .lux-light .lux-features-icons .lux-feature-card {
+            background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%);
+        }
+        .lux-light .lux-spec-card { background: rgba(255, 252, 240, 0.6); }
+        .lux-light .lux-feature-pill { background: rgba(138, 106, 37, 0.06); }
+        .lux-light .lux-input,
+        .lux-light .lux-form-page input,
+        .lux-light .lux-form-page select,
+        .lux-light .lux-form-page textarea,
+        .lux-light .lux-filter-form input,
+        .lux-light .lux-filter-form select {
+            background: rgba(255, 252, 240, 0.6);
+            color: var(--lux-text);
+        }
+        .lux-light .lux-form-page select option,
+        .lux-light .lux-filter-form select option { background: #fbf6e8; color: var(--lux-text); }
+        .lux-light .lux-menu { background: #fbf6e8; }
+        .lux-light .lux-card-img,
+        .lux-light .lux-gallery-main,
+        .lux-light .lux-similar-img,
+        .lux-light .lux-thumb { background: #c8b787; }
+        .lux-light .lux-card:hover { box-shadow: 0 18px 36px rgba(138, 106, 37, 0.18); }
+        .lux-light .lux-cta-solid { color: #fbf6e8; }
+        .lux-light .lux-cta-solid:hover { color: #fbf6e8; }
+        .lux-light .lux-submit { color: #fbf6e8; }
+        .lux-light .lux-add-btn { color: #fbf6e8; }
+        .lux-light .lux-filter-submit { color: #fbf6e8; }
+        .lux-light .lux-tab.active { color: #fbf6e8; }
+        .lux-light .lux-pager .current { color: #fbf6e8; }
+
+        /* Nav: switch the dark glass to a creamy translucent panel */
+        .lux-light .lux-nav {
+            background: rgba(245, 239, 225, 0.9);
+        }
+        .lux-light .lux-bottom-nav {
+            background: linear-gradient(180deg, rgba(245, 239, 225, 0.55) 0%, rgba(235, 225, 200, 0.92) 80%);
+        }
+        .lux-light .lux-bn-fab { color: #fbf6e8; outline-color: rgba(245, 239, 225, 0.95); }
+
+        /* Footer warmer cream */
+        .lux-light .lux-footer { background: var(--lux-bg-soft); }
+        .lux-light .lux-auth-card.wide,
+        .lux-light .lux-auth-card { background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%); }
+
+        /* Mode toggle button */
+        .lux-mode-toggle {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 2.1rem; height: 2.1rem; padding: 0;
+            background: transparent; color: var(--lux-text-dim);
+            border: 1px solid var(--lux-line); cursor: pointer;
+            font-family: inherit; transition: all 0.2s ease;
+        }
+        .lux-mode-toggle:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+        .lux-mode-toggle svg { width: 1rem; height: 1rem; }
+        .lux-mode-toggle .lux-mode-icon-light { display: inline-flex; }
+        .lux-mode-toggle .lux-mode-icon-dark  { display: none; }
+        .lux-light .lux-mode-toggle .lux-mode-icon-light { display: none; }
+        .lux-light .lux-mode-toggle .lux-mode-icon-dark  { display: inline-flex; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
@@ -298,6 +398,15 @@
                 </div>
             </div>
 
+            <button type="button" class="lux-mode-toggle" id="lux-mode-toggle" onclick="luxToggleMode()" aria-label="Toggle light mode" title="Toggle light mode">
+                <span class="lux-mode-icon-light" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
+                </span>
+                <span class="lux-mode-icon-dark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+                </span>
+            </button>
+
             <div class="lux-switcher" id="currency-dropdown">
                 <button type="button" class="lux-switcher-btn" onclick="document.getElementById('currency-menu').classList.toggle('hidden'); document.getElementById('lang-menu')?.classList.add('hidden');">
                     <span id="currency-label">﷼ SAR</span>
@@ -312,6 +421,16 @@
             </div>
 
             {% if user.is_authenticated %}
+            {% if user.is_staff %}
+            <a href="{% url 'site_dashboard' %}" class="lux-nav-action lux-nav-action-icon bilingual" data-lang-ar="لوحة التحكم" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                <span class="bilingual" data-lang-ar="لوحة التحكم" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة التحكم</span>
+            </a>
+            <a href="{% url 'site_car_add' %}" class="lux-nav-action primary lux-nav-action-icon bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir coche" data-lang-ru="Добавить машину">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir coche" data-lang-ru="Добавить машину">أضف سيارة</span>
+            </a>
+            {% endif %}
             <a href="{% url 'logout' %}" class="lux-nav-action bilingual" data-lang-ar="خروج" data-lang-en="Sign Out" data-lang-es="Cerrar sesión" data-lang-ru="Выйти">خروج</a>
             {% else %}
             <a href="{% url 'login' %}" class="lux-nav-action bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</a>
@@ -362,6 +481,9 @@
         <div class="lux-footer-col">
             <h4 class="bilingual" data-lang-ar="الحساب" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">الحساب</h4>
             {% if user.is_authenticated %}
+            {% if user.is_staff %}
+            <a href="{% url 'site_dashboard' %}" class="bilingual" data-lang-ar="لوحة التحكم" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة التحكم</a>
+            {% endif %}
             <a href="{% url 'logout' %}" class="bilingual" data-lang-ar="خروج" data-lang-en="Sign Out" data-lang-es="Cerrar sesión" data-lang-ru="Выйти">خروج</a>
             {% else %}
             <a href="{% url 'login' %}" class="bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</a>
@@ -378,6 +500,13 @@
 {% include "partials/lang_currency_script.html" %}
 
 <script>
+function luxToggleMode() {
+    var root = document.documentElement;
+    var nowLight = !root.classList.contains('lux-light');
+    root.classList.toggle('lux-light', nowLight);
+    try { localStorage.setItem('site_theme_mode', nowLight ? 'light' : 'dark'); } catch (e) {}
+}
+
 function getCookie(name) {
     let v = null;
     if (document.cookie && document.cookie !== '') {
@@ -408,6 +537,170 @@ function toggleWishlist(carId) {
 }
 </script>
 {% block extra_js %}{% endblock %}
-{% block mobile_bottom_nav %}{% endblock %}
+
+{% block mobile_bottom_nav %}
+<style>
+    /* Hide on tablet+ */
+    @media (min-width: 768px) { .lux-bottom-nav { display: none !important; } }
+
+    /* Reserve space at the bottom of the page so content isn't hidden under the bar */
+    @media (max-width: 767px) {
+        body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+    }
+
+    .lux-bottom-nav {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+        padding: 0.6rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(180deg, rgba(20,17,13,0.55) 0%, rgba(10,10,10,0.88) 80%);
+        backdrop-filter: saturate(160%) blur(14px);
+        -webkit-backdrop-filter: saturate(160%) blur(14px);
+        border-top: 1px solid var(--lux-line);
+        font-family: 'Playfair Display', 'Tajawal', serif;
+    }
+    .lux-bottom-nav::before {
+        content: ""; position: absolute; left: 12%; right: 12%; top: 0;
+        height: 1px; pointer-events: none;
+        background: linear-gradient(90deg, transparent, var(--lux-gold), transparent);
+        opacity: 0.55;
+    }
+    .lux-bottom-nav-row {
+        display: grid; grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
+        align-items: end; gap: 0.25rem;
+        max-width: 540px; margin: 0 auto;
+    }
+
+    .lux-bn-link {
+        display: inline-flex; flex-direction: column; align-items: center; gap: 0.2rem;
+        padding: 0.45rem 0.25rem; min-width: 0;
+        color: var(--lux-text-dim); text-decoration: none;
+        font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+        position: relative;
+        transition: color 0.2s ease;
+    }
+    .lux-bn-link svg { width: 1.35rem; height: 1.35rem; transition: transform 0.2s ease; }
+    .lux-bn-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .lux-bn-link:active svg { transform: scale(0.92); }
+    .lux-bn-link:hover, .lux-bn-link.active { color: var(--lux-gold-bright); }
+    .lux-bn-link.active::after {
+        content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 1.5rem; height: 2px; background: var(--lux-gold);
+        box-shadow: 0 0 8px var(--lux-gold);
+    }
+
+    .lux-bn-fab-wrap {
+        position: relative; display: flex; flex-direction: column;
+        align-items: center; gap: 0.2rem;
+        margin-top: -1.6rem;
+    }
+    .lux-bn-fab {
+        width: 3.5rem; height: 3.5rem;
+        display: flex; align-items: center; justify-content: center;
+        background: radial-gradient(circle at 30% 30%, var(--lux-gold-bright), var(--lux-gold) 70%);
+        color: var(--lux-bg);
+        border: 1px solid rgba(255, 240, 200, 0.6);
+        outline: 4px solid rgba(10, 10, 10, 0.85);
+        box-shadow:
+            0 8px 24px rgba(201, 164, 90, 0.45),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+    .lux-bn-fab:active { transform: scale(0.94); box-shadow: 0 4px 14px rgba(201,164,90,0.4); }
+    .lux-bn-fab svg { width: 1.5rem; height: 1.5rem; }
+    .lux-bn-fab-label {
+        color: var(--lux-gold-bright);
+        font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+        white-space: nowrap; max-width: 100%;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .lux-bn-badge {
+        position: absolute; top: 0.15rem; right: calc(50% - 1.15rem);
+        min-width: 1rem; height: 1rem; padding: 0 0.25rem;
+        background: #c0392b; color: #fff;
+        font-size: 0.6rem; font-weight: 700; letter-spacing: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--lux-bg);
+        border-radius: 999px;
+    }
+</style>
+
+<nav class="lux-bottom-nav" aria-label="Mobile navigation">
+    <div class="lux-bottom-nav-row">
+        <a href="{% url 'home' %}" class="lux-bn-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+            <span class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</span>
+        </a>
+
+        <a href="{% url 'car_list' %}" class="lux-bn-link {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l1-3a2 2 0 011.7-1.4L8 9l1.5-3a2 2 0 011.7-1H15a2 2 0 011.7 1L18 9l2.3.6A2 2 0 0122 11.6V14"/><path d="M2 14h20v3a1 1 0 01-1 1h-1a2 2 0 01-4 0H8a2 2 0 01-4 0H3a1 1 0 01-1-1v-3z"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/></svg>
+            <span class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</span>
+        </a>
+
+        {% if user.is_staff %}
+        <div class="lux-bn-fab-wrap">
+            <a href="{% url 'site_car_add' %}" class="lux-bn-fab" aria-label="Add Car">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </a>
+            <span class="lux-bn-fab-label bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir" data-lang-ru="Добавить">أضف سيارة</span>
+        </div>
+        {% elif site_whatsapp %}
+        {% load whatsapp_tags %}
+        {% whatsapp_site_inquiry_message site_name as wa_site_inquiry_msg %}
+        <div class="lux-bn-fab-wrap">
+            <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ wa_site_inquiry_msg }}" target="_blank" rel="noopener" class="lux-bn-fab" aria-label="WhatsApp" style="background: radial-gradient(circle at 30% 30%, #34d265, #1f9b46 70%); outline-color: rgba(10,10,10,0.85);">
+                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+            </a>
+            <span class="lux-bn-fab-label bilingual" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp" style="color:#7fd99d;">واتساب</span>
+        </div>
+        {% else %}
+        <div class="lux-bn-fab-wrap">
+            <a href="{% url 'car_list' %}" class="lux-bn-fab" aria-label="Find your car">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M21 21l-4.3-4.3"/></svg>
+            </a>
+            <span class="lux-bn-fab-label bilingual" data-lang-ar="ابحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">ابحث</span>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'wishlist' %}" class="lux-bn-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-9-10.5A5.5 5.5 0 0112 5a5.5 5.5 0 019 5.5C19 15.5 12 21 12 21z"/></svg>
+            <span class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</span>
+            <span class="lux-bn-badge" id="wishlist-count" style="display:none">0</span>
+        </a>
+
+        {% if user.is_authenticated %}
+        {% if user.is_staff %}
+        <a href="{% url 'site_dashboard' %}" class="lux-bn-link {% if request.resolver_match.url_name == 'site_dashboard' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <span class="bilingual" data-lang-ar="لوحة" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة</span>
+        </a>
+        {% else %}
+        <a href="{% url 'logout' %}" class="lux-bn-link">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20a7 7 0 0114 0"/></svg>
+            <span class="bilingual" data-lang-ar="حسابي" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">حسابي</span>
+        </a>
+        {% endif %}
+        {% else %}
+        <a href="{% url 'login' %}" class="lux-bn-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12H4M11 8l-4 4 4 4"/><path d="M14 4h5a1 1 0 011 1v14a1 1 0 01-1 1h-5"/></svg>
+            <span class="bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</span>
+        </a>
+        {% endif %}
+    </div>
+</nav>
+
+<script>
+(function () {
+    fetch('/wishlist/count/', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+            if (!d || typeof d.count !== 'number' || d.count <= 0) return;
+            var b = document.getElementById('wishlist-count');
+            if (b) { b.textContent = d.count > 99 ? '99+' : d.count; b.style.display = 'inline-flex'; }
+        })
+        .catch(function () {});
+})();
+</script>
+{% endblock mobile_bottom_nav %}
 </body>
 </html>
