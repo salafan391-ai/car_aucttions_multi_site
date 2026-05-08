@@ -5,6 +5,12 @@ from urllib.parse import quote
 register = template.Library()
 
 
+# Markup applied when converting AWAY from the source KRW price. KRW displays
+# the original feed value; every other currency shows the price + 1%.
+# Mirrors `PRICE_MARKUP` in templates/partials/lang_currency_script.html.
+PRICE_MARKUP = 1.01
+
+
 @register.filter
 def krw_to_sar(value, rate):
     """Convert a price stored in KRW to SAR using the provided rate and
@@ -20,7 +26,7 @@ def krw_to_sar(value, rate):
             return ""
         v = float(value)
         r = float(rate) if rate is not None else 0.00250
-        sar = v * r
+        sar = v * r * PRICE_MARKUP
         # Format with comma as thousands separator, no decimal places
         return "{:,.0f}".format(sar)
     except Exception:
@@ -82,7 +88,7 @@ def whatsapp_order_message(context, car, site_name=""):
             except Exception:
                 rate_sar = 0.00250
 
-        sar_price = (car.price or 0) * rate_sar
+        sar_price = (car.price or 0) * rate_sar * PRICE_MARKUP
         message_parts.append(f"السعر: {sar_price:,.0f} ريال")
 
     if hasattr(car, 'entry') and car.entry:
@@ -142,7 +148,7 @@ def whatsapp_car_message(context, car, site_name=""):
             except Exception:
                 rate_sar = 0.00250
 
-        sar_price = (car.price or 0) * rate_sar
+        sar_price = (car.price or 0) * rate_sar * PRICE_MARKUP
         message_parts.append(f"السعر: {sar_price:,.0f} ريال")
 
     if hasattr(car, 'entry') and car.entry:

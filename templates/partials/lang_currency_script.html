@@ -158,6 +158,9 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
         AED: { symbol: 'د.إ', label: 'د.إ AED', rate: {{ rate_aed|default:"0.00272" }} },
         EUR: { symbol: '€',   label: '€ EUR',   rate: {{ rate_eur|default:"0.00069" }} },
     };
+    /* Markup applied when converting AWAY from the source KRW price. KRW
+       displays the original feed price; every other currency shows +1%. */
+    var PRICE_MARKUP = 1.01;
     var CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
 
     function setCurrency(code) {
@@ -182,7 +185,7 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
         document.querySelectorAll('[data-price-krw]').forEach(function(el) {
             var krw = parseFloat(el.getAttribute('data-price-krw'));
             if (isNaN(krw)) return;
-            var converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate);
+            var converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate * PRICE_MARKUP);
             el.innerHTML = converted.toLocaleString() + ' <span class="lux-cur-sym">' + cfg.symbol + '</span>';
         });
     }
