@@ -1,0 +1,12 @@
+<section class="sb-section sb-gallery">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+    {% if section.title %}<h2 class="text-3xl font-bold text-gray-900 text-center mb-8">{{ section.title }}</h2>{% endif %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-{{ section.config.columns|default:4 }} gap-3">
+      {% for img in section.config.images %}
+        <a href="{{ img.url|default:'#' }}" class="block aspect-square overflow-hidden rounded-lg bg-gray-100">
+          <img src="{{ img.src }}" alt="{{ img.alt|default:'' }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy">
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>

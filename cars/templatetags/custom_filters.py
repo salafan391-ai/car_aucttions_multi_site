@@ -390,6 +390,154 @@ def translate_color(value, lang='ar'):
     return _translate_enum(value, lang, colors_dict, 'colors_dict')
 
 
+# Map every known color name (Arabic or English, lowercased) to a CSS color
+# string. Two-tone variants return a 50/50 linear gradient. Returns the
+# fallback `#9ca3af` (gray-400) for unknown names so the swatch always renders.
+_COLOR_HEX = {
+    # Singletons (English)
+    "black": "#0a0a0a",
+    "white": "#fafafa",
+    "silver": "#bfbfbf",
+    "bright silver": "#d6d6d6",
+    "silver metallic": "#bcc1c5",
+    "silver gray": "#a8acaf",
+    "silent silver": "#c0c2c4",
+    "galaxy silver": "#5b6770",
+    "gray": "#7a7d80",
+    "dark gray": "#3f4448",
+    "space gray": "#525960",
+    "platinum": "#d9d9d6",
+    "gold": "#c9a45a",
+    "light gold": "#dcc581",
+    "blue": "#2563eb",
+    "sky blue": "#7fb6ff",
+    "dark blue": "#1e3a8a",
+    "cosmic blue": "#0b1d52",
+    "mercury blue": "#445a86",
+    "red": "#dc2626",
+    "burgundy": "#6d1b25",
+    "maroon": "#8a2331",
+    "marsala": "#964f4c",
+    "cherry": "#a01d2b",
+    "green": "#16a34a",
+    "light green": "#86efac",
+    "lime green": "#a3e635",
+    "yellow green": "#bef264",
+    "storr green": "#3a6b3a",
+    "yellow": "#facc15",
+    "sunflower": "#f5c518",
+    "orange": "#f97316",
+    "orange pop": "#ff7a18",
+    "copper": "#b87333",
+    "bronze": "#8c6232",
+    "brown": "#7a4a2a",
+    "reed brown": "#7a5230",
+    "beige": "#e6d8b8",
+    "creamy beige": "#ead9b8",
+    "creamy": "#f4e8d0",
+    "vanilla": "#f3e5ab",
+    "ivory": "#f6f0d8",
+    "purple": "#7c3aed",
+    "pink": "#ec4899",
+    "turquoise": "#14b8a6",
+    "teal": "#0d9488",
+    "metallic": "#9ca3af",
+    "pearl": "#ece4d3",
+    "pearl white": "#f4ecdc",
+    "black pearl": "#171314",
+    # Singletons (Arabic)
+    "أسود": "#0a0a0a", "اسود": "#0a0a0a", "سوداء": "#0a0a0a",
+    "أبيض": "#fafafa",
+    "فضي": "#bfbfbf", "الفضي": "#bfbfbf",
+    "رمادي": "#7a7d80",
+    "ذهبي": "#c9a45a",
+    "أزرق": "#2563eb", "ازرق": "#2563eb", "الأزرق": "#2563eb",
+    "أزرق سماوي": "#7fb6ff",
+    "أزرق داكن": "#1e3a8a",
+    "أحمر": "#dc2626", "الأحمر": "#dc2626",
+    "أحمر بورجوندي": "#6d1b25",
+    "بورغندي": "#6d1b25",
+    "كرزي": "#a01d2b",
+    "أخضر": "#16a34a", "الأخضر": "#16a34a",
+    "أخضر فاتح": "#86efac",
+    "أخضر ليموني": "#a3e635",
+    "أصفر": "#facc15",
+    "برتقالي": "#f97316",
+    "بني": "#7a4a2a",
+    "بني قصب": "#7a5230",
+    "بيج": "#e6d8b8",
+    "كريمي": "#f4e8d0",
+    "بنفسجي": "#7c3aed",
+    "وردي": "#ec4899",
+    "فيروزي": "#14b8a6",
+    "لؤلؤي": "#ece4d3",
+    "أبيض لؤلؤي": "#f4ecdc",
+    "بلاتيني": "#d9d9d6",
+    "ذهبي فاتح": "#dcc581",
+    "فضي فاتح": "#d6d6d6",
+    "فضي معدني": "#bcc1c5",
+    "فضي رمادي": "#a8acaf",
+    "فضي جالاكسي": "#5b6770",
+    "رمادي داكن": "#3f4448",
+    "مارون": "#8a2331",
+    "مارسالا": "#964f4c",
+    "معدني": "#9ca3af",
+    "عاجي": "#f6f0d8",
+    "فانيليا": "#f3e5ab",
+    "غير محدد": "#9ca3af", "unspecified": "#9ca3af", "etc": "#9ca3af", "기타": "#9ca3af",
+}
+
+# For two-tone colors we render a 50/50 split between the dominant color and
+# its pairing. The leading word picks the colour; "two-tone" pairs with white.
+_TWO_TONE_PARTNER_EN = {
+    "black": "#fafafa",   # black + white
+    "white": "#0a0a0a",   # white + black
+    "silver": "#0a0a0a",  # silver + black
+    "gold":   "#0a0a0a",
+    "pearl":  "#0a0a0a",
+    "brown":  "#e6d8b8",  # brown + beige
+}
+_TWO_TONE_PARTNER_AR = {
+    "أسود": "#fafafa",
+    "أبيض": "#0a0a0a",
+    "فضي":  "#0a0a0a",
+    "ذهبي": "#0a0a0a",
+    "لؤلؤي": "#0a0a0a",
+    "بني":  "#e6d8b8",
+}
+
+
+@register.filter(name='color_to_css')
+def color_to_css(value):
+    """Return a CSS color (or linear-gradient) for a CarColor name. Used to
+    render a small color swatch beside the color filter chip. Falls back to
+    a neutral gray when the name is unknown so the swatch always shows."""
+    if value is None:
+        return "#9ca3af"
+    name = getattr(value, 'name', value)
+    if not isinstance(name, str):
+        return "#9ca3af"
+    key = name.strip().lower()
+
+    # Two-tone in English ("black two-tone", "pearl two-tone", …)
+    if "two-tone" in key:
+        base_word = key.replace("two-tone", "").strip()
+        base = _COLOR_HEX.get(base_word)
+        partner = _TWO_TONE_PARTNER_EN.get(base_word, "#fafafa")
+        if base:
+            return f"linear-gradient(135deg, {base} 50%, {partner} 50%)"
+
+    # Two-tone in Arabic ("أسود ثنائي اللون", …)
+    if "ثنائي اللون" in name:
+        base_word = name.replace("ثنائي اللون", "").strip()
+        base = _COLOR_HEX.get(base_word)
+        partner = _TWO_TONE_PARTNER_AR.get(base_word, "#fafafa")
+        if base:
+            return f"linear-gradient(135deg, {base} 50%, {partner} 50%)"
+
+    return _COLOR_HEX.get(key, _COLOR_HEX.get(name.strip(), "#9ca3af"))
+
+
 @register.filter(name='translate_body')
 def translate_body(value, lang='ar'):
     """

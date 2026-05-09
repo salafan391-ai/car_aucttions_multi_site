@@ -28,6 +28,47 @@ from .utils import car_models_dict
 from .export_service import start_export, process_webhook_payload
 
 
+# ── Manufacturer "appeal" tiers ─────────────────────────────────────────────
+# Used to order the homepage rails and the default car-list ordering so the
+# most desirable brands lead. Names are matched case-insensitively against
+# Manufacturer.name (which is normalized to lowercase by the model's save()).
+APPEAL_TIER_PREMIUM = [
+    "bentley", "rolls-royce", "rolls royce", "ferrari", "lamborghini",
+    "maserati", "mclaren", "aston martin", "porsche",
+]
+APPEAL_TIER_LUXURY = [
+    "mercedes-benz", "mercedes", "bmw", "audi", "lexus", "land rover",
+    "range rover", "genesis", "cadillac", "infiniti", "acura", "volvo",
+    "jaguar", "tesla", "lincoln", "alpine",
+]
+APPEAL_TIER_MAINSTREAM = [
+    "toyota", "honda", "hyundai", "kia", "nissan", "mazda", "ford",
+    "chevrolet", "gmc", "volkswagen", "vw", "subaru", "mitsubishi",
+    "renault", "peugeot", "citroen", "fiat", "skoda", "seat",
+]
+
+
+def _order_by_appeal(qs, *secondary):
+    """
+    Annotate `_appeal_tier` on the queryset (0=premium, 1=luxury, 2=mainstream,
+    3=other) and order by it, then by the given secondary fields.
+
+    Example: `_order_by_appeal(qs, '-created_at')`
+    """
+    from django.db.models import Case, When, Value, IntegerField
+
+    qs = qs.annotate(
+        _appeal_tier=Case(
+            When(manufacturer__name__in=APPEAL_TIER_PREMIUM, then=Value(0)),
+            When(manufacturer__name__in=APPEAL_TIER_LUXURY, then=Value(1)),
+            When(manufacturer__name__in=APPEAL_TIER_MAINSTREAM, then=Value(2)),
+            default=Value(3),
+            output_field=IntegerField(),
+        )
+    )
+    return qs.order_by('_appeal_tier', *secondary)
+
+
 def _build_webhook_url(request):
     """
     Return the absolute webhook URL for the CURRENT tenant.
@@ -81,6 +122,12 @@ def _exclude_expired_auctions(qs):
 @cache_control(public=True, max_age=600)
 def landing(request):
     """Opening page – logo + CTA cards. Redirects to home if landing_is_active is False."""
+    # Site-builder override: if a tenant has published a Page(kind='home'), render that.
+    from site_builder.views import render_home_if_configured
+    sb_response = render_home_if_configured(request)
+    if sb_response is not None:
+        return sb_response
+
     # Skip landing page if disabled for this tenant
     if not getattr(connection.tenant, 'landing_is_active', True):
         return redirect('home')
@@ -192,6 +239,12 @@ def landing(request):
 
 @cache_control(public=True, max_age=180)
 def home(request):
+    # Site-builder override: if a tenant has published a Page(kind='home'), render that.
+    from site_builder.views import render_home_if_configured
+    sb_response = render_home_if_configured(request)
+    if sb_response is not None:
+        return sb_response
+
     now = timezone.now()
     schema = getattr(connection, 'schema_name', 'public')
 
@@ -215,10 +268,13 @@ def home(request):
             'manufacturer', 'model', 'badge', 'category'
         ).exclude(category__name='auction', auction_date__lt=now)
 
-        # Latest cars (non-auction) – limited early
+        # Latest cars (non-auction) – limited early. Ordered by manufacturer
+        # appeal (premium → luxury → mainstream → other), then newest first.
         latest_cars = list(
-            _base_qs.exclude(category__name='auction')
-            .order_by('-created_at')
+            _order_by_appeal(
+                _base_qs.exclude(category__name='auction'),
+                '-created_at',
+            )
             .only(
                 'id', 'title', 'slug', 'image', 'images', 'price', 'year',
                 'mileage', 'status', 'transmission', 'address', 'created_at',
@@ -229,10 +285,12 @@ def home(request):
             )[:12]
         )
 
-        # Latest auctions – limited early
+        # Latest auctions – limited early. Same appeal-tier ordering.
         latest_auctions = list(
-            _base_qs.filter(category__name='auction')
-            .order_by('-created_at')
+            _order_by_appeal(
+                _base_qs.filter(category__name='auction'),
+                '-created_at',
+            )
             .only(
                 'id', 'title', 'slug', 'image', 'images', 'price', 'year',
                 'mileage', 'status', 'transmission', 'auction_date',
@@ -827,12 +885,14 @@ def car_list(request):
         except ValueError:
             pass
 
-    sort = request.GET.get('sort', '-created_at')
+    sort = request.GET.get('sort')
     allowed_sorts = ['-created_at', 'price', '-price', '-year', 'year', 'mileage', '-mileage']
     if sort in allowed_sorts:
+        # User explicitly chose a sort — honour it directly.
         qs = qs.order_by(sort)
     else:
-        qs = qs.order_by('-created_at')
+        # Default: lead with the most appealing manufacturers, newest first.
+        qs = _order_by_appeal(qs, '-created_at')
 
     # Cache the paginator COUNT per unique filter combination (excludes sort/page
     # which don't affect the total count).  This avoids a full-table COUNT(*) on
@@ -909,7 +969,18 @@ def car_list(request):
             _body_ids   = set(_auction_qs.values_list('body_id', flat=True).distinct())
             _fuels      = sorted(v for v in _auction_qs.values_list('fuel', flat=True).distinct() if v)[:15]
             _trans      = sorted(v for v in _auction_qs.values_list('transmission', flat=True).distinct() if v)
-            _seats      = sorted(v for v in _auction_qs.values_list('seat_count', flat=True).distinct() if v)
+            # seat_count is a CharField; sort numerically so "10" doesn't come
+            # before "2", and skip empties / zero-seat rows.
+            def _seat_sort_key(v):
+                s = str(v)
+                if s.replace('.', '', 1).replace('-', '', 1).isdigit():
+                    return (float(v), s)
+                return (float('inf'), s)
+            _seats      = sorted(
+                (v for v in _auction_qs.values_list('seat_count', flat=True).distinct()
+                 if v and str(v).strip() not in ('0', '0.0') and not (str(v).replace('.', '', 1).isdigit() and float(v) == 0)),
+                key=_seat_sort_key,
+            )
             _color_ids  = set(_auction_qs.values_list('color_id', flat=True).distinct())
             _scolor_ids = set(_auction_qs.values_list('seat_color_id', flat=True).distinct())
             _anames     = sorted(v for v in _auction_qs.values_list('auction_name', flat=True).distinct() if v)
@@ -1077,7 +1148,18 @@ def car_list(request):
             _body_ids   = set(_base_qs.values_list('body_id', flat=True).distinct())
             _fuels      = sorted(v for v in _base_qs.values_list('fuel', flat=True).distinct() if v)[:15]
             _trans      = sorted(v for v in _base_qs.values_list('transmission', flat=True).distinct() if v)
-            _seats      = sorted(v for v in _base_qs.values_list('seat_count', flat=True).distinct() if v)
+            # seat_count is a CharField; sort numerically so "10" doesn't come
+            # before "2", and skip empties / zero-seat rows.
+            def _seat_sort_key(v):
+                s = str(v)
+                if s.replace('.', '', 1).replace('-', '', 1).isdigit():
+                    return (float(v), s)
+                return (float('inf'), s)
+            _seats      = sorted(
+                (v for v in _base_qs.values_list('seat_count', flat=True).distinct()
+                 if v and str(v).strip() not in ('0', '0.0') and not (str(v).replace('.', '', 1).isdigit() and float(v) == 0)),
+                key=_seat_sort_key,
+            )
             _color_ids  = set(_base_qs.values_list('color_id', flat=True).distinct())
             _scolor_ids = set(_base_qs.values_list('seat_color_id', flat=True).distinct())
             static_filters = {

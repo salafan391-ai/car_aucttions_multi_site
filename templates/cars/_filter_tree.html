@@ -1,0 +1,61 @@
+{% load custom_filters %}
+{% comment %}
+Hierarchical manufacturer → model → badge tree filter — ported from the
+luxury theme. Used by both the mobile drawer and the desktop sidebar in
+_htmx_main_content.html.
+
+Required vars:
+  manufacturers, models, badges, sel_manufacturers, sel_models, sel_badges
+  tree_id  (str, unique per instance — e.g. "drawer-tree-root", "sidebar-tree-root")
+  car_type (str, passed through to /api/models and /api/badges)
+{% endcomment %}
+<div class="df-tree" id="{{ tree_id }}" data-car-type="{{ car_type|default:'' }}">
+    {% for m in manufacturers %}{% if m.car_count %}{% with mfr_id_str=m.id|stringformat:"d" %}
+    <div class="df-tree-node df-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
+        <div class="df-tree-row">
+            <label class="df-tree-label">
+                <input type="checkbox" name="manufacturer" value="{{ m.id }}" {% if mfr_id_str in sel_manufacturers %}checked{% endif %} class="df-tree-cb df-mfr-cb">
+                {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
+                <span class="df-tree-name bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
+                <span class="df-tree-count">({{ m.car_count }})</span>
+            </label>
+            <button type="button" class="df-tree-toggle" aria-label="Toggle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+        </div>
+        <div class="df-tree-children">
+            {% for mod in models %}{% if mod.manufacturer_id == m.id and mod.car_count %}{% with mod_id_str=mod.id|stringformat:"d" %}
+            <div class="df-tree-node df-model-node{% if mod_id_str in sel_models %} is-open{% endif %}" data-model-id="{{ mod.id }}" data-loaded="{% if mod_id_str in sel_models %}true{% else %}false{% endif %}">
+                <div class="df-tree-row">
+                    <label class="df-tree-label">
+                        <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="df-tree-cb df-model-cb">
+                        <span class="df-tree-name bilingual" data-lang-ar="{{ mod|translate_model }}" data-lang-ru="{{ mod|translate_model:'ru' }}" data-lang-es="{{ mod|translate_model:'es' }}" data-lang-en="{{ mod.name|pretty_en }}">{{ mod|translate_model }}</span>
+                        <span class="df-tree-count">({{ mod.car_count }})</span>
+                    </label>
+                    {% if car_type != 'auction' %}
+                    <button type="button" class="df-tree-toggle" aria-label="Toggle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                    {% endif %}
+                </div>
+                {% if car_type != 'auction' %}
+                <div class="df-tree-children">
+                    {% for b in badges %}{% if b.model_id == mod.id and b.car_count %}
+                    <div class="df-tree-node df-badge-node" data-badge-id="{{ b.id }}">
+                        <div class="df-tree-row">
+                            <label class="df-tree-label">
+                                <input type="checkbox" name="badge" value="{{ b.id }}" {% if b.id|stringformat:"d" in sel_badges %}checked{% endif %} class="df-tree-cb df-badge-cb">
+                                <span class="df-tree-name">{{ b.name }}</span>
+                                <span class="df-tree-count">({{ b.car_count }})</span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endwith %}{% endif %}{% endfor %}
+        </div>
+    </div>
+    {% endwith %}{% endif %}{% endfor %}
+</div>

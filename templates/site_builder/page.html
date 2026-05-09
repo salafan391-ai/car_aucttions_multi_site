@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} | {{ site_name|default:"" }}{% endblock %}
+{% block meta_description %}{{ page.meta_description|default:page.title }}{% endblock %}
+
+{% block content %}
+<main class="sb-page">
+  {% for section in sections %}
+    {% include "site_builder/sections/_section.html" with section=section %}
+  {% endfor %}
+</main>
+{% endblock %}

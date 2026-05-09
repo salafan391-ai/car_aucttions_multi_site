@@ -1,0 +1,15 @@
+<section class="sb-section sb-hero relative overflow-hidden hero-gradient text-white">
+  {% if section.image %}
+    <div class="absolute inset-0 z-0">
+      <img src="{{ section.image.url }}" alt="" class="w-full h-full object-cover opacity-40">
+      <div class="absolute inset-0 bg-black/40"></div>
+    </div>
+  {% endif %}
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
+    {% if section.title %}<h1 class="text-4xl sm:text-6xl font-bold mb-4">{{ section.title }}</h1>{% endif %}
+    {% if section.subtitle %}<p class="text-lg sm:text-xl text-gray-100 max-w-2xl mx-auto mb-8">{{ section.subtitle }}</p>{% endif %}
+    {% if section.config.cta_label and section.config.cta_url %}
+      <a href="{{ section.config.cta_url }}" class="inline-block bg-brand text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90 transition">{{ section.config.cta_label }}</a>
+    {% endif %}
+  </div>
+</section>

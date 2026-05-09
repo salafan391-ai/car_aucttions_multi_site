@@ -1,0 +1,39 @@
+<section class="sb-section sb-featured-cars">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+    {% if section.title or section.subtitle %}
+      <div class="text-center mb-8">
+        {% if section.title %}<h2 class="text-3xl font-bold text-gray-900">{{ section.title }}</h2>{% endif %}
+        {% if section.subtitle %}<p class="mt-2 text-gray-600">{{ section.subtitle }}</p>{% endif %}
+      </div>
+    {% endif %}
+
+    {% if section.cars %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-{{ section.config.columns|default:4 }} gap-5">
+        {% for car in section.cars %}
+          <a href="/site_cars/{{ car.id }}/" class="car-card group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg ring-1 ring-gray-100">
+            <div class="aspect-video bg-gray-100 overflow-hidden">
+              {% if car.image %}
+                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
+              {% endif %}
+            </div>
+            <div class="p-4">
+              <h3 class="font-semibold text-gray-900 line-clamp-1">{{ car.title }}</h3>
+              <div class="text-sm text-gray-500 mt-1">{{ car.manufacturer }} · {{ car.model }} · {{ car.year }}</div>
+              {% if car.price %}<div class="mt-2 text-brand font-bold">{{ car.price|floatformat:0 }}</div>{% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+      {% if section.config.view_all_url %}
+        <div class="text-center mt-8">
+          <a href="{{ section.config.view_all_url }}" class="inline-block px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+            {{ section.config.view_all_label|default:"View all" }}
+          </a>
+        </div>
+      {% endif %}
+    {% else %}
+      <p class="text-center text-gray-500">No cars to show yet.</p>
+    {% endif %}
+  </div>
+</section>

@@ -1,0 +1,20 @@
+<section class="sb-section sb-cta">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+    <div class="rounded-2xl px-8 py-12 text-center text-white" style="background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);">
+      {% if section.title %}<h2 class="text-3xl sm:text-4xl font-bold mb-3">{{ section.title }}</h2>{% endif %}
+      {% if section.subtitle %}<p class="text-lg text-white/90 max-w-xl mx-auto mb-6">{{ section.subtitle }}</p>{% endif %}
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        {% if section.config.primary_label and section.config.primary_url %}
+          <a href="{{ section.config.primary_url }}" class="inline-block bg-white text-gray-900 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100">
+            {{ section.config.primary_label }}
+          </a>
+        {% endif %}
+        {% if section.config.secondary_label and section.config.secondary_url %}
+          <a href="{{ section.config.secondary_url }}" class="inline-block border border-white/40 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/10">
+            {{ section.config.secondary_label }}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>

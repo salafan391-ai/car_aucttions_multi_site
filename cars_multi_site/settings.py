@@ -73,6 +73,7 @@ TENANT_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "site_cars",
+    "site_builder",
 ]
 TAILWIND_APP_NAME = "theme"
 
@@ -117,6 +118,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "tenants.context_processors.tenant_branding",
+                "site_builder.context_processors.site_chrome",
             ],
             "loaders": [
                 "tenants.template_loader.TenantThemeLoader",

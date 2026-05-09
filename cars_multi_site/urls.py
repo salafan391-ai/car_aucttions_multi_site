@@ -140,6 +140,7 @@ urlpatterns = [
     path("stripe/webhook/", stripe_webhook, name="stripe_webhook"),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
+    path("", include("site_builder.urls")),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,212 @@
+{% load static %}
+<nav id="main-nav" class="shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <a href="{% url 'home' %}" class="flex items-center gap-2">
+                {% if site_logo %}
+                <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-16 w-auto" fetchpriority="high">
+                {% else %}
+                <div class="h-16 bg-brand flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h-4m4 0h4a1 1 0 001-1v-5a1 1 0 00-.3-.7l-4-4A1 1 0 0016 5h-3"/>
+                    </svg>
+                </div>
+                {% endif %}
+
+            </a>
+
+            <div class="hidden md:flex items-center gap-8">
+                <a href="{% url 'home' %}" class="text-gray-600 text-brand-hover font-medium transition">الرئيسية</a>
+                <a href="{% url 'car_list' %}" class="text-gray-600 text-brand-hover font-medium transition">السيارات</a>
+                <a href="{% url 'post_list' %}" class="text-gray-600 text-brand-hover font-medium transition">المنشورات</a>
+                <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition">تواصل معنا</a>
+
+                {# ── Dynamic NavLinks (site_builder) ── #}
+                {% for link in sb_nav_links %}
+                    {% if link.children.all %}
+                        <div class="relative group">
+                            <button type="button" class="text-gray-600 text-brand-hover font-medium transition inline-flex items-center gap-1">
+                                {{ link.label }}
+                                <svg class="h-4 w-4 opacity-60" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                            </button>
+                            <div class="hidden group-hover:block absolute end-0 top-full mt-1 w-56 rounded-md bg-white shadow-lg ring-1 ring-black/5 py-1 z-50">
+                                {% for child in link.children.all %}
+                                    {% if child.is_visible %}
+                                        <a href="{{ child.resolved_url }}" {% if child.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{{ child.label }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="text-gray-600 text-brand-hover font-medium transition">{{ link.label }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% for page in sb_nav_pages %}
+                    <a href="/p/{{ page.slug }}/" class="text-gray-600 text-brand-hover font-medium transition">{{ page.title }}</a>
+                {% endfor %}
+
+                {% if user.is_authenticated %}
+                <a href="{% url 'wishlist' %}" class="text-gray-600 text-brand-hover font-medium transition relative">
+                    قائمة الأمنيات
+                    <span id="wishlist-count" class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                </a>
+                <a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition">طلباتي</a>
+                <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition">الرسائل</a>
+                {% if user.is_staff %}
+                <a href="{% url 'site_car_add' %}"
+                   class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-brand/30 ring-1 ring-white/10 transition active:scale-95"
+                   style="box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--color-primary) 45%, transparent);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-ru="Добавить машину" data-lang-es="Añadir un coche" data-lang-en="Add Car">أضف سيارة</span>
+                </a>
+                <a href="{% url 'site_dashboard' %}" class="inline-flex items-center gap-1.5 bg-brand/10 text-brand text-sm font-bold px-4 py-2 rounded-xl hover:bg-brand/20 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                    لوحة التحكم
+                </a>
+                {% if billing_visible %}
+                <a href="{% url 'billing:dashboard' %}" class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-sm font-bold px-4 py-2 rounded-xl hover:bg-green-100 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    الفوترة
+                </a>
+                {% endif %}
+                {% endif %}
+                <div class="flex items-center gap-3 border-r border-gray-200 pr-6">
+                    <div class="w-8 h-8 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ user.username|first|upper }}</div>
+                    <span class="text-sm font-medium text-gray-700">{{ user.get_short_name|default:user.username }}</span>
+                    <a href="{% url 'logout' %}" class="text-sm text-red-500 hover:text-red-600 font-medium transition">خروج</a>
+                </div>
+                {% else %}
+                <div class="flex items-center gap-3 border-r border-gray-200 pr-6">
+                    <a href="{% url 'login' %}" class="text-gray-600 text-brand-hover font-medium transition">دخول</a>
+                    <a href="{% url 'register' %}" class="bg-brand bg-brand-hover text-white text-sm font-medium px-4 py-2 rounded-xl transition">حساب جديد</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Lang & Currency Switcher -->
+            <div class="hidden md:flex items-center gap-2 border-r border-gray-200 pr-4 mr-2">
+                <div class="relative" id="lang-dropdown">
+                    <button type="button" onclick="document.getElementById('lang-menu').classList.toggle('hidden'); document.getElementById('currency-menu')?.classList.add('hidden');" class="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-800 bg-gray-50 border-2 border-gray-200 hover:border-brand hover:text-brand hover:bg-brand/5 rounded-lg shadow-sm transition">
+                        <span id="lang-flag" class="text-base leading-none">🇸🇦</span>
+                        <span id="lang-label">العربية</span>
+                        <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="lang-menu" class="hidden absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-xl border-2 border-gray-100 py-1 min-w-[150px] z-50" data-active-lang-menu>
+                        <button data-lang-code="ar" onclick="setLang('ar')" class="lang-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span class="flex items-center gap-2"><span class="text-base leading-none">🇸🇦</span> العربية</span>
+                            <svg class="lang-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button data-lang-code="en" onclick="setLang('en')" class="lang-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span class="flex items-center gap-2"><span class="text-base leading-none">🇬🇧</span> English</span>
+                            <svg class="lang-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button data-lang-code="es" onclick="setLang('es')" class="lang-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span class="flex items-center gap-2"><span class="text-base leading-none">🇪🇸</span> Español</span>
+                            <svg class="lang-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button data-lang-code="ru" onclick="setLang('ru')" class="lang-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span class="flex items-center gap-2"><span class="text-base leading-none">🇷🇺</span> Русский</span>
+                            <svg class="lang-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="relative" id="currency-dropdown">
+                    <button type="button" onclick="document.getElementById('currency-menu').classList.toggle('hidden'); document.getElementById('lang-menu')?.classList.add('hidden');" class="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-800 bg-gray-50 border-2 border-gray-200 hover:border-brand hover:text-brand hover:bg-brand/5 rounded-lg shadow-sm transition">
+                        <span id="currency-label">﷼ SAR</span>
+                        <svg class="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="currency-menu" class="hidden absolute top-full left-0 mt-1.5 bg-white rounded-xl shadow-xl border-2 border-gray-100 py-1 min-w-[150px] z-50">
+                        <button data-currency-code="KRW" onclick="setCurrency('KRW')" class="currency-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span>₩ KRW</span>
+                            <svg class="currency-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button data-currency-code="USD" onclick="setCurrency('USD')" class="currency-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span>$ USD</span>
+                            <svg class="currency-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button data-currency-code="SAR" onclick="setCurrency('SAR')" class="currency-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span>﷼ SAR</span>
+                            <svg class="currency-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button data-currency-code="AED" onclick="setCurrency('AED')" class="currency-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span>د.إ AED</span>
+                            <svg class="currency-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button data-currency-code="EUR" onclick="setCurrency('EUR')" class="currency-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition">
+                            <span>€ EUR</span>
+                            <svg class="currency-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden border-t" style="background-color:var(--color-primary)">
+        <div class="px-4 py-3 space-y-2">
+            <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات</a>
+            <a href="{% url 'post_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">المنشورات</a>
+            <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تواصل معنا</a>
+
+            {# ── Dynamic NavLinks (site_builder) ── #}
+            {% for link in sb_nav_links %}
+                <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">{{ link.label }}</a>
+                {% for child in link.children.all %}
+                    {% if child.is_visible %}
+                        <a href="{{ child.resolved_url }}" class="block ps-7 pe-3 py-2 rounded-lg hover:bg-gray-50 text-sm">— {{ child.label }}</a>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            {% for page in sb_nav_pages %}
+                <a href="/p/{{ page.slug }}/" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">{{ page.title }}</a>
+            {% endfor %}
+
+            <!-- Mobile Lang/Currency -->
+            <div class="flex items-center gap-2 py-2 px-3 border-t border-gray-100 mt-2">
+                <button onclick="cycleLang()" id="mobile-lang-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium text-gray-800">
+                    <span id="mobile-lang-flag">🇸🇦</span> <span id="mobile-lang-label">العربية</span>
+                </button>
+                <button onclick="cycleCurrency()" id="mobile-currency-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium text-gray-800">
+                    <span id="mobile-currency-label">﷼ SAR</span>
+                </button>
+            </div>
+            <div class="border-t border-gray-100 pt-2 mt-2">
+                {% if user.is_authenticated %}
+                <a href="{% url 'wishlist' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium relative">
+                    قائمة الأمنيات
+                    <span id="wishlist-count-mobile" class="absolute top-2 right-8 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                </a>
+                <a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلباتي</a>
+                <a href="{% url 'inbox' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرسائل</a>
+                {% if user.is_staff %}
+                <a href="{% url 'site_car_add' %}" class="flex items-center gap-2 py-2 px-3 rounded-lg bg-brand text-white font-bold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    <span>أضف سيارة</span>
+                </a>
+                <a href="{% url 'site_dashboard' %}" class="block py-2 px-3 rounded-lg hover:bg-brand/10 text-brand font-medium">لوحة التحكم</a>
+                {% if billing_visible %}
+                <a href="{% url 'billing:dashboard' %}" class="block py-2 px-3 rounded-lg hover:bg-green-100 text-green-700 font-medium">الفوترة</a>
+                {% endif %}
+                {% endif %}
+                <div class="flex items-center gap-2 py-2 px-3">
+                    <div class="w-8 h-8 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ user.username|first|upper }}</div>
+                    <span class="text-sm font-medium">{{ user.get_short_name|default:user.username }}</span>
+                </div>
+                <a href="{% url 'logout' %}" class="block py-2 px-3 rounded-lg hover:bg-red-50 text-red-500 font-medium">تسجيل الخروج</a>
+                {% else %}
+                <a href="{% url 'login' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تسجيل الدخول</a>
+                <a href="{% url 'register' %}" class="block py-2 px-3 rounded-lg bg-brand text-white font-medium text-center mt-1">إنشاء حساب</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

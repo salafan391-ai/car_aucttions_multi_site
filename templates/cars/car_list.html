@@ -156,13 +156,15 @@
 [data-car-theme="bold"] #filter-drawer input::placeholder,
 [data-car-theme="bold"] #sidebar-filters input::placeholder { color:rgba(255,255,255,.25) !important; }
 
-/* ── Filter checkbox chips — checked state ── */
+/* ── Filter checkbox chips — checked state. Borderless, subtle brand-tinted
+       background + bold primary text. Matches the tree rows. ── */
 #filter-form input[type="checkbox"].peer:checked ~ span,
 #filter-form-sidebar input[type="checkbox"].peer:checked ~ span {
-  background-color: var(--color-primary) !important;
-  color: #fff !important;
-  border-color: var(--color-primary) !important;
-  font-weight: 600;
+  background-color: rgba(37, 99, 235, .12) !important;
+  color: var(--color-primary) !important;
+  font-weight: 700 !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 /* ── Collapsible filter groups ── */
@@ -482,6 +484,128 @@
 [data-car-theme="cockpit"] #pagination a svg { color:rgba(59,130,246,.6) !important; }
 [data-car-theme="cockpit"] #pagination .text-gray-400 { color:rgba(59,130,246,.3) !important; }
 [data-car-theme="cockpit"] #pagination-info { color:rgba(147,197,253,.25) !important; font-family:'Orbitron','Courier New',monospace; font-size:.55rem !important; letter-spacing:.08em; }
+
+/* ─── Hierarchical tree filter (manufacturer → model → badge) ─── */
+.df-tree { display:flex; flex-direction:column; gap:.25rem; max-height:18rem; overflow-y:auto; padding:.15rem; }
+.df-tree-node { display:flex; flex-direction:column; }
+.df-tree-row {
+    display:flex; align-items:center; gap:.4rem;
+    padding:.4rem .55rem; border:1px solid #e5e7eb; border-radius:.5rem;
+    background:#fff; color:#374151; transition:all .15s ease; position:relative;
+}
+.df-tree-row:hover { border-color:var(--color-primary, #2563eb); color:var(--color-primary, #2563eb); }
+.df-tree-label {
+    flex:1; display:flex; align-items:center; gap:.4rem;
+    cursor:pointer; user-select:none; min-width:0; margin:0; position:relative;
+}
+.df-tree-cb {
+    position:absolute; top:0; left:0;
+    width:1px; height:1px; margin:0; padding:0; border:0;
+    overflow:hidden; clip:rect(0 0 0 0);
+    opacity:0; pointer-events:none;
+}
+.df-tree-name {
+    font-size:.78rem; font-weight:500;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.df-tree-count { color:#9ca3af; font-size:.65rem; font-weight:400; flex-shrink:0; }
+.df-tree-row:has(.df-tree-cb:checked) {
+    background:rgba(37,99,235,.08);
+    border-color:var(--color-primary, #2563eb);
+    color:var(--color-primary, #2563eb);
+    font-weight:600;
+}
+.df-tree-toggle {
+    width:1.4rem; height:1.4rem; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid #e5e7eb; background:transparent;
+    color:#6b7280; cursor:pointer;
+    transition:all .2s ease; padding:0; font-family:inherit;
+    border-radius:50%;
+}
+.df-tree-toggle:hover { border-color:var(--color-primary, #2563eb); color:var(--color-primary, #2563eb); background:rgba(37,99,235,.06); }
+.df-tree-toggle svg { width:.7rem; height:.7rem; transition:transform .25s ease; pointer-events:none; }
+.df-tree-node.is-open > .df-tree-row .df-tree-toggle { background:var(--color-primary, #2563eb); color:#fff; border-color:var(--color-primary, #2563eb); }
+.df-tree-node.is-open > .df-tree-row .df-tree-toggle svg { transform:rotate(45deg); }
+.df-tree-children {
+    display:none; flex-direction:column; gap:.25rem;
+    padding:.3rem 0 .1rem 1.1rem;
+    border-left:1px dashed #e5e7eb; margin-left:.7rem; margin-top:.25rem;
+}
+[dir="rtl"] .df-tree-children { padding-left:0; padding-right:1.1rem; border-left:0; border-right:1px dashed #e5e7eb; margin-left:0; margin-right:.7rem; }
+.df-tree-node.is-open > .df-tree-children { display:flex; }
+.df-tree-hint { color:#9ca3af; font-size:.7rem; padding:.3rem .5rem; font-style:italic; }
+
+/* Dark theme overrides */
+[data-car-theme="dark"] .df-tree-row,
+[data-car-theme="bold"] .df-tree-row { background:#1a1a2e; border-color:rgba(255,255,255,.1); color:rgba(255,255,255,.75); }
+[data-car-theme="dark"] .df-tree-row:has(.df-tree-cb:checked),
+[data-car-theme="bold"] .df-tree-row:has(.df-tree-cb:checked) { background:rgba(255,255,255,.05); }
+[data-car-theme="dark"] .df-tree-children,
+[data-car-theme="bold"] .df-tree-children { border-color:rgba(255,255,255,.1); }
+[data-car-theme="dark"] .df-tree-toggle,
+[data-car-theme="bold"] .df-tree-toggle { border-color:rgba(255,255,255,.15); color:rgba(255,255,255,.6); }
+[data-car-theme="dark"] .df-tree-count,
+[data-car-theme="bold"] .df-tree-count { color:rgba(255,255,255,.4); }
+
+/* ─── Flat-chip filters (fuel, transmission, color, seats, …): subtle
+   highlight on selection — same visual language as the tree rows above.
+   Replaces the JS that previously inline-styled the checked state.
+   Stacked one-per-row so long labels render in full without truncation. ─── */
+#filter-form .filter-group-body,
+#filter-form-sidebar .filter-group-body {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: .25rem !important;
+}
+/* Colour swatches read better as a multi-column grid — keep them in cols
+   even though every other flat-chip section is stacked one-per-row. */
+#filter-form .filter-group-body:has(input[name="color"]),
+#filter-form-sidebar .filter-group-body:has(input[name="color"]),
+#filter-form .filter-group-body:has(input[name="seat_color"]),
+#filter-form-sidebar .filter-group-body:has(input[name="seat_color"]) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: .35rem !important;
+}
+#filter-form .peer + span,
+#filter-form-sidebar .peer + span {
+    transition: all .15s ease;
+    font-size: .8rem !important;
+    font-weight: 500 !important;
+    line-height: 1.25rem;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: .45rem .55rem !important;
+    text-align: start !important;
+    white-space: normal;
+    min-height: auto;
+    border-radius: .5rem !important;
+}
+#filter-form .peer:hover + span,
+#filter-form-sidebar .peer:hover + span,
+#filter-form .peer + span:hover,
+#filter-form-sidebar .peer + span:hover {
+    background: rgba(37, 99, 235, .06) !important;
+    color: var(--color-primary) !important;
+}
+#filter-form .peer:checked + span,
+#filter-form-sidebar .peer:checked + span {
+    background: rgba(37, 99, 235, .12) !important;
+    border-color: var(--color-primary, #2563eb) !important;
+    color: var(--color-primary, #2563eb) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 0 rgba(37, 99, 235, .15) inset, 0 0 0 1px rgba(37, 99, 235, .35);
+}
+[data-car-theme="dark"] #filter-form .peer:checked + span,
+[data-car-theme="dark"] #filter-form-sidebar .peer:checked + span,
+[data-car-theme="bold"] #filter-form .peer:checked + span,
+[data-car-theme="bold"] #filter-form-sidebar .peer:checked + span {
+    background: rgba(255, 255, 255, .08) !important;
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, .35) !important;
+}
 </style>
 {% endblock %}
 
@@ -566,40 +690,10 @@
 
 <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
 <script>
-// ── Filter chip visual state ──
-(function () {
-  var primary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#2563eb';
-  var statusColors = { available: '#22c55e', sold: '#ef4444', pending: '#eab308' };
-
-  function applyChipState(input) {
-    var span = input.nextElementSibling;
-    if (!span) return;
-    if (input.checked) {
-      var color = (input.name === 'status' && statusColors[input.value]) ? statusColors[input.value] : primary;
-      span.style.backgroundColor = color;
-      span.style.color = '#fff';
-      span.style.borderColor = color;
-      span.style.fontWeight = '700';
-      span.style.boxShadow = '0 4px 12px ' + color + '40, 0 0 0 3px ' + color + '25';
-      span.style.transform = 'scale(1.02)';
-    } else {
-      span.style.backgroundColor = '';
-      span.style.color = '';
-      span.style.borderColor = '';
-      span.style.fontWeight = '';
-      span.style.boxShadow = '';
-      span.style.transform = '';
-    }
-  }
-
-  document.querySelectorAll(
-    '#filter-form input[type="checkbox"].peer, #filter-form-sidebar input[type="checkbox"].peer'
-  ).forEach(function (input) {
-    applyChipState(input);
-    input.addEventListener('change', function () { applyChipState(input); });
-  });
-
-})();
+// Flat-chip filter selection state is handled entirely in CSS now (see the
+// `.peer:checked + span` rule above). No JS needed for fuel/transmission/
+// color/etc. checkboxes — visual state stays in sync via the CSS sibling
+// selector even after HTMX swaps.
 
 // Preserve sidebar scroll positions across HTMX swaps of #htmx-main.
 // The sidebar is re-rendered on every swap, so without this, its outer scroll
@@ -717,185 +811,228 @@ function toggleFilterValue(key, value) {
   htmxGet(params.toString());
 }
 
-// ── Drawer manufacturer / model / badge — multi-select chips ──
+// ── Hierarchical tree filter (manufacturer → model → badge) ──
+// Initialises every .df-tree on the page (drawer + sidebar).
 (function () {
-  var primary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#2563eb';
-  var carType = '{{ request.GET.car_type|default:"" }}';
+  var carTypeGlobal = '{{ request.GET.car_type|default:"" }}';
 
-  var mfrInputs = document.getElementById('drawer-mfr-inputs');
-  var mdlInputs = document.getElementById('drawer-mdl-inputs');
-  var bdgInputs = document.getElementById('drawer-bdg-inputs');
-  var mdlSection = document.getElementById('drawer-models-section');
-  var bdgSection = document.getElementById('drawer-badges-section');
-  var mdlGrid    = document.getElementById('drawer-mdl-grid');
-  var bdgGrid    = document.getElementById('drawer-bdg-grid');
-
-  if (!mfrInputs) return;
-
-  function chipOn(btn) {
-    btn.style.backgroundColor = primary;
-    btn.style.borderColor = primary;
-    btn.style.color = '#fff';
-    btn.style.fontWeight = '600';
-    btn.dataset.sel = '1';
-  }
-  function chipOff(btn) {
-    btn.style.backgroundColor = '';
-    btn.style.borderColor = '';
-    btn.style.color = '';
-    btn.style.fontWeight = '';
-    btn.dataset.sel = '0';
+  function fetchJSON(url) {
+    return fetch(url, { credentials: 'same-origin' })
+      .then(function(r) { return r.ok ? r.json() : []; })
+      .catch(function() { return []; });
   }
 
-  function getSelectedIds(container) {
-    if (!container) return [];
-    return Array.from(container.querySelectorAll('input')).map(function(i) { return i.value; });
+  function curLang() {
+    try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
   }
-  function addHidden(container, name, value) {
-    var inp = document.createElement('input');
-    inp.type = 'hidden';
-    inp.name = name;
-    inp.value = value;
-    container.appendChild(inp);
-  }
-  function removeHidden(container, value) {
-    if (!container) return;
-    Array.from(container.querySelectorAll('input')).forEach(function(inp) {
-      if (inp.value === String(value)) inp.remove();
+
+  function makeTogglePlusSvg() {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2.5');
+    [['12','5','12','19'], ['5','12','19','12']].forEach(function(c) {
+      var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      l.setAttribute('x1', c[0]); l.setAttribute('y1', c[1]);
+      l.setAttribute('x2', c[2]); l.setAttribute('y2', c[3]);
+      svg.appendChild(l);
     });
-  }
-  function clearHidden(container) {
-    if (container) container.innerHTML = '';
+    return svg;
   }
 
-  // Apply initial states from server-rendered chips
-  document.querySelectorAll('.drawer-mfr-btn').forEach(function(b) { if (b.dataset.sel === '1') chipOn(b); });
-  document.querySelectorAll('.drawer-mdl-btn').forEach(function(b) { if (b.dataset.sel === '1') chipOn(b); });
-  document.querySelectorAll('.drawer-bdg-btn').forEach(function(b) { if (b.dataset.sel === '1') chipOn(b); });
+  function buildNode(opts) {
+    // opts: { kind: 'model'|'badge', id, name, langs, count, leaf, checked }
+    var node = document.createElement('div');
+    node.className = 'df-tree-node df-' + opts.kind + '-node';
+    node.dataset[opts.kind + 'Id'] = opts.id;
+    if (!opts.leaf) node.dataset.loaded = 'false';
 
-  function bindBadgeBtn(btn) {
-    btn.addEventListener('click', function() {
-      if (btn.dataset.sel === '1') {
-        chipOff(btn);
-        removeHidden(bdgInputs, btn.dataset.id);
-      } else {
-        chipOn(btn);
-        if (bdgInputs) addHidden(bdgInputs, 'badge', btn.dataset.id);
-      }
-    });
-  }
+    var row = document.createElement('div');
+    row.className = 'df-tree-row';
 
-  function bindModelBtn(btn) {
-    btn.addEventListener('click', function() {
-      if (btn.dataset.sel === '1') {
-        chipOff(btn);
-        removeHidden(mdlInputs, btn.dataset.id);
-        if (getSelectedIds(mdlInputs).length === 0) {
-          clearHidden(bdgInputs);
-          if (bdgGrid) bdgGrid.innerHTML = '';
-          if (bdgSection) bdgSection.style.display = 'none';
-        }
-      } else {
-        chipOn(btn);
-        if (mdlInputs) addHidden(mdlInputs, 'model', btn.dataset.id);
-        if (bdgSection && carType !== 'auction') {
-          fetch('/api/badges/?model_id=' + btn.dataset.id + (carType ? '&car_type=' + carType : ''))
-            .then(function(r) { return r.json(); })
-            .then(function(newBadges) {
-              var existingIds = bdgGrid ? Array.from(bdgGrid.querySelectorAll('.drawer-bdg-btn')).map(function(b) { return b.dataset.id; }) : [];
-              newBadges.forEach(function(b) {
-                if (!existingIds.includes(String(b.id))) {
-                  var b2 = document.createElement('button');
-                  b2.type = 'button';
-                  b2.className = 'drawer-bdg-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600';
-                  b2.dataset.id = b.id;
-                  b2.dataset.sel = '0';
-                  b2.textContent = b.name;
-                  bindBadgeBtn(b2);
-                  bdgGrid && bdgGrid.appendChild(b2);
-                }
-              });
-              if (bdgSection) bdgSection.style.display = (bdgGrid && bdgGrid.children.length) ? '' : 'none';
-            });
-        }
-      }
-    });
-  }
+    var label = document.createElement('label');
+    label.className = 'df-tree-label';
 
-  function fetchModelsForSelected() {
-    var selectedMfrs = getSelectedIds(mfrInputs);
-    if (!selectedMfrs.length) {
-      if (mdlSection) mdlSection.style.display = 'none';
-      if (bdgSection) bdgSection.style.display = 'none';
-      return;
-    }
-    var promises = selectedMfrs.map(function(id) {
-      return fetch('/api/models/?manufacturer_id=' + id + (carType ? '&car_type=' + carType : '') + '&lang=ar')
-        .then(function(r) { return r.json(); });
-    });
-    Promise.all(promises).then(function(results) {
-      var seen = {};
-      var merged = [];
-      results.forEach(function(models) {
-        models.forEach(function(m) {
-          if (!seen[m.id] && m.car_count) { seen[m.id] = true; merged.push(m); }
-        });
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = opts.kind;
+    input.value = opts.id;
+    input.className = 'df-tree-cb df-' + opts.kind + '-cb';
+    if (opts.checked) input.checked = true;
+
+    var name = document.createElement('span');
+    name.className = 'df-tree-name';
+    if (opts.langs) {
+      name.classList.add('bilingual');
+      ['ar','en','es','ru'].forEach(function(lang) {
+        if (opts.langs[lang]) name.setAttribute('data-lang-' + lang, opts.langs[lang]);
       });
-      merged.sort(function(a, b) { return (b.car_count || 0) - (a.car_count || 0); });
-      var currentMdls = getSelectedIds(mdlInputs);
-      if (mdlGrid) {
-        mdlGrid.innerHTML = '';
-        var curLang = localStorage.getItem('site_lang') || 'ar';
-        merged.forEach(function(m) {
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'drawer-mdl-btn w-full text-center px-2 py-2 text-xs rounded-lg font-medium border-2 transition-all bg-white border-gray-200 text-gray-600';
-          btn.dataset.id = m.id;
-          btn.dataset.sel = currentMdls.includes(String(m.id)) ? '1' : '0';
-          btn.innerHTML = '';
-          var nameAr = m.name_ar || m.name;
-          var nameEn = m.name_en || m.name;
-          var nameSpan = document.createElement('span');
-          nameSpan.className = 'bilingual';
-          nameSpan.setAttribute('data-lang-ar', nameAr);
-          nameSpan.setAttribute('data-lang-en', nameEn);
-          nameSpan.textContent = curLang === 'en' ? nameEn : nameAr;
-          btn.appendChild(nameSpan);
-          btn.appendChild(document.createTextNode(' '));
-          var cnt = document.createElement('span');
-          cnt.className = 'opacity-60 text-[10px] font-normal';
-          cnt.textContent = '(' + m.car_count + ')';
-          btn.appendChild(cnt);
-          if (btn.dataset.sel === '1') chipOn(btn);
-          bindModelBtn(btn);
-          mdlGrid.appendChild(btn);
+    }
+    var lang = curLang();
+    name.textContent = (opts.langs && opts.langs[lang]) || opts.name;
+
+    label.appendChild(input); label.appendChild(name);
+
+    if (typeof opts.count === 'number') {
+      var cnt = document.createElement('span');
+      cnt.className = 'df-tree-count';
+      cnt.textContent = '(' + opts.count + ')';
+      label.appendChild(cnt);
+    }
+    row.appendChild(label);
+
+    if (!opts.leaf) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'df-tree-toggle';
+      btn.setAttribute('aria-label', 'Toggle');
+      btn.appendChild(makeTogglePlusSvg());
+      row.appendChild(btn);
+
+      var children = document.createElement('div');
+      children.className = 'df-tree-children';
+      node.appendChild(row);
+      node.appendChild(children);
+    } else {
+      node.appendChild(row);
+    }
+    return node;
+  }
+
+  function loadModels(mfrNode, qsCarType) {
+    var mid = mfrNode.dataset.mfrId;
+    var children = mfrNode.querySelector(':scope > .df-tree-children');
+    if (!children) return Promise.resolve();
+    var existingSelected = new Map();
+    children.querySelectorAll(':scope > .df-model-node').forEach(function(n) {
+      existingSelected.set(n.dataset.modelId, n);
+    });
+
+    var hint = document.createElement('div');
+    hint.className = 'df-tree-hint';
+    hint.textContent = '…';
+    children.appendChild(hint);
+
+    return fetchJSON('/api/models/?manufacturer_id=' + encodeURIComponent(mid) + qsCarType + '&lang=' + curLang())
+      .then(function(arr) {
+        hint.remove();
+        arr.sort(function(a, b) { return (b.car_count || 0) - (a.car_count || 0); });
+        arr.forEach(function(m) {
+          if (existingSelected.has(String(m.id))) return;
+          if (!m.car_count) return;
+          var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
+          children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, count: m.car_count, leaf: qsCarType.indexOf('auction') !== -1, checked: false }));
         });
+        if (!children.children.length) {
+          var empty = document.createElement('div');
+          empty.className = 'df-tree-hint';
+          empty.textContent = '—';
+          children.appendChild(empty);
+        }
+        mfrNode.dataset.loaded = 'true';
+      });
+  }
+
+  function loadBadges(modelNode, qsCarType) {
+    var mid = modelNode.dataset.modelId;
+    var children = modelNode.querySelector(':scope > .df-tree-children');
+    if (!children) return Promise.resolve();
+    var existingSelected = new Map();
+    children.querySelectorAll(':scope > .df-badge-node').forEach(function(n) {
+      existingSelected.set(n.dataset.badgeId, n);
+    });
+
+    var hint = document.createElement('div');
+    hint.className = 'df-tree-hint';
+    hint.textContent = '…';
+    children.appendChild(hint);
+
+    return fetchJSON('/api/badges/?model_id=' + encodeURIComponent(mid) + qsCarType)
+      .then(function(arr) {
+        hint.remove();
+        arr.forEach(function(b) {
+          if (existingSelected.has(String(b.id))) return;
+          if (!b.car_count) return;
+          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: false }));
+        });
+        if (!children.children.length) {
+          var empty = document.createElement('div');
+          empty.className = 'df-tree-hint';
+          empty.textContent = '—';
+          children.appendChild(empty);
+        }
+        modelNode.dataset.loaded = 'true';
+      });
+  }
+
+  function initTree(root) {
+    if (!root || root.dataset.bound === '1') return;
+    root.dataset.bound = '1';
+    var carType = root.dataset.carType || carTypeGlobal || '';
+    var qsCarType = carType ? '&car_type=' + encodeURIComponent(carType) : '';
+
+    function toggleNode(node) {
+      var willOpen = !node.classList.contains('is-open');
+      if (willOpen && node.dataset.loaded === 'false') {
+        if (node.classList.contains('df-mfr-node')) {
+          loadModels(node, qsCarType).then(function() { node.classList.add('is-open'); });
+          return;
+        }
+        if (node.classList.contains('df-model-node')) {
+          loadBadges(node, qsCarType).then(function() { node.classList.add('is-open'); });
+          return;
+        }
       }
-      if (mdlSection) mdlSection.style.display = merged.length ? '' : 'none';
+      node.classList.toggle('is-open');
+    }
+
+    // Toggle button click — expand/collapse + lazy-load.
+    root.addEventListener('click', function(e) {
+      var btn = e.target.closest('.df-tree-toggle');
+      if (!btn) return;
+      e.preventDefault();
+      var node = btn.closest('.df-tree-node');
+      if (node) toggleNode(node);
+    });
+
+    // When a parent is unchecked, also uncheck its descendants. When a
+    // parent is freshly checked, auto-expand to reveal its children.
+    // For the sidebar (form has hx-get), the form's onchange auto-submit
+    // handles re-rendering with up-to-date model/badge data.
+    root.addEventListener('change', function(e) {
+      var cb = e.target;
+      if (!cb.classList || !cb.classList.contains('df-tree-cb')) return;
+      if (!cb.checked) {
+        var node = cb.closest('.df-tree-node');
+        if (!node) return;
+        node.querySelectorAll('.df-tree-cb').forEach(function(c) {
+          if (c !== cb) c.checked = false;
+        });
+      } else if (cb.classList.contains('df-mfr-cb')) {
+        var node = cb.closest('.df-mfr-node');
+        if (node && !node.classList.contains('is-open')) toggleNode(node);
+      } else if (cb.classList.contains('df-model-cb')) {
+        var node = cb.closest('.df-model-node');
+        if (node && !node.classList.contains('is-open')) toggleNode(node);
+      }
+
+      // Sidebar form auto-submits via HTMX on change — let the existing
+      // submitSidebarForm handler pick up the new checkbox state. The
+      // change event bubbles up to the form; submitSidebarForm is bound to
+      // input/select onchange in the markup. For checkboxes inside the
+      // tree we need to call it explicitly.
+      var form = cb.form;
+      if (form && form.id === 'filter-form-sidebar' && typeof submitSidebarForm === 'function') {
+        submitSidebarForm(form);
+      }
     });
   }
 
-  // Bind server-rendered model & badge buttons
-  document.querySelectorAll('.drawer-mdl-btn').forEach(bindModelBtn);
-  document.querySelectorAll('.drawer-bdg-btn').forEach(bindBadgeBtn);
-
-  // Manufacturer click — toggle selection, then refresh model list
-  document.querySelectorAll('.drawer-mfr-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      if (btn.dataset.sel === '1') {
-        chipOff(btn);
-        removeHidden(mfrInputs, btn.dataset.id);
-      } else {
-        chipOn(btn);
-        addHidden(mfrInputs, 'manufacturer', btn.dataset.id);
-      }
-      // Reset model/badge selections when manufacturer list changes
-      clearHidden(mdlInputs);
-      clearHidden(bdgInputs);
-      document.querySelectorAll('.drawer-mdl-btn').forEach(chipOff);
-      document.querySelectorAll('.drawer-bdg-btn').forEach(chipOff);
-      fetchModelsForSelected();
-    });
+  document.querySelectorAll('.df-tree').forEach(initTree);
+  // Re-init on HTMX swaps that bring new trees into the DOM.
+  document.body.addEventListener('htmx:afterSwap', function() {
+    document.querySelectorAll('.df-tree').forEach(initTree);
   });
 })();
 

@@ -1,0 +1,39 @@
+<section class="sb-section sb-contact-form">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+    <div class="text-center mb-8">
+      {% if section.title %}<h2 class="text-3xl font-bold text-gray-900">{{ section.title }}</h2>{% endif %}
+      {% if section.subtitle %}<p class="mt-2 text-gray-600">{{ section.subtitle }}</p>{% endif %}
+    </div>
+
+    <form method="post" action="{{ section.config.action_url|default:'/contact/' }}" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {% csrf_token %}
+      <div class="sm:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ section.config.name_label|default:"Name" }}</label>
+        <input type="text" name="name" required class="w-full rounded-lg border-gray-300 focus:ring-brand focus:border-brand">
+      </div>
+      <div class="sm:col-span-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ section.config.phone_label|default:"Phone" }}</label>
+        <input type="tel" name="phone" class="w-full rounded-lg border-gray-300 focus:ring-brand focus:border-brand">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ section.config.email_label|default:"Email" }}</label>
+        <input type="email" name="email" class="w-full rounded-lg border-gray-300 focus:ring-brand focus:border-brand">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ section.config.message_label|default:"Message" }}</label>
+        <textarea name="message" rows="5" required class="w-full rounded-lg border-gray-300 focus:ring-brand focus:border-brand"></textarea>
+      </div>
+      <div class="sm:col-span-2">
+        <button type="submit" class="bg-brand text-white font-semibold px-6 py-3 rounded-lg hover:opacity-90">
+          {{ section.config.submit_label|default:"Send" }}
+        </button>
+      </div>
+    </form>
+
+    <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-600">
+      {% if site_phone %}<div><span class="font-semibold text-gray-900">Phone:</span> <span dir="ltr">{{ site_phone }}</span></div>{% endif %}
+      {% if site_email %}<div><span class="font-semibold text-gray-900">Email:</span> {{ site_email }}</div>{% endif %}
+      {% if site_address %}<div><span class="font-semibold text-gray-900">Address:</span> {{ site_address }}</div>{% endif %}
+    </div>
+  </div>
+</section>

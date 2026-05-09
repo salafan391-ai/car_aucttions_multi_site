@@ -1,0 +1,9 @@
+{% if section.type == "hero" %}{% include "site_builder/sections/_hero.html" %}
+{% elif section.type == "text" %}{% include "site_builder/sections/_text.html" %}
+{% elif section.type == "html" %}{% include "site_builder/sections/_html.html" %}
+{% elif section.type == "featured_cars" %}{% include "site_builder/sections/_featured_cars.html" %}
+{% elif section.type == "brand_strip" %}{% include "site_builder/sections/_brand_strip.html" %}
+{% elif section.type == "gallery" %}{% include "site_builder/sections/_gallery.html" %}
+{% elif section.type == "cta" %}{% include "site_builder/sections/_cta.html" %}
+{% elif section.type == "contact_form" %}{% include "site_builder/sections/_contact_form.html" %}
+{% endif %}

@@ -1,0 +1,7 @@
+<section class="sb-section sb-text">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+    {% if section.title %}<h2 class="text-3xl font-bold mb-4 text-gray-900">{{ section.title }}</h2>{% endif %}
+    {% if section.subtitle %}<p class="text-lg text-gray-600 mb-6">{{ section.subtitle }}</p>{% endif %}
+    {% if section.body %}<div class="prose max-w-none text-gray-700 whitespace-pre-line">{{ section.body }}</div>{% endif %}
+  </div>
+</section>
