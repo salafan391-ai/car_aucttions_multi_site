@@ -89,7 +89,30 @@
         html[lang="en"] body, html[lang="ko"] body { font-family: 'Tajawal', Arial, sans-serif; }
         .car-card:hover { transform: translateY(-4px); }
         .car-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .hero-gradient { background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 50%, #0f0f23 100%); }
+        /* Modern mesh-gradient hero: soft brand-coloured glows on a deep
+           navy base. Reads as premium / cinematic without committing to a
+           single bold colour. */
+        .hero-gradient {
+            background:
+                radial-gradient(60% 80% at 15% 15%, color-mix(in srgb, var(--color-primary) 55%, transparent) 0%, transparent 60%),
+                radial-gradient(55% 70% at 88% 25%, color-mix(in srgb, var(--color-accent) 45%, transparent) 0%, transparent 65%),
+                radial-gradient(60% 85% at 75% 95%, color-mix(in srgb, var(--color-primary) 35%, transparent) 0%, transparent 60%),
+                linear-gradient(180deg, #0a0e27 0%, #11183a 50%, #0a0e27 100%);
+            position: relative;
+            isolation: isolate;
+        }
+        /* Subtle grain to break the mesh banding, keeps it from looking flat. */
+        .hero-gradient::before {
+            content: "";
+            position: absolute; inset: 0;
+            background-image:
+                radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+            background-size: 4px 4px;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero-gradient > * { position: relative; z-index: 1; }
         .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         .bg-brand { background-color: var(--color-primary); }
         .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
@@ -624,7 +647,7 @@
             );
             border-radius: 2px;
         }
-        {% if site_logo %}
+        {% if site_logo and show_watermark %}
         :root { --site-logo-url: url("{{ site_logo }}"); }
         .car-img-wm { position: relative; }
         .car-img-wm::after {

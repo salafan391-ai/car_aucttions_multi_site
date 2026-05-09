@@ -13,6 +13,11 @@ class Tenant(TenantMixin):
         verbose_name="إظهار الهيرو في الصفحة الرئيسية",
         help_text="عند التعطيل تختفي قسم الهيرو من الصفحة الرئيسية ويُرفع المحتوى لأعلى.",
     )
+    show_watermark = models.BooleanField(
+        default=True,
+        verbose_name="إظهار العلامة المائية على الصور",
+        help_text="عند التعطيل تختفي العلامة المائية (الشعار) المرتسمة فوق صور السيارات.",
+    )
     LANDING_DESIGN_CHOICES = [
         ('cosmos',  '🌌 Cosmos (Dark Animated)'),
         ('minimal', '⚡ Minimal (Clean Light)'),
