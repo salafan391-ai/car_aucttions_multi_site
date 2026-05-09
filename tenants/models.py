@@ -8,6 +8,11 @@ class Tenant(TenantMixin):
     logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True, verbose_name="الشعار")
     favicon = models.ImageField(upload_to='tenant_favicons/', blank=True, null=True, verbose_name="أيقونة الموقع")
     hero_image = models.ImageField(upload_to='tenant_hero/', blank=True, null=True, verbose_name="صورة الخلفية الرئيسية", help_text="صورة خلفية الصفحة الرئيسية")
+    show_hero = models.BooleanField(
+        default=True,
+        verbose_name="إظهار الهيرو في الصفحة الرئيسية",
+        help_text="عند التعطيل تختفي قسم الهيرو من الصفحة الرئيسية ويُرفع المحتوى لأعلى.",
+    )
     LANDING_DESIGN_CHOICES = [
         ('cosmos',  '🌌 Cosmos (Dark Animated)'),
         ('minimal', '⚡ Minimal (Clean Light)'),

@@ -273,10 +273,12 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
     }
 </style>
 {% endif %}
+{% if show_hero %}
 {% if site_hero_images %}
 <link rel="preload" as="image" href="{{ site_hero_images.0.image.url }}" fetchpriority="high">
 {% elif site_hero_image %}
 <link rel="preload" as="image" href="{{ site_hero_image }}" fetchpriority="high">
+{% endif %}
 {% endif %}
 <style>
     .scrollbar-hide {
@@ -326,9 +328,12 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
     </div>
     <div class="eid-mubarak bilingual" data-lang-ar="عيد مبارك" data-lang-ru="Ид Мубарак" data-lang-es="Eid Mubarak" data-lang-en="Eid Mubarak">عيد مبارك</div>
 {% endif %}
-<!-- Hero Section -->
-<section class="hero-gradient text-white relative py-16 sm:py-24 md:py-32" id="hero-section">
+<!-- Hero Section. The slideshow / logo / tagline are gated by `show_hero`,
+     but the search bar + body-types scroller always render so users can
+     search even when the big hero is disabled. -->
+<section class="hero-gradient text-white relative {% if show_hero %}py-16 sm:py-24 md:py-32{% else %}py-8 sm:py-10{% endif %}" id="hero-section">
 
+    {% if show_hero %}
     <!-- Slideshow Background -->
     {% if site_hero_images %}
     <div id="hero-slideshow" class="absolute inset-0 overflow-hidden">
@@ -369,8 +374,10 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         <div class="absolute inset-0 bg-black/30"></div>
     </div>
     {% endif %}
+    {% endif %}{# end show_hero (slideshow) #}
     <!-- Hero Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if show_hero %}
         <div class="text-center mb-8 sm:mb-12">
             <div class="max-w-2xl mx-auto flex items-center justify-center mb-6">
             {% if site_logo %}
@@ -387,7 +394,8 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                       {% if site_tagline_en %}data-en="{{ site_tagline_en }}"{% endif %}></span>
             </p>
         </div>
-        
+        {% endif %}{# end show_hero (logo + tagline) #}
+
         <!-- Search Bar -->
         <div class="max-w-4xl mx-auto">
             <!-- Search Input -->
@@ -550,146 +558,58 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 
             </div>
                             
-                <!-- Body Types -->
-                {% if body_types %}
-                <div class="mt-4 pt-4">
-                    <div class="relative group">
-                        <!-- Left Arrow -->
-                        <button onclick="scrollElement('body-types-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-4">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                            </svg>
-                        </button>
-                        
-                        <!-- Right Arrow -->
-                        <button onclick="scrollElement('body-types-scroll', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-4">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </button>
-                        
-                        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="body-types-scroll">
-                        {% for bt in body_types %}
-                        {% with bt_key=bt.name|lower %}
-                        <a href="{% url 'car_list' %}?body_type={{ bt.name }}" class="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:border-brand hover:text-brand hover:shadow-sm transition whitespace-nowrap">
-                            {% if bt_key == 'suv' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="سيارات دفع رباعي" data-lang-ru="внедорожники" data-lang-es="SUV" data-lang-en="SUV">سيارات دفع رباعي</span>
-                            {% elif bt_key == 'sedan' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="سيدان" data-lang-ru="Седан" data-lang-es="Sedán" data-lang-en="Sedan">سيدان</span>
-                            {% elif bt_key == 'hatchback' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="هاتشباك" data-lang-ru="хэтчбек" data-lang-es="hatchback" data-lang-en="Hatchback">هاتشباك</span>
-                            {% elif bt_key == 'coupe' or bt_key == 'roadster' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="كوبيه/روادستر" data-lang-ru="Купе/Роудстер" data-lang-es="Coupé/Roadster" data-lang-en="Coupe/Roadster">كوبيه/روادستر</span>
-                            {% elif bt_key == 'truck' or bt_key == 'pickup truck' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="شاحنة صغيرة" data-lang-ru="небольшой грузовик" data-lang-es="camión pequeño" data-lang-en="Pickup Truck">شاحنة صغيرة</span>
-                            {% elif bt_key == 'minivan' or bt_key == 'microbus' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="ميني فان/ميكروباص" data-lang-ru="Минивэн/микроавтобус" data-lang-es="Minivan/Microbús" data-lang-en="{{ bt.name|pretty_en }}">ميني فان/ميكروباص</span>
-                            {% elif bt_key == 'rv' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="مركبة ترفيهية" data-lang-ru="транспортное средство для отдыха" data-lang-es="vehículo recreativo" data-lang-en="RV">مركبة ترفيهية</span>
-                            {% elif bt_key == 'sedan/hatchback' %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="سيدان/هاتشباك" data-lang-ru="Седан/Хэтчбек" data-lang-es="Sedán/Hatchback" data-lang-en="Sedan/Hatchback">سيدان/هاتشباك</span>
-                            {% else %}
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="{{ bt|translate_body }}" data-lang-ru="{{ bt|translate_body:'ru' }}" data-lang-es="{{ bt|translate_body:'es' }}" data-lang-en="{{ bt.name|pretty_en }}">{{ bt|translate_body }}</span>
-                            {% endif %}
-                        </a>
-                        {% endwith %}
-                        {% endfor %}
+                <!-- Category Cards (moved into the hero — replaces the old body-types badges) -->
+                <div id="category-cards" class="mt-6 sm:mt-8 flex flex-wrap justify-center gap-3 sm:gap-4 max-w-4xl mx-auto [&>a]:basis-[calc(50%-0.375rem)] sm:[&>a]:basis-44 sm:[&>a]:grow-0">
+                    <a href="{% url 'car_list' %}?car_type=cars" class="group relative bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-white">
+                        {% if cars_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-blue-50 group-hover:bg-brand-light rounded-xl sm:rounded-2xl flex items-center justify-center transition">
+                            <svg class="w-5 h-5 sm:w-7 sm:h-7 text-blue-500 group-hover:text-brand transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17h.01M16 17h.01M3 11l1.5-5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 11M3 11v6a1 1 0 001 1h1a2 2 0 004 0h6a2 2 0 004 0h1a1 1 0 001-1v-6M3 11h18"/></svg>
                         </div>
+                        {% if cars_count %}
+                        <div class="text-2xl sm:text-3xl font-extrabold text-brand">{{ cars_count|intcomma }}</div>
+                        <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-ru="Корейские выставки" data-lang-es="exposiciones coreanas" data-lang-en="Korean Showrooms">المعارض الكورية</div>
+                        {% else %}
+                        <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
+                        <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-ru="Корейские выставки" data-lang-es="exposiciones coreanas" data-lang-en="Korean Showrooms">المعارض الكورية</div>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'car_list' %}?car_type=auction" class="group relative bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-white">
+                        {% if auction_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500"></span></span>{% endif %}
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-purple-50 group-hover:bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
+                            <svg class="w-5 h-5 sm:w-7 sm:h-7 text-purple-500 group-hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
-                    </div>
+                        {% if auction_count %}
+                        <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">{{ auction_count|intcomma }}</div>
+                        <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات" data-lang-ru="Аукционы" data-lang-es="Subastas" data-lang-en="Auctions">مزادات</div>
+                        {% else %}
+                        <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
+                        <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات كوريا تتجدد بشكل يومي" data-lang-ru="Корейские аукционы обновляются ежедневно." data-lang-es="Las subastas coreanas se actualizan diariamente." data-lang-en="Korean auctions updated daily">مزادات كوريا تتجدد بشكل يومي</div>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'site_car_list' %}" class="group relative bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-white">
+                        {% if site_cars %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-green-50 group-hover:bg-green-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
+                            <svg class="w-5 h-5 sm:w-7 sm:h-7 text-green-500 group-hover:text-green-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        </div>
+                        {% if site_cars %}
+                        <div class="text-2xl sm:text-3xl font-extrabold text-green-600">{{ site_cars|length }}</div>
+                        <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</div>
+                        {% else %}
+                        <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
+                        <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</div>
+                        {% endif %}
+                    </a>
+                    {% if damaged_cars_count %}
+                    <a href="{% url 'site_car_list' %}?source=auctions" class="group relative bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-red-300">
+                        <span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500"></span></span>
+                        <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-red-50 group-hover:bg-red-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
+                            <svg class="w-5 h-5 sm:w-7 sm:h-7 text-red-500 group-hover:text-red-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.73 4a2 2 0 00-3.46 0L3.33 16a2 2 0 001.74 3z"/></svg>
+                        </div>
+                        <div class="text-2xl sm:text-3xl font-extrabold text-red-600">{{ damaged_cars_count|intcomma }}</div>
+                        <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سيارات مصدومة" data-lang-ru="Поврежденные" data-lang-es="Dañados" data-lang-en="Damaged">سيارات مصدومة</div>
+                    </a>
+                    {% endif %}
                 </div>
-                {% endif %}
-        </div>
-    </div>
-</section>
-
-<!-- Car Type Navigation -->
-<section class="relative z-10 -mt-8 sm:-mt-12">
-    <div class="max-w-7xl mx-auto px-3 sm:px-4">
-        <div id="category-cards" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-        <a href="{% url 'car_list' %}?car_type=cars" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
-            {% if cars_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
-            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-blue-50 group-hover:bg-brand-light rounded-xl sm:rounded-2xl flex items-center justify-center transition">
-                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-blue-500 group-hover:text-brand transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17h.01M16 17h.01M3 11l1.5-5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 11M3 11v6a1 1 0 001 1h1a2 2 0 004 0h6a2 2 0 004 0h1a1 1 0 001-1v-6M3 11h18"/></svg>
-            </div>
-            {% if cars_count %}
-            <div class="text-2xl sm:text-3xl font-extrabold text-brand">{{ cars_count|intcomma }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-ru="Корейские выставки" data-lang-es="exposiciones coreanas" data-lang-en="Korean Showrooms">المعارض الكورية</div>
-            {% else %}
-            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="المعارض الكورية" data-lang-ru="Корейские выставки" data-lang-es="exposiciones coreanas" data-lang-en="Korean Showrooms">المعارض الكورية</div>
-            {% endif %}
-        </a>
-        <a href="{% url 'car_list' %}?car_type=auction" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
-            {% if auction_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500"></span></span>{% endif %}
-            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-purple-50 group-hover:bg-purple-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
-                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-purple-500 group-hover:text-purple-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            {% if auction_count %}
-            <div class="text-2xl sm:text-3xl font-extrabold text-purple-600">{{ auction_count|intcomma }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات" data-lang-ru="Аукционы" data-lang-es="Subastas" data-lang-en="Auctions">مزادات</div>
-            {% else %}
-            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="مزادات كوريا تتجدد بشكل يومي" data-lang-ru="Корейские аукционы обновляются ежедневно." data-lang-es="Las subastas coreanas se actualizan diariamente." data-lang-en="Korean auctions updated daily">مزادات كوريا تتجدد بشكل يومي</div>
-            {% endif %}
-        </a>
-           <a href="{% url 'site_car_list' %}" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-brand/30">
-            {% if site_cars %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
-            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-green-50 group-hover:bg-green-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
-                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-green-500 group-hover:text-green-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-            </div>
-            {% if site_cars %}
-            <div class="text-2xl sm:text-3xl font-extrabold text-green-600">{{ site_cars|length }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</div>
-            {% else %}
-            <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
-            <div class="bilingual text-gray-400 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</div>
-            {% endif %}
-        </a>
-        {% if damaged_cars_count %}
-        <a href="{% url 'site_car_list' %}?source=auctions" class="group relative bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-red-500/30">
-            <span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-red-500"></span></span>
-            <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-red-50 group-hover:bg-red-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
-                <svg class="w-5 h-5 sm:w-7 sm:h-7 text-red-500 group-hover:text-red-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.73 4a2 2 0 00-3.46 0L3.33 16a2 2 0 001.74 3z"/></svg>
-            </div>
-            <div class="text-2xl sm:text-3xl font-extrabold text-red-600">{{ damaged_cars_count|intcomma }}</div>
-            <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سيارات مصدومة" data-lang-ru="Поврежденные" data-lang-es="Dañados" data-lang-en="Damaged">سيارات مصدومة</div>
-        </a>
-        {% endif %}
         </div>
     </div>
 </section>

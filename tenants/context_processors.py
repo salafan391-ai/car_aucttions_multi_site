@@ -82,6 +82,7 @@ def tenant_branding(request):
         "site_favicon": _file_url(getattr(tenant, 'favicon', None)),
         "site_hero_image": _file_url(getattr(tenant, 'hero_image', None)),
         "site_hero_images": hero_images,
+        "show_hero": bool(getattr(tenant, 'show_hero', True)),
         "primary_color": eid_colors["primary_color"] if theme == "eid" else tenant.primary_color or "#2563eb",
         "secondary_color": eid_colors["secondary_color"] if theme == "eid" else tenant.secondary_color or "#1e3a8a",
         "accent_color": eid_colors["accent_color"] if theme == "eid" else tenant.accent_color or "#3b82f6",

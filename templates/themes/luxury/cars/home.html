@@ -137,6 +137,7 @@
 </style>
 
 <div class="lux-page">
+    {% if show_hero %}
     <section class="lux-hero">
         <video class="lux-hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
             <source src="{% static 'videos/huna_korea.mp4' %}" type="video/mp4">
@@ -147,6 +148,7 @@
         <p class="lux-sub bilingual" data-lang-ar="مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها." data-lang-en="A handpicked selection of exceptional vehicles, sourced and presented with the discernment they deserve." data-lang-es="Una selección de vehículos excepcionales, presentados con la atención que merecen." data-lang-ru="Тщательно подобранная коллекция исключительных автомобилей.">مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها.</p>
         <a href="{% url 'car_list' %}" class="lux-cta bilingual" data-lang-ar="استعرض المجموعة" data-lang-en="Browse Collection" data-lang-es="Explorar colección" data-lang-ru="Смотреть коллекцию">استعرض المجموعة</a>
     </section>
+    {% endif %}
 
     {% for section_key in home_sections_order %}
     {% if section_key == 'site_cars' and site_cars %}
