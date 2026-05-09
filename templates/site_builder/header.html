@@ -2,11 +2,11 @@
 <nav id="main-nav" class="shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
-            <a href="{% url 'home' %}" class="flex items-center gap-2">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 shrink-0">
                 {% if site_logo %}
-                <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-16 w-auto" fetchpriority="high">
+                <img src="{{ site_logo }}" alt="{{ site_name }}" class="h-16 w-auto max-w-40 sm:max-w-[200px] object-contain" fetchpriority="high">
                 {% else %}
-                <div class="h-16 bg-brand flex items-center justify-center">
+                <div class="h-16 w-12 bg-brand flex items-center justify-center shrink-0">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h-4m4 0h4a1 1 0 001-1v-5a1 1 0 00-.3-.7l-4-4A1 1 0 0016 5h-3"/>

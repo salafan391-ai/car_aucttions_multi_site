@@ -101,7 +101,11 @@
             position: relative;
             isolation: isolate;
         }
-        /* Subtle grain to break the mesh banding, keeps it from looking flat. */
+        /* Subtle grain to break the mesh banding, keeps it from looking flat.
+           z-index 0 sits below children that come later in the DOM, so the
+           slideshow + content stay on top automatically — no need to force
+           `position: relative` on children (which would break the absolutely-
+           positioned slideshow background). */
         .hero-gradient::before {
             content: "";
             position: absolute; inset: 0;
@@ -112,7 +116,6 @@
             pointer-events: none;
             z-index: 0;
         }
-        .hero-gradient > * { position: relative; z-index: 1; }
         .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         .bg-brand { background-color: var(--color-primary); }
         .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }

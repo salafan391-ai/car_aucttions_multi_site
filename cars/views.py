@@ -344,19 +344,32 @@ def home(request):
 
         years = _years_set
 
-        # Tenant site cars
+        # Tenant site cars — keep damaged (external_id starts with `hc_`)
+        # out of the "Our Cars" rail and surface them in their own section.
         site_cars = []
+        damaged_cars = []
         damaged_cars_count = 0
         tenant = _get_current_tenant()
         if tenant and tenant.schema_name != 'public':
             from site_cars.models import SiteCar
+            _site_only = (
+                'id', 'title', 'image', 'external_image_url',
+                'manufacturer', 'model', 'year', 'price', 'status',
+                'is_featured', 'mileage', 'transmission', 'external_id',
+            )
             site_cars = list(
-                SiteCar.objects.only(
-                    'id', 'title', 'image', 'external_image_url',
-                    'manufacturer', 'model',
-                    'year', 'price', 'status', 'is_featured', 'mileage',
-                    'transmission',
-                ).prefetch_related('gallery').order_by('-created_at')[:8]
+                SiteCar.objects
+                .exclude(external_id__startswith='hc_')
+                .only(*_site_only)
+                .prefetch_related('gallery')
+                .order_by('-created_at')[:8]
+            )
+            damaged_cars = list(
+                SiteCar.objects
+                .filter(external_id__startswith='hc_')
+                .only(*_site_only)
+                .prefetch_related('gallery')
+                .order_by('-created_at')[:8]
             )
             damaged_cars_count = (SiteCar.objects
                                   .filter(external_id__startswith='hc_').count())
@@ -376,6 +389,7 @@ def home(request):
         # Order home sections by most-recently-added entry, descending.
         _section_recency = [
             ('site_cars',      site_cars[0].created_at      if site_cars      else None),
+            ('damaged_cars',   damaged_cars[0].created_at   if damaged_cars   else None),
             ('latest_cars',    latest_cars[0].created_at    if latest_cars    else None),
             ('latest_auctions', latest_auctions[0].created_at if latest_auctions else None),
         ]
@@ -390,6 +404,7 @@ def home(request):
             'latest_cars': latest_cars,
             'latest_auctions': latest_auctions,
             'site_cars': site_cars,
+            'damaged_cars': damaged_cars,
             'home_sections_order': home_sections_order,
             'damaged_cars_count': damaged_cars_count,
             'manufacturers': manufacturers,
