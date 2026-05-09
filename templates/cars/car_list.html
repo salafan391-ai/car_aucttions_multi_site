@@ -568,6 +568,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: .35rem !important;
 }
+/* Seat counts are short numeric chips — pack them into a 4-up grid. */
+#filter-form .filter-group-body:has(input[name="seat_count"]),
+#filter-form-sidebar .filter-group-body:has(input[name="seat_count"]) {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: .35rem !important;
+}
 #filter-form .peer + span,
 #filter-form-sidebar .peer + span {
     transition: all .15s ease;

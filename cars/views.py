@@ -348,6 +348,7 @@ def home(request):
         # out of the "Our Cars" rail and surface them in their own section.
         site_cars = []
         damaged_cars = []
+        site_cars_count = 0
         damaged_cars_count = 0
         tenant = _get_current_tenant()
         if tenant and tenant.schema_name != 'public':
@@ -357,22 +358,16 @@ def home(request):
                 'manufacturer', 'model', 'year', 'price', 'status',
                 'is_featured', 'mileage', 'transmission', 'external_id',
             )
+            _own_qs = SiteCar.objects.exclude(external_id__startswith='hc_')
+            _damaged_qs = SiteCar.objects.filter(external_id__startswith='hc_')
             site_cars = list(
-                SiteCar.objects
-                .exclude(external_id__startswith='hc_')
-                .only(*_site_only)
-                .prefetch_related('gallery')
-                .order_by('-created_at')[:8]
+                _own_qs.only(*_site_only).prefetch_related('gallery').order_by('-created_at')[:8]
             )
             damaged_cars = list(
-                SiteCar.objects
-                .filter(external_id__startswith='hc_')
-                .only(*_site_only)
-                .prefetch_related('gallery')
-                .order_by('-created_at')[:8]
+                _damaged_qs.only(*_site_only).prefetch_related('gallery').order_by('-created_at')[:8]
             )
-            damaged_cars_count = (SiteCar.objects
-                                  .filter(external_id__startswith='hc_').count())
+            site_cars_count = _own_qs.count()
+            damaged_cars_count = _damaged_qs.count()
 
         # Posts (filtered by tenant)
         posts_qs = Post.objects.filter(is_published=True)
@@ -406,6 +401,7 @@ def home(request):
             'site_cars': site_cars,
             'damaged_cars': damaged_cars,
             'home_sections_order': home_sections_order,
+            'site_cars_count': site_cars_count,
             'damaged_cars_count': damaged_cars_count,
             'manufacturers': manufacturers,
             'body_types': body_types,

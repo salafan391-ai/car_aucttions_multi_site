@@ -677,14 +677,14 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                         {% endif %}
                     </a>
                     <a href="{% url 'site_car_list' %}" class="group relative bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl p-4 sm:p-6 text-center transition-all duration-300 border-2 border-transparent hover:border-white">
-                        {% if site_cars %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
+                        {% if site_cars_count %}<span class="absolute top-2 right-2 sm:top-3 sm:right-3 flex h-2.5 w-2.5 sm:h-3 sm:w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500"></span></span>{% endif %}
                         <div class="w-10 h-10 sm:w-14 sm:h-14 mx-auto mb-2 sm:mb-3 bg-green-50 group-hover:bg-green-100 rounded-xl sm:rounded-2xl flex items-center justify-center transition">
                             <svg class="w-5 h-5 sm:w-7 sm:h-7 text-green-500 group-hover:text-green-600 transition" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M5.223 2.25c-.497 0-.974.198-1.325.55l-1.3 1.298A3.75 3.75 0 003.5 9.879V19.5h-.75a.75.75 0 000 1.5h17.5a.75.75 0 000-1.5H19.5V9.879a3.75 3.75 0 00.902-5.781l-1.3-1.298a1.875 1.875 0 00-1.325-.55H5.223zM5 7.5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM10 7.5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 6a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM5.25 11.25a.75.75 0 00-.75.75v6.75c0 .414.336.75.75.75H10.5v-7.5h-5.25zm6.75 0v7.5h6a.75.75 0 00.75-.75V12a.75.75 0 00-.75-.75h-6z" clip-rule="evenodd"/>
                             </svg>
                         </div>
-                        {% if site_cars %}
-                        <div class="text-2xl sm:text-3xl font-extrabold text-green-600">{{ site_cars|length }}</div>
+                        {% if site_cars_count %}
+                        <div class="text-2xl sm:text-3xl font-extrabold text-green-600">{{ site_cars_count|intcomma }}</div>
                         <div class="bilingual text-gray-500 text-[10px] sm:text-sm mt-0.5 sm:mt-1" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</div>
                         {% else %}
                         <div class="bilingual text-sm sm:text-base font-extrabold text-red-500" data-lang-ar="قريباً" data-lang-ru="почти" data-lang-es="casi" data-lang-en="Coming soon">قريباً</div>
