@@ -65,6 +65,182 @@
     }
     .lux-cta:hover { background: var(--lux-gold); color: var(--lux-bg); }
 
+    /* Mega filter — tabbed entry to a cascading manufacturer → model → year
+       search panel, mirroring the default theme's hero filter UX. */
+    .lux-mega { position: relative; max-width: 760px; margin: 1.5rem auto 0; text-align: start; }
+    .lux-mega-tabs {
+        display: flex; gap: 0; padding: 0;
+        border: 1px solid var(--lux-line); border-bottom: 0;
+        background: rgba(10, 10, 10, 0.55); backdrop-filter: blur(8px);
+    }
+    .lux-mega-tab {
+        flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        padding: 0.85rem 1rem; border: 0; background: transparent;
+        color: var(--lux-text-dim); cursor: pointer;
+        font-family: inherit; font-size: 0.75rem;
+        letter-spacing: 0.22em; text-transform: uppercase;
+        position: relative; transition: color 0.2s ease;
+    }
+    .lux-mega-tab + .lux-mega-tab { border-inline-start: 1px solid var(--lux-line); }
+    .lux-mega-tab:hover { color: var(--lux-gold); background: rgba(201,164,90,0.04); }
+    .lux-mega-tab.is-active {
+        color: var(--lux-bg) !important;
+        background: var(--lux-gold);
+        font-weight: 600;
+    }
+    .lux-mega-tab.is-active::after {
+        content: ""; position: absolute; left: 0; right: 0; bottom: -3px;
+        height: 3px; background: var(--lux-gold);
+    }
+    .lux-mega-tab-count {
+        font-size: 0.6rem; letter-spacing: 0.05em;
+        padding: 0.1rem 0.45rem;
+        border: 1px solid var(--lux-line);
+        color: var(--lux-gold);
+        background: rgba(10, 10, 10, 0.4);
+    }
+    .lux-mega-tab.is-active .lux-mega-tab-count {
+        background: var(--lux-bg); color: var(--lux-gold); border-color: var(--lux-bg);
+    }
+    .lux-mega-input-row {
+        display: flex; align-items: center;
+        border: 1px solid var(--lux-line);
+        background: rgba(10, 10, 10, 0.72); backdrop-filter: blur(8px);
+    }
+    .lux-mega-input {
+        flex: 1; min-width: 0;
+        padding: 1.05rem 1.2rem; border: 0; outline: none;
+        background: transparent; color: var(--lux-text);
+        font-family: inherit; font-size: 0.95rem; letter-spacing: 0.02em;
+    }
+    .lux-mega-input::placeholder { color: var(--lux-text-dim); }
+    /* Magnifier-as-toggle button — sits at the trailing edge of the input,
+       opens the cascading panel on click. Mirrors the default theme. */
+    .lux-mega-toggle {
+        padding: 0.5rem 1.1rem; border: 0; background: transparent;
+        color: var(--lux-text-dim); cursor: pointer; font-family: inherit;
+        display: inline-flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        transition: color 0.2s ease;
+    }
+    .lux-mega-toggle:hover { color: var(--lux-gold-bright); }
+    .lux-mega-toggle svg { width: 1.25rem; height: 1.25rem; }
+    .lux-mega-submit {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+        padding: 1rem 2.25rem; border: 1px solid var(--lux-gold);
+        background: var(--lux-gold); color: var(--lux-bg);
+        font-family: inherit; font-size: 0.78rem; font-weight: 600;
+        letter-spacing: 0.3em; text-transform: uppercase;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .lux-mega-submit:hover { background: var(--lux-gold-bright); border-color: var(--lux-gold-bright); }
+    .lux-mega-submit svg { width: 0.95rem; height: 0.95rem; }
+    .lux-mega-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Cascading panel */
+    .lux-mega-panel {
+        display: none; padding: 1.5rem;
+        border: 1px solid var(--lux-line); border-top: 0;
+        background: rgba(10, 10, 10, 0.78); backdrop-filter: blur(12px);
+        position: relative;
+    }
+    .lux-mega-panel.is-open { display: block; }
+    .lux-mega-panel-close {
+        position: absolute; top: 0.85rem; inset-inline-end: 0.85rem;
+        width: 2rem; height: 2rem; border: 1px solid var(--lux-line);
+        background: transparent; color: var(--lux-text-dim);
+        cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+        font-family: inherit;
+    }
+    .lux-mega-panel-close:hover { color: var(--lux-gold); border-color: var(--lux-gold); }
+    .lux-mega-panel-close svg { width: 1rem; height: 1rem; }
+    .lux-mega-step-label {
+        color: var(--lux-gold); font-size: 0.72rem; letter-spacing: 0.28em;
+        text-transform: uppercase; font-weight: 500; margin-bottom: 0.85rem;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .lux-mega-back {
+        background: transparent; border: 1px solid var(--lux-line);
+        color: var(--lux-text-dim); cursor: pointer; font-family: inherit;
+        padding: 0.35rem 0.7rem; font-size: 0.65rem; letter-spacing: 0.18em;
+        text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .lux-mega-back:hover { color: var(--lux-gold); border-color: var(--lux-gold); }
+    .lux-mega-back svg { width: 0.85rem; height: 0.85rem; }
+    .lux-mega-step-context { color: var(--lux-text-dim); font-size: 0.75rem; margin-bottom: 1rem; }
+    .lux-mega-grid {
+        display: grid; gap: 0.6rem;
+        grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+        max-height: 18rem; overflow-y: auto; padding: 0.15rem;
+    }
+    .lux-mega-grid::-webkit-scrollbar { width: 5px; }
+    .lux-mega-grid::-webkit-scrollbar-thumb { background: var(--lux-line); border-radius: 3px; }
+    .lux-mega-option {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
+        padding: 0.85rem 0.5rem;
+        border: 1px solid var(--lux-line); background: rgba(0,0,0,0.25);
+        cursor: pointer; user-select: none;
+        color: var(--lux-text); text-align: center;
+        transition: all 0.2s ease;
+    }
+    .lux-mega-option:hover { border-color: var(--lux-gold); background: rgba(201,164,90,0.08); }
+    .lux-mega-option.is-selected { border-color: var(--lux-gold); background: rgba(201,164,90,0.15); color: var(--lux-gold-bright); }
+    .lux-mega-option img { width: 2rem; height: 2rem; object-fit: contain; }
+    .lux-mega-option-fallback {
+        width: 2rem; height: 2rem; border-radius: 999px;
+        background: linear-gradient(135deg, var(--lux-gold), var(--lux-gold-bright));
+        color: var(--lux-bg); display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.85rem;
+    }
+    .lux-mega-option-label { font-size: 0.72rem; letter-spacing: 0.02em; line-height: 1.2; }
+    .lux-mega-option-count { font-size: 0.6rem; color: var(--lux-text-dim); letter-spacing: 0.05em; }
+    .lux-mega-year-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .lux-mega-year-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem;
+        max-height: 10rem; overflow-y: auto; padding: 0.15rem;
+    }
+    .lux-mega-year-option {
+        padding: 0.5rem 0.3rem; border: 1px solid var(--lux-line);
+        background: rgba(0,0,0,0.25); color: var(--lux-text);
+        text-align: center; font-size: 0.78rem; cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .lux-mega-year-option:hover { border-color: var(--lux-gold); background: rgba(201,164,90,0.08); }
+    .lux-mega-year-option.is-selected { border-color: var(--lux-gold); background: rgba(201,164,90,0.18); color: var(--lux-gold-bright); }
+    .lux-mega-summary {
+        margin-top: 1.25rem; padding: 0.85rem 1rem;
+        border: 1px solid var(--lux-line); background: rgba(0,0,0,0.25);
+        display: none; gap: 1rem; flex-wrap: wrap;
+        color: var(--lux-text); font-size: 0.78rem; letter-spacing: 0.04em;
+    }
+    .lux-mega-summary.is-active { display: flex; }
+    .lux-mega-summary span.lux-mega-sum-key { color: var(--lux-gold); }
+    .lux-mega-actions {
+        margin-top: 1.25rem; display: flex; justify-content: space-between;
+        align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .lux-mega-skip {
+        color: var(--lux-text-dim); background: transparent; border: 0;
+        cursor: pointer; font-family: inherit; font-size: 0.72rem;
+        letter-spacing: 0.2em; text-transform: uppercase;
+    }
+    .lux-mega-skip:hover { color: var(--lux-gold); }
+
+    @media (max-width: 600px) {
+        .lux-mega { margin-top: 1.25rem; }
+        .lux-mega-tab { padding: 0.65rem 0.4rem; font-size: 0.6rem; letter-spacing: 0.12em; }
+        .lux-mega-tab-count { font-size: 0.52rem; padding: 0.08rem 0.35rem; }
+        .lux-mega-input { padding: 0.85rem 0.6rem; font-size: 0.85rem; }
+        .lux-mega-search-icon { margin-inline-start: 0.7rem; width: 0.95rem; height: 0.95rem; }
+        .lux-mega-toggle { padding: 0.85rem 0.7rem; font-size: 0.6rem; letter-spacing: 0.12em; }
+        .lux-mega-toggle span { display: none; }
+        .lux-mega-submit { padding: 0.85rem 0.85rem; font-size: 0.6rem; letter-spacing: 0.15em; }
+        .lux-mega-panel { padding: 3rem 0.85rem 1rem; }
+        .lux-mega-grid { grid-template-columns: repeat(2, 1fr); max-height: 14rem; }
+        .lux-mega-option { padding: 0.6rem 0.4rem; }
+        .lux-mega-year-grid { grid-template-columns: repeat(3, 1fr); max-height: 8rem; }
+    }
+
     .lux-section { padding: 5rem 1.5rem; max-width: 1280px; margin: 0 auto; }
     .lux-section.lux-section--bordered { border-top: 1px solid var(--lux-line); }
     .lux-section-head { text-align: center; margin-bottom: 3rem; }
@@ -146,7 +322,125 @@
         <div class="lux-eyebrow bilingual" data-lang-ar="{{ site_tagline|default:'تميز سيارات منتقاة بعناية' }}" data-lang-en="{{ site_tagline_en|default:'Curated Automotive Excellence' }}" data-lang-es="Excelencia automotriz seleccionada" data-lang-ru="Подобранное автомобильное совершенство">{{ site_tagline|default:"تميز سيارات منتقاة بعناية" }}</div>
         <h1 class="lux-title">{{ site_name|default:"سيارات" }}</h1>
         <p class="lux-sub bilingual" data-lang-ar="مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها." data-lang-en="A handpicked selection of exceptional vehicles, sourced and presented with the discernment they deserve." data-lang-es="Una selección de vehículos excepcionales, presentados con la atención que merecen." data-lang-ru="Тщательно подобранная коллекция исключительных автомобилей.">مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها.</p>
-        <a href="{% url 'car_list' %}" class="lux-cta bilingual" data-lang-ar="استعرض المجموعة" data-lang-en="Browse Collection" data-lang-es="Explorar colección" data-lang-ru="Смотреть коллекцию">استعرض المجموعة</a>
+        <div class="lux-mega" id="lux-mega"
+             data-url-cars="{% url 'car_list' %}"
+             data-url-auction="{% url 'car_list' %}"
+             {% if site_cars_count %}data-url-ours="{% url 'site_car_list' %}"{% endif %}>
+            <div class="lux-mega-tabs" role="tablist">
+                <button type="button" class="lux-mega-tab is-active" data-tab="cars" role="tab">
+                    <span class="bilingual" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</span>
+                    {% if cars_count %}<span class="lux-mega-tab-count">{{ cars_count|intcomma }}</span>{% endif %}
+                </button>
+                <button type="button" class="lux-mega-tab" data-tab="auction" role="tab">
+                    <span class="bilingual" data-lang-ar="مزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">مزادات</span>
+                    {% if auction_count %}<span class="lux-mega-tab-count">{{ auction_count|intcomma }}</span>{% endif %}
+                </button>
+                {% if site_cars_count %}
+                <button type="button" class="lux-mega-tab" data-tab="ours" role="tab">
+                    <span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</span>
+                    <span class="lux-mega-tab-count">{{ site_cars_count|intcomma }}</span>
+                </button>
+                {% endif %}
+            </div>
+
+            <form id="lux-mega-form" method="get" action="{% url 'car_list' %}">
+                <input type="hidden" name="car_type" value="cars" id="lux-mega-cartype">
+                <input type="hidden" name="manufacturer" id="lux-mega-mfg" value="">
+                <input type="hidden" name="model" id="lux-mega-model" value="">
+                <input type="hidden" name="year_from" id="lux-mega-yfrom" value="">
+                <input type="hidden" name="year_to" id="lux-mega-yto" value="">
+
+                <div class="lux-mega-input-row" id="lux-mega-input-row">
+                    <input type="text" name="q"
+                           class="lux-mega-input bilingual" id="lux-mega-q"
+                           placeholder="ابحث عن سيارة..."
+                           data-placeholder-ar="ابحث عن سيارة..."
+                           data-placeholder-en="Search for a car…"
+                           data-placeholder-es="Busca un coche…"
+                           data-placeholder-ru="Найдите автомобиль…"
+                           autocomplete="off">
+                    <button type="button" class="lux-mega-toggle" id="lux-mega-toggle" aria-label="Advanced filter">
+                        <svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </button>
+                </div>
+
+                <div class="lux-mega-panel" id="lux-mega-panel">
+                    <button type="button" class="lux-mega-panel-close" id="lux-mega-panel-close" aria-label="Close filter">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+
+                    {# ── Step 1: Manufacturer ── #}
+                    <div class="lux-mega-step" id="lux-mega-step-mfg">
+                        <div class="lux-mega-step-label">
+                            <span class="bilingual" data-lang-ar="اختر الشركة المصنعة" data-lang-en="Choose a Manufacturer" data-lang-es="Elija al fabricante" data-lang-ru="Выберите производителя">اختر الشركة المصنعة</span>
+                        </div>
+                        <div class="lux-mega-grid" id="lux-mega-mfg-grid">
+                            {% for m in manufacturers %}
+                            <div class="lux-mega-option lux-mega-mfg-option"
+                                 data-id="{{ m.id }}"
+                                 data-name-ar="{{ m.name_ar|default:m.name }}"
+                                 data-name-en="{{ m.name|pretty_en }}"
+                                 data-cars-count="{{ m.cars_count|default:0 }}"
+                                 data-auction-count="{{ m.auction_count|default:0 }}">
+                                {% if m.logo %}<img src="{{ m.logo }}" alt="" loading="lazy">{% else %}<span class="lux-mega-option-fallback">{{ m.name|first|upper }}</span>{% endif %}
+                                <span class="lux-mega-option-label bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
+                                <span class="lux-mega-option-count" data-count-cars="{{ m.cars_count|default:0 }}" data-count-auction="{{ m.auction_count|default:0 }}">{{ m.cars_count|default:0 }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    {# ── Step 2: Model ── #}
+                    <div class="lux-mega-step" id="lux-mega-step-model" style="display:none;">
+                        <div class="lux-mega-step-label">
+                            <span class="bilingual" data-lang-ar="اختر الموديل" data-lang-en="Choose a Model" data-lang-es="Elige el modelo" data-lang-ru="Выберите модель">اختر الموديل</span>
+                            <button type="button" class="lux-mega-back" data-target="mfg">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                <span class="bilingual" data-lang-ar="عودة" data-lang-en="Back" data-lang-es="Atrás" data-lang-ru="Назад">عودة</span>
+                            </button>
+                        </div>
+                        <div class="lux-mega-step-context" id="lux-mega-mfg-context"></div>
+                        <div class="lux-mega-grid" id="lux-mega-model-grid"></div>
+                    </div>
+
+                    {# ── Step 3: Year ── #}
+                    <div class="lux-mega-step" id="lux-mega-step-year" style="display:none;">
+                        <div class="lux-mega-step-label">
+                            <span class="bilingual" data-lang-ar="اختر السنة" data-lang-en="Choose Year" data-lang-es="Elige el año" data-lang-ru="Выберите год">اختر السنة</span>
+                            <button type="button" class="lux-mega-back" data-target="model">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                <span class="bilingual" data-lang-ar="عودة" data-lang-en="Back" data-lang-es="Atrás" data-lang-ru="Назад">عودة</span>
+                            </button>
+                        </div>
+                        <div class="lux-mega-step-context" id="lux-mega-model-context"></div>
+                        <div class="lux-mega-year-cols">
+                            <div>
+                                <div style="font-size:.65rem;letter-spacing:.2em;color:var(--lux-text-dim);text-transform:uppercase;margin-bottom:.5rem;" class="bilingual" data-lang-ar="من سنة" data-lang-en="Year From" data-lang-es="Desde el año" data-lang-ru="С года">من سنة</div>
+                                <div class="lux-mega-year-grid" id="lux-mega-yfrom-grid">
+                                    {% for y in years %}<div class="lux-mega-year-option lux-mega-yfrom-option" data-year="{{ y }}">{{ y }}</div>{% endfor %}
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size:.65rem;letter-spacing:.2em;color:var(--lux-text-dim);text-transform:uppercase;margin-bottom:.5rem;" class="bilingual" data-lang-ar="إلى سنة" data-lang-en="Year To" data-lang-es="al año" data-lang-ru="к году">إلى سنة</div>
+                                <div class="lux-mega-year-grid" id="lux-mega-yto-grid">
+                                    {% for y in years %}<div class="lux-mega-year-option lux-mega-yto-option" data-year="{{ y }}">{{ y }}</div>{% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lux-mega-summary" id="lux-mega-summary"></div>
+
+                    <div class="lux-mega-actions">
+                        <button type="button" class="lux-mega-skip bilingual" id="lux-mega-skip" data-lang-ar="استعراض جميع السيارات" data-lang-en="Browse all cars" data-lang-es="Ver todos los coches" data-lang-ru="Все автомобили">استعراض جميع السيارات</button>
+                        <button type="submit" class="lux-mega-submit">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <span class="bilingual" data-lang-ar="بحث متقدم" data-lang-en="Advanced Search" data-lang-es="Búsqueda avanzada" data-lang-ru="Расширенный поиск">بحث متقدم</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </section>
     {% endif %}
 
@@ -302,4 +596,233 @@
     {% endif %}
     {% endfor %}
 </div>
+
+<script>
+(function() {
+    var mega = document.getElementById('lux-mega');
+    if (!mega) return;
+    var form        = document.getElementById('lux-mega-form');
+    var typeInput   = document.getElementById('lux-mega-cartype');
+    var mfgInput    = document.getElementById('lux-mega-mfg');
+    var modelInput  = document.getElementById('lux-mega-model');
+    var yFromInput  = document.getElementById('lux-mega-yfrom');
+    var yToInput    = document.getElementById('lux-mega-yto');
+    var tabs        = mega.querySelectorAll('.lux-mega-tab');
+    var panel       = document.getElementById('lux-mega-panel');
+    var toggleBtn   = document.getElementById('lux-mega-toggle');
+    var closeBtn    = document.getElementById('lux-mega-panel-close');
+    var skipBtn     = document.getElementById('lux-mega-skip');
+    var stepMfg     = document.getElementById('lux-mega-step-mfg');
+    var stepModel   = document.getElementById('lux-mega-step-model');
+    var stepYear    = document.getElementById('lux-mega-step-year');
+    var modelGrid   = document.getElementById('lux-mega-model-grid');
+    var mfgContext  = document.getElementById('lux-mega-mfg-context');
+    var modelContext= document.getElementById('lux-mega-model-context');
+    var summary     = document.getElementById('lux-mega-summary');
+
+    var urls = {
+        cars:    mega.dataset.urlCars,
+        auction: mega.dataset.urlAuction,
+        ours:    mega.dataset.urlOurs || null,
+    };
+    var currentTab = 'cars';
+
+    function curLang() {
+        try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
+    }
+
+    var inputEl     = document.getElementById('lux-mega-q');
+    var placeholders = {
+        cars:    { ar: 'ابحث في السيارات...',  en: 'Search cars…',      es: 'Buscar coches…',    ru: 'Найти автомобиль…' },
+        auction: { ar: 'ابحث في المزادات...',  en: 'Search auctions…',  es: 'Buscar subastas…',  ru: 'Найти аукцион…' },
+        ours:    { ar: 'ابحث في سياراتنا...',  en: 'Search our cars…',  es: 'Buscar nuestros…',  ru: 'Найти у нас…' },
+    };
+
+    function activateTab(tab) {
+        tabs.forEach(function(t) { t.classList.toggle('is-active', t === tab); });
+        currentTab = tab.dataset.tab;
+        var L = curLang();
+        // Update placeholder + the bilingual data-* attrs so applyLang keeps it correct on lang switches.
+        if (placeholders[currentTab]) {
+            ['ar','en','es','ru'].forEach(function(lang) {
+                inputEl.setAttribute('data-placeholder-' + lang, placeholders[currentTab][lang]);
+            });
+            inputEl.setAttribute('placeholder', placeholders[currentTab][L] || placeholders[currentTab].ar);
+            inputEl.value = '';
+        }
+        // Reset filter selections + clear any open panel state.
+        mfgInput.value = ''; modelInput.value = '';
+        yFromInput.value = ''; yToInput.value = '';
+        delete mfgInput.dataset.label; delete modelInput.dataset.label;
+        mega.querySelectorAll('.lux-mega-option, .lux-mega-year-option').forEach(function(o) { o.classList.remove('is-selected'); });
+        if (mfgContext) mfgContext.textContent = '';
+        if (modelContext) modelContext.textContent = '';
+        if (modelGrid) modelGrid.innerHTML = '';
+        updateSummary();
+
+        if (currentTab === 'ours' && urls.ours) {
+            // "Our Cars" lives on SiteCar — no manufacturer/model cascade.
+            form.action = urls.ours;
+            typeInput.disabled = true;
+            // Hide the magnifier toggle and the cascading panel.
+            toggleBtn.style.display = 'none';
+            panel.classList.remove('is-open');
+        } else {
+            form.action = urls[currentTab];
+            typeInput.disabled = false;
+            typeInput.value = currentTab;
+            toggleBtn.style.display = '';
+            // Filter the manufacturer grid: only show makes with listings in
+            // the active tab's category. Also swap the visible count chip.
+            var countAttr = currentTab === 'auction' ? 'data-auction-count' : 'data-cars-count';
+            mega.querySelectorAll('.lux-mega-mfg-option').forEach(function(opt) {
+                var n = parseInt(opt.getAttribute(countAttr) || '0', 10);
+                opt.style.display = n > 0 ? '' : 'none';
+                var cnt = opt.querySelector('.lux-mega-option-count');
+                if (cnt) {
+                    var key = currentTab === 'auction' ? 'data-count-auction' : 'data-count-cars';
+                    cnt.textContent = cnt.getAttribute(key);
+                }
+            });
+        }
+    }
+    tabs.forEach(function(tab) { tab.addEventListener('click', function() { activateTab(tab); }); });
+
+    function showStep(step) {
+        stepMfg.style.display   = step === 'mfg'   ? '' : 'none';
+        stepModel.style.display = step === 'model' ? '' : 'none';
+        stepYear.style.display  = step === 'year'  ? '' : 'none';
+    }
+    function openPanel() {
+        panel.classList.add('is-open');
+        showStep(mfgInput.value ? (modelInput.value ? 'year' : 'model') : 'mfg');
+    }
+    function closePanel() { panel.classList.remove('is-open'); }
+
+    toggleBtn.addEventListener('click', openPanel);
+    closeBtn.addEventListener('click', closePanel);
+    skipBtn.addEventListener('click', function() {
+        // Browse all — clear filters and submit current tab.
+        mfgInput.value = ''; modelInput.value = '';
+        yFromInput.value = ''; yToInput.value = '';
+        form.submit();
+    });
+
+    // Back buttons
+    panel.querySelectorAll('.lux-mega-back').forEach(function(btn) {
+        btn.addEventListener('click', function() { showStep(btn.dataset.target); });
+    });
+
+    function updateSummary() {
+        var parts = [];
+        if (mfgInput.dataset.label)   parts.push('<span class="lux-mega-sum-key">' + (curLang() === 'en' ? 'Make' : 'الشركة') + ':</span> ' + mfgInput.dataset.label);
+        if (modelInput.dataset.label) parts.push('<span class="lux-mega-sum-key">' + (curLang() === 'en' ? 'Model' : 'الموديل') + ':</span> ' + modelInput.dataset.label);
+        if (yFromInput.value || yToInput.value) {
+            parts.push('<span class="lux-mega-sum-key">' + (curLang() === 'en' ? 'Year' : 'السنة') + ':</span> ' + (yFromInput.value || '…') + ' – ' + (yToInput.value || '…'));
+        }
+        summary.innerHTML = parts.join('');
+        summary.classList.toggle('is-active', parts.length > 0);
+    }
+
+    // Step 1: Manufacturer click
+    mega.querySelectorAll('.lux-mega-mfg-option').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+            mega.querySelectorAll('.lux-mega-mfg-option').forEach(function(o) { o.classList.remove('is-selected'); });
+            opt.classList.add('is-selected');
+            mfgInput.value = opt.dataset.id;
+            mfgInput.dataset.label = curLang() === 'en' ? opt.dataset.nameEn : opt.dataset.nameAr;
+            // Reset downstream
+            modelInput.value = ''; delete modelInput.dataset.label;
+            yFromInput.value = ''; yToInput.value = '';
+            updateSummary();
+            mfgContext.textContent = (curLang() === 'en' ? 'Manufacturer: ' : 'الشركة: ') + mfgInput.dataset.label;
+            loadModels(opt.dataset.id);
+            showStep('model');
+        });
+    });
+
+    function loadModels(mfrId) {
+        modelGrid.innerHTML = '<div style="color:var(--lux-text-dim);font-size:.75rem;padding:.5rem;">…</div>';
+        var carType = currentTab === 'auction' ? 'auction' : '';
+        var url = '/api/models/?manufacturer_id=' + encodeURIComponent(mfrId) +
+                  (carType ? '&car_type=' + encodeURIComponent(carType) : '') +
+                  '&lang=' + curLang();
+        fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : []; })
+            .then(function(arr) {
+                arr.sort(function(a, b) { return (b.car_count || 0) - (a.car_count || 0); });
+                modelGrid.innerHTML = '';
+                if (!arr.length) {
+                    modelGrid.innerHTML = '<div style="color:var(--lux-text-dim);font-size:.8rem;padding:.5rem;" class="bilingual" data-lang-ar="لا توجد موديلات" data-lang-en="No models">لا توجد موديلات</div>';
+                    return;
+                }
+                arr.forEach(function(m) {
+                    var nameAr = m.name_ar || m.name;
+                    var nameEn = m.name_en || m.name;
+                    var d = document.createElement('div');
+                    d.className = 'lux-mega-option';
+                    d.dataset.id = m.id;
+                    d.dataset.nameAr = nameAr;
+                    d.dataset.nameEn = nameEn;
+                    d.innerHTML =
+                        '<span class="lux-mega-option-label bilingual" data-lang-ar="' + nameAr + '" data-lang-en="' + nameEn + '">' +
+                          (curLang() === 'en' ? nameEn : nameAr) + '</span>' +
+                          (m.car_count ? '<span class="lux-mega-option-count">' + m.car_count + '</span>' : '');
+                    d.addEventListener('click', function() {
+                        modelGrid.querySelectorAll('.lux-mega-option').forEach(function(o) { o.classList.remove('is-selected'); });
+                        d.classList.add('is-selected');
+                        modelInput.value = m.id;
+                        modelInput.dataset.label = curLang() === 'en' ? nameEn : nameAr;
+                        yFromInput.value = ''; yToInput.value = '';
+                        mega.querySelectorAll('.lux-mega-year-option').forEach(function(o) { o.classList.remove('is-selected'); });
+                        updateSummary();
+                        modelContext.textContent = (curLang() === 'en' ? 'Model: ' : 'الموديل: ') + modelInput.dataset.label;
+                        showStep('year');
+                    });
+                    modelGrid.appendChild(d);
+                });
+            });
+    }
+
+    // Year from/to
+    mega.querySelectorAll('.lux-mega-yfrom-option').forEach(function(o) {
+        o.addEventListener('click', function() {
+            mega.querySelectorAll('.lux-mega-yfrom-option').forEach(function(x) { x.classList.remove('is-selected'); });
+            o.classList.add('is-selected');
+            yFromInput.value = o.dataset.year;
+            // If yTo < yFrom, clear yTo
+            if (yToInput.value && parseInt(yToInput.value) < parseInt(yFromInput.value)) {
+                yToInput.value = '';
+                mega.querySelectorAll('.lux-mega-yto-option').forEach(function(x) { x.classList.remove('is-selected'); });
+            }
+            updateSummary();
+        });
+    });
+    mega.querySelectorAll('.lux-mega-yto-option').forEach(function(o) {
+        o.addEventListener('click', function() {
+            mega.querySelectorAll('.lux-mega-yto-option').forEach(function(x) { x.classList.remove('is-selected'); });
+            o.classList.add('is-selected');
+            yToInput.value = o.dataset.year;
+            if (yFromInput.value && parseInt(yFromInput.value) > parseInt(yToInput.value)) {
+                yFromInput.value = '';
+                mega.querySelectorAll('.lux-mega-yfrom-option').forEach(function(x) { x.classList.remove('is-selected'); });
+            }
+            updateSummary();
+        });
+    });
+
+    // Focusing the search input opens the panel (matches the default theme).
+    var qInput = document.getElementById('lux-mega-q');
+    qInput.addEventListener('focus', openPanel);
+    qInput.addEventListener('click', openPanel);
+
+    // Before submit, strip any empty hidden inputs so we never emit
+    // `?manufacturer=` etc. into the URL (the server view rejects them).
+    form.addEventListener('submit', function() {
+        [mfgInput, modelInput, yFromInput, yToInput, qInput].forEach(function(el) {
+            if (el && (!el.value || !el.value.trim())) el.disabled = true;
+        });
+    });
+})();
+</script>
 {% endblock %}

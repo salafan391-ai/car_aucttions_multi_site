@@ -332,9 +332,15 @@ def home(request):
             'total_models': _base_filter.values('model_id').distinct().count(),
         }
 
+        # Per-tab counts let the home mega-filter hide manufacturers without
+        # listings for the active tab (Cars vs Auctions).
         manufacturers = list(
             Manufacturer.objects.filter(id__in=_mfr_ids_set)
-            .annotate(car_count=Count('apicar'))
+            .annotate(
+                car_count=Count('apicar'),
+                cars_count=Count('apicar', filter=~Q(apicar__category__name='auction')),
+                auction_count=Count('apicar', filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now)),
+            )
             .order_by('-car_count')[:20]
         )
 
@@ -802,15 +808,17 @@ def car_list(request):
             | Q(badge__name__icontains=q)
         )
 
-    sel_manufacturers = request.GET.getlist('manufacturer')
+    # Drop empty strings — hero/drawer forms can emit `?manufacturer=` when the
+    # cascade is left empty, and `int('')` would explode on the SQL filter.
+    sel_manufacturers = [v for v in request.GET.getlist('manufacturer') if v]
     if sel_manufacturers:
         qs = qs.filter(manufacturer_id__in=sel_manufacturers)
 
-    sel_models = request.GET.getlist('model')
+    sel_models = [v for v in request.GET.getlist('model') if v]
     if sel_models:
         qs = qs.filter(model_id__in=sel_models)
 
-    sel_badges = request.GET.getlist('badge')
+    sel_badges = [v for v in request.GET.getlist('badge') if v]
     if sel_badges:
         qs = qs.filter(badge_id__in=sel_badges)
 
