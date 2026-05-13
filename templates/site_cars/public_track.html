@@ -6,7 +6,7 @@
 {% block content %}
 <section class="max-w-2xl mx-auto px-4 py-10">
     <div class="text-center mb-8">
-        <div class="text-sm text-gray-500 mb-1 bilingual" data-lang-ar="رقم الفاتورة" data-lang-en="Invoice">رقم الفاتورة</div>
+        <div class="text-sm text-gray-500 mb-1 bilingual" data-lang-ar="رقم الفاتورة" data-lang-ru="Номер счета-фактуры" data-lang-es="Número de factura" data-lang-en="Invoice">رقم الفاتورة</div>
         <div class="text-2xl font-mono font-bold text-gray-900">{{ bill.receipt_number }}</div>
         {% if car %}
         <div class="text-gray-600 mt-2">{{ car.title|pretty_en }}</div>
@@ -16,7 +16,7 @@
     {% if shipment %}
     <!-- Big status badge -->
     <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 text-center">
-        <div class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider bilingual" data-lang-ar="حالة الشحنة" data-lang-en="Shipment Status">حالة الشحنة</div>
+        <div class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider bilingual" data-lang-ar="حالة الشحنة" data-lang-ru="Статус отгрузки" data-lang-es="Estado del envío" data-lang-en="Shipment Status">حالة الشحنة</div>
         {% if shipment.status == 'delivered' %}
         <div class="inline-block bg-green-100 text-green-800 text-2xl font-bold px-6 py-3 rounded-xl">{{ shipment.get_status_display }}</div>
         {% elif shipment.status == 'in_transit' %}
@@ -33,12 +33,12 @@
 
         {% if shipment.delivered_at %}
         <div class="mt-4 text-sm text-gray-600">
-            <span class="bilingual" data-lang-ar="تم التسليم في" data-lang-en="Delivered on">تم التسليم في</span>
+            <span class="bilingual" data-lang-ar="تم التسليم في" data-lang-ru="Доставлено в" data-lang-es="Entregado en" data-lang-en="Delivered on">تم التسليم في</span>
             <span class="font-bold">{{ shipment.delivered_at|date:"Y-m-d" }}</span>
         </div>
         {% elif shipment.eta %}
         <div class="mt-4 text-sm text-gray-600">
-            <span class="bilingual" data-lang-ar="الوصول المتوقع" data-lang-en="Expected arrival">الوصول المتوقع</span>
+            <span class="bilingual" data-lang-ar="الوصول المتوقع" data-lang-ru="Ожидаемое прибытие" data-lang-es="Llegada prevista" data-lang-en="Expected arrival">الوصول المتوقع</span>
             <span class="font-bold">{{ shipment.eta|date:"Y-m-d" }}</span>
         </div>
         {% endif %}
@@ -48,7 +48,7 @@
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
         <div class="flex items-center justify-between">
             <div class="text-center flex-1">
-                <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="من" data-lang-en="From">من</div>
+                <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="من" data-lang-ru="от" data-lang-es="de" data-lang-en="From">من</div>
                 <div class="font-bold">{{ shipment.origin_port|default:"—" }}</div>
                 {% if shipment.etd %}<div class="text-xs text-gray-500 mt-1">{{ shipment.etd|date:"Y-m-d" }}</div>{% endif %}
             </div>
@@ -56,7 +56,7 @@
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </div>
             <div class="text-center flex-1">
-                <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="إلى" data-lang-en="To">إلى</div>
+                <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="إلى" data-lang-ru="к" data-lang-es="a" data-lang-en="To">إلى</div>
                 <div class="font-bold">{{ shipment.destination_port|default:"—" }}{% if shipment.destination_country %}<br><span class="text-sm font-normal text-gray-500">{{ shipment.destination_country }}</span>{% endif %}</div>
                 {% if shipment.eta %}<div class="text-xs text-gray-500 mt-1">{{ shipment.eta|date:"Y-m-d" }}</div>{% endif %}
             </div>
@@ -66,25 +66,25 @@
     <!-- Carrier details -->
     {% if shipment.shipping_company or shipment.vessel_name or shipment.container_number or shipment.bill_of_lading %}
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-        <div class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider bilingual" data-lang-ar="بيانات الشحن" data-lang-en="Carrier">بيانات الشحن</div>
+        <div class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider bilingual" data-lang-ar="بيانات الشحن" data-lang-ru="Данные о доставке" data-lang-es="Datos de envío" data-lang-en="Carrier">بيانات الشحن</div>
         <div class="grid grid-cols-2 gap-3 text-sm">
-            {% if shipment.shipping_company %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="شركة الشحن" data-lang-en="Carrier">شركة الشحن</div><div class="font-medium">{{ shipment.shipping_company }}</div></div>{% endif %}
-            {% if shipment.vessel_name %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="السفينة" data-lang-en="Vessel">السفينة</div><div class="font-medium">{{ shipment.vessel_name }}</div></div>{% endif %}
-            {% if shipment.container_number %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="رقم الحاوية" data-lang-en="Container #">رقم الحاوية</div><div class="font-mono font-medium">{{ shipment.container_number }}</div></div>{% endif %}
-            {% if shipment.bill_of_lading %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="بوليصة الشحن" data-lang-en="Bill of lading">بوليصة الشحن</div><div class="font-mono font-medium">{{ shipment.bill_of_lading }}</div></div>{% endif %}
+            {% if shipment.shipping_company %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="شركة الشحن" data-lang-ru="Транспортная компания" data-lang-es="Compañía naviera" data-lang-en="Carrier">شركة الشحن</div><div class="font-medium">{{ shipment.shipping_company }}</div></div>{% endif %}
+            {% if shipment.vessel_name %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="السفينة" data-lang-ru="корабль" data-lang-es="barco" data-lang-en="Vessel">السفينة</div><div class="font-medium">{{ shipment.vessel_name }}</div></div>{% endif %}
+            {% if shipment.container_number %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="رقم الحاوية" data-lang-ru="Номер контейнера" data-lang-es="Número de contenedor" data-lang-en="Container #">رقم الحاوية</div><div class="font-mono font-medium">{{ shipment.container_number }}</div></div>{% endif %}
+            {% if shipment.bill_of_lading %}<div><div class="text-xs text-gray-500 bilingual" data-lang-ar="بوليصة الشحن" data-lang-ru="коносамент" data-lang-es="guía de carga" data-lang-en="Bill of lading">بوليصة الشحن</div><div class="font-mono font-medium">{{ shipment.bill_of_lading }}</div></div>{% endif %}
         </div>
         {% if shipment.tracking_url %}
         <a href="{{ shipment.tracking_url }}" target="_blank"
            class="mt-5 flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-            <span class="bilingual" data-lang-ar="تتبع لدى شركة الشحن" data-lang-en="Track with carrier">تتبع لدى شركة الشحن</span>
+            <span class="bilingual" data-lang-ar="تتبع لدى شركة الشحن" data-lang-ru="Отслеживайте статус доставки с помощью транспортной компании." data-lang-es="Realizar el seguimiento con la empresa de transporte." data-lang-en="Track with carrier">تتبع لدى شركة الشحن</span>
         </a>
         {% endif %}
     </div>
     {% endif %}
 
     {% else %}
-    <div class="bg-white rounded-2xl shadow-sm p-8 text-center text-gray-500 bilingual" data-lang-ar="لم يتم تسجيل شحنة بعد. يرجى التواصل مع البائع للاستفسار." data-lang-en="No shipment recorded yet. Please contact the seller for updates.">
+    <div class="bg-white rounded-2xl shadow-sm p-8 text-center text-gray-500 bilingual" data-lang-ar="لم يتم تسجيل شحنة بعد. يرجى التواصل مع البائع للاستفسار." data-lang-ru="Отправка товара пока не зарегистрирована. Пожалуйста, свяжитесь с продавцом для уточнения информации." data-lang-es="Aún no se ha registrado ningún envío. Para cualquier consulta, póngase en contacto con el vendedor." data-lang-en="No shipment recorded yet. Please contact the seller for updates.">
         لم يتم تسجيل شحنة بعد. يرجى التواصل مع البائع للاستفسار.
     </div>
     {% endif %}
@@ -92,7 +92,7 @@
     <!-- Seller contact (from tenant branding) -->
     {% if site_name %}
     <div class="text-center text-xs text-gray-500 mt-8">
-        <div class="bilingual" data-lang-ar="للاستفسار" data-lang-en="Questions?">للاستفسار</div>
+        <div class="bilingual" data-lang-ar="للاستفسار" data-lang-ru="Для получения дополнительной информации" data-lang-es="Para consultas" data-lang-en="Questions?">للاستفسار</div>
         <div class="font-medium text-gray-700 mt-1">{{ site_name }}</div>
         {% if site_phone %}<div class="mt-1">{{ site_phone }}</div>{% endif %}
     </div>

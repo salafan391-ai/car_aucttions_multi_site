@@ -6,16 +6,16 @@
 {% block content %}
 <section class="max-w-3xl mx-auto px-4 py-8">
     <nav class="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <a href="{% url 'site_car_list' %}" class="bilingual text-brand-hover transition" data-lang-ar="سياراتنا" data-lang-en="our cars">سياراتنا</a>
+        <a href="{% url 'site_car_list' %}" class="bilingual text-brand-hover transition" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="our cars">سياراتنا</a>
         <span>/</span>
         <a href="{% url 'site_car_detail' car.pk %}" class="text-brand-hover">{{ car.title|pretty_en }}</a>
         <span>/</span>
         {% if bill %}
         <a href="{% url 'invoice_view' car.pk bill.pk %}" class="text-brand-hover font-mono">{{ bill.receipt_number }}</a>
         <span>/</span>
-        <span class="text-gray-800 bilingual" data-lang-ar="تعديل" data-lang-en="Edit">تعديل</span>
+        <span class="text-gray-800 bilingual" data-lang-ar="تعديل" data-lang-ru="поправка" data-lang-es="enmienda" data-lang-en="Edit">تعديل</span>
         {% else %}
-        <span class="text-gray-800 bilingual" data-lang-ar="فاتورة بيع" data-lang-en="Sales Invoice">فاتورة بيع</span>
+        <span class="text-gray-800 bilingual" data-lang-ar="فاتورة بيع" data-lang-ru="Счет-фактура продажи" data-lang-es="Factura de venta" data-lang-en="Sales Invoice">فاتورة بيع</span>
         {% endif %}
     </nav>
 
@@ -31,9 +31,9 @@
 
         {% if bill %}
         <div class="mb-5 flex items-center gap-2 text-sm bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg">
-            <span class="text-gray-500 bilingual" data-lang-ar="رقم الفاتورة:" data-lang-en="Invoice #:">رقم الفاتورة:</span>
+            <span class="text-gray-500 bilingual" data-lang-ar="رقم الفاتورة:" data-lang-ru="Номер счета-фактуры:" data-lang-es="Número de factura:" data-lang-en="Invoice #:">رقم الفاتورة:</span>
             <span class="font-mono font-bold">{{ bill.receipt_number }}</span>
-            <span class="text-xs text-gray-400 bilingual" data-lang-ar="(غير قابل للتعديل)" data-lang-en="(locked)">(غير قابل للتعديل)</span>
+            <span class="text-xs text-gray-400 bilingual" data-lang-ar="(غير قابل للتعديل)" data-lang-ru="(Не подлежит редактированию)" data-lang-es="(No editable)" data-lang-en="(locked)">(غير قابل للتعديل)</span>
         </div>
         {% endif %}
 
@@ -51,47 +51,47 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="اسم المشتري *" data-lang-en="Buyer name *">اسم المشتري *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="اسم المشتري *" data-lang-ru="Имя покупателя *" data-lang-es="Nombre del comprador *" data-lang-en="Buyer name *">اسم المشتري *</label>
                     <input type="text" name="buyer_name" required value="{{ bill.buyer_name|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رقم الهوية" data-lang-en="ID number">رقم الهوية</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رقم الهوية" data-lang-ru="идентификационный номер" data-lang-es="número de identificación" data-lang-en="ID number">رقم الهوية</label>
                     <input type="text" name="buyer_id_number" value="{{ bill.buyer_id_number|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رقم الجوال" data-lang-en="Phone">رقم الجوال</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رقم الجوال" data-lang-ru="Номер мобильного телефона" data-lang-es="Número de teléfono móvil" data-lang-en="Phone">رقم الجوال</label>
                     <input type="text" name="buyer_phone" value="{{ bill.buyer_phone|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="العنوان" data-lang-en="Address">العنوان</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="العنوان" data-lang-ru="адрес" data-lang-es="la dirección" data-lang-en="Address">العنوان</label>
                     <input type="text" name="buyer_address" value="{{ bill.buyer_address|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="سعر البيع *" data-lang-en="Sale price *">سعر البيع *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="سعر البيع *" data-lang-ru="Цена продажи *" data-lang-es="Precio de venta *" data-lang-en="Sale price *">سعر البيع *</label>
                     <input type="number" name="sale_price" required min="0"
                            value="{% if bill %}{{ bill.price|floatformat:0 }}{% else %}{{ car.price }}{% endif %}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ البيع" data-lang-en="Sale date">تاريخ البيع</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ البيع" data-lang-ru="Дата продажи" data-lang-es="Fecha de venta" data-lang-en="Sale date">تاريخ البيع</label>
                     <input type="date" name="sale_date" value="{{ bill.date|date:'Y-m-d' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ملاحظات" data-lang-en="Notes">ملاحظات</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ملاحظات" data-lang-ru="комментарии" data-lang-es="comentarios" data-lang-en="Notes">ملاحظات</label>
                 <textarea name="description" rows="2"
                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ bill.description|default:'' }}</textarea>
             </div>
 
             <label class="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="is_paid" {% if bill.is_paid %}checked{% endif %} class="rounded">
-                <span class="bilingual" data-lang-ar="مدفوعة" data-lang-en="Paid">مدفوعة</span>
+                <span class="bilingual" data-lang-ar="مدفوعة" data-lang-ru="Оплаченный" data-lang-es="Pagado" data-lang-en="Paid">مدفوعة</span>
             </label>
 
             <div class="flex gap-3 pt-2">
@@ -99,7 +99,7 @@
                         data-lang-ar="{% if bill %}حفظ التعديلات{% else %}إنشاء الفاتورة{% endif %}"
                         data-lang-en="{% if bill %}Save Changes{% else %}Create Invoice{% endif %}">{% if bill %}حفظ التعديلات{% else %}إنشاء الفاتورة{% endif %}</button>
                 <a href="{% if bill %}{% url 'invoice_view' car.pk bill.pk %}{% else %}{% url 'site_car_detail' car.pk %}{% endif %}"
-                   class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg transition bilingual" data-lang-ar="إلغاء" data-lang-en="Cancel">إلغاء</a>
+                   class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg transition bilingual" data-lang-ar="إلغاء" data-lang-ru="отмена" data-lang-es="cancelación" data-lang-en="Cancel">إلغاء</a>
             </div>
         </form>
     </div>

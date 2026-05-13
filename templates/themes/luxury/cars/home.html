@@ -753,7 +753,7 @@
                 arr.sort(function(a, b) { return (b.car_count || 0) - (a.car_count || 0); });
                 modelGrid.innerHTML = '';
                 if (!arr.length) {
-                    modelGrid.innerHTML = '<div style="color:var(--lux-text-dim);font-size:.8rem;padding:.5rem;" class="bilingual" data-lang-ar="لا توجد موديلات" data-lang-en="No models">لا توجد موديلات</div>';
+                    modelGrid.innerHTML = '<div style="color:var(--lux-text-dim);font-size:.8rem;padding:.5rem;" class="bilingual" data-lang-ar="لا توجد موديلات" data-lang-ru="Нет моделей" data-lang-es="No hay modelos" data-lang-en="No models">لا توجد موديلات</div>';
                     return;
                 }
                 arr.forEach(function(m) {
@@ -765,7 +765,7 @@
                     d.dataset.nameAr = nameAr;
                     d.dataset.nameEn = nameEn;
                     d.innerHTML =
-                        '<span class="lux-mega-option-label bilingual" data-lang-ar="' + nameAr + '" data-lang-en="' + nameEn + '">' +
+                        '<span class="lux-mega-option-label bilingual" data-lang-ar="' + nameAr + '" data-lang-ru="' + nameAr + '" data-lang-es="' + nombreAr + '" data-lang-en="' + nameEn + '">' +
                           (curLang() === 'en' ? nameEn : nameAr) + '</span>' +
                           (m.car_count ? '<span class="lux-mega-option-count">' + m.car_count + '</span>' : '');
                     d.addEventListener('click', function() {

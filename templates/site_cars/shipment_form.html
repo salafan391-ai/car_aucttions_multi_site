@@ -10,7 +10,7 @@
         <span>/</span>
         <a href="{% url 'invoice_view' car.pk bill.pk %}" class="text-brand-hover font-mono">{{ bill.receipt_number }}</a>
         <span>/</span>
-        <span class="text-gray-800 bilingual" data-lang-ar="الشحنة" data-lang-en="Shipment">الشحنة</span>
+        <span class="text-gray-800 bilingual" data-lang-ar="الشحنة" data-lang-ru="отгрузка" data-lang-es="envío" data-lang-en="Shipment">الشحنة</span>
     </nav>
 
     <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
@@ -33,7 +33,7 @@
             {% csrf_token %}
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="حالة الشحنة" data-lang-en="Status">حالة الشحنة</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="حالة الشحنة" data-lang-ru="Статус отгрузки" data-lang-es="Estado del envío" data-lang-en="Status">حالة الشحنة</label>
                 <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     {% for value, label in status_choices %}
                     <option value="{{ value }}" {% if shipment and shipment.status == value %}selected{% endif %}>{{ label }}</option>
@@ -43,77 +43,77 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="شركة الشحن" data-lang-en="Shipping company">شركة الشحن</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="شركة الشحن" data-lang-ru="Транспортная компания" data-lang-es="Compañía naviera" data-lang-en="Shipping company">شركة الشحن</label>
                     <input type="text" name="shipping_company" value="{{ shipment.shipping_company|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="اسم السفينة" data-lang-en="Vessel">اسم السفينة</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="اسم السفينة" data-lang-ru="Название корабля" data-lang-es="Nombre del barco" data-lang-en="Vessel">اسم السفينة</label>
                     <input type="text" name="vessel_name" value="{{ shipment.vessel_name|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رقم الحاوية" data-lang-en="Container #">رقم الحاوية</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رقم الحاوية" data-lang-ru="Номер контейнера" data-lang-es="Número de contenedor" data-lang-en="Container #">رقم الحاوية</label>
                     <input type="text" name="container_number" value="{{ shipment.container_number|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="بوليصة الشحن" data-lang-en="Bill of lading">بوليصة الشحن</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="بوليصة الشحن" data-lang-ru="коносамент" data-lang-es="guía de carga" data-lang-en="Bill of lading">بوليصة الشحن</label>
                     <input type="text" name="bill_of_lading" value="{{ shipment.bill_of_lading|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 font-mono">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ميناء الشحن" data-lang-en="Origin port">ميناء الشحن</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ميناء الشحن" data-lang-ru="Порт отправки" data-lang-es="puerto marítimo" data-lang-en="Origin port">ميناء الشحن</label>
                     <input type="text" name="origin_port" value="{{ shipment.origin_port|default:'Busan' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ميناء الوصول" data-lang-en="Destination port">ميناء الوصول</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ميناء الوصول" data-lang-ru="Порт прибытия" data-lang-es="Puerto de llegada" data-lang-en="Destination port">ميناء الوصول</label>
                     <input type="text" name="destination_port" value="{{ shipment.destination_port|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="دولة الوصول" data-lang-en="Destination country">دولة الوصول</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="دولة الوصول" data-lang-ru="страна прибытия" data-lang-es="país de llegada" data-lang-en="Destination country">دولة الوصول</label>
                     <input type="text" name="destination_country" value="{{ shipment.destination_country|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تكلفة الشحن" data-lang-en="Shipping cost">تكلفة الشحن</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تكلفة الشحن" data-lang-ru="Стоимость доставки" data-lang-es="Costo de envío" data-lang-en="Shipping cost">تكلفة الشحن</label>
                     <input type="number" step="0.01" name="shipping_cost" value="{{ shipment.shipping_cost|default_if_none:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ المغادرة (ETD)" data-lang-en="ETD">تاريخ المغادرة (ETD)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ المغادرة (ETD)" data-lang-ru="Дата отправления (ETD)" data-lang-es="Fecha de salida (ETD)" data-lang-en="ETD">تاريخ المغادرة (ETD)</label>
                     <input type="date" name="etd" value="{{ shipment.etd|date:'Y-m-d' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ الوصول (ETA)" data-lang-en="ETA">تاريخ الوصول (ETA)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ الوصول (ETA)" data-lang-ru="Дата прибытия (ориентировочное время прибытия)" data-lang-es="Fecha estimada de llegada (ETA)" data-lang-en="ETA">تاريخ الوصول (ETA)</label>
                     <input type="date" name="eta" value="{{ shipment.eta|date:'Y-m-d' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ التسليم" data-lang-en="Delivered on">تاريخ التسليم</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ التسليم" data-lang-ru="Дата доставки" data-lang-es="Fecha de entrega" data-lang-en="Delivered on">تاريخ التسليم</label>
                     <input type="date" name="delivered_at" value="{{ shipment.delivered_at|date:'Y-m-d' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رابط التتبع" data-lang-en="Tracking URL">رابط التتبع</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رابط التتبع" data-lang-ru="Ссылка для отслеживания" data-lang-es="Enlace de seguimiento" data-lang-en="Tracking URL">رابط التتبع</label>
                     <input type="url" name="tracking_url" value="{{ shipment.tracking_url|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="https://">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ملاحظات" data-lang-en="Notes">ملاحظات</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ملاحظات" data-lang-ru="комментарии" data-lang-es="comentarios" data-lang-en="Notes">ملاحظات</label>
                 <textarea name="notes" rows="3"
                           class="w-full border border-gray-300 rounded-lg px-3 py-2">{{ shipment.notes|default:'' }}</textarea>
             </div>
 
             <div class="flex gap-3 pt-2">
                 <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition bilingual"
-                        data-lang-ar="حفظ الشحنة" data-lang-en="Save Shipment">حفظ الشحنة</button>
-                <a href="{% url 'invoice_view' car.pk bill.pk %}" class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg transition bilingual" data-lang-ar="إلغاء" data-lang-en="Cancel">إلغاء</a>
+                        data-lang-ar="حفظ الشحنة" data-lang-ru="Сохраните отправление" data-lang-es="Salva el envío" data-lang-en="Save Shipment">حفظ الشحنة</button>
+                <a href="{% url 'invoice_view' car.pk bill.pk %}" class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-lg transition bilingual" data-lang-ar="إلغاء" data-lang-ru="отмена" data-lang-es="cancelación" data-lang-en="Cancel">إلغاء</a>
             </div>
         </form>
     </div>

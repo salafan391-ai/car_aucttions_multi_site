@@ -46,17 +46,17 @@
         <div class="flex items-center gap-2 text-sm text-gray-500">
             <a href="{% url 'site_car_detail' car.pk %}" class="text-brand-hover">{{ car.title|pretty_en }}</a>
             <span>/</span>
-            <span class="bilingual" data-lang-ar="فاتورة" data-lang-en="Invoice">فاتورة</span>
+            <span class="bilingual" data-lang-ar="فاتورة" data-lang-ru="счет" data-lang-es="factura" data-lang-en="Invoice">فاتورة</span>
             <span class="font-mono">{{ bill.receipt_number }}</span>
         </div>
         <div class="flex gap-2">
             <a href="{% url 'invoice_edit' car.pk bill.pk %}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold px-4 py-2 rounded-lg transition flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                <span class="bilingual" data-lang-ar="تعديل" data-lang-en="Edit">تعديل</span>
+                <span class="bilingual" data-lang-ar="تعديل" data-lang-ru="поправка" data-lang-es="enmienda" data-lang-en="Edit">تعديل</span>
             </a>
             <button type="button" onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                <span class="bilingual" data-lang-ar="طباعة / تصدير PDF" data-lang-en="Print / Export PDF">طباعة / تصدير PDF</span>
+                <span class="bilingual" data-lang-ar="طباعة / تصدير PDF" data-lang-ru="Печать/экспорт PDF" data-lang-es="Imprimir/Exportar PDF" data-lang-en="Print / Export PDF">طباعة / تصدير PDF</span>
             </button>
         </div>
     </div>
@@ -74,22 +74,22 @@
                 {% if site_address %}<div class="text-sm text-gray-600">{{ site_address }}</div>{% endif %}
             </div>
             <div class="text-end">
-                <div class="text-2xl font-bold text-gray-900 bilingual" data-lang-ar="فاتورة بيع" data-lang-en="Sales Invoice">فاتورة بيع</div>
+                <div class="text-2xl font-bold text-gray-900 bilingual" data-lang-ar="فاتورة بيع" data-lang-ru="Счет-фактура продажи" data-lang-es="Factura de venta" data-lang-en="Sales Invoice">فاتورة بيع</div>
                 <div class="text-sm text-gray-600 mt-2">
-                    <div><span class="bilingual" data-lang-ar="رقم الفاتورة:" data-lang-en="Invoice #:">رقم الفاتورة:</span> <span class="font-mono font-bold">{{ bill.receipt_number }}</span></div>
-                    <div><span class="bilingual" data-lang-ar="التاريخ:" data-lang-en="Date:">التاريخ:</span> {{ bill.date|date:"Y-m-d" }}</div>
+                    <div><span class="bilingual" data-lang-ar="رقم الفاتورة:" data-lang-ru="Номер счета-фактуры:" data-lang-es="Número de factura:" data-lang-en="Invoice #:">رقم الفاتورة:</span> <span class="font-mono font-bold">{{ bill.receipt_number }}</span></div>
+                    <div><span class="bilingual" data-lang-ar="التاريخ:" data-lang-ru="дата:" data-lang-es="la fecha:" data-lang-en="Date:">التاريخ:</span> {{ bill.date|date:"Y-m-d" }}</div>
                 </div>
             </div>
         </div>
 
         <!-- Buyer -->
         <div class="py-6 border-b border-gray-200">
-            <div class="text-sm font-bold text-gray-500 mb-2 bilingual" data-lang-ar="بيانات المشتري" data-lang-en="Buyer">بيانات المشتري</div>
+            <div class="text-sm font-bold text-gray-500 mb-2 bilingual" data-lang-ar="بيانات المشتري" data-lang-ru="данные о покупателях" data-lang-es="Datos del comprador" data-lang-en="Buyer">بيانات المشتري</div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div><span class="text-gray-500 bilingual" data-lang-ar="الاسم:" data-lang-en="Name:">الاسم:</span> <span class="font-medium">{{ bill.buyer_name }}</span></div>
-                {% if bill.buyer_id_number %}<div><span class="text-gray-500 bilingual" data-lang-ar="رقم الهوية:" data-lang-en="ID:">رقم الهوية:</span> <span class="font-medium">{{ bill.buyer_id_number }}</span></div>{% endif %}
-                {% if bill.buyer_phone %}<div><span class="text-gray-500 bilingual" data-lang-ar="الجوال:" data-lang-en="Phone:">الجوال:</span> <span class="font-medium">{{ bill.buyer_phone }}</span></div>{% endif %}
-                {% if bill.buyer_address %}<div><span class="text-gray-500 bilingual" data-lang-ar="العنوان:" data-lang-en="Address:">العنوان:</span> <span class="font-medium">{{ bill.buyer_address }}</span></div>{% endif %}
+                <div><span class="text-gray-500 bilingual" data-lang-ar="الاسم:" data-lang-ru="имя:" data-lang-es="el nombre:" data-lang-en="Name:">الاسم:</span> <span class="font-medium">{{ bill.buyer_name }}</span></div>
+                {% if bill.buyer_id_number %}<div><span class="text-gray-500 bilingual" data-lang-ar="رقم الهوية:" data-lang-ru="Идентификационный номер:" data-lang-es="Número de identificación:" data-lang-en="ID:">رقم الهوية:</span> <span class="font-medium">{{ bill.buyer_id_number }}</span></div>{% endif %}
+                {% if bill.buyer_phone %}<div><span class="text-gray-500 bilingual" data-lang-ar="الجوال:" data-lang-ru="Мобильный телефон:" data-lang-es="Móvil:" data-lang-en="Phone:">الجوال:</span> <span class="font-medium">{{ bill.buyer_phone }}</span></div>{% endif %}
+                {% if bill.buyer_address %}<div><span class="text-gray-500 bilingual" data-lang-ar="العنوان:" data-lang-ru="Адрес:" data-lang-es="La dirección:" data-lang-en="Address:">العنوان:</span> <span class="font-medium">{{ bill.buyer_address }}</span></div>{% endif %}
             </div>
         </div>
 
@@ -98,9 +98,9 @@
             <table class="invoice-table w-full text-sm">
                 <thead>
                     <tr>
-                        <th class="bilingual" data-lang-ar="الصنف" data-lang-en="Item">الصنف</th>
-                        <th class="bilingual" data-lang-ar="التفاصيل" data-lang-en="Details">التفاصيل</th>
-                        <th class="bilingual text-end" data-lang-ar="المبلغ" data-lang-en="Amount">المبلغ</th>
+                        <th class="bilingual" data-lang-ar="الصنف" data-lang-ru="Категория" data-lang-es="Categoría" data-lang-en="Item">الصنف</th>
+                        <th class="bilingual" data-lang-ar="التفاصيل" data-lang-ru="подробности" data-lang-es="los detalles" data-lang-en="Details">التفاصيل</th>
+                        <th class="bilingual text-end" data-lang-ar="المبلغ" data-lang-ru="количество" data-lang-es="cantidad" data-lang-en="Amount">المبلغ</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,7 +121,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="2" class="text-end font-bold bilingual" data-lang-ar="الإجمالي" data-lang-en="Total">الإجمالي</td>
+                        <td colspan="2" class="text-end font-bold bilingual" data-lang-ar="الإجمالي" data-lang-ru="Общий" data-lang-es="Total" data-lang-en="Total">الإجمالي</td>
                         <td class="text-end font-bold font-mono text-lg">{{ bill.price|floatformat:0 }}</td>
                     </tr>
                 </tfoot>
@@ -132,9 +132,9 @@
         <div class="py-4 flex items-center justify-between text-sm">
             <div>
                 {% if bill.is_paid %}
-                <span class="inline-flex items-center gap-1 bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full bilingual" data-lang-ar="مدفوعة" data-lang-en="PAID">مدفوعة</span>
+                <span class="inline-flex items-center gap-1 bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full bilingual" data-lang-ar="مدفوعة" data-lang-ru="Оплаченный" data-lang-es="Pagado" data-lang-en="PAID">مدفوعة</span>
                 {% else %}
-                <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 font-bold px-3 py-1 rounded-full bilingual" data-lang-ar="غير مدفوعة" data-lang-en="UNPAID">غير مدفوعة</span>
+                <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 font-bold px-3 py-1 rounded-full bilingual" data-lang-ar="غير مدفوعة" data-lang-ru="Неоплачено" data-lang-es="No pagado" data-lang-en="UNPAID">غير مدفوعة</span>
                 {% endif %}
             </div>
         </div>
@@ -142,7 +142,7 @@
         <!-- Shipment -->
         <div class="py-6 border-t border-gray-200">
             <div class="flex items-center justify-between mb-3">
-                <div class="text-sm font-bold text-gray-500 bilingual" data-lang-ar="بيانات الشحن" data-lang-en="Shipment">بيانات الشحن</div>
+                <div class="text-sm font-bold text-gray-500 bilingual" data-lang-ar="بيانات الشحن" data-lang-ru="Данные о доставке" data-lang-es="Datos de envío" data-lang-en="Shipment">بيانات الشحن</div>
                 <a href="{% url 'shipment_edit' car.pk bill.pk %}" class="no-print text-xs text-blue-600 hover:text-blue-800 bilingual" data-lang-ar="{% if shipment %}تعديل{% else %}إضافة شحنة{% endif %}" data-lang-en="{% if shipment %}Edit{% else %}Add shipment{% endif %}">{% if shipment %}تعديل{% else %}إضافة شحنة{% endif %}</a>
             </div>
 
@@ -161,22 +161,22 @@
                 {% endif %}
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                {% if shipment.shipping_company %}<div><span class="text-gray-500 bilingual" data-lang-ar="شركة الشحن:" data-lang-en="Carrier:">شركة الشحن:</span> <span class="font-medium">{{ shipment.shipping_company }}</span></div>{% endif %}
-                {% if shipment.vessel_name %}<div><span class="text-gray-500 bilingual" data-lang-ar="السفينة:" data-lang-en="Vessel:">السفينة:</span> <span class="font-medium">{{ shipment.vessel_name }}</span></div>{% endif %}
-                {% if shipment.container_number %}<div><span class="text-gray-500 bilingual" data-lang-ar="الحاوية:" data-lang-en="Container:">الحاوية:</span> <span class="font-mono">{{ shipment.container_number }}</span></div>{% endif %}
-                {% if shipment.bill_of_lading %}<div><span class="text-gray-500 bilingual" data-lang-ar="البوليصة:" data-lang-en="B/L:">البوليصة:</span> <span class="font-mono">{{ shipment.bill_of_lading }}</span></div>{% endif %}
-                {% if shipment.origin_port %}<div><span class="text-gray-500 bilingual" data-lang-ar="من:" data-lang-en="From:">من:</span> <span class="font-medium">{{ shipment.origin_port }}</span></div>{% endif %}
-                {% if shipment.destination_port %}<div><span class="text-gray-500 bilingual" data-lang-ar="إلى:" data-lang-en="To:">إلى:</span> <span class="font-medium">{{ shipment.destination_port }}{% if shipment.destination_country %}, {{ shipment.destination_country }}{% endif %}</span></div>{% endif %}
-                {% if shipment.etd %}<div><span class="text-gray-500 bilingual" data-lang-ar="المغادرة (ETD):" data-lang-en="ETD:">المغادرة (ETD):</span> <span class="font-medium">{{ shipment.etd|date:"Y-m-d" }}</span></div>{% endif %}
-                {% if shipment.eta %}<div><span class="text-gray-500 bilingual" data-lang-ar="الوصول (ETA):" data-lang-en="ETA:">الوصول (ETA):</span> <span class="font-medium">{{ shipment.eta|date:"Y-m-d" }}</span></div>{% endif %}
-                {% if shipment.delivered_at %}<div><span class="text-gray-500 bilingual" data-lang-ar="التسليم:" data-lang-en="Delivered:">التسليم:</span> <span class="font-medium">{{ shipment.delivered_at|date:"Y-m-d" }}</span></div>{% endif %}
-                {% if shipment.shipping_cost %}<div><span class="text-gray-500 bilingual" data-lang-ar="تكلفة الشحن:" data-lang-en="Shipping cost:">تكلفة الشحن:</span> <span class="font-mono">{{ shipment.shipping_cost|floatformat:0 }}</span></div>{% endif %}
+                {% if shipment.shipping_company %}<div><span class="text-gray-500 bilingual" data-lang-ar="شركة الشحن:" data-lang-ru="Транспортная компания:" data-lang-es="Compañía naviera:" data-lang-en="Carrier:">شركة الشحن:</span> <span class="font-medium">{{ shipment.shipping_company }}</span></div>{% endif %}
+                {% if shipment.vessel_name %}<div><span class="text-gray-500 bilingual" data-lang-ar="السفينة:" data-lang-ru="Корабль:" data-lang-es="El barco:" data-lang-en="Vessel:">السفينة:</span> <span class="font-medium">{{ shipment.vessel_name }}</span></div>{% endif %}
+                {% if shipment.container_number %}<div><span class="text-gray-500 bilingual" data-lang-ar="الحاوية:" data-lang-ru="Контейнер:" data-lang-es="Recipiente:" data-lang-en="Container:">الحاوية:</span> <span class="font-mono">{{ shipment.container_number }}</span></div>{% endif %}
+                {% if shipment.bill_of_lading %}<div><span class="text-gray-500 bilingual" data-lang-ar="البوليصة:" data-lang-ru="Политика:" data-lang-es="Política:" data-lang-en="B/L:">البوليصة:</span> <span class="font-mono">{{ shipment.bill_of_lading }}</span></div>{% endif %}
+                {% if shipment.origin_port %}<div><span class="text-gray-500 bilingual" data-lang-ar="من:" data-lang-ru="от:" data-lang-es="de:" data-lang-en="From:">من:</span> <span class="font-medium">{{ shipment.origin_port }}</span></div>{% endif %}
+                {% if shipment.destination_port %}<div><span class="text-gray-500 bilingual" data-lang-ar="إلى:" data-lang-ru="мне:" data-lang-es="a mí:" data-lang-en="To:">إلى:</span> <span class="font-medium">{{ shipment.destination_port }}{% if shipment.destination_country %}, {{ shipment.destination_country }}{% endif %}</span></div>{% endif %}
+                {% if shipment.etd %}<div><span class="text-gray-500 bilingual" data-lang-ar="المغادرة (ETD):" data-lang-ru="Отправление (ETD):" data-lang-es="Salida (ETD):" data-lang-en="ETD:">المغادرة (ETD):</span> <span class="font-medium">{{ shipment.etd|date:"Y-m-d" }}</span></div>{% endif %}
+                {% if shipment.eta %}<div><span class="text-gray-500 bilingual" data-lang-ar="الوصول (ETA):" data-lang-ru="Доступ (ориентировочное время прибытия):" data-lang-es="Acceso (ETA):" data-lang-en="ETA:">الوصول (ETA):</span> <span class="font-medium">{{ shipment.eta|date:"Y-m-d" }}</span></div>{% endif %}
+                {% if shipment.delivered_at %}<div><span class="text-gray-500 bilingual" data-lang-ar="التسليم:" data-lang-ru="Доставка:" data-lang-es="Entrega:" data-lang-en="Delivered:">التسليم:</span> <span class="font-medium">{{ shipment.delivered_at|date:"Y-m-d" }}</span></div>{% endif %}
+                {% if shipment.shipping_cost %}<div><span class="text-gray-500 bilingual" data-lang-ar="تكلفة الشحن:" data-lang-ru="Стоимость доставки:" data-lang-es="Costo de envío:" data-lang-en="Shipping cost:">تكلفة الشحن:</span> <span class="font-mono">{{ shipment.shipping_cost|floatformat:0 }}</span></div>{% endif %}
                 {% if shipment.tracking_url %}<div class="md:col-span-2">
-                    <span class="text-gray-500 bilingual" data-lang-ar="تتبع لدى شركة الشحن:" data-lang-en="Carrier tracking:">تتبع لدى شركة الشحن:</span>
+                    <span class="text-gray-500 bilingual" data-lang-ar="تتبع لدى شركة الشحن:" data-lang-ru="Отслеживайте отправления с помощью транспортной компании:" data-lang-es="Realice el seguimiento con la empresa de transporte:" data-lang-en="Carrier tracking:">تتبع لدى شركة الشحن:</span>
                     <a href="{{ shipment.tracking_url }}" target="_blank" class="text-blue-600 hover:text-blue-800 underline text-xs break-all">{{ shipment.tracking_url }}</a>
                 </div>{% endif %}
                 <div class="md:col-span-2 mt-1">
-                    <span class="text-gray-500 bilingual" data-lang-ar="تتبع الشحنة عبر الموقع:" data-lang-en="Track online:">تتبع الشحنة عبر الموقع:</span>
+                    <span class="text-gray-500 bilingual" data-lang-ar="تتبع الشحنة عبر الموقع:" data-lang-ru="Отслеживайте отправление на сайте:" data-lang-es="Realice el seguimiento del envío a través del sitio web:" data-lang-en="Track online:">تتبع الشحنة عبر الموقع:</span>
                     <span class="text-blue-700 break-all">{{ request.scheme }}://{{ request.get_host }}{% url 'public_track' bill.receipt_number %}</span>
                 </div>
             </div>
@@ -184,17 +184,17 @@
             <div class="mt-3 text-xs text-gray-600">{{ shipment.notes }}</div>
             {% endif %}
             {% else %}
-            <div class="text-xs text-gray-400 bilingual" data-lang-ar="لا توجد شحنة مسجلة بعد." data-lang-en="No shipment recorded yet.">لا توجد شحنة مسجلة بعد.</div>
+            <div class="text-xs text-gray-400 bilingual" data-lang-ar="لا توجد شحنة مسجلة بعد." data-lang-ru="Отправление пока не зарегистрировано." data-lang-es="Aún no se ha registrado ningún envío." data-lang-en="No shipment recorded yet.">لا توجد شحنة مسجلة بعد.</div>
             {% endif %}
         </div>
 
         <!-- Signatures -->
         <div class="grid grid-cols-2 gap-8 pt-12 mt-8 text-sm">
             <div>
-                <div class="border-t border-gray-400 pt-2 bilingual" data-lang-ar="توقيع البائع" data-lang-en="Seller signature">توقيع البائع</div>
+                <div class="border-t border-gray-400 pt-2 bilingual" data-lang-ar="توقيع البائع" data-lang-ru="Подпись продавца" data-lang-es="Firma del vendedor" data-lang-en="Seller signature">توقيع البائع</div>
             </div>
             <div>
-                <div class="border-t border-gray-400 pt-2 bilingual" data-lang-ar="توقيع المشتري" data-lang-en="Buyer signature">توقيع المشتري</div>
+                <div class="border-t border-gray-400 pt-2 bilingual" data-lang-ar="توقيع المشتري" data-lang-ru="Подпись покупателя" data-lang-es="Firma del comprador" data-lang-en="Buyer signature">توقيع المشتري</div>
             </div>
         </div>
 
