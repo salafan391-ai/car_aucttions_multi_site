@@ -51,20 +51,31 @@ class Command(BaseCommand):
             help="Force an Arabic Manufacturer name to merge into an English one. Repeatable, "
                  "e.g. --arabic-pair جينسس=genesis --arabic-pair لكسز=lexus",
         )
+        parser.add_argument(
+            '--rename-pair', action='append', default=[],
+            metavar='OLD=NEW',
+            help="Force a Manufacturer name (English or anything) to merge into another. "
+                 "Use when two English variants exist for one brand. Repeatable, e.g. "
+                 "--rename-pair 'kgm=ssangyong' --rename-pair 'benz=mercedes-benz'",
+        )
 
     def handle(self, *args, **options):
         schema = options['tenant']
         apply_changes = options['apply']
         do_badges = options['badges']
 
-        # Parse --arabic-pair AR=EN into {ar.strip(): en_lower.strip()}.
+        # Parse both --arabic-pair AR=EN and --rename-pair OLD=NEW into a single
+        # case-insensitive {from_lower: to_lower} map; both flags do the same job
+        # (rename source name → canonical name), kept separate only for readability.
         forced_pairs = {}
-        for raw in options['arabic_pair']:
-            if '=' not in raw:
-                self.stderr.write(self.style.ERROR(f"  bad --arabic-pair value (missing '='): {raw!r}"))
-                continue
-            ar, en = raw.split('=', 1)
-            forced_pairs[ar.strip()] = en.strip().lower()
+        for flag, raw_values in (('--arabic-pair', options['arabic_pair']),
+                                 ('--rename-pair', options['rename_pair'])):
+            for raw in raw_values:
+                if '=' not in raw:
+                    self.stderr.write(self.style.ERROR(f"  bad {flag} value (missing '='): {raw!r}"))
+                    continue
+                src, dst = raw.split('=', 1)
+                forced_pairs[src.strip().lower()] = dst.strip().lower()
 
         mode = self.style.SUCCESS('APPLY') if apply_changes else self.style.WARNING('DRY-RUN')
         self.stdout.write(f"\n=== merge_brand_dupes — schema={schema} mode={mode} ===\n")
@@ -107,18 +118,21 @@ class Command(BaseCommand):
         all_mfrs = list(Manufacturer.objects.all().order_by('id'))
         self.stdout.write(f"  total Manufacturer rows: {len(all_mfrs)}")
 
-        # Build clusters: English rows grouped by lower(name).
+        # Partition: forced_pairs gets first crack at rewriting each row's name
+        # (handles English↔English brand variants AND Arabic→English). Rows that
+        # remain Arabic after rewrite are deferred to the name_ar auto-pair step.
         english_clusters = defaultdict(list)
         arabic_rows = []
         for m in all_mfrs:
-            if _is_arabic(m.name):
+            raw_lower = _norm(m.name)
+            effective = forced_pairs.get(raw_lower, raw_lower)
+            if _is_arabic(effective):
                 arabic_rows.append(m)
             else:
-                english_clusters[_norm(m.name)].append(m)
+                english_clusters[effective].append(m)
 
-        # Try to pair Arabic-only rows to an English cluster via:
-        #   1. forced_pairs (CLI overrides) — wins
-        #   2. canonical-row name_ar exact match
+        # Pair leftover Arabic-only rows by matching their name against an
+        # English canonical row's name_ar.
         ar_to_en = {}
         for key, rows in english_clusters.items():
             for r in rows:
@@ -127,8 +141,7 @@ class Command(BaseCommand):
 
         unmatched_arabic = []
         for m in arabic_rows:
-            stripped = (m.name or '').strip()
-            en_key = forced_pairs.get(stripped) or ar_to_en.get(stripped)
+            en_key = ar_to_en.get((m.name or '').strip())
             if en_key and en_key in english_clusters:
                 english_clusters[en_key].append(m)
             else:
