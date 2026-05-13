@@ -1,4 +1,4 @@
-{% load static tailwind_tags whatsapp_tags django_htmx %}
+{% load static tailwind_tags whatsapp_tags django_htmx custom_filters %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" id="html-root" data-theme="{{ site_theme|default:'light' }}">
 <head>
@@ -22,7 +22,7 @@
     <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endblock %}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{% if site_logo %}{{ request.scheme }}://{{ request.get_host }}{{ site_logo }}{% elif site_hero_image %}{{ request.scheme }}://{{ request.get_host }}{{ site_hero_image }}{% else %}{% static 'images/og-image.jpg' %}{% endif %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="ar_AR">
@@ -32,7 +32,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{% if site_logo %}{{ request.scheme }}://{{ request.get_host }}{{ site_logo }}{% elif site_hero_image %}{{ request.scheme }}://{{ request.get_host }}{{ site_hero_image }}{% else %}{% static 'images/og-image.jpg' %}{% endif %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
     
     <!-- Additional SEO Meta Tags -->
     <meta name="theme-color" content="{{ primary_color|default:'#2563eb' }}">

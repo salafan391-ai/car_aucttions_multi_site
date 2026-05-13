@@ -72,6 +72,22 @@ def https_url(url):
     return _force_https(url)
 
 
+@register.simple_tag(takes_context=True)
+def absolute_url(context, url):
+    """Return an absolute https URL. Pass through if already absolute, else prepend
+    the current request's scheme + host. Used for og:image / twitter:image meta
+    tags where social-link scrapers (WhatsApp, Twitter) need a fetchable URL."""
+    if not url:
+        return ''
+    s = str(url)
+    if s.startswith(('http://', 'https://')):
+        return _force_https(s)
+    request = context.get('request')
+    if request is not None:
+        return request.build_absolute_uri(s)
+    return s
+
+
 # Words that must stay fully uppercase in English display.
 _UPPERCASE_TOKENS = {
     'bmw', 'gmc', 'mg', 'vw', 'suv', 'cvt', 'cng', 'lpg', 'vin', 'rv', 'ev',

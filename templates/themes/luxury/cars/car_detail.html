@@ -6,10 +6,10 @@
 {% block og_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
 {% block og_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
 {% block og_type %}product{% endblock %}
-{% block og_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
+{% block og_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% elif site_logo %}{% absolute_url site_logo %}{% else %}{% absolute_url '/static/images/og-car-default.jpg' %}{% endif %}{% endblock %}
 {% block twitter_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
 {% block twitter_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
-{% block twitter_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% else %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-car-default.jpg' %}{% endif %}{% endblock %}
+{% block twitter_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% elif site_logo %}{% absolute_url site_logo %}{% else %}{% absolute_url '/static/images/og-car-default.jpg' %}{% endif %}{% endblock %}
 
 {% block content %}
 <style>
