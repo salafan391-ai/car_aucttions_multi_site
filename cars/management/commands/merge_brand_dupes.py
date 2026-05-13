@@ -164,7 +164,11 @@ class Command(BaseCommand):
         for key, rows in english_clusters.items():
             if len(rows) <= 1:
                 continue
-            rows.sort(key=lambda r: r.id)
+            # Prefer the row already named like the cluster key — when forced_pairs
+            # rewrote some rows into this cluster, this keeps the canonical's label
+            # readable (e.g. avoids picking 'renault samsung' as canonical for the
+            # renault cluster just because its id is lowest).
+            rows.sort(key=lambda r: (_norm(r.name) != key, r.id))
             canonical = rows[0]
             dupes = rows[1:]
             self.stdout.write(f"  cluster {key!r}: canonical id={canonical.id} (name={canonical.name!r}) ← {len(dupes)} dupes")
