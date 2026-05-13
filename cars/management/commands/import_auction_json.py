@@ -55,8 +55,9 @@ class Command(BaseCommand):
             type=str,
             help=(
                 "Local path to a JSON file  OR  an R2 object key (e.g. "
-                "'auctions/2026-03-10.json'). When an R2 key is given you must "
-                "also supply --r2-bucket (or set R2_BUCKET env var)."
+                "'auctions/2026-03-10.json'). Pass multiple comma-separated "
+                "paths to merge several feeds in one run. When an R2 key is "
+                "given you must also supply --r2-bucket (or set R2_BUCKET env var)."
             ),
         )
         parser.add_argument(
@@ -204,23 +205,29 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options.get("dry_run", False)
 
-        # Load the JSON.
+        # Load the JSON. Local mode supports comma-separated paths so multiple
+        # auction feeds can be merged in a single run (R2 mode stays one key).
         if options["r2"]:
             data = self._load_from_r2(options)
+            if not isinstance(data, list):
+                raise CommandError("JSON must be a list of car objects")
         else:
-            json_path = options["json_file"]
-            try:
-                with open(json_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except FileNotFoundError:
-                raise CommandError(f"File not found: {json_path}")
-            except json.JSONDecodeError as e:
-                raise CommandError(f"Invalid JSON: {e}")
+            paths = [p.strip() for p in options["json_file"].split(",") if p.strip()]
+            data = []
+            for json_path in paths:
+                try:
+                    with open(json_path, "r", encoding="utf-8") as f:
+                        chunk = json.load(f)
+                except FileNotFoundError:
+                    raise CommandError(f"File not found: {json_path}")
+                except json.JSONDecodeError as e:
+                    raise CommandError(f"Invalid JSON in {json_path}: {e}")
+                if not isinstance(chunk, list):
+                    raise CommandError(f"{json_path}: JSON must be a list of car objects")
+                self.stdout.write(f"  loaded {len(chunk)} cars from {json_path}")
+                data.extend(chunk)
 
-        if not isinstance(data, list):
-            raise CommandError("JSON must be a list of car objects")
-
-        self.stdout.write(f"Found {len(data)} cars in JSON file")
+        self.stdout.write(f"Found {len(data)} cars in JSON file(s)")
 
         # Local imports — match the dashboard view layout.
         from cars.normalization import normalize_transmission, normalize_fuel
