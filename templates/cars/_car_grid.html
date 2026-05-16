@@ -37,11 +37,15 @@
                     <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     <span class="bilingual group-hover:text-brand" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
-                {% if car.badge.name %}
+                {% with mn=car.model.name sc=car.seat_count %}
+                {% if mn and mn|lower != 'unknown' or car.category.name == 'auction' and car.points or car.category.name == 'auction' and car.drive_wheel or car.category.name == 'auction' and sc and sc != '0' %}
                 <div class="mb-2 sm:mb-3">
-                    <span class="inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full max-w-full truncate" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.1);">{{ car.badge.name }}{% if car.category.name == 'auction' %}{% if car.points %} · {{ car.points }}{% endif %}{% if car.drive_wheel %} · {{ car.drive_wheel }}{% endif %}{% if car.seat_count %} · {{ car.seat_count }}{% endif %}{% endif %}</span>
+                    <span class="inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full max-w-full truncate" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.1);">
+                        {% if mn and mn|lower != 'unknown' %}{{ mn }}{% endif %}{% if car.category.name == 'auction' %}{% if car.points %}{% if mn and mn|lower != 'unknown' %} · {% endif %}{{ car.points }}{% endif %}{% if car.drive_wheel %}{% if mn and mn|lower != 'unknown' or car.points %} · {% endif %}{{ car.drive_wheel }}{% endif %}{% if sc and sc != '0' %}{% if mn and mn|lower != 'unknown' or car.points or car.drive_wheel %} · {% endif %}<span class="bilingual" data-lang-ar="{{ sc }} مقاعد" data-lang-ru="{{ sc }} мест" data-lang-es="{{ sc }} plazas" data-lang-en="{{ sc }}-seater">{{ sc }} مقاعد</span>{% endif %}{% endif %}
+                    </span>
                 </div>
                 {% endif %}
+                {% endwith %}
                 <div class="flex items-center flex-wrap gap-1.5 mb-2 sm:mb-3">
                     {% if car.mileage %}<span class="inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" style="background:rgba(var(--color-primary-rgb,59,130,246),.18);color:var(--color-primary,#3b82f6);border:1px solid rgba(var(--color-primary-rgb,59,130,246),.3);"><span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km">{{ car.mileage|intcomma }} كم</span></span>{% endif %}
                     {% if car.transmission %}<span class="bilingual inline-flex items-center text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" style="background:rgba(96,165,250,.18);color:#93c5fd;border:1px solid rgba(96,165,250,.3);" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
@@ -88,7 +92,7 @@
                     <span class="text-brand font-extrabold text-xs sm:text-sm shrink-0" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}₩</span>
                 </div>
                 <div class="text-[10px] sm:text-xs text-gray-400 truncate">
-                    {{ car.year }} · {{ car.badge.name }}{% if car.category.name == 'auction' %}{% if car.points %} · {{ car.points }}{% endif %}{% if car.drive_wheel %} · {{ car.drive_wheel }}{% endif %}{% if car.seat_count %} · {{ car.seat_count }}{% endif %}{% endif %}
+                    {% with mn=car.model.name sc=car.seat_count %}{{ car.year }}{% if mn and mn|lower != 'unknown' %} · {{ mn }}{% endif %}{% if car.category.name == 'auction' %}{% if car.points %} · {{ car.points }}{% endif %}{% if car.drive_wheel %} · {{ car.drive_wheel }}{% endif %}{% if sc and sc != '0' %} · <span class="bilingual" data-lang-ar="{{ sc }} مقاعد" data-lang-ru="{{ sc }} мест" data-lang-es="{{ sc }} plazas" data-lang-en="{{ sc }}-seater">{{ sc }} مقاعد</span>{% endif %}{% endif %}{% endwith %}
                     {% if car.mileage %} · <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km">{{ car.mileage|intcomma }} كم</span>{% endif %}
                     {% if car.transmission %} · <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
                 </div>
@@ -205,7 +209,9 @@
                     <span style="color:rgba(255,255,255,.35);margin:0 .2rem;">·</span>
                     <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
-                <div style="font-size:.6rem;letter-spacing:.08em;color:rgba(255,255,255,.28);margin-bottom:.5rem;">{{ car.badge.name }}{% if car.category.name == 'auction' %}{% if car.points %} · {{ car.points }}{% endif %}{% if car.drive_wheel %} · {{ car.drive_wheel }}{% endif %}{% if car.seat_count %} · {{ car.seat_count }}{% endif %}{% endif %}</div>
+                {% with mn=car.model.name sc=car.seat_count %}{% if mn and mn|lower != 'unknown' or car.category.name == 'auction' and car.points or car.category.name == 'auction' and car.drive_wheel or car.category.name == 'auction' and sc and sc != '0' %}
+                <div style="font-size:.6rem;letter-spacing:.08em;color:rgba(255,255,255,.28);margin-bottom:.5rem;">{% if mn and mn|lower != 'unknown' %}{{ mn }}{% endif %}{% if car.category.name == 'auction' %}{% if car.points %}{% if mn and mn|lower != 'unknown' %} · {% endif %}{{ car.points }}{% endif %}{% if car.drive_wheel %}{% if mn and mn|lower != 'unknown' or car.points %} · {% endif %}{{ car.drive_wheel }}{% endif %}{% if sc and sc != '0' %}{% if mn and mn|lower != 'unknown' or car.points or car.drive_wheel %} · {% endif %}<span class="bilingual" data-lang-ar="{{ sc }} مقاعد" data-lang-ru="{{ sc }} мест" data-lang-es="{{ sc }} plazas" data-lang-en="{{ sc }}-seater">{{ sc }} مقاعد</span>{% endif %}{% endif %}</div>
+                {% endif %}{% endwith %}
 
                 {# spec indicators row #}
                 <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.55rem;">
@@ -283,11 +289,13 @@
                     <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                     <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 </div>
-                {% if car.badge.name %}
+                {% with mn=car.model.name sc=car.seat_count %}
+                {% if mn and mn|lower != 'unknown' or car.category.name == 'auction' and car.points or car.category.name == 'auction' and car.drive_wheel or car.category.name == 'auction' and sc and sc != '0' %}
                 <div class="mb-2 sm:mb-3">
-                    <span class="inline-flex items-center bg-gray-100 text-gray-700 border border-gray-200 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full max-w-full truncate">{{ car.badge.name }}{% if car.category.name == 'auction' %}{% if car.points %} · {{ car.points }}{% endif %}{% if car.drive_wheel %} · {{ car.drive_wheel }}{% endif %}{% if car.seat_count %} · {{ car.seat_count }}{% endif %}{% endif %}</span>
+                    <span class="inline-flex items-center bg-gray-100 text-gray-700 border border-gray-200 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full max-w-full truncate">{% if mn and mn|lower != 'unknown' %}{{ mn }}{% endif %}{% if car.category.name == 'auction' %}{% if car.points %}{% if mn and mn|lower != 'unknown' %} · {% endif %}{{ car.points }}{% endif %}{% if car.drive_wheel %}{% if mn and mn|lower != 'unknown' or car.points %} · {% endif %}{{ car.drive_wheel }}{% endif %}{% if sc and sc != '0' %}{% if mn and mn|lower != 'unknown' or car.points or car.drive_wheel %} · {% endif %}<span class="bilingual" data-lang-ar="{{ sc }} مقاعد" data-lang-ru="{{ sc }} мест" data-lang-es="{{ sc }} plazas" data-lang-en="{{ sc }}-seater">{{ sc }} مقاعد</span>{% endif %}{% endif %}</span>
                 </div>
                 {% endif %}
+                {% endwith %}
                 <div class="flex items-center flex-wrap gap-1.5 mb-2 sm:mb-3">
                     {% if car.mileage %}<span class="inline-flex items-center bg-brand/10 text-brand border border-brand/20 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full"><span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km">{{ car.mileage|intcomma }} كم</span></span>{% endif %}
                     {% if car.transmission %}<span class="bilingual inline-flex items-center bg-blue-50 text-blue-700 border border-blue-100 text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:py-1 rounded-full" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
