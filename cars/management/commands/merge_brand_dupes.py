@@ -182,9 +182,27 @@ class Command(BaseCommand):
                 total_merged += 1
 
                 if apply_changes:
+                    # Per-row model move so we can handle name collisions: if
+                    # the canonical manufacturer already has a CarModel with
+                    # the same name as one we're trying to move, merge cars +
+                    # badges into the existing row instead of trying to
+                    # repoint the duplicate (which violates the new
+                    # uniq_carmodel_name_per_manufacturer constraint).
+                    for dupe_model in CarModel.objects.filter(manufacturer_id=d.id):
+                        existing = CarModel.objects.filter(
+                            manufacturer_id=canonical.id,
+                            name=dupe_model.name,
+                        ).first()
+                        if existing:
+                            ApiCar.objects.filter(model_id=dupe_model.id).update(model_id=existing.id)
+                            CarBadge.objects.filter(model_id=dupe_model.id).update(model_id=existing.id)
+                            if dupe_model.name_ar and not existing.name_ar:
+                                existing.name_ar = dupe_model.name_ar
+                                existing.save(update_fields=['name_ar'])
+                            CarModel.objects.filter(id=dupe_model.id).delete()
+                        else:
+                            CarModel.objects.filter(id=dupe_model.id).update(manufacturer_id=canonical.id)
                     ApiCar.objects.filter(manufacturer_id=d.id).update(manufacturer_id=canonical.id)
-                    CarModel.objects.filter(manufacturer_id=d.id).update(manufacturer_id=canonical.id)
-                    # Promote name_ar to canonical if it's missing there.
                     if d.name_ar and not canonical.name_ar:
                         canonical.name_ar = d.name_ar
                         canonical.save(update_fields=['name_ar'])
