@@ -1,10 +1,11 @@
 """
-Dedup duplicate Manufacturer / CarModel rows in-place, then lock the schema
-with UniqueConstraints so the bug can't recur even if importer logic regresses.
+Dedup duplicate Manufacturer / CarModel rows in-place.
 
-Why: the auction importer historically created duplicate rows on every run
-because its in-memory lookup dicts missed case-mismatched JSON values, and
-`bulk_create(ignore_conflicts=True)` is a no-op without a unique index.
+Why split from the AddConstraint migration: doing both in the same migration
+hits Postgres' "cannot ALTER TABLE because it has pending trigger events" —
+the FK-cascade triggers from DELETEing dupe rows are deferred to transaction
+commit, so the ALTER TABLE that adds the unique constraint fails inside the
+same transaction. Splitting forces a commit between the two phases.
 
 The dedup logic here matches `cars.management.commands.merge_brand_dupes`
 Phase 1 + Phase 2: group by lower(name) for manufacturers and
@@ -14,7 +15,7 @@ repoint FK references (ApiCar, CarModel, CarBadge) and delete duplicates.
 
 from collections import defaultdict
 
-from django.db import migrations, models
+from django.db import migrations
 
 
 def _dedup_manufacturers_and_models(apps, schema_editor):
@@ -43,14 +44,11 @@ def _dedup_manufacturers_and_models(apps, schema_editor):
                 canonical.name_ar = d.name_ar
                 canonical.save(update_fields=["name_ar"])
             Manufacturer.objects.filter(id=d.id).delete()
-        # Promote canonical name to the normalized form so the constraint holds.
         if canonical.name != key:
             canonical.name = key
             canonical.save(update_fields=["name"])
 
-    # Normalize remaining singleton rows too (some pre-existing rows may have
-    # capital letters that haven't been re-saved since the constraint requires
-    # equality on the exact stored value).
+    # Normalize remaining singleton rows.
     for m in Manufacturer.objects.all():
         norm = _norm(m.name)
         if m.name != norm:
@@ -77,7 +75,6 @@ def _dedup_manufacturers_and_models(apps, schema_editor):
             canonical.name = key_name
             canonical.save(update_fields=["name"])
 
-    # Normalize remaining singleton model rows.
     for m in CarModel.objects.all():
         norm = _norm(m.name)
         if m.name != norm:
@@ -97,18 +94,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(_dedup_manufacturers_and_models, _noop_reverse),
-        migrations.AddConstraint(
-            model_name="manufacturer",
-            constraint=models.UniqueConstraint(
-                fields=["name"],
-                name="uniq_manufacturer_name",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="carmodel",
-            constraint=models.UniqueConstraint(
-                fields=["name", "manufacturer"],
-                name="uniq_carmodel_name_per_manufacturer",
-            ),
-        ),
     ]
