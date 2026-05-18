@@ -230,7 +230,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Found {len(data)} cars in JSON file(s)")
 
         # Local imports — match the dashboard view layout.
-        from cars.normalization import normalize_transmission, normalize_fuel
+        from cars.normalization import normalize_transmission, normalize_fuel, normalize_name
         from cars.translation_utils import translate_batch
 
         auction_category = self._safe_get_or_create(Category.objects, name="auction")
@@ -278,25 +278,33 @@ class Command(BaseCommand):
         created = updated = skipped = 0
 
         # Pass 1: collect missing FK rows so we can bulk-create them.
+        # Names are normalized up-front so dict lookups (keyed by the DB's
+        # lowercased values) match — otherwise JSON "Kia" misses dict "kia"
+        # and we bulk_create a fresh row each run.
         for item in data:
             car_id = (item.get("car_identifire") or item.get("car_ids") or "").strip()
             if not car_id:
                 skipped += 1
                 continue
 
-            make_name = item.get("make_en") or item.get("make") or "Unknown"
+            make_name = normalize_name(item.get("make_en") or item.get("make")) or "unknown"
+            model_name = normalize_name(item.get("models_en") or item.get("models")) or "unknown"
+            color_name = normalize_name(item.get("color_en") or item.get("color")) or "unknown"
+
             if make_name not in all_manufacturers and make_name not in new_manufacturers:
                 new_manufacturers[make_name] = Manufacturer(
                     name=make_name, country="Unknown"
                 )
 
-            model_name = item.get("models_en") or item.get("models") or "Unknown"
-            # We don't know the manufacturer.id for newly-created makes yet, so
-            # key the staging dict by model name and resolve after bulk-create.
-            if model_name not in new_models and (model_name, None) not in all_models:
-                new_models[model_name] = (model_name, make_name)
+            # Key the staging dict by (model_name, make_name) so the same model
+            # name under two different makes both get staged.
+            model_stage_key = (model_name, make_name)
+            mfr = all_manufacturers.get(make_name)
+            existing_lookup_key = (model_name, mfr.id if mfr else None)
+            if (existing_lookup_key not in all_models
+                    and model_stage_key not in new_models):
+                new_models[model_stage_key] = (model_name, make_name)
 
-            color_name = item.get("color_en") or item.get("color") or "Unknown"
             if color_name not in all_colors and color_name not in new_colors:
                 new_colors[color_name] = CarColor(name=color_name)
 
@@ -350,7 +358,9 @@ class Command(BaseCommand):
             models_to_create = []
             for model_name, make_name in new_models.values():
                 manufacturer_obj = all_manufacturers.get(make_name)
-                if manufacturer_obj:
+                # Re-check all_models — earlier batches in this same run may have
+                # already created the (name, mfr_id) pair.
+                if manufacturer_obj and (model_name, manufacturer_obj.id) not in all_models:
                     models_to_create.append(
                         CarModel(name=model_name, manufacturer=manufacturer_obj)
                     )
@@ -371,18 +381,18 @@ class Command(BaseCommand):
             if not car_id:
                 continue
 
-            make_name = item.get("make_en") or item.get("make") or "Unknown"
+            make_name = normalize_name(item.get("make_en") or item.get("make")) or "unknown"
+            model_name = normalize_name(item.get("models_en") or item.get("models")) or "unknown"
             manufacturer = all_manufacturers.get(make_name)
 
-            model_name = item.get("models_en") or item.get("models") or "Unknown"
             model_key = (model_name, manufacturer.id if manufacturer else None)
             car_model = all_models.get(model_key)
             if not car_model and manufacturer:
-                unknown_key = ("Unknown", manufacturer.id)
+                unknown_key = ("unknown", manufacturer.id)
                 car_model = all_models.get(unknown_key)
                 if not car_model:
                     car_model = CarModel.objects.create(
-                        name="Unknown", manufacturer=manufacturer
+                        name="unknown", manufacturer=manufacturer
                     )
                     all_models[(car_model.name, car_model.manufacturer_id)] = car_model
 
@@ -415,7 +425,7 @@ class Command(BaseCommand):
                 skipped += 1
                 continue
 
-            color_name = item.get("color_en") or item.get("color") or "Unknown"
+            color_name = normalize_name(item.get("color_en") or item.get("color")) or "unknown"
             color = all_colors.get(color_name)
 
             title = item.get("title") or f"{make_name} {model_name}"

@@ -696,7 +696,7 @@ def upload_auction_json(request):
     from django.core.exceptions import MultipleObjectsReturned
     from django.db import transaction
     from cars.models import Manufacturer, CarModel, CarBadge, CarColor, BodyType, Category
-    from cars.normalization import normalize_transmission, normalize_fuel
+    from cars.normalization import normalize_transmission, normalize_fuel, normalize_name
 
     def safe_get_or_create(manager, defaults=None, **kwargs):
         try:
@@ -803,22 +803,27 @@ def upload_auction_json(request):
                 skipped += 1
                 continue
 
+            # Normalize names up front so dict keys match the DB's stored form
+            # (lowercase, via Manufacturer/CarModel.save() → normalize_name).
+            # Without this, the JSON's "Kia" misses the dict's "kia" key and we
+            # bulk_create a fresh row with capital K each run.
+            make_name = normalize_name(item.get("make_en") or item.get("make")) or "unknown"
+            model_name = normalize_name(item.get("models_en") or item.get("models")) or "unknown"
+            color_name = normalize_name(item.get("color_en") or item.get("color")) or "unknown"
+
             # Handle manufacturer
-            make_name = item.get("make_en") or item.get("make") or "Unknown"
             if make_name not in all_manufacturers and make_name not in new_manufacturers:
                 new_manufacturers[make_name] = Manufacturer(name=make_name, country="Unknown")
             manufacturer = all_manufacturers.get(make_name) or new_manufacturers.get(make_name)
 
-            # Handle model
-            model_name = item.get("models_en") or item.get("models") or "Unknown"
-            model_key = (model_name, manufacturer.id if hasattr(manufacturer, 'id') else None)
-            # Store manufacturer name (string) for new models so we can resolve
-            # to the saved Manufacturer instance after bulk-creating missing manufacturers.
-            if model_key not in all_models and model_name not in new_models:
-                new_models[model_name] = (model_name, make_name)
-            
+            # Handle model — key by (normalized name, make_name) so same model
+            # name under two different makes both get staged.
+            model_stage_key = (model_name, make_name)
+            model_lookup_key = (model_name, manufacturer.id if hasattr(manufacturer, 'id') and manufacturer.id else None)
+            if model_lookup_key not in all_models and model_stage_key not in new_models:
+                new_models[model_stage_key] = (model_name, make_name)
+
             # Handle color
-            color_name = item.get("color_en") or item.get("color") or "Unknown"
             if color_name not in all_colors and color_name not in new_colors:
                 new_colors[color_name] = CarColor(name=color_name)
             
@@ -836,17 +841,19 @@ def upload_auction_json(request):
             all_colors.update({c.name: c for c in CarColor.objects.filter(name__in=new_colors.keys())})
         
        
-        # Bulk create missing models
+        # Bulk create missing models. Re-check all_models for each pair before
+        # appending — same (name, mfr_id) may already have landed in all_models
+        # from a previous batch in this same run.
         if new_models:
             models_to_create = []
             for model_name, make_name in new_models.values():
                 manufacturer_obj = all_manufacturers.get(make_name)
-                if manufacturer_obj:
+                if manufacturer_obj and (model_name, manufacturer_obj.id) not in all_models:
                     models_to_create.append(CarModel(name=model_name, manufacturer=manufacturer_obj))
             if models_to_create:
                 CarModel.objects.bulk_create(models_to_create, ignore_conflicts=True)
             all_models.update({
-                (m.name, m.manufacturer_id): m 
+                (m.name, m.manufacturer_id): m
                 for m in CarModel.objects.filter(name__in=[name for name, _ in new_models.values()]).select_related('manufacturer')
             })
         
@@ -858,19 +865,21 @@ def upload_auction_json(request):
             if not car_id:
                 continue
 
-            make_name = item.get("make_en") or item.get("make") or "Unknown"
+            # Same normalization as the first loop — the dict lookups below need
+            # to match the lowercased keys we built.
+            make_name = normalize_name(item.get("make_en") or item.get("make")) or "unknown"
+            model_name = normalize_name(item.get("models_en") or item.get("models")) or "unknown"
             manufacturer = all_manufacturers.get(make_name)
-            
-            model_name = item.get("models_en") or item.get("models") or "Unknown"
+
             model_key = (model_name, manufacturer.id if manufacturer else None)
             car_model = all_models.get(model_key)
             # If model is missing but we have a manufacturer, create or reuse an
-            # 'Unknown' model for this manufacturer to allow creating a badge.
+            # 'unknown' model for this manufacturer to allow creating a badge.
             if not car_model and manufacturer:
-                unknown_model_key = ("Unknown", manufacturer.id)
+                unknown_model_key = ("unknown", manufacturer.id)
                 car_model = all_models.get(unknown_model_key)
                 if not car_model:
-                    car_model = CarModel.objects.create(name='Unknown', manufacturer=manufacturer)
+                    car_model = CarModel.objects.create(name='unknown', manufacturer=manufacturer)
                     all_models[(car_model.name, car_model.manufacturer_id)] = car_model
             
      
@@ -901,7 +910,7 @@ def upload_auction_json(request):
                         badge = CarBadge.objects.create(name='Unknown', model=car_model)
                         all_badges[(badge.name, badge.model_id)] = badge
 
-            color_name = item.get("color_en") or item.get("color") or "Unknown"
+            color_name = normalize_name(item.get("color_en") or item.get("color")) or "unknown"
             color = all_colors.get(color_name)
             
    
