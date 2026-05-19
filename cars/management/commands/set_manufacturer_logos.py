@@ -1,85 +1,121 @@
-from django.core.management.base import BaseCommand
+"""
+Set Manufacturer.logo for every row whose name matches an entry in the brand-logo
+mapping JSON. Names are lowercased + stripped on both sides before matching, since
+the DB stores manufacturer.name in normalized lowercase form.
+
+Default JSON is `cars/data/brand_logos.json` (185 brands → S3 SVG URLs). Pass a
+different path with `--json /abs/path.json` if you want to point at another source.
+
+Usage:
+    python manage.py set_manufacturer_logos           # dry-run (default)
+    python manage.py set_manufacturer_logos --apply   # write changes
+"""
+
+import json
+import re
+from pathlib import Path
+
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
+
 from cars.models import Manufacturer
 
 
-MANUFACTURER_LOGOS = {
-    "Hyundai": "https://carstat.dev/images/brands/hyundai.svg",
-    "Kia": "https://carstat.dev/images/brands/kia.svg",
-    "Mercedes-Benz": "https://carstat.dev/images/brands/mercedes.svg",
-    "BMW": "https://carstat.dev/images/brands/bmw.svg",
-    "Genesis": "https://carstat.dev/images/brands/genesis.svg",
-    "Audi": "https://carstat.dev/images/brands/audi.svg",
-    "Volkswagen": "https://carstat.dev/images/brands/volkswagen.svg",
-    "Porsche": "https://carstat.dev/images/brands/porche.svg",
-    "Land Rover": "https://carstat.dev/images/brands/land-rover.svg",
-    "Jeep": "https://carstat.dev/images/brands/jeep.svg",
-    "Ford": "https://carstat.dev/images/brands/ford.svg",
-    "Volvo": "https://carstat.dev/images/brands/volvo.svg",
-    "Tesla": "https://carstat.dev/images/brands/tesla.svg",
-    "Lexus": "https://carstat.dev/images/brands/lexus.svg",
-    "Toyota": "https://carstat.dev/images/brands/toyota.svg",
-    "Lincoln": "https://carstat.dev/images/brands/lincoln.svg",
-    "Honda": "https://carstat.dev/images/brands/honda.svg",
-    "Jaguar": "https://carstat.dev/images/brands/jaguar.svg",
-    "Peugeot": "https://carstat.dev/images/brands/peugeot.svg",
-    "Maserati": "https://carstat.dev/images/brands/maserati.svg",
-    "Cadillac": "https://carstat.dev/images/brands/cadillac.svg",
-    "Infiniti": "https://carstat.dev/images/brands/infiniti.svg",
-    "Nissan": "https://carstat.dev/images/brands/nissan.svg",
-    "Bentley": "https://carstat.dev/images/brands/bentley.svg",
-    "Ferrari": "https://carstat.dev/images/brands/ferrari.svg",
-    "Rolls-Royce": "https://carstat.dev/images/brands/rolls-royce.svg",
-    "Chevrolet": "https://carstat.dev/images/brands/chevrolet.svg",
-    "Lamborghini": "https://carstat.dev/images/brands/lamborghini.svg",
-    "Chrysler": "https://carstat.dev/images/brands/chrysler.svg",
-    "Fiat": "https://carstat.dev/images/brands/fiat.svg",
-    "Polestar": "https://carstat.dev/images/brands/Polestar.svg",
-    "Dodge": "https://carstat.dev/images/brands/dodge.svg",
-    "Suzuki": "https://carstat.dev/images/brands/suzuki.svg",
-    "Smart": "https://carstat.dev/images/brands/smart.png",
-    "GMC": "https://carstat.dev/images/brands/gmc.svg",
-    "Hummer": "https://carstat.dev/images/brands/Hummer.svg",
-    "Daihatsu": "https://carstat.dev/images/brands/daihatsu.png",
-    "Lotus": "https://carstat.dev/images/brands/Lotus.svg",
-    "BYD": "https://carstat.dev/images/brands/byd.svg",
-    "Saab": "https://carstat.dev/images/brands/Saab.svg",
-    "Mazda": "https://carstat.dev/images/brands/mazda.svg",
-    "Mitsubishi": "https://carstat.dev/images/brands/mitsubishi.svg",
-    "Geely": "https://carstat.dev/images/brands/Geely.svg",
-    "Subaru": "https://carstat.dev/images/brands/subaru.svg",
-    "Maybach": "https://carstat.dev/images/brands/Maybach.svg",
-    "Mitsuoka": "https://carstat.dev/images/brands/Mitsuoka.svg",
-    "Acura": "https://carstat.dev/images/brands/acura.svg",
-    "Alfa Romeo": "https://carstat.dev/images/brands/alfa-romeo.svg",
-    "Scion": "https://carstat.dev/images/brands/Scion.svg",
-    "Mercury": "https://carstat.dev/images/brands/Mercury.svg",
-    "Renault": "https://carstat.dev/images/brands/renault.svg",
-}
+DEFAULT_JSON = Path(settings.BASE_DIR) / "cars" / "data" / "brand_logos.json"
+
+_NONALPHA_RE = re.compile(r"[^a-z0-9]")
+
+
+def _norm(s):
+    return (s or "").strip().lower()
+
+
+def _strip_norm(s):
+    """Aggressive form for fallback matching: strip every non-alphanumeric so
+    `astonmartin` matches `aston martin`, `rolls-royce` matches `rollsroyce`,
+    etc. Used only when the exact-lower lookup misses."""
+    return _NONALPHA_RE.sub("", _norm(s))
 
 
 class Command(BaseCommand):
-    help = "Set manufacturer logos from predefined mapping"
+    help = "Set Manufacturer.logo from a brand_logos.json mapping."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--json",
+            default=str(DEFAULT_JSON),
+            help=f"Path to the brand-logo JSON file. Default: {DEFAULT_JSON}",
+        )
+        parser.add_argument(
+            "--apply",
+            action="store_true",
+            help="Write changes. Default is dry-run.",
+        )
+        parser.add_argument(
+            "--overwrite",
+            action="store_true",
+            help="Replace existing logo URLs. Default leaves rows that already have a logo alone.",
+        )
 
     def handle(self, *args, **options):
-        updated = 0
-        not_found = []
+        path = Path(options["json"])
+        if not path.exists():
+            raise CommandError(f"JSON file not found: {path}")
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            raise CommandError(f"Invalid JSON in {path}: {e}")
+        if not isinstance(raw, dict):
+            raise CommandError("JSON must be an object mapping brand → URL.")
 
-        for name, logo_url in MANUFACTURER_LOGOS.items():
-            # Try exact match first, then case-insensitive
-            qs = Manufacturer.objects.filter(name=name)
-            if not qs.exists():
-                qs = Manufacturer.objects.filter(name__iexact=name)
-            if not qs.exists():
-                # Try partial match (e.g. "Mercedes-Benz" matching "Mercedes" or "Mercedes Benz")
-                qs = Manufacturer.objects.filter(name__icontains=name.split("-")[0].split(" ")[0])
+        # Build two lookup maps: exact-lower (preferred) and aggressive strip
+        # (fallback). Aggressive map collisions are kept first-wins so we don't
+        # accidentally clobber a clean key.
+        logos = {_norm(k): v for k, v in raw.items() if k and v}
+        logos_strip = {}
+        for k, v in raw.items():
+            if not k or not v:
+                continue
+            sk = _strip_norm(k)
+            logos_strip.setdefault(sk, v)
 
-            if qs.exists():
-                count = qs.update(logo=logo_url)
-                updated += count
-                self.stdout.write(f"  ✓ {name} → {count} record(s) updated")
-            else:
-                not_found.append(name)
+        apply_changes = options["apply"]
+        overwrite = options["overwrite"]
 
-        self.stdout.write(self.style.SUCCESS(f"\nDone! Updated {updated} manufacturers."))
-        if not_found:
-            self.stdout.write(self.style.WARNING(f"Not found in DB: {', '.join(not_found)}"))
+        mode = self.style.SUCCESS("APPLY") if apply_changes else self.style.WARNING("DRY-RUN")
+        self.stdout.write(f"=== set_manufacturer_logos — mode={mode}, source={path.name} ===")
+        self.stdout.write(f"  {len(logos)} brand entries in JSON")
+
+        matched = []
+        skipped_has_logo = []
+        unmatched = []
+        for m in Manufacturer.objects.all().order_by("name"):
+            url = logos.get(_norm(m.name)) or logos_strip.get(_strip_norm(m.name))
+            if not url:
+                unmatched.append(m)
+                continue
+            if m.logo and not overwrite:
+                skipped_has_logo.append((m, url))
+                continue
+            matched.append((m, url))
+
+        for m, url in matched:
+            self.stdout.write(f"  ✓ {m.name} → {url}")
+            if apply_changes:
+                Manufacturer.objects.filter(id=m.id).update(logo=url)
+
+        if skipped_has_logo:
+            self.stdout.write(self.style.NOTICE(
+                f"\n  {len(skipped_has_logo)} row(s) already have a logo (pass --overwrite to replace)"
+            ))
+        if unmatched:
+            self.stdout.write(self.style.WARNING(
+                f"\n  {len(unmatched)} Manufacturer rows had no matching JSON entry:"
+            ))
+            for m in unmatched:
+                self.stdout.write(f"      {m.name}")
+
+        verb = "updated" if apply_changes else "would update"
+        self.stdout.write(self.style.SUCCESS(f"\n→ {verb} {len(matched)} manufacturer logo(s)."))
+        if not apply_changes:
+            self.stdout.write(self.style.WARNING("Dry-run complete. Re-run with --apply to commit."))
