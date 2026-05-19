@@ -11,7 +11,7 @@ Required vars:
 {% endcomment %}
 <div class="df-tree" id="{{ tree_id }}" data-car-type="{{ car_type|default:'' }}">
     {% for m in manufacturers %}{% if m.car_count %}{% with mfr_id_str=m.id|stringformat:"d" %}
-    <div class="df-tree-node df-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
+    <div class="df-tree-node df-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-logo="{{ m.logo|default:'' }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
         <div class="df-tree-row">
             <label class="df-tree-label">
                 <input type="checkbox" name="manufacturer" value="{{ m.id }}" {% if mfr_id_str in sel_manufacturers %}checked{% endif %} class="df-tree-cb df-mfr-cb">
@@ -29,6 +29,7 @@ Required vars:
                 <div class="df-tree-row">
                     <label class="df-tree-label">
                         <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="df-tree-cb df-model-cb">
+                        {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
                         <span class="df-tree-name bilingual" data-lang-ar="{{ mod|translate_model }}" data-lang-ru="{{ mod|translate_model:'ru' }}" data-lang-es="{{ mod|translate_model:'es' }}" data-lang-en="{{ mod.name|pretty_en }}">{{ mod|translate_model }}</span>
                         <span class="df-tree-count">({{ mod.car_count }})</span>
                     </label>
@@ -45,6 +46,7 @@ Required vars:
                         <div class="df-tree-row">
                             <label class="df-tree-label">
                                 <input type="checkbox" name="badge" value="{{ b.id }}" {% if b.id|stringformat:"d" in sel_badges %}checked{% endif %} class="df-tree-cb df-badge-cb">
+                                {% if m.logo %}<img src="{{ m.logo }}" class="w-3.5 h-3.5 object-contain shrink-0" loading="lazy" alt="">{% endif %}
                                 <span class="df-tree-name">{{ b.name }}</span>
                                 <span class="df-tree-count">({{ b.car_count }})</span>
                             </label>

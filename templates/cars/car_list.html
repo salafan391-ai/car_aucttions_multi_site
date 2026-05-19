@@ -919,7 +919,16 @@ function toggleFilterValue(key, value) {
     var lang = curLang();
     name.textContent = (opts.langs && opts.langs[lang]) || opts.name;
 
-    label.appendChild(input); label.appendChild(name);
+    label.appendChild(input);
+    if (opts.logo) {
+      var img = document.createElement('img');
+      img.src = opts.logo;
+      img.className = 'w-3.5 h-3.5 object-contain shrink-0';
+      img.loading = 'lazy';
+      img.alt = '';
+      label.appendChild(img);
+    }
+    label.appendChild(name);
 
     if (typeof opts.count === 'number') {
       var cnt = document.createElement('span');
@@ -969,7 +978,7 @@ function toggleFilterValue(key, value) {
           if (existingSelected.has(String(m.id))) return;
           if (!m.car_count) return;
           var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
-          children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, count: m.car_count, leaf: qsCarType.indexOf('auction') !== -1, checked: false }));
+          children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, count: m.car_count, leaf: qsCarType.indexOf('auction') !== -1, checked: false, logo: m.manufacturer_logo || mfrNode.dataset.logo || '' }));
         });
         if (!children.children.length) {
           var empty = document.createElement('div');
@@ -990,6 +999,11 @@ function toggleFilterValue(key, value) {
       existingSelected.set(n.dataset.badgeId, n);
     });
 
+    // Inherit the parent manufacturer's logo so dynamically-loaded badges
+    // get the same brand image as their ancestor row.
+    var ancestorMfr = modelNode.closest('.df-mfr-node');
+    var inheritedLogo = (ancestorMfr && ancestorMfr.dataset.logo) || '';
+
     var hint = document.createElement('div');
     hint.className = 'df-tree-hint';
     hint.textContent = '…';
@@ -1001,7 +1015,7 @@ function toggleFilterValue(key, value) {
         arr.forEach(function(b) {
           if (existingSelected.has(String(b.id))) return;
           if (!b.car_count) return;
-          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: false }));
+          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: false, logo: inheritedLogo }));
         });
         if (!children.children.length) {
           var empty = document.createElement('div');
