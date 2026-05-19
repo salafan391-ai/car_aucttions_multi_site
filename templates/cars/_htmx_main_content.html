@@ -460,7 +460,7 @@
                 <!-- Search -->
                 <div class="relative">
                     <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." data-placeholder-ar="ابحث بالاسم..." data-placeholder-ru="Поиск по имени..." data-placeholder-es="Buscar por nombre..." data-placeholder-en="Search by name..." autocomplete="off"
+                    <input type="text" id="filter-q-sidebar" hx-preserve="true" name="q" value="{{ request.GET.q }}" placeholder="ابحث بالاسم..." data-placeholder-ar="ابحث بالاسم..." data-placeholder-ru="Поиск по имени..." data-placeholder-es="Buscar por nombre..." data-placeholder-en="Search by name..." autocomplete="off"
                            oninput="debouncedSubmitSidebarForm(this.form)"
                            class="w-full pr-8 pl-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
                 </div>
