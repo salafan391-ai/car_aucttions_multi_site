@@ -819,6 +819,15 @@ function submitDrawerForm(form) {
   return false; // prevent native form submit
 }
 
+// Debounced wrapper for live text-input search — avoids firing an HTMX
+// request on every keystroke. ~350ms after the user stops typing is the
+// usual sweet spot between snappy and not-spam.
+var __debouncedSidebarTimer = null;
+function debouncedSubmitSidebarForm(form) {
+  clearTimeout(__debouncedSidebarTimer);
+  __debouncedSidebarTimer = setTimeout(function() { submitSidebarForm(form); }, 350);
+}
+
 // Submit a sidebar filter form via HTMX (no full page reload)
 function submitSidebarForm(form) {
   var params = new URLSearchParams(new FormData(form));
