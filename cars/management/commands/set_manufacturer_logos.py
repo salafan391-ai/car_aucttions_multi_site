@@ -13,6 +13,7 @@ Usage:
 
 import json
 import re
+import unicodedata
 from pathlib import Path
 
 from django.conf import settings
@@ -24,10 +25,17 @@ from cars.models import Manufacturer
 DEFAULT_JSON = Path(settings.BASE_DIR) / "cars" / "data" / "brand_logos.json"
 
 _NONALPHA_RE = re.compile(r"[^a-z0-9]")
+_TOKEN_SPLIT_RE = re.compile(r"[\s\-_()]+")
+
+
+def _strip_diacritics(s):
+    # 'citroën' → 'citroen', 'café' → 'cafe'. NFD decomposes accented chars,
+    # then we drop the combining marks.
+    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
 
 
 def _norm(s):
-    return (s or "").strip().lower()
+    return _strip_diacritics((s or "").strip()).lower()
 
 
 def _strip_norm(s):
@@ -35,6 +43,12 @@ def _strip_norm(s):
     `astonmartin` matches `aston martin`, `rolls-royce` matches `rollsroyce`,
     etc. Used only when the exact-lower lookup misses."""
     return _NONALPHA_RE.sub("", _norm(s))
+
+
+def _tokens(s):
+    """Split on whitespace/hyphen/underscore/paren so we can try first-token
+    lookups for compound names like `man truck`, `daewoo bus`, `baic yinxiang`."""
+    return [t for t in _TOKEN_SPLIT_RE.split(_norm(s)) if t]
 
 
 class Command(BaseCommand):
@@ -91,6 +105,13 @@ class Command(BaseCommand):
         unmatched = []
         for m in Manufacturer.objects.all().order_by("name"):
             url = logos.get(_norm(m.name)) or logos_strip.get(_strip_norm(m.name))
+            # Token fallback for compound names like 'man truck', 'daewoo bus',
+            # 'baic yinxiang'. Try each token in order — first token wins.
+            if not url:
+                for tok in _tokens(m.name):
+                    url = logos.get(tok) or logos_strip.get(tok)
+                    if url:
+                        break
             if not url:
                 unmatched.append(m)
                 continue
