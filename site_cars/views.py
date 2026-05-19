@@ -1226,6 +1226,83 @@ def delete_unsold_damaged(request):
 
 
 @staff_member_required
+def auction_browse(request):
+    """
+    Dashboard view: browse all auction ApiCars (including expired) so the
+    tenant can pull them into their own SiteCar inventory.
+
+    Filters via GET params:
+      - auction_date  (YYYY-MM-DD)  → exact date match
+      - auction_name  (string)      → exact match (dropdown from distinct values)
+      - entry         (string)      → icontains on ApiCar.entry
+      - q             (string)      → icontains on title / manufacturer / model
+    """
+    if _is_public_schema():
+        return redirect('home')
+
+    qs = (
+        ApiCar.objects
+        .filter(category__name='auction')
+        .select_related('manufacturer', 'model', 'color', 'body')
+        .order_by('-auction_date', '-created_at')
+    )
+
+    auction_date = (request.GET.get('auction_date') or '').strip()
+    auction_name = (request.GET.get('auction_name') or '').strip()
+    entry = (request.GET.get('entry') or '').strip()
+    q = (request.GET.get('q') or '').strip()
+
+    if auction_date:
+        qs = qs.filter(auction_date__date=auction_date)
+    if auction_name:
+        qs = qs.filter(auction_name=auction_name)
+    if entry:
+        qs = qs.filter(entry__icontains=entry)
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q)
+            | Q(manufacturer__name__icontains=q)
+            | Q(model__name__icontains=q)
+            | Q(lot_number__icontains=q)
+        )
+
+    paginator = Paginator(qs, 30)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    # Mark which cars are already saved in this tenant's SiteCar inventory.
+    saved_keys = set(
+        SiteCar.objects
+        .filter(external_id__startswith='apicar_')
+        .values_list('external_id', flat=True)
+    )
+
+    # Distinct auction names for the filter dropdown — drop blanks, alpha order.
+    auction_names = list(
+        ApiCar.objects
+        .filter(category__name='auction')
+        .exclude(auction_name__isnull=True)
+        .exclude(auction_name='')
+        .values_list('auction_name', flat=True)
+        .distinct()
+        .order_by('auction_name')
+    )
+
+    return render(request, 'site_cars/auction_browse.html', {
+        'page_obj': page_obj,
+        'cars': page_obj.object_list,
+        'auction_names': auction_names,
+        'saved_keys': saved_keys,
+        'filters': {
+            'auction_date': auction_date,
+            'auction_name': auction_name,
+            'entry': entry,
+            'q': q,
+        },
+        'now': timezone.now(),
+    })
+
+
+@staff_member_required
 @require_POST
 def save_public_car(request, api_car_id):
     """Copy a public ApiCar into the current tenant's SiteCar inventory.

@@ -12,6 +12,7 @@ urlpatterns = [
     path('our-cars/<int:pk>/delete-image/<int:image_id>/', views.site_car_delete_image, name='site_car_delete_image'),
     path('track/<str:receipt_number>/', views.public_track, name='public_track'),
     path('our-cars/save/<int:api_car_id>/', views.save_public_car, name='save_public_car'),
+    path('auctions/browse/', views.auction_browse, name='auction_browse'),
     path('our-cars/<int:pk>/invoice/new/', views.invoice_new, name='invoice_new'),
     path('our-cars/<int:pk>/invoice/<int:bill_pk>/', views.invoice_view, name='invoice_view'),
     path('our-cars/<int:pk>/invoice/<int:bill_pk>/edit/', views.invoice_edit, name='invoice_edit'),

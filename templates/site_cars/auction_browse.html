@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load humanize custom_filters %}
+
+{% block title %}تصفح المزادات - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">تصفح سيارات المزاد</h1>
+            <p class="text-gray-500 mt-1">أضف سيارات المزاد (حتى المنتهية) إلى سياراتك مباشرة من لوحة التحكم.</p>
+        </div>
+        <a href="{% url 'site_dashboard' %}" class="inline-flex items-center gap-2 border border-gray-200 text-gray-600 text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-gray-50 transition">
+            رجوع للوحة التحكم
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="bg-white rounded-2xl shadow-sm p-5 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">تاريخ المزاد</label>
+                <input type="date" name="auction_date" value="{{ filters.auction_date }}"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">اسم المزاد</label>
+                <select name="auction_name"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand">
+                    <option value="">الكل</option>
+                    {% for name in auction_names %}
+                        <option value="{{ name }}" {% if filters.auction_name == name %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">رقم الدخول (Entry)</label>
+                <input type="text" name="entry" value="{{ filters.entry }}" placeholder="مثال: 12345"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">بحث (موديل / شركة / لوت)</label>
+                <input type="text" name="q" value="{{ filters.q }}" placeholder="مثال: sonata 2022"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand">
+            </div>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+            <button type="submit" class="bg-brand hover:bg-brand-hover text-white font-bold px-5 py-2.5 rounded-xl transition">
+                تطبيق الفلاتر
+            </button>
+            <a href="{% url 'auction_browse' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium px-3 py-2.5">إعادة تعيين</a>
+            <span class="ml-auto text-sm text-gray-500">
+                {{ page_obj.paginator.count|intcomma }} سيارة
+            </span>
+        </div>
+    </form>
+
+    <!-- Results -->
+    {% if cars %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for car in cars %}
+        {% with saved_key="apicar_"|add:car.car_id %}
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div class="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                {% if car.image %}
+                    <img src="{{ car.image|https_url }}" loading="lazy" class="w-full h-full object-cover" alt="{{ car.title }}">
+                {% elif car.images.0 %}
+                    <img src="{{ car.images.0|https_url }}" loading="lazy" class="w-full h-full object-cover" alt="{{ car.title }}">
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm">لا توجد صورة</div>
+                {% endif %}
+                {% if car.auction_date and car.auction_date < now %}
+                    <span class="absolute top-2 right-2 bg-gray-700/80 text-white text-xs font-bold px-2 py-1 rounded-full">انتهى المزاد</span>
+                {% elif car.auction_date %}
+                    <span class="absolute top-2 right-2 bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded-full">نشط</span>
+                {% endif %}
+            </div>
+            <div class="p-4 flex flex-col gap-2 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-bold text-sm leading-snug line-clamp-2">{{ car.title }}</h3>
+                    <span class="text-xs font-bold text-brand whitespace-nowrap">{{ car.year }}</span>
+                </div>
+                <div class="text-xs text-gray-500 grid grid-cols-2 gap-y-1">
+                    {% if car.auction_name %}<div><span class="text-gray-400">المزاد:</span> {{ car.auction_name }}</div>{% endif %}
+                    {% if car.auction_date %}<div><span class="text-gray-400">التاريخ:</span> {{ car.auction_date|date:"Y-m-d" }}</div>{% endif %}
+                    {% if car.entry %}<div><span class="text-gray-400">Entry:</span> {{ car.entry }}</div>{% endif %}
+                    {% if car.lot_number %}<div><span class="text-gray-400">Lot:</span> {{ car.lot_number }}</div>{% endif %}
+                    {% if car.mileage %}<div><span class="text-gray-400">العداد:</span> {{ car.mileage|intcomma }} كم</div>{% endif %}
+                    {% if car.color %}<div><span class="text-gray-400">اللون:</span> {{ car.color.name }}</div>{% endif %}
+                </div>
+                <div class="text-base font-bold text-gray-900 mt-1">{{ car.price|intcomma }} ₩</div>
+                <div class="mt-auto pt-2 flex items-center gap-2">
+                    <a href="{% url 'car_detail' car.slug %}" target="_blank" class="text-xs font-bold text-gray-600 hover:text-brand border border-gray-200 rounded-lg px-3 py-1.5">
+                        عرض التفاصيل
+                    </a>
+                    {% if saved_key in saved_keys %}
+                        <span class="ml-auto text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+                            ✓ محفوظة
+                        </span>
+                    {% else %}
+                        <form method="post" action="{% url 'save_public_car' car.id %}" class="ml-auto">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs font-bold bg-brand hover:bg-brand-hover text-white rounded-lg px-3 py-1.5">
+                                + إضافة لسياراتي
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-center gap-2 mt-8">
+        {% if page_obj.has_previous %}
+            <a href="?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm hover:bg-gray-50">السابق</a>
+        {% endif %}
+        <span class="text-sm text-gray-500">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="px-3 py-2 rounded-lg border border-gray-200 text-sm hover:bg-gray-50">التالي</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm p-12 text-center text-gray-500">
+        لا توجد سيارات تطابق الفلاتر الحالية.
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
