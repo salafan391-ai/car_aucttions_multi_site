@@ -1287,10 +1287,18 @@ def auction_browse(request):
         .order_by('auction_name')
     )
 
+    # Distinct auction dates (date-truncated) — newest first.
+    auction_dates = list(
+        ApiCar.objects
+        .filter(category__name='auction', auction_date__isnull=False)
+        .dates('auction_date', 'day', order='DESC')
+    )
+
     return render(request, 'site_cars/auction_browse.html', {
         'page_obj': page_obj,
         'cars': page_obj.object_list,
         'auction_names': auction_names,
+        'auction_dates': auction_dates,
         'saved_keys': saved_keys,
         'filters': {
             'auction_date': auction_date,
