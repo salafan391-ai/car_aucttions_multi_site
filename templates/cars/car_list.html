@@ -697,6 +697,37 @@
 
 <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
 <script>
+// Per-filter search: any `<input class="filter-search">` inside a `.filter-group`
+// filters its siblings live. Hides flat labels whose visible text doesn't match
+// the query; for the manufacturer tree, filters top-level manufacturer nodes by
+// their name. Checked items always stay visible so the user can see their
+// active selections regardless of the current search term. Event-delegated so
+// it keeps working after HTMX swaps the form HTML.
+document.addEventListener('input', function(e) {
+    var input = e.target;
+    if (!input.classList || !input.classList.contains('filter-search')) return;
+    var q = (input.value || '').trim().toLowerCase();
+    var group = input.closest('.filter-group');
+    if (!group) return;
+    var tree = group.querySelector('.df-tree');
+    if (tree) {
+        tree.querySelectorAll('.df-mfr-node').forEach(function(n) {
+            var nameEl = n.querySelector(':scope > .df-tree-row .df-tree-name');
+            var t = nameEl ? nameEl.textContent.toLowerCase() : '';
+            var stillChecked = n.querySelector('input[name="manufacturer"]:checked, input[name="model"]:checked, input[name="badge"]:checked');
+            n.style.display = (!q || t.indexOf(q) !== -1 || stillChecked) ? '' : 'none';
+        });
+        return;
+    }
+    var body = group.querySelector('.filter-group-body');
+    if (!body) return;
+    body.querySelectorAll(':scope > label').forEach(function(label) {
+        var t = label.textContent.toLowerCase();
+        var stillChecked = label.querySelector('input:checked');
+        label.style.display = (!q || t.indexOf(q) !== -1 || stillChecked) ? '' : 'none';
+    });
+});
+
 // Flat-chip filter selection state is handled entirely in CSS now (see the
 // `.peer:checked + span` rule above). No JS needed for fuel/transmission/
 // color/etc. checkboxes — visual state stays in sync via the CSS sibling

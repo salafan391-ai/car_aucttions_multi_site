@@ -178,6 +178,7 @@
                                 <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الشركة المصنعة" data-lang-ru="Производитель" data-lang-es="Fabricante" data-lang-en="Manufacturer">الشركة المصنعة</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                             {% include 'cars/_filter_tree.html' with tree_id="drawer-tree-root" car_type=request.GET.car_type %}
                         </details>
                     </div>
@@ -207,6 +208,7 @@
                                 <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الوقود" data-lang-ru="топливо" data-lang-es="combustible" data-lang-en="Fuel">الوقود</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 pb-1">
                                 {% for f in fuels %}
                                 <label class="cursor-pointer select-none"><input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ f|translate_fuel }}" data-lang-ru="{{ f|translate_fuel:'ru' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-en="{{ f|pretty_en }}">{{ f|translate_fuel }}</span></label>
@@ -221,6 +223,7 @@
                                 <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="ناقل الحركة" data-lang-ru="Передача инфекции" data-lang-es="Transmisión" data-lang-en="Transmission">ناقل الحركة</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 pb-1">
                                 {% for t in transmissions %}
                                 <label class="cursor-pointer select-none"><input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ t|translate_transmission }}" data-lang-ru="{{ t|translate_transmission:'ru' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-en="{{ t|pretty_en }}">{{ t|translate_transmission }}</span></label>
@@ -235,6 +238,7 @@
                                 <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اللون" data-lang-ru="цвет" data-lang-es="el color" data-lang-en="Color">اللون</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for c in colors %}
                                 <label class="cursor-pointer select-none"><input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer"><span class="block w-full px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm flex items-center justify-center gap-1.5"><span class="inline-block w-3.5 h-3.5 rounded-full ring-1 ring-black/15 shrink-0" style="background:{{ c.name|color_to_css }};"></span><span class="bilingual truncate" data-lang-ar="{{ c.name|translate_color }}" data-lang-ru="{{ c.name|translate_color:'ru' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-en="{{ c.name|pretty_en }}">{{ c.name|translate_color }}</span></span></label>
@@ -249,6 +253,7 @@
                                 <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="عدد المقاعد" data-lang-ru="Количество мест" data-lang-es="Número de asientos" data-lang-en="Seat count">عدد المقاعد</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                             <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for s in seat_counts %}
                                 <label class="cursor-pointer select-none"><input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ s|floatformat:"0" }}</span></label>
@@ -264,6 +269,7 @@
                                 <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="لون المقاعد" data-lang-ru="Цвет сиденья" data-lang-es="Color del asiento" data-lang-en="Seat color">لون المقاعد</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for sc in seat_colors %}<label class="cursor-pointer select-none"><input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer"><span class="block w-full px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm flex items-center justify-center gap-1.5"><span class="inline-block w-3.5 h-3.5 rounded-full ring-1 ring-black/15 shrink-0" style="background:{{ sc.name|color_to_css }};"></span><span class="bilingual truncate" data-lang-ar="{{ sc.name|translate_color }}" data-lang-ru="{{ sc.name|translate_color:'ru' }}" data-lang-es="{{ sc.name|translate_color:'es' }}" data-lang-en="{{ sc.name|pretty_en }}">{{ sc.name|translate_color }}</span></span></label>{% endfor %}
                             </div>
@@ -278,6 +284,7 @@
                                 <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اسم المزاد" data-lang-ru="Название аукциона" data-lang-es="Nombre de la subasta" data-lang-en="Auction name">اسم المزاد</span>
                                 <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                             <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                                 {% for an in auction_names %}<label class="cursor-pointer select-none"><input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ an }}</span></label>{% endfor %}
                             </div>
@@ -463,6 +470,7 @@
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الشركة المصنعة" data-lang-ru="Производитель" data-lang-es="Fabricante" data-lang-en="Manufacturer">الشركة المصنعة</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                     {% include 'cars/_filter_tree.html' with tree_id="sidebar-tree-root" car_type=request.GET.car_type %}
                 </details>
 
@@ -495,7 +503,8 @@
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="الوقود" data-lang-ru="топливо" data-lang-es="combustible" data-lang-en="Fuel">الوقود</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <div class="filter-group-body grid grid-cols-2 gap-1.5 pb-1">
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 pb-1">
                         {% for f in fuels %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
@@ -511,7 +520,8 @@
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="ناقل الحركة" data-lang-ru="Передача инфекции" data-lang-es="Transmisión" data-lang-en="Transmission">ناقل الحركة</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <div class="filter-group-body grid grid-cols-2 gap-1.5 pb-1">
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 pb-1">
                         {% for t in transmissions %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
@@ -527,7 +537,8 @@
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اللون" data-lang-ru="цвет" data-lang-es="el color" data-lang-en="Color">اللون</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for c in colors %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
@@ -543,7 +554,8 @@
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="عدد المقاعد" data-lang-ru="Количество мест" data-lang-es="Número de asientos" data-lang-en="Seat count">عدد المقاعد</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                            <div class="filter-group-body grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for s in seat_counts %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
@@ -560,7 +572,8 @@
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="لون المقاعد" data-lang-ru="Цвет сиденья" data-lang-es="Color del asiento" data-lang-en="Seat color">لون المقاعد</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for sc in seat_colors %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
@@ -578,7 +591,8 @@
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="اسم المزاد" data-lang-ru="Название аукциона" data-lang-es="Nombre de la subasta" data-lang-en="Auction name">اسم المزاد</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
-                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
                         {% for an in auction_names %}
                         <label class="cursor-pointer select-none">
                             <input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
