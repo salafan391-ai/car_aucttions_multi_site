@@ -38,8 +38,24 @@ def _dedup_manufacturers_and_models(apps, schema_editor):
         rows.sort(key=lambda r: (_norm(r.name) != key, r.id))
         canonical = rows[0]
         for d in rows[1:]:
+            # Per-row model move so we can handle (name, manufacturer) collisions.
+            # If a previous run already added the unique constraint, a blind
+            # UPDATE would violate it. Merge same-name models into the existing
+            # canonical model instead of repointing.
+            for dupe_model in CarModel.objects.filter(manufacturer_id=d.id):
+                existing = CarModel.objects.filter(
+                    manufacturer_id=canonical.id, name=dupe_model.name
+                ).first()
+                if existing:
+                    ApiCar.objects.filter(model_id=dupe_model.id).update(model_id=existing.id)
+                    CarBadge.objects.filter(model_id=dupe_model.id).update(model_id=existing.id)
+                    if dupe_model.name_ar and not existing.name_ar:
+                        existing.name_ar = dupe_model.name_ar
+                        existing.save(update_fields=["name_ar"])
+                    CarModel.objects.filter(id=dupe_model.id).delete()
+                else:
+                    CarModel.objects.filter(id=dupe_model.id).update(manufacturer_id=canonical.id)
             ApiCar.objects.filter(manufacturer_id=d.id).update(manufacturer_id=canonical.id)
-            CarModel.objects.filter(manufacturer_id=d.id).update(manufacturer_id=canonical.id)
             if d.name_ar and not canonical.name_ar:
                 canonical.name_ar = d.name_ar
                 canonical.save(update_fields=["name_ar"])
