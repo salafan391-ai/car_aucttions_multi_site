@@ -327,16 +327,20 @@
              data-url-auction="{% url 'car_list' %}"
              {% if site_cars_count %}data-url-ours="{% url 'site_car_list' %}"{% endif %}>
             <div class="lux-mega-tabs" role="tablist">
+                {% if show_encar %}
                 <button type="button" class="lux-mega-tab is-active" data-tab="cars" role="tab">
                     <span class="bilingual" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</span>
                     {% if cars_count %}<span class="lux-mega-tab-count">{{ cars_count|intcomma }}</span>{% endif %}
                 </button>
-                <button type="button" class="lux-mega-tab" data-tab="auction" role="tab">
+                {% endif %}
+                {% if show_auctions %}
+                <button type="button" class="lux-mega-tab{% if not show_encar %} is-active{% endif %}" data-tab="auction" role="tab">
                     <span class="bilingual" data-lang-ar="مزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">مزادات</span>
                     {% if auction_count %}<span class="lux-mega-tab-count">{{ auction_count|intcomma }}</span>{% endif %}
                 </button>
-                {% if site_cars_count %}
-                <button type="button" class="lux-mega-tab" data-tab="ours" role="tab">
+                {% endif %}
+                {% if site_cars_count and show_site_cars %}
+                <button type="button" class="lux-mega-tab{% if not show_encar and not show_auctions %} is-active{% endif %}" data-tab="ours" role="tab">
                     <span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</span>
                     <span class="lux-mega-tab-count">{{ site_cars_count|intcomma }}</span>
                 </button>
@@ -445,7 +449,7 @@
     {% endif %}
 
     {% for section_key in home_sections_order %}
-    {% if section_key == 'site_cars' and site_cars %}
+    {% if section_key == 'site_cars' and site_cars and show_site_cars %}
     <section class="lux-section {% if not forloop.first %}lux-section--bordered{% endif %}">
         <div class="lux-section-head-row">
             <div>
@@ -502,7 +506,7 @@
         </div>
     </section>
     {% endif %}
-    {% if section_key == 'latest_cars' and latest_cars %}
+    {% if section_key == 'latest_cars' and latest_cars and show_encar %}
     <section class="lux-section {% if not forloop.first %}lux-section--bordered{% endif %}">
         <div class="lux-section-head-row">
             <div>
@@ -554,7 +558,7 @@
         </div>
     </section>
     {% endif %}
-    {% if section_key == 'latest_auctions' and latest_auctions %}
+    {% if section_key == 'latest_auctions' and latest_auctions and show_auctions %}
     <section class="lux-section {% if not forloop.first %}lux-section--bordered{% endif %}">
         <div class="lux-section-head-row">
             <div>

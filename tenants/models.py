@@ -18,6 +18,21 @@ class Tenant(TenantMixin):
         verbose_name="إظهار العلامة المائية على الصور",
         help_text="عند التعطيل تختفي العلامة المائية (الشعار) المرتسمة فوق صور السيارات.",
     )
+    show_encar = models.BooleanField(
+        default=True,
+        verbose_name="عرض سيارات Encar",
+        help_text="عند التعطيل تختفي قسم سيارات Encar (السيارات العادية المستوردة) من الصفحة الرئيسية وقوائم السيارات.",
+    )
+    show_auctions = models.BooleanField(
+        default=True,
+        verbose_name="عرض سيارات المزاد",
+        help_text="عند التعطيل تختفي قسم سيارات المزاد من الصفحة الرئيسية وقوائم السيارات.",
+    )
+    show_site_cars = models.BooleanField(
+        default=True,
+        verbose_name="عرض ‘سياراتنا‘ والسماح بإضافتها",
+        help_text="عند التعطيل تختفي ‘سياراتنا‘ (سيارات الموقع الخاصة بك) من الصفحة الرئيسية، وتُخفى أزرار الإضافة في لوحة التحكم.",
+    )
     LANDING_DESIGN_CHOICES = [
         ('cosmos',  '🌌 Cosmos (Dark Animated)'),
         ('minimal', '⚡ Minimal (Clean Light)'),
