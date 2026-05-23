@@ -778,7 +778,15 @@ def car_list(request):
             json.dumps(_params, sort_keys=True).encode()
         ).hexdigest()
         _variant = 'htmx' if getattr(request, 'htmx', False) else 'full'
-        cache_key = f"car_list_v3:{schema}:{_variant}:{_params_hash}"
+        # Include section-toggle state in the cache key so toggling encar /
+        # auctions / site_cars in admin doesn't keep serving stale HTML.
+        _t = getattr(connection, 'tenant', None)
+        _toggles = (
+            f"{int(getattr(_t, 'show_encar', True))}"
+            f"{int(getattr(_t, 'show_auctions', True))}"
+            f"{int(getattr(_t, 'show_site_cars', True))}"
+        ) if _t is not None else '111'
+        cache_key = f"car_list_v4:{schema}:{_variant}:{_toggles}:{_params_hash}"
         cached_html = cache.get(cache_key)
         if cached_html:
             return HttpResponse(cached_html)
@@ -871,6 +879,16 @@ def car_list(request):
         qs = qs.exclude(category__name='auction').exclude(body__name='truck')
     elif car_type == 'truck':
         qs = qs.exclude(category__name='auction').filter(body__name='truck')
+
+    # Per-tenant section toggles — drop categories the tenant has deactivated.
+    # show_encar=False → only auctions; show_auctions=False → only non-auctions;
+    # both False → empty list (intentional, mirrors home-page gating).
+    _tenant = getattr(connection, 'tenant', None)
+    if _tenant is not None:
+        if not getattr(_tenant, 'show_auctions', True):
+            qs = qs.exclude(category__name='auction')
+        if not getattr(_tenant, 'show_encar', True):
+            qs = qs.filter(category__name='auction')
 
     sel_statuses = request.GET.getlist('status')
     if sel_statuses:
