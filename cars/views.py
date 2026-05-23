@@ -768,6 +768,30 @@ def ofleet_webhook(request):
 @ensure_csrf_cookie
 @cache_control(public=True, max_age=120)
 def car_list(request):
+    # Hard-bounce disabled car_type tabs to a still-enabled one (or home if
+    # nothing is enabled). Direct URL access to a disabled tab would otherwise
+    # render the page with zero cars but the full filter sidebar — confusing.
+    _t = getattr(connection, 'tenant', None)
+    if _t is not None:
+        _requested_type = request.GET.get('car_type')
+        _show_encar = bool(getattr(_t, 'show_encar', True))
+        _show_auctions = bool(getattr(_t, 'show_auctions', True))
+        # Trucks ride under the encar toggle (same data source).
+        _type_blocked = (
+            (_requested_type in ('cars', 'truck') and not _show_encar)
+            or (_requested_type == 'auction' and not _show_auctions)
+        )
+        if _type_blocked:
+            if _show_encar:
+                return redirect(f"{request.path}?car_type=cars")
+            if _show_auctions:
+                return redirect(f"{request.path}?car_type=auction")
+            return redirect('home')
+        # No explicit car_type AND both encar+auctions disabled → no cars to
+        # show at all; send the visitor home instead of an empty grid.
+        if not _requested_type and not _show_encar and not _show_auctions:
+            return redirect('home')
+
     # For anonymous users, try to serve a cached full response to reduce DB load.
     # Use a stable hash of sorted GET params so param-order variants share the same key.
     schema = getattr(connection, 'schema_name', 'public')
