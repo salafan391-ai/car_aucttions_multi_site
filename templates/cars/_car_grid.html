@@ -54,11 +54,11 @@
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mb-2 text-[10px] sm:text-xs" style="color:rgba(167,139,250,.8);">
                     <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-end items-center pt-2 sm:pt-3" style="border-top:1px solid rgba(255,255,255,.07);">
-                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} <span class="text-[9px] sm:text-xs font-medium">₩</span></span>
+                    {% if car.category.name == 'auction' %}<span class="bilingual text-[10px] sm:text-xs font-semibold me-auto self-center" style="opacity:.6;" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</span>{% endif %}<span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} <span class="text-[9px] sm:text-xs font-medium">₩</span></span>
                 </div>
             </div>
         </a>
@@ -89,7 +89,7 @@
                         {% if car.manufacturer.logo %}<img src="{{ car.manufacturer.logo }}" alt="" loading="lazy" class="inline-block w-4 h-4 object-contain align-middle me-1 shrink-0">{% endif %}<span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
                         <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                     </div>
-                    <span class="text-brand font-extrabold text-xs sm:text-sm shrink-0" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}₩</span>
+                    {% if car.category.name == 'auction' %}<span class="bilingual text-[9px] sm:text-[10px] font-semibold me-auto self-center text-gray-500" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</span>{% endif %}<span class="text-brand font-extrabold text-xs sm:text-sm shrink-0" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}₩</span>
                 </div>
                 <div class="text-[10px] sm:text-xs text-gray-400 truncate">
                     {% with mn=car.model.name bn=car.badge.name sc=car.seat_count %}{{ car.year }}{% if mn and mn|lower != 'unknown' %} · {{ mn }}{% endif %}{% if bn and bn|lower != 'unknown' %} · {{ bn }}{% endif %}{% if car.category.name == 'auction' %}{% if car.points %} · {{ car.points }}{% endif %}{% if car.drive_wheel %} · {{ car.drive_wheel }}{% endif %}{% if sc and sc != '0' %} · <span class="bilingual" data-lang-ar="{{ sc }} مقاعد" data-lang-ru="{{ sc }} мест" data-lang-es="{{ sc }} plazas" data-lang-en="{{ sc }}-seater">{{ sc }} مقاعد</span>{% endif %}{% endif %}{% endwith %}
@@ -99,7 +99,7 @@
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mt-1 text-[10px] text-purple-500">
                     <svg class="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -144,12 +144,12 @@
                         {% if car.transmission %}<span>·</span><span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
                         {% if car.fuel %}<span>·</span><span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
                     </div>
-                    <span class="text-brand font-extrabold text-sm sm:text-base drop-shadow" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}<span class="text-[9px] font-medium"> ₩</span></span>
+                    {% if car.category.name == 'auction' %}<span class="bilingual text-[10px] sm:text-xs font-semibold me-auto self-center drop-shadow" style="color:rgba(255,255,255,.65);" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</span>{% endif %}<span class="text-brand font-extrabold text-sm sm:text-base drop-shadow" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}<span class="text-[9px] font-medium"> ₩</span></span>
                 </div>
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mt-1 text-[10px]" style="color:rgba(196,181,253,.9);">
                     <svg class="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -247,12 +247,13 @@
                 {% if car.auction_date %}
                 <div style="display:flex;align-items:center;gap:.35rem;font-size:.6rem;letter-spacing:.06em;color:rgba(167,139,250,.8);margin-bottom:.45rem;">
                     <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
 
                 {# bottom: price #}
                 <div style="display:flex;align-items:baseline;justify-content:flex-end;border-top:1px solid rgba(255,255,255,.05);padding-top:.45rem;gap:.3rem;">
+                    {% if car.category.name == 'auction' %}<span class="bilingual" style="font-size:.55rem;letter-spacing:.08em;color:rgba(255,255,255,.35);margin-inline-end:auto;align-self:center;font-weight:600;text-transform:uppercase;" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</span>{% endif %}
                     <span style="font-size:.6rem;letter-spacing:.1em;color:rgba(255,255,255,.3);">₩</span>
                     <span class="text-brand" style="font-size:1rem;font-weight:900;letter-spacing:.04em;text-shadow:0 0 16px currentColor;" data-price-krw="{{ car.price }}">{{ car.price|intcomma }}</span>
                 </div>
@@ -304,11 +305,11 @@
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 sm:gap-1.5 mb-2 sm:mb-3">
                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-end items-center pt-2 sm:pt-3 border-t border-gray-100">
-                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} <span class="text-[9px] sm:text-xs font-medium">₩</span></span>
+                    {% if car.category.name == 'auction' %}<span class="bilingual text-[10px] sm:text-xs font-semibold me-auto self-center" style="opacity:.6;" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</span>{% endif %}<span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} <span class="text-[9px] sm:text-xs font-medium">₩</span></span>
                 </div>
             </div>
         </a>
