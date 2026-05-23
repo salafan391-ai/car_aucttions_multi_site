@@ -315,6 +315,21 @@
                         <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-ru="к" data-placeholder-es="a" data-placeholder-en="To" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
                     </div>
                 </details>
+                {% if body_types and show_encar %}
+                <!-- Body type (always last — trucks live here) -->
+                <details class="filter-group" {% if sel_body_types %}open{% endif %}>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="نوع الهيكل" data-lang-ru="Тип кузова" data-lang-es="Tipo de carrocería" data-lang-en="Body type">نوع الهيكل</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                        {% for bt in body_types %}
+                        <label class="cursor-pointer select-none"><input type="checkbox" name="body_type" value="{{ bt.name }}" {% if bt.name in sel_body_types %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ bt.name_ar|default:bt.name }}" data-lang-en="{{ bt.name|pretty_en }}">{{ bt.name_ar|default:bt.name }}</span></label>
+                        {% endfor %}
+                    </div>
+                </details>
+                {% endif %}
             </div>
 
             <!-- Drawer footer: actions -->
@@ -627,6 +642,25 @@
                         <input type="number" name="mileage_max" value="{{ request.GET.mileage_max }}" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-ru="к" data-placeholder-es="a" data-placeholder-en="To" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
                     </div>
                 </details>
+
+                {% if body_types and show_encar %}
+                <!-- Body type (always last — trucks live here) -->
+                <details class="filter-group border-t border-gray-100 pt-3" {% if sel_body_types %}open{% endif %}>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="نوع الهيكل" data-lang-ru="Тип кузова" data-lang-es="Tipo de carrocería" data-lang-en="Body type">نوع الهيكل</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto pb-1">
+                        {% for bt in body_types %}
+                        <label class="cursor-pointer select-none">
+                            <input type="checkbox" name="body_type" value="{{ bt.name }}" {% if bt.name in sel_body_types %}checked{% endif %} class="sr-only peer" onchange="submitSidebarForm(this.form)">
+                            <span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ bt.name_ar|default:bt.name }}" data-lang-en="{{ bt.name|pretty_en }}">{{ bt.name_ar|default:bt.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </details>
+                {% endif %}
             </div>
         </form>
     </aside>

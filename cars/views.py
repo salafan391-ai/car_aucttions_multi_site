@@ -900,8 +900,11 @@ def car_list(request):
     if car_type == 'auction':
         qs = qs.filter(category__name='auction')
     elif car_type == 'cars':
-        qs = qs.exclude(category__name='auction').exclude(body__name='truck')
+        # Cars tab now covers everything non-auction (including trucks).
+        # Trucks are a body_type filter the user opts into separately.
+        qs = qs.exclude(category__name='auction')
     elif car_type == 'truck':
+        # Legacy URL — keep working but funnel through the body_type filter.
         qs = qs.exclude(category__name='auction').filter(body__name='truck')
 
     # Per-tenant section toggles — drop categories the tenant has deactivated.
