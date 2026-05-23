@@ -206,7 +206,7 @@
 
     <div class="cards{% if site_cars_count %} has-three{% endif %}">
 
-      <a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
+      {% if show_encar %}<a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
         <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/></svg></div>
         <div>
           <div class="card-label" data-ar="المعارض الكورية" data-en="Direct Sale">المعارض الكورية</div>
@@ -216,9 +216,9 @@
           </div>
         </div>
         <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
-      </a>
+      </a>{% endif %}
 
-      <a href="{% url 'car_list' %}?car_type=auction" class="card card-auction">
+      {% if show_auctions %}<a href="{% url 'car_list' %}?car_type=auction" class="card card-auction">
         <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/></svg></div>
         <div>
           <div class="card-label" data-ar="سيارات المزاد" data-en="Auction Cars">سيارات المزاد</div>
@@ -231,17 +231,17 @@
           {% if auction_names %}<div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.25rem;">{% for name in auction_names %}<span style="font-size:.62rem;font-weight:600;padding:.1rem .4rem;border-radius:8px;background:rgba(212,136,10,.1);color:#a06808;border:1px solid rgba(212,136,10,.25);">{{ name }}</span>{% endfor %}</div>{% endif %}
         </div>
         <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
-      </a>
+      </a>{% endif %}
 
       {% if site_cars_count %}
-      <a href="{% url 'site_car_list' %}" class="card card-site">
+      {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="card card-site">
         <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 21V12h6v9"/></svg></div>
         <div>
           <div class="card-label" data-ar="البيع المباشر" data-en="Direct Sales">البيع المباشر</div>
           <div class="card-sub"><span class="card-badge">{{ site_cars_count }}</span><span class="card-sub-text" data-ar="سيارات البيع المباشر" data-en="Direct Sales Cars">سيارات البيع المباشر</span></div>
         </div>
         <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
-      </a>
+      </a>{% endif %}
       {% endif %}
 
     </div>

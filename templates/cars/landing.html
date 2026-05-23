@@ -468,7 +468,7 @@
     <div class="cards{% if site_cars_count %} has-three{% endif %}">
 
       <!-- Card 1: Cars -->
-      <a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
+      {% if show_encar %}<a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
         <div class="card-icon">
           <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -500,10 +500,10 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
           </svg>
         </div>
-      </a>
+      </a>{% endif %}
 
       <!-- Card 2: Auction Cars -->
-      <a href="{% url 'car_list' %}?car_type=auction" class="card card-auction">
+      {% if show_auctions %}<a href="{% url 'car_list' %}?car_type=auction" class="card card-auction">
         <div class="card-icon">
           <!-- gavel icon -->
           <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -550,11 +550,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
           </svg>
         </div>
-      </a>
+      </a>{% endif %}
 
       {% if site_cars_count %}
       <!-- Card 3: Site Owner Cars -->
-      <a href="{% url 'site_car_list' %}" class="card card-site">
+      {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="card card-site">
         <div class="card-icon">
           <!-- store / showroom icon -->
           <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -582,7 +582,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
           </svg>
         </div>
-      </a>
+      </a>{% endif %}
       {% endif %}
 
     </div><!-- /cards -->
