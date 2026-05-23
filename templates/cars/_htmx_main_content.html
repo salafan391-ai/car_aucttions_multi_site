@@ -1,4 +1,9 @@
 {% load static humanize i18n safe_query custom_filters %}
+{# Out-of-band swaps: keep the result count + tab badges in sync with the #}
+{# HTMX-swapped car grid below (they live outside #htmx-main on the page). #}
+<span id="results-count" hx-swap-oob="true" class="font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span>
+{% if show_encar %}<span id="tab-count-cars" hx-swap-oob="true" class="{% if request.GET.car_type == 'cars' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_cars|intcomma }}</span>{% endif %}
+{% if show_auctions %}<span id="tab-count-auction" hx-swap-oob="true" class="{% if request.GET.car_type == 'auction' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_auction|intcomma }}</span>{% endif %}
     <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
     <div id="active-chips" class="hidden lg:block">{% if sel_manufacturers or sel_models or sel_badges or request.GET.year_from or request.GET.year_to or sel_colors or sel_fuels or sel_transmissions or sel_seat_counts or sel_seat_colors or sel_auction_names or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
     <div class="flex flex-wrap items-center gap-2 mb-5">
