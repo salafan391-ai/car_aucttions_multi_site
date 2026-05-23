@@ -1255,7 +1255,7 @@ def car_list(request):
         tab_counts = _tab_base.aggregate(
             count_all=Count('id'),
             count_auction=Count('id', filter=Q(category__name='auction')),
-            count_cars=Count('id', filter=~Q(category__name='auction') & ~Q(body__name='truck')),
+            count_cars=Count('id', filter=~Q(category__name='auction')),
             count_truck=Count('id', filter=~Q(category__name='auction') & Q(body__name='truck')),
         )
         cache.set(_tab_count_key, tab_counts, 60 * 5)
