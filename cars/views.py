@@ -48,25 +48,30 @@ APPEAL_TIER_MAINSTREAM = [
 ]
 
 
+# Brands that lead the default car list — fully randomized among themselves,
+# then everything else (also randomized).
+FEATURED_BRANDS = ["mercedes-benz", "mercedes", "genesis", "hyundai", "kia"]
+
+
 def _order_by_appeal(qs, *secondary):
     """
-    Annotate `_appeal_tier` on the queryset (0=premium, 1=luxury, 2=mainstream,
-    3=other) and order by it, then by the given secondary fields.
+    Lead the car list with the featured brands (Mercedes / Genesis / Hyundai /
+    Kia) randomly mixed among themselves, then the rest of the inventory also
+    in random order.
 
-    Example: `_order_by_appeal(qs, '-created_at')`
+    `secondary` is kept for callers that pass `-created_at` etc.; it's appended
+    after the random key as a tiebreaker (rarely matters).
     """
     from django.db.models import Case, When, Value, IntegerField
 
     qs = qs.annotate(
         _appeal_tier=Case(
-            When(manufacturer__name__in=APPEAL_TIER_PREMIUM, then=Value(0)),
-            When(manufacturer__name__in=APPEAL_TIER_LUXURY, then=Value(1)),
-            When(manufacturer__name__in=APPEAL_TIER_MAINSTREAM, then=Value(2)),
-            default=Value(3),
+            When(manufacturer__name__in=FEATURED_BRANDS, then=Value(0)),
+            default=Value(1),
             output_field=IntegerField(),
         )
     )
-    return qs.order_by('_appeal_tier', *secondary)
+    return qs.order_by('_appeal_tier', '?', *secondary)
 
 
 def _build_webhook_url(request):
