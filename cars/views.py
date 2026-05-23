@@ -897,25 +897,6 @@ def car_list(request):
         qs = qs.filter(auction_name__in=sel_auction_names)
 
     car_type = request.GET.get('car_type')
-    if car_type == 'auction':
-        qs = qs.filter(category__name='auction')
-    elif car_type == 'cars':
-        # Cars tab now covers everything non-auction (including trucks).
-        # Trucks are a body_type filter the user opts into separately.
-        qs = qs.exclude(category__name='auction')
-    elif car_type == 'truck':
-        # Legacy URL — keep working but funnel through the body_type filter.
-        qs = qs.exclude(category__name='auction').filter(body__name='truck')
-
-    # Per-tenant section toggles — drop categories the tenant has deactivated.
-    # show_encar=False → only auctions; show_auctions=False → only non-auctions;
-    # both False → empty list (intentional, mirrors home-page gating).
-    _tenant = getattr(connection, 'tenant', None)
-    if _tenant is not None:
-        if not getattr(_tenant, 'show_auctions', True):
-            qs = qs.exclude(category__name='auction')
-        if not getattr(_tenant, 'show_encar', True):
-            qs = qs.filter(category__name='auction')
 
     sel_statuses = request.GET.getlist('status')
     if sel_statuses:
@@ -948,6 +929,32 @@ def car_list(request):
             qs = qs.filter(mileage__lte=int(mileage_max))
         except ValueError:
             pass
+
+    # Per-tenant section toggles — drop categories the tenant has deactivated.
+    # Applied BEFORE the tab-count aggregate so disabled categories report 0.
+    _tenant = getattr(connection, 'tenant', None)
+    if _tenant is not None:
+        if not getattr(_tenant, 'show_auctions', True):
+            qs = qs.exclude(category__name='auction')
+        if not getattr(_tenant, 'show_encar', True):
+            qs = qs.filter(category__name='auction')
+
+    # Live tab counts — every filter so far (except car_type itself) has been
+    # applied to qs, so `count_cars` and `count_auction` reflect what the user
+    # would see if they switched tabs without changing any filter.
+    _live_tab_counts = qs.aggregate(
+        live_count_all=Count('id'),
+        live_count_cars=Count('id', filter=~Q(category__name='auction')),
+        live_count_auction=Count('id', filter=Q(category__name='auction')),
+    )
+
+    # Finally narrow qs by the chosen tab.
+    if car_type == 'auction':
+        qs = qs.filter(category__name='auction')
+    elif car_type == 'cars':
+        qs = qs.exclude(category__name='auction')
+    elif car_type == 'truck':
+        qs = qs.exclude(category__name='auction').filter(body__name='truck')
 
     sort = request.GET.get('sort')
     allowed_sorts = ['-created_at', 'price', '-price', '-year', 'year', 'mileage', '-mileage']
@@ -1262,10 +1269,12 @@ def car_list(request):
             count_truck=Count('id', filter=~Q(category__name='auction') & Q(body__name='truck')),
         )
         cache.set(_tab_count_key, tab_counts, 60 * 5)
-    count_all = tab_counts['count_all']
-    count_cars = tab_counts['count_cars']
-    count_auction = tab_counts['count_auction']
-    count_truck = tab_counts['count_truck']
+    # Cached counts are the full-tenant baseline. Override with live counts
+    # so the tab badges update as the user toggles filters.
+    count_all = _live_tab_counts['live_count_all']
+    count_cars = _live_tab_counts['live_count_cars']
+    count_auction = _live_tab_counts['live_count_auction']
+    count_truck = tab_counts['count_truck']  # truck tab is gone — left only as compat
 
     # Site cars count for the showroom tab — cached 10 min
     # site_cars_count  = admin-uploaded SiteCars (no external_id)  → "سياراتنا" tab
