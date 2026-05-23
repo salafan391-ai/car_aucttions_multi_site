@@ -54,7 +54,7 @@
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mb-2 text-[10px] sm:text-xs" style="color:rgba(167,139,250,.8);">
                     <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-end items-center pt-2 sm:pt-3" style="border-top:1px solid rgba(255,255,255,.07);">
@@ -99,7 +99,7 @@
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mt-1 text-[10px] text-purple-500">
                     <svg class="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -149,7 +149,7 @@
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mt-1 text-[10px]" style="color:rgba(196,181,253,.9);">
                     <svg class="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -247,7 +247,7 @@
                 {% if car.auction_date %}
                 <div style="display:flex;align-items:center;gap:.35rem;font-size:.6rem;letter-spacing:.06em;color:rgba(167,139,250,.8);margin-bottom:.45rem;">
                     <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
 
@@ -304,7 +304,7 @@
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 sm:gap-1.5 mb-2 sm:mb-3">
                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
+                    <span class="bilingual" data-lang-ar="بداية المزاد:" data-lang-en="Auction start:" data-lang-es="Inicio de subasta:" data-lang-ru="Начало аукциона:">بداية المزاد:</span> <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-end items-center pt-2 sm:pt-3 border-t border-gray-100">
