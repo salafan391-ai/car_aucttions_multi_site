@@ -530,6 +530,9 @@
             </div>
             <div class="lux-preview-side">
                 {% if car.price %}
+                {% if car.category.name == 'auction' %}
+                <div class="bilingual" style="font-size:.7rem;letter-spacing:.12em;color:var(--lux-text-dim);text-transform:uppercase;margin-bottom:.2rem;" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</div>
+                {% endif %}
                 <div class="lux-preview-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
                 {% endif %}
                 <div class="lux-share" id="lux-share" data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}" data-share-title="{{ car.year }} {{ car.manufacturer.name }} {{ car.model.name }}">
@@ -593,7 +596,11 @@
 
                 {% if car.price %}
                 <div class="lux-price-block">
+                    {% if car.category.name == 'auction' %}
+                    <div class="lux-price-label bilingual" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</div>
+                    {% else %}
                     <div class="lux-price-label bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</div>
+                    {% endif %}
                     <div class="lux-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
                     <div id="price-change-banner" class="lux-price-change">
                         <span data-arrow class="lux-price-change-arrow">↓</span>

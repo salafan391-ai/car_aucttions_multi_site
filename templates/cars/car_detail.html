@@ -124,7 +124,10 @@
             </div>
             {% endif %}
             <div class="flex flex-wrap items-center gap-3">
-                <span class="text-white font-extrabold text-2xl" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-sm text-white/60">₩</span></span>
+                <div class="flex flex-col">
+                    {% if car.category.name == 'auction' %}<span class="bilingual text-[11px] font-semibold" style="color:rgba(255,255,255,.7);" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</span>{% endif %}
+                    <span class="text-white font-extrabold text-2xl" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-sm text-white/60">₩</span></span>
+                </div>
                 {% if car.status == 'sold' %}
                 <span class="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full bilingual" data-lang-ar="تم البيع" data-lang-ru="Продал" data-lang-es="Vendido" data-lang-en="Sold">تم البيع</span>
                 {% elif car.status == 'pending' %}
@@ -816,7 +819,11 @@
                 {% endif %}
 
                 <div class="border-t border-gray-100 pt-4 mb-4">
+                    {% if car.category.name == 'auction' %}
+                    <div class="text-sm text-gray-500 mb-1 bilingual" data-lang-ar="سعر بداية المزاد" data-lang-ru="Стартовая цена аукциона" data-lang-es="Precio inicial de subasta" data-lang-en="Starting auction price">سعر بداية المزاد</div>
+                    {% else %}
                     <div class="text-sm text-gray-500 mb-1 bilingual" data-lang-ar="السعر" data-lang-ru="цена" data-lang-es="el precio" data-lang-en="Price">السعر</div>
+                    {% endif %}
                     <div class="text-brand font-extrabold text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
                     <div id="price-change-banner" class="hidden mt-2 border rounded-xl px-3 py-2 text-xs items-center gap-2">
                         <span data-arrow class="font-bold text-base leading-none">↓</span>
