@@ -1066,13 +1066,14 @@ def car_list(request):
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
         _mfr_cache_suffix = {'cars': 'cars', 'truck': 'truck'}.get(car_type, 'all')
-        _mfr_cache_key = f"car_list_v3:manufacturers_{_mfr_cache_suffix}"
+        _mfr_cache_key = f"car_list_v4:manufacturers_{_mfr_cache_suffix}"
         manufacturers = cache.get(_mfr_cache_key)
         if manufacturers is None:
             if car_type == 'truck':
                 _mfr_count_filter = ~Q(apicar__category__name='auction') & Q(apicar__body__name='truck')
             elif car_type == 'cars':
-                _mfr_count_filter = ~Q(apicar__category__name='auction') & ~Q(apicar__body__name='truck')
+                # Cars tab now covers trucks too — surface their manufacturers in the tree.
+                _mfr_count_filter = ~Q(apicar__category__name='auction')
             else:
                 _mfr_count_filter = ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
             manufacturers = list(
@@ -1197,13 +1198,15 @@ def car_list(request):
     # Static lookup lists — for non-auction only (auction path handled above)
     if car_type != 'auction':
         if car_type == 'cars':
-            _static_cache_key = f"car_list_v2:static_filters_cars:{schema}"
-            _base_qs = ApiCar.objects.exclude(category__name='auction').exclude(body__name='truck')
+            # Cars tab now includes trucks — body_type chip group surfaces
+            # 'truck' as one of the selectable filter options.
+            _static_cache_key = f"car_list_v3:static_filters_cars:{schema}"
+            _base_qs = ApiCar.objects.exclude(category__name='auction')
         elif car_type == 'truck':
-            _static_cache_key = f"car_list_v2:static_filters_truck:{schema}"
+            _static_cache_key = f"car_list_v3:static_filters_truck:{schema}"
             _base_qs = ApiCar.objects.exclude(category__name='auction').filter(body__name='truck')
         else:
-            _static_cache_key = f"car_list_v2:static_filters_all:{schema}"
+            _static_cache_key = f"car_list_v3:static_filters_all:{schema}"
             _base_qs = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
 
         static_filters = cache.get(_static_cache_key)
