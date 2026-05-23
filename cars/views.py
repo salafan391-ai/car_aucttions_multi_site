@@ -810,7 +810,7 @@ def car_list(request):
             f"{int(getattr(_t, 'show_auctions', True))}"
             f"{int(getattr(_t, 'show_site_cars', True))}"
         ) if _t is not None else '111'
-        cache_key = f"car_list_v4:{schema}:{_variant}:{_toggles}:{_params_hash}"
+        cache_key = f"car_list_v5:{schema}:{_variant}:{_toggles}:{_params_hash}"
         cached_html = cache.get(cache_key)
         if cached_html:
             return HttpResponse(cached_html)
@@ -972,7 +972,7 @@ def car_list(request):
     _count_hash = hashlib.md5(
         json.dumps(_count_params, sort_keys=True).encode()
     ).hexdigest()
-    _count_cache_key = f"car_list_v2:count:{schema}:{_count_hash}"
+    _count_cache_key = f"car_list_v3:count:{schema}:{_count_hash}"
     _cached_count = cache.get(_count_cache_key)
 
     class _CachedCountPaginator(Paginator):
