@@ -879,7 +879,7 @@
         </section>
         {% endif %}
 
-        {% with rec=car.extra_features.record autohub_opts=car.autohub_options %}
+        {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice %}
 
         {% if car.options.standard or autohub_opts %}
         <section class="lux-section-block">
@@ -916,6 +916,38 @@
                 {% endfor %}
             </div>
             {% endif %}
+        </section>
+        {% endif %}
+
+        {% if opts_choice %}
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="مختارة من المصنع" data-lang-en="Factory-selected" data-lang-es="Seleccionado de fábrica" data-lang-ru="Заводская комплектация">مختارة من المصنع</small>
+                <span class="bilingual" data-lang-ar="الخيارات الإضافية" data-lang-en="Optional Extras" data-lang-es="Opciones adicionales" data-lang-ru="Дополнительные опции">الخيارات الإضافية</span>
+            </h2>
+            <div class="lux-options-choice">
+                {% for opt in opts_choice %}
+                <div class="lux-oc-row" style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:0.85rem 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <div style="min-width:0;">
+                        <div class="bilingual" style="font-weight:600;"
+                             data-lang-ar="{{ opt.optionName|oc:'ar' }}"
+                             data-lang-en="{{ opt.optionName|oc:'en' }}"
+                             data-lang-es="{{ opt.optionName|oc:'es' }}"
+                             data-lang-ru="{{ opt.optionName|oc:'ru' }}">{{ opt.optionName|oc:'ar' }}</div>
+                        {% if opt.description %}
+                        <div class="bilingual" style="font-size:0.85rem;opacity:0.65;margin-top:0.25rem;white-space:pre-line;"
+                             data-lang-ar="{{ opt.description|oc:'ar' }}"
+                             data-lang-en="{{ opt.description|oc:'en' }}"
+                             data-lang-es="{{ opt.description|oc:'es' }}"
+                             data-lang-ru="{{ opt.description|oc:'ru' }}">{{ opt.description|oc:'ar' }}</div>
+                        {% endif %}
+                    </div>
+                    {% if opt.price %}
+                    <span style="flex-shrink:0;font-weight:700;white-space:nowrap;" data-price-krw="{{ opt.price|manwon_krw }}">{{ opt.price|manwon_krw|intcomma }} <span style="font-size:0.7rem;opacity:0.6;">₩</span></span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
         </section>
         {% endif %}
 

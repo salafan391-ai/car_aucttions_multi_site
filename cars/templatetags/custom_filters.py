@@ -9,6 +9,13 @@ try:
 except ImportError:
     _i18n = None
 
+# Generated translations for Encar optionsChoice strings (English-pivoted).
+# Absent / empty until `translate_options_choice` has been run.
+try:
+    from cars import options_choice_i18n as _oc
+except ImportError:
+    _oc = None
+
 
 def _extra_dict(enum_name: str, lang: str):
     """Look up a lang-specific enum dict (e.g. colors_dict_es) on utils_i18n."""
@@ -173,6 +180,35 @@ def translate_option(value, lang='ar'):
 @register.filter
 def translate_option_en(value):
     return OPTION_TRANSLATIONS.get('en', {}).get(value, value)
+
+
+@register.filter
+def oc(value, lang='en'):
+    """Translate a Korean Encar optionsChoice name/description.
+
+    ``en`` is a direct ko->en lookup; ``ar``/``ru``/``es`` go ko->en->lang via
+    the English-pivot dicts in ``options_choice_i18n``. Falls back to the source
+    string (Korean) when a translation is missing, so the page degrades cleanly
+    before ``translate_options_choice`` has been run.
+    """
+    if _oc is None or not isinstance(value, str) or not value.strip():
+        return value
+    src = value.strip()
+    english = _oc.OC_EN.get(src, src)
+    if lang == 'en':
+        return english
+    table = {'ar': _oc.OC_AR, 'ru': _oc.OC_RU, 'es': _oc.OC_ES}.get(lang)
+    return table.get(english, english) if table is not None else english
+
+
+@register.filter
+def manwon_krw(value):
+    """Encar optionsChoice prices are in 만원 (10,000 KRW) units; return whole KRW
+    so the shared ``data-price-krw`` currency converter can format them."""
+    try:
+        return int(round(float(value) * 10000))
+    except (TypeError, ValueError):
+        return ''
 
 
 # Icon SVGs (24x24 viewBox, stroke="currentColor"). Picked from Heroicons-style

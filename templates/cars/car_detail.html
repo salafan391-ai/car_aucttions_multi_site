@@ -393,8 +393,8 @@
             {% endif %}
 
             <!-- Tabbed: Features / Inspection / History -->
-            {% with rec=car.extra_features.record autohub_opts=car.autohub_options %}
-            {% if car.options.standard or insp.has_inspection or rec.openData or autohub_opts %}
+            {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice %}
+            {% if car.options.standard or insp.has_inspection or rec.openData or autohub_opts or opts_choice %}
             <div class="bg-white rounded-2xl shadow-sm mt-6 overflow-hidden" dir="rtl">
 
               <style>
@@ -431,6 +431,12 @@
                   <span class="bilingual" data-lang-ar="سجل التأمين" data-lang-ru="Страховая запись" data-lang-es="historial de seguros" data-lang-en="Insurance History">سجل التأمين</span>
                 </button>
                 {% endif %}
+                {% if opts_choice %}
+                <button onclick="switchDetailTab('tab-options-choice',this)" id="btn-tab-options-choice"
+                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition-colors">
+                  <span class="bilingual" data-lang-ar="الخيارات الإضافية" data-lang-ru="Дополнительные опции" data-lang-es="Opciones adicionales" data-lang-en="Optional Extras">الخيارات الإضافية</span>
+                </button>
+                {% endif %}
               </div>
 
               <!-- Tab: Features -->
@@ -458,6 +464,35 @@
                           data-lang-es="{{ opt.name_es|default:fallback }}">{{ fallback }}</span>
                   </div>
                   {% endwith %}
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Tab: Optional Extras (factory optionsChoice) -->
+              {% if opts_choice %}
+              <div id="tab-options-choice" class="detail-tab-panel hidden p-6">
+                <div class="space-y-3">
+                  {% for opt in opts_choice %}
+                  <div class="flex items-start justify-between gap-4 p-4 bg-brand-light/40 rounded-xl">
+                    <div class="min-w-0">
+                      <div class="bilingual font-semibold text-gray-800"
+                           data-lang-ar="{{ opt.optionName|oc:'ar' }}"
+                           data-lang-en="{{ opt.optionName|oc:'en' }}"
+                           data-lang-ru="{{ opt.optionName|oc:'ru' }}"
+                           data-lang-es="{{ opt.optionName|oc:'es' }}">{{ opt.optionName|oc:'ar' }}</div>
+                      {% if opt.description %}
+                      <div class="bilingual text-sm text-gray-500 mt-1 whitespace-pre-line"
+                           data-lang-ar="{{ opt.description|oc:'ar' }}"
+                           data-lang-en="{{ opt.description|oc:'en' }}"
+                           data-lang-ru="{{ opt.description|oc:'ru' }}"
+                           data-lang-es="{{ opt.description|oc:'es' }}">{{ opt.description|oc:'ar' }}</div>
+                      {% endif %}
+                    </div>
+                    {% if opt.price %}
+                    <span class="shrink-0 font-bold text-brand whitespace-nowrap" data-price-krw="{{ opt.price|manwon_krw }}">{{ opt.price|manwon_krw|intcomma }} <span class="text-xs text-gray-400">₩</span></span>
+                    {% endif %}
+                  </div>
                   {% endfor %}
                 </div>
               </div>
@@ -592,6 +627,15 @@
               btn.classList.remove('text-gray-400', 'border-transparent');
               btn.classList.add('text-brand', 'border-brand');
             }
+            // Ensure a tab is active even when the Features tab is absent
+            // (e.g. a car that only has optional extras / inspection / history).
+            (function () {
+              var panels = [].slice.call(document.querySelectorAll('.detail-tab-panel'));
+              if (panels.length && !panels.some(function (p) { return !p.classList.contains('hidden'); })) {
+                var firstBtn = document.querySelector('.detail-tab-btn');
+                if (firstBtn) firstBtn.click();
+              }
+            })();
             </script>
 
         <!-- Inspection Images -->
