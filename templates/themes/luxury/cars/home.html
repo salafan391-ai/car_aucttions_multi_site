@@ -323,6 +323,19 @@
         <p class="lux-sub bilingual" data-lang-ar="{{ site_tagline|default:'مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها.' }}" data-lang-en="{{ site_tagline_en|default:'A handpicked selection of exceptional vehicles, sourced and presented with the discernment they deserve.' }}" data-lang-es="Una selección de vehículos excepcionales, presentados con la atención que merecen." data-lang-ru="Тщательно подобранная коллекция исключительных автомобилей.">{{ site_tagline|default:"مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها." }}</p>
         <!-- Hero search/filter — identical to the default theme -->
         <div class="max-w-4xl mx-auto" style="margin-top:1.75rem;text-align:start;">
+            <!-- Cars / Auctions tabs -->
+            <div id="hero-type-tabs" class="flex gap-2 mb-3">
+                {% if show_encar %}
+                <button type="button" class="hero-type-tab flex-1 px-4 py-2.5 rounded-lg sm:rounded-xl text-sm font-bold transition backdrop-blur-md border border-transparent" data-type="cars">
+                    <span class="bilingual" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</span>{% if cars_count %} <span class="opacity-70">{{ cars_count|intcomma }}</span>{% endif %}
+                </button>
+                {% endif %}
+                {% if show_auctions %}
+                <button type="button" class="hero-type-tab flex-1 px-4 py-2.5 rounded-lg sm:rounded-xl text-sm font-bold transition backdrop-blur-md border border-transparent" data-type="auction">
+                    <span class="bilingual" data-lang-ar="مزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">مزادات</span>{% if auction_count %} <span class="opacity-70">{{ auction_count|intcomma }}</span>{% endif %}
+                </button>
+                {% endif %}
+            </div>
             <div id="hero-search-input-container" class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-md bg-white/10 border border-white/20">
                 <div class="relative">
                     <input 
@@ -364,6 +377,7 @@
                     <input type="hidden" name="model" id="selected-model" value="">
                     <input type="hidden" name="year_from" id="selected-year-from" value="">
                     <input type="hidden" name="year_to" id="selected-year-to" value="">
+                    <input type="hidden" name="car_type" id="hero-car-type" value="cars">
 
                     <!-- Manufacturer Grid -->
                     <div id="manufacturer-selection" class="space-y-3">
@@ -375,6 +389,8 @@
                                 data-id="{{ m.id }}"
                                 data-name-ar="{{ m.name_ar|default:m.name }}"
                                 data-name-en="{{ m.name|pretty_en }}"
+                                data-cars-count="{{ m.cars_count|default:0 }}"
+                                data-auction-count="{{ m.auction_count|default:0 }}"
                             >
                                 {% if m.logo %}
                                 <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -390,7 +406,7 @@
                                 <div class="text-sm font-bold text-gray-800 group-hover:text-brand transition">
                                     <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
                                 </div>
-                                <div class="text-xs text-gray-500 mt-1">{{ m.car_count|default:0 }} <span class="bilingual" data-lang-ar="سيارة" data-lang-ru="машина" data-lang-es="auto" data-lang-en="cars">سيارة</span></div>
+                                <div class="text-xs text-gray-500 mt-1"><span class="mfg-count-num">{{ m.cars_count|default:0 }}</span> <span class="bilingual" data-lang-ar="سيارة" data-lang-ru="машина" data-lang-es="auto" data-lang-en="cars">سيارة</span></div>
                             </div>
                             {% endfor %}
                         </div>
@@ -647,6 +663,7 @@
     const filtersPanel = document.getElementById('hero-search-filters');
     const searchInput = document.getElementById('hero-search-input');
     const inputContainer = document.getElementById('hero-search-input-container');
+    const carTypeInput = document.getElementById('hero-car-type');
     
     if (toggleBtn && filtersPanel && inputContainer) {
         toggleBtn.addEventListener('click', function() {
@@ -848,7 +865,7 @@
         const _loadingMsg = _lang0 === 'en' ? 'Loading...' : 'جاري التحميل...';
         modelGrid.innerHTML = `<div class="col-span-full text-center text-white/80 py-4">${_loadingMsg}</div>`;
         
-    const HOME_CAR_TYPE = '{{ request.GET.car_type|default:"" }}';
+    const HOME_CAR_TYPE = (carTypeInput && carTypeInput.value === 'auction') ? 'auction' : '';
     const HOME_LANG = '{{ request.LANGUAGE_CODE|default:"en" }}';
     fetch('{% url "api_models_by_manufacturer" %}?manufacturer_id=' + manufacturerId + (HOME_CAR_TYPE ? '&car_type=' + HOME_CAR_TYPE : '') + (HOME_LANG ? '&lang=' + HOME_LANG : ''))
             .then(r => {
@@ -1005,6 +1022,47 @@
         } else {
             selectionSummary.classList.add('hidden');
         }
+    }
+
+    // ── Cars / Auctions tabs ──
+    // Each tab sets the car_type the form submits, filters the manufacturer
+    // grid to makes that have inventory for that type, swaps the shown count,
+    // and resets any in-progress selection so it can't carry across tabs.
+    const typeTabs = Array.prototype.slice.call(document.querySelectorAll('.hero-type-tab'));
+    const TAB_ACTIVE = ['bg-white', 'text-brand'];
+    const TAB_INACTIVE = ['bg-white/10', 'text-white', 'border-white/20'];
+    function applyCarType(type) {
+        if (carTypeInput) carTypeInput.value = type;
+        typeTabs.forEach(function (t) {
+            const active = t.dataset.type === type;
+            t.classList.remove.apply(t.classList, active ? TAB_INACTIVE : TAB_ACTIVE);
+            t.classList.add.apply(t.classList, active ? TAB_ACTIVE : TAB_INACTIVE);
+        });
+        const attr = type === 'auction' ? 'auctionCount' : 'carsCount';
+        manufacturerOptions.forEach(function (opt) {
+            const n = parseInt(opt.dataset[attr] || '0', 10);
+            opt.style.display = n > 0 ? '' : 'none';
+            const numEl = opt.querySelector('.mfg-count-num');
+            if (numEl) numEl.textContent = n;
+            opt.classList.remove('border-brand', 'bg-white', 'scale-105');
+        });
+        // Reset selection so it never crosses tabs
+        selectedData = { manufacturer: null, model: null, yearFrom: null, yearTo: null };
+        hiddenInputs.manufacturer.value = '';
+        hiddenInputs.model.value = '';
+        hiddenInputs.yearFrom.value = '';
+        hiddenInputs.yearTo.value = '';
+        if (modelGrid) modelGrid.innerHTML = '';
+        showStep(manufacturerSelection);
+        updateSelectionSummary();
+        updateSearchButton();
+    }
+    typeTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () { applyCarType(tab.dataset.type); });
+    });
+    if (typeTabs.length) {
+        const hasCars = typeTabs.some(function (t) { return t.dataset.type === 'cars'; });
+        applyCarType(hasCars ? 'cars' : typeTabs[0].dataset.type);
     }
 
     // Initialize
