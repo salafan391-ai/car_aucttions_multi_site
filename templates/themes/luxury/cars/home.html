@@ -321,183 +321,85 @@
         <div class="lux-hero-overlay" aria-hidden="true"></div>
         <h1 class="lux-title">{{ site_name|default:"سيارات" }}</h1>
         <p class="lux-sub bilingual" data-lang-ar="{{ site_tagline|default:'مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها.' }}" data-lang-en="{{ site_tagline_en|default:'A handpicked selection of exceptional vehicles, sourced and presented with the discernment they deserve.' }}" data-lang-es="Una selección de vehículos excepcionales, presentados con la atención que merecen." data-lang-ru="Тщательно подобранная коллекция исключительных автомобилей.">{{ site_tagline|default:"مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها." }}</p>
-        <!-- Hero search/filter — identical to the default theme -->
-        <div class="max-w-4xl mx-auto" style="margin-top:1.75rem;text-align:start;">
-            <!-- Cars / Auctions tabs -->
-            <div id="hero-type-tabs" class="flex gap-2 mb-3">
-                {% if show_encar %}
-                <button type="button" class="hero-type-tab flex-1 px-4 py-2.5 rounded-lg sm:rounded-xl text-sm font-bold transition backdrop-blur-md border border-transparent" data-type="cars">
-                    <span class="bilingual" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</span>{% if cars_count %} <span class="opacity-70">{{ cars_count|intcomma }}</span>{% endif %}
+        <!-- Hero filter (luxury): tabs + Brand/Model/Year accordion -->
+        <style>
+          .lux-hf{max-width:640px;margin:1.75rem auto 0;text-align:start;}
+          .lux-hf-tabs{display:flex;justify-content:center;gap:2.5rem;margin-bottom:1.1rem;}
+          .lux-hf-tab{background:none;border:0;cursor:pointer;color:var(--lux-text-dim);font-family:inherit;font-size:1rem;font-weight:600;padding:0 0 .5rem;position:relative;transition:color .2s;}
+          .lux-hf-tab:hover{color:var(--lux-text);}
+          .lux-hf-tab.is-active{color:var(--lux-gold-bright);}
+          .lux-hf-tab.is-active::after{content:"";position:absolute;inset-inline:0;bottom:0;height:2px;background:var(--lux-gold);border-radius:2px;}
+          .lux-hf-card{border:1px solid var(--lux-line);background:rgba(10,10,10,.78);backdrop-filter:blur(8px);border-radius:1rem;overflow:hidden;}
+          .lux-hf-row{border-bottom:1px solid var(--lux-line);}
+          .lux-hf-row-head{width:100%;display:flex;align-items:center;gap:.75rem;padding:1.15rem 1.4rem;background:none;border:0;cursor:pointer;color:var(--lux-text);font-family:inherit;font-size:1rem;}
+          .lux-hf-chev{width:1.05rem;height:1.05rem;flex-shrink:0;color:var(--lux-text-dim);transition:transform .25s;}
+          .lux-hf-row.is-open .lux-hf-chev{transform:rotate(180deg);}
+          .lux-hf-row-label{flex:1;text-align:center;color:var(--lux-text-dim);transition:color .2s;}
+          .lux-hf-row.is-selected .lux-hf-row-label{color:var(--lux-gold-bright);font-weight:600;}
+          .lux-hf-row-body{max-height:0;overflow:hidden;transition:max-height .28s ease;}
+          .lux-hf-row.is-open .lux-hf-row-body{max-height:21rem;overflow-y:auto;}
+          .lux-hf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.5rem,1fr));gap:.55rem;padding:.4rem 1.1rem 1.2rem;}
+          .lux-hf-years{grid-template-columns:repeat(4,1fr);}
+          .lux-hf-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;padding:.7rem .4rem;border:1px solid var(--lux-line);background:rgba(0,0,0,.25);border-radius:.6rem;cursor:pointer;color:var(--lux-text);font-family:inherit;font-size:.8rem;text-align:center;transition:all .15s;}
+          .lux-hf-opt:hover{border-color:var(--lux-gold);}
+          .lux-hf-opt.is-selected{border-color:var(--lux-gold);background:rgba(201,164,90,.16);color:var(--lux-gold-bright);}
+          .lux-hf-opt img{width:2rem;height:2rem;object-fit:contain;}
+          .lux-hf-opt-count{font-size:.68rem;color:var(--lux-text-dim);}
+          .lux-hf-empty{grid-column:1/-1;text-align:center;color:var(--lux-text-dim);padding:1rem;font-size:.85rem;}
+          .lux-hf-search{width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem;padding:1.05rem;border:0;cursor:pointer;background:var(--lux-gold);color:var(--lux-bg);font-family:inherit;font-weight:700;font-size:.95rem;letter-spacing:.05em;transition:background .2s;}
+          .lux-hf-search:hover{background:var(--lux-gold-bright);}
+          .lux-hf-search svg{width:1.1rem;height:1.1rem;}
+        </style>
+        <div class="lux-hf" id="lux-hf">
+          <div class="lux-hf-tabs">
+            <button type="button" class="lux-hf-tab is-active" data-type="all"><span class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</span></button>
+            {% if site_cars_count and show_site_cars %}
+            <button type="button" class="lux-hf-tab" data-type="ours"><span class="bilingual" data-lang-ar="بيع مباشر" data-lang-en="Direct Sale" data-lang-es="Venta directa" data-lang-ru="Прямая продажа">بيع مباشر</span></button>
+            {% endif %}
+            {% if show_auctions %}
+            <button type="button" class="lux-hf-tab" data-type="auction"><span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد</span></button>
+            {% endif %}
+          </div>
+          <form id="lux-hf-form" method="get" action="{% url 'car_list' %}">
+            <input type="hidden" name="car_type" id="lux-hf-cartype" value="">
+            <input type="hidden" name="manufacturer" id="lux-hf-mfg" value="">
+            <input type="hidden" name="model" id="lux-hf-model" value="">
+            <input type="hidden" name="year_from" id="lux-hf-year" value="">
+            <div class="lux-hf-card">
+              <div class="lux-hf-row" data-acc="brand">
+                <button type="button" class="lux-hf-row-head"><svg class="lux-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  <span class="lux-hf-row-label" id="lux-hf-brand-label"><span class="bilingual" data-lang-ar="جميع البراندات" data-lang-en="All Brands" data-lang-es="Todas las marcas" data-lang-ru="Все бренды">جميع البراندات</span></span>
                 </button>
-                {% endif %}
-                {% if show_auctions %}
-                <button type="button" class="hero-type-tab flex-1 px-4 py-2.5 rounded-lg sm:rounded-xl text-sm font-bold transition backdrop-blur-md border border-transparent" data-type="auction">
-                    <span class="bilingual" data-lang-ar="مزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">مزادات</span>{% if auction_count %} <span class="opacity-70">{{ auction_count|intcomma }}</span>{% endif %}
-                </button>
-                {% endif %}
-            </div>
-            <div id="hero-search-input-container" class="glass rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-md bg-white/10 border border-white/20">
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        id="hero-search-input"
-                        readonly
-                        placeholder="ما هي السيارة التي تبحث عنها؟"
-                        data-placeholder-ar="ما هي السيارة التي تبحث عنها؟" data-placeholder-ru="Какую машину вы ищете?" data-placeholder-es="¿Qué coche estás buscando?"
-                        data-placeholder-en="What car are you looking for?"
-                        class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-white text-gray-800 placeholder-gray-400 text-sm sm:text-base focus:ring-2 focus:ring-primary-400 outline-none pr-12 cursor-pointer"
-                    >
-                    <button 
-                        type="button"
-                        id="toggle-search-filters"
-                        class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-gray-400 hover:text-brand transition"
-                    >
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
+                <div class="lux-hf-row-body">
+                  <div class="lux-hf-grid" id="lux-hf-brand-grid">
+                    {% for m in manufacturers %}
+                    <button type="button" class="lux-hf-opt lux-hf-brand-opt" data-id="{{ m.id }}" data-name-ar="{{ m.name_ar|default:m.name }}" data-name-en="{{ m.name|pretty_en }}" data-cars-count="{{ m.cars_count|default:0 }}" data-auction-count="{{ m.auction_count|default:0 }}">
+                      {% if m.logo %}<img src="{{ m.logo }}" alt="{{ m.name_ar|default:m.name }}" loading="lazy">{% endif %}
+                      <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
+                      <span class="lux-hf-opt-count">{{ m.cars_count|default:0 }}</span>
                     </button>
+                    {% endfor %}
+                  </div>
                 </div>
-            </div>
-            
-            <!-- Hidden Filters -->
-            <div id="hero-search-filters" class="hidden glass rounded-xl sm:rounded-2xl p-4 sm:p-6 relative backdrop-blur-md bg-white/20 border border-white/30">
-                <button 
-                    type="button"
-                    id="close-search-filters"
-                    class="absolute top-3 left-3 p-2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition"
-                >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+              </div>
+              <div class="lux-hf-row" data-acc="model">
+                <button type="button" class="lux-hf-row-head"><svg class="lux-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  <span class="lux-hf-row-label" id="lux-hf-model-label"><span class="bilingual" data-lang-ar="جميع الموديلات" data-lang-en="All Models" data-lang-es="Todos los modelos" data-lang-ru="Все модели">جميع الموديلات</span></span>
                 </button>
-                
-                <form action="{% url 'car_list' %}" method="get" id="hero-filter-form" class="space-y-6">
-                    <!-- Hidden inputs to store selections -->
-                    <input type="hidden" name="manufacturer" id="selected-manufacturer" value="">
-                    <input type="hidden" name="model" id="selected-model" value="">
-                    <input type="hidden" name="year_from" id="selected-year-from" value="">
-                    <input type="hidden" name="year_to" id="selected-year-to" value="">
-                    <input type="hidden" name="car_type" id="hero-car-type" value="cars">
-
-                    <!-- Manufacturer Grid -->
-                    <div id="manufacturer-selection" class="space-y-3">
-                        <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر الشركة المصنعة" data-lang-ru="Выберите производителя" data-lang-es="Elija al fabricante" data-lang-en="Choose a Manufacturer">اختر الشركة المصنعة</label>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-60 overflow-y-auto scrollbar-hide">
-                            {% for m in manufacturers %}
-                            <div 
-                                class="manufacturer-option group cursor-pointer p-4 bg-white/90 backdrop-blur-sm rounded-xl border-2 border-transparent hover:border-white hover:bg-white hover:scale-105 transition-all duration-300 text-center"
-                                data-id="{{ m.id }}"
-                                data-name-ar="{{ m.name_ar|default:m.name }}"
-                                data-name-en="{{ m.name|pretty_en }}"
-                                data-cars-count="{{ m.cars_count|default:0 }}"
-                                data-auction-count="{{ m.auction_count|default:0 }}"
-                            >
-                                {% if m.logo %}
-                                <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img src="{{ m.logo }}" alt="{{ m.name_ar|default:m.name }}" class="w-full h-full object-contain" loading="lazy" width="48" height="48">
-                                </div>
-                                {% else %}
-                                <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gradient-to-br from-brand to-brand-light flex items-center justify-center">
-                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
-                                    </svg>
-                                </div>
-                                {% endif %}
-                                <div class="text-sm font-bold text-gray-800 group-hover:text-brand transition">
-                                    <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
-                                </div>
-                                <div class="text-xs text-gray-500 mt-1"><span class="mfg-count-num">{{ m.cars_count|default:0 }}</span> <span class="bilingual" data-lang-ar="سيارة" data-lang-ru="машина" data-lang-es="auto" data-lang-en="cars">سيارة</span></div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Model Grid (Hidden initially) -->
-                    <div id="model-selection" class="space-y-3 hidden">
-                        <div class="flex items-center justify-between">
-                            <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر الموديل" data-lang-ru="Выберите модель" data-lang-es="Elige el modelo" data-lang-en="Choose a Model">اختر الموديل</label>
-                            <button type="button" id="back-to-manufacturer" class="flex items-center gap-2 px-3 py-1 text-sm text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="عودة" data-lang-ru="возвращаться" data-lang-es="devolver" data-lang-en="Back">عودة</span>
-                            </button>
-                        </div>
-                        <div id="selected-manufacturer-name" class="text-sm text-white/80 mb-2"></div>
-                        <div id="model-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-60 overflow-y-auto scrollbar-hide">
-                            <!-- Models will be populated dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Year Selection -->
-                    <div id="year-selection" class="space-y-4 hidden">
-                        <div class="flex items-center justify-between">
-                            <label class="bilingual block text-lg font-bold text-white" data-lang-ar="اختر السنة" data-lang-ru="Выберите год" data-lang-es="Elige el año" data-lang-en="Choose a Year">اختر السنة</label>
-                            <button type="button" id="back-to-model" class="flex items-center gap-2 px-3 py-1 text-sm text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                                </svg>
-                                <span class="bilingual" data-lang-ar="عودة" data-lang-ru="возвращаться" data-lang-es="devolver" data-lang-en="Back">عودة</span>
-                            </button>
-                        </div>
-                        <div id="selected-model-name" class="text-sm text-white/80 mb-2"></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label class="bilingual block text-sm font-medium text-white/90" data-lang-ar="من سنة" data-lang-ru="С года" data-lang-es="Desde el año" data-lang-en="Year from">من سنة</label>
-                                <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto scrollbar-hide">
-                                    {% for y in years %}
-                                    <div class="year-from-option cursor-pointer p-2 bg-white/90 backdrop-blur-sm rounded-lg text-center text-sm font-bold text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200" data-year="{{ y }}">
-                                        {{ y }}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                <label class="bilingual block text-sm font-medium text-white/90" data-lang-ar="إلى سنة" data-lang-ru="к году" data-lang-es="al año" data-lang-en="Year to">إلى سنة</label>
-                                <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto scrollbar-hide">
-                                    {% for y in years %}
-                                    <div class="year-to-option cursor-pointer p-2 bg-white/90 backdrop-blur-sm rounded-lg text-center text-sm font-bold text-gray-800 hover:bg-white hover:scale-105 transition-all duration-200" data-year="{{ y }}">
-                                        {{ y }}
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Always visible Selection Summary and Search Button -->
-                    <div class="space-y-4 mt-6 pt-4 border-t border-white/20">
-                        <!-- Selection Summary -->
-                        <div id="selection-summary" class="hidden p-4 bg-white/10 rounded-lg backdrop-blur-sm">
-                            <div class="text-sm text-white/90 space-y-1">
-                                <div id="summary-manufacturer" class="hidden"><span class="bilingual" data-lang-ar="الشركة:" data-lang-ru="Компания:" data-lang-es="Compañía:" data-lang-en="Manufacturer:">الشركة:</span> <span class="font-bold text-white"></span></div>
-                                <div id="summary-model" class="hidden"><span class="bilingual" data-lang-ar="الموديل:" data-lang-ru="Модель:" data-lang-es="Modelo:" data-lang-en="Model:">الموديل:</span> <span class="font-bold text-white"></span></div>
-                                <div id="summary-years" class="hidden"><span class="bilingual" data-lang-ar="السنة:" data-lang-ru="Год:" data-lang-es="Año:" data-lang-en="Year:">السنة:</span> <span class="font-bold text-white"></span></div>
-                            </div>
-                        </div>
-
-                        <!-- Search Button - Always Available -->
-                        <div class="flex justify-center">
-                            <button type="submit" id="hero-search-btn" class="group relative px-8 sm:px-12 py-3.5 sm:py-4 bg-white text-brand font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg shadow-black/10 hover:shadow-xl hover:shadow-black/20 hover:scale-105 active:scale-95 border-2 border-white/20 hover:border-white disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                                <span class="flex items-center gap-3">
-                                    <svg class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                    </svg>
-                                    <span id="search-btn-text" class="bilingual" data-lang-ar="بحث متقدم" data-lang-ru="Расширенный поиск" data-lang-es="Búsqueda avanzada" data-lang-en="Advanced Search">بحث متقدم</span>
-                                </span>
-                            </button>
-                        </div>
-                        
-                        <!-- Skip to Search Option -->
-                        <div class="text-center">
-                            <button type="button" id="skip-to-search" class="bilingual text-sm text-white/70 hover:text-white underline transition" data-lang-ar="تخطي واستعراض جميع السيارات" data-lang-ru="Пропустить и просмотреть все автомобили" data-lang-es="Saltar y ver todos los coches" data-lang-en="Skip and browse all cars">
-                                تخطي واستعراض جميع السيارات
-                            </button>
-                        </div>
-                    </div>
-                </form>
-
+                <div class="lux-hf-row-body"><div class="lux-hf-grid" id="lux-hf-model-grid"></div></div>
+              </div>
+              <div class="lux-hf-row" data-acc="year">
+                <button type="button" class="lux-hf-row-head"><svg class="lux-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                  <span class="lux-hf-row-label" id="lux-hf-year-label"><span class="bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع</span></span>
+                </button>
+                <div class="lux-hf-row-body"><div class="lux-hf-grid lux-hf-years" id="lux-hf-year-grid">{% for y in years %}<button type="button" class="lux-hf-opt lux-hf-year-opt" data-year="{{ y }}">{{ y }}</button>{% endfor %}</div></div>
+              </div>
+              <button type="submit" class="lux-hf-search">
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <span class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</span>
+              </button>
             </div>
+          </form>
         </div>
     </section>
     {% endif %}
@@ -656,441 +558,128 @@
 </div>
 
 <script>
-(function() {
-    // Toggle search filters
-    const toggleBtn = document.getElementById('toggle-search-filters');
-    const closeBtn = document.getElementById('close-search-filters');
-    const filtersPanel = document.getElementById('hero-search-filters');
-    const searchInput = document.getElementById('hero-search-input');
-    const inputContainer = document.getElementById('hero-search-input-container');
-    const carTypeInput = document.getElementById('hero-car-type');
-    
-    if (toggleBtn && filtersPanel && inputContainer) {
-        toggleBtn.addEventListener('click', function() {
-            inputContainer.classList.add('hidden');
-            filtersPanel.classList.remove('hidden');
-        });
-    }
-    
-    if (closeBtn && filtersPanel && inputContainer) {
-        closeBtn.addEventListener('click', function() {
-            filtersPanel.classList.add('hidden');
-            inputContainer.classList.remove('hidden');
-        });
-    }
-    
-    // The whole search bar acts as a button: clicking anywhere on the input
-    // (or its container) opens the makes panel and replaces the bar with it.
-    if (filtersPanel && inputContainer) {
-        function openHeroFilters() {
-            inputContainer.classList.add('hidden');
-            filtersPanel.classList.remove('hidden');
-        }
-        inputContainer.addEventListener('click', openHeroFilters);
-        if (searchInput) {
-            searchInput.addEventListener('focus', openHeroFilters);
-            searchInput.addEventListener('click', openHeroFilters);
-        }
-    }
+(function () {
+  var root = document.getElementById('lux-hf');
+  if (!root) return;
+  var form       = document.getElementById('lux-hf-form');
+  var carType    = document.getElementById('lux-hf-cartype');
+  var mfgInput   = document.getElementById('lux-hf-mfg');
+  var modelInput = document.getElementById('lux-hf-model');
+  var yearInput  = document.getElementById('lux-hf-year');
+  var brandGrid  = document.getElementById('lux-hf-brand-grid');
+  var modelGrid  = document.getElementById('lux-hf-model-grid');
+  var brandLabel = document.getElementById('lux-hf-brand-label');
+  var modelLabel = document.getElementById('lux-hf-model-label');
+  var yearLabel  = document.getElementById('lux-hf-year-label');
+  var rows = {};
+  root.querySelectorAll('.lux-hf-row').forEach(function (r) { rows[r.dataset.acc] = r; });
+  var carListUrl = "{% url 'car_list' %}";
+  var siteUrl    = "{% if site_cars_count %}{% url 'site_car_list' %}{% endif %}";
+  var modelsApi  = "{% url 'api_models_by_manufacturer' %}";
 
-    // Grid-based selection system with step-by-step navigation
-    let selectedData = {
-        manufacturer: null,
-        model: null,
-        yearFrom: null,
-        yearTo: null
-    };
+  function lang() { return (window.localStorage && localStorage.getItem('site_lang')) || 'ar'; }
+  function nameOf(d) { return lang() === 'en' ? (d.nameEn || d.nameAr) : (d.nameAr || d.nameEn); }
 
-    // DOM elements
-    const manufacturerSelection = document.getElementById('manufacturer-selection');
-    const modelSelection = document.getElementById('model-selection');
-    const yearSelection = document.getElementById('year-selection');
-    
-    const backToMfgBtn = document.getElementById('back-to-manufacturer');
-    const backToModelBtn = document.getElementById('back-to-model');
-    const skipToSearchBtn = document.getElementById('skip-to-search');
-    const searchBtn = document.getElementById('hero-search-btn');
-    const searchBtnText = document.getElementById('search-btn-text');
-    
-    const selectedMfgName = document.getElementById('selected-manufacturer-name');
-    const selectedModelName = document.getElementById('selected-model-name');
-    const modelGrid = document.getElementById('model-grid');
-    
-    const hiddenInputs = {
-        manufacturer: document.getElementById('selected-manufacturer'),
-        model: document.getElementById('selected-model'),
-        yearFrom: document.getElementById('selected-year-from'),
-        yearTo: document.getElementById('selected-year-to')
-    };
+  function bilingual(ar, en, es, ru) {
+    return '<span class="bilingual" data-lang-ar="' + ar + '" data-lang-en="' + en +
+           '" data-lang-es="' + (es || en) + '" data-lang-ru="' + (ru || en) + '">' + ar + '</span>';
+  }
+  function resetBrandLabel() { brandLabel.innerHTML = bilingual('جميع البراندات','All Brands','Todas las marcas','Все бренды'); rows.brand.classList.remove('is-selected'); }
+  function resetModelLabel() { modelLabel.innerHTML = bilingual('جميع الموديلات','All Models','Todos los modelos','Все модели'); rows.model.classList.remove('is-selected'); }
+  function resetYearLabel()  { yearLabel.innerHTML  = bilingual('سنة الصنع','Year','Año','Год'); rows.year.classList.remove('is-selected'); }
+  function setLabel(el, text) { el.textContent = text; el.closest('.lux-hf-row').classList.add('is-selected'); }
 
-    // Step navigation functions
-    function showStep(step) {
-        // Hide all steps
-        manufacturerSelection.classList.add('hidden');
-        modelSelection.classList.add('hidden');
-        yearSelection.classList.add('hidden');
-        
-        // Show requested step
-        step.classList.remove('hidden');
-        
-        // Update search button text based on current step
-        updateSearchButton();
-    }
-
-    // Manufacturer selection
-    const manufacturerOptions = document.querySelectorAll('.manufacturer-option');
-    manufacturerOptions.forEach(option => {
-        option.addEventListener('click', function() {
-            // Store selection
-            selectedData.manufacturer = {
-                id: this.dataset.id,
-                nameAr: this.dataset.nameAr,
-                nameEn: this.dataset.nameEn
-            };
-            
-            // Update hidden input
-            hiddenInputs.manufacturer.value = selectedData.manufacturer.id;
-            
-            // Clear subsequent selections
-            selectedData.model = null;
-            selectedData.yearFrom = null;
-            selectedData.yearTo = null;
-            hiddenInputs.model.value = '';
-            hiddenInputs.yearFrom.value = '';
-            hiddenInputs.yearTo.value = '';
-            
-            // Load models and show model selection
-            loadModels(selectedData.manufacturer.id);
-            const _curLang = localStorage.getItem('site_lang') || 'ar';
-            const _mfgName = _curLang === 'en' ? selectedData.manufacturer.nameEn : selectedData.manufacturer.nameAr;
-            const _mfgLabel = _curLang === 'en' ? 'Selected manufacturer' : 'الشركة المحددة';
-            selectedMfgName.textContent = `${_mfgLabel}: ${_mfgName}`;
-            showStep(modelSelection);
-        });
+  function openRow(key) { Object.keys(rows).forEach(function (k) { rows[k].classList.toggle('is-open', k === key); }); }
+  root.querySelectorAll('.lux-hf-row-head').forEach(function (head) {
+    head.addEventListener('click', function () {
+      var row = head.closest('.lux-hf-row');
+      openRow(row.classList.contains('is-open') ? null : row.dataset.acc);
     });
+  });
 
-    // Back to manufacturer button
-    if (backToMfgBtn) {
-        backToMfgBtn.addEventListener('click', function() {
-            showStep(manufacturerSelection);
-        });
-    }
-
-    // Back to model button
-    if (backToModelBtn) {
-        backToModelBtn.addEventListener('click', function() {
-            showStep(modelSelection);
-        });
-    }
-
-    // Skip to search button
-    if (skipToSearchBtn) {
-        skipToSearchBtn.addEventListener('click', function() {
-            // Clear all selections and go to car list
-            window.location.href = '{% url "car_list" %}';
-        });
-    }
-
-    // Year selection
-    function updateYearOptionStates() {
-        const fromVal = selectedData.yearFrom ? parseInt(selectedData.yearFrom) : null;
-        const toVal   = selectedData.yearTo   ? parseInt(selectedData.yearTo)   : null;
-
-        // Hide "year-to" options that are LESS than the selected year_from
-        document.querySelectorAll('.year-to-option').forEach(opt => {
-            const y = parseInt(opt.dataset.year);
-            if (fromVal !== null && y < fromVal) {
-                opt.classList.add('hidden');
-            } else {
-                opt.classList.remove('hidden');
-            }
-        });
-
-        // Hide "year-from" options that are GREATER than the selected year_to
-        document.querySelectorAll('.year-from-option').forEach(opt => {
-            const y = parseInt(opt.dataset.year);
-            if (toVal !== null && y > toVal) {
-                opt.classList.add('hidden');
-            } else {
-                opt.classList.remove('hidden');
-            }
-        });
-    }
-
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('year-from-option')) {
-            document.querySelectorAll('.year-from-option').forEach(opt => 
-                opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
-            e.target.classList.add('border-brand', 'bg-white', 'scale-105');
-            selectedData.yearFrom = e.target.dataset.year;
-            hiddenInputs.yearFrom.value = selectedData.yearFrom;
-
-            // If a year_to was already picked that is now invalid, clear it
-            if (selectedData.yearTo && parseInt(selectedData.yearTo) < parseInt(selectedData.yearFrom)) {
-                selectedData.yearTo = null;
-                hiddenInputs.yearTo.value = '';
-                document.querySelectorAll('.year-to-option').forEach(opt =>
-                    opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
-            }
-
-            updateYearOptionStates();
-            updateSelectionSummary();
-            updateSearchButton();
-        }
-        
-        if (e.target.classList.contains('year-to-option')) {
-            document.querySelectorAll('.year-to-option').forEach(opt => 
-                opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
-            e.target.classList.add('border-brand', 'bg-white', 'scale-105');
-            selectedData.yearTo = e.target.dataset.year;
-            hiddenInputs.yearTo.value = selectedData.yearTo;
-
-            // If a year_from was already picked that is now invalid, clear it
-            if (selectedData.yearFrom && parseInt(selectedData.yearFrom) > parseInt(selectedData.yearTo)) {
-                selectedData.yearFrom = null;
-                hiddenInputs.yearFrom.value = '';
-                document.querySelectorAll('.year-from-option').forEach(opt =>
-                    opt.classList.remove('border-brand', 'bg-white', 'scale-105'));
-            }
-
-            updateYearOptionStates();
-            updateSelectionSummary();
-            updateSearchButton();
-        }
+  // Brand
+  brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (opt) {
+    opt.addEventListener('click', function () {
+      brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+      opt.classList.add('is-selected');
+      mfgInput.value = opt.dataset.id;
+      setLabel(brandLabel, nameOf(opt.dataset));
+      modelInput.value = ''; resetModelLabel(); modelGrid.innerHTML = '';
+      loadModels(opt.dataset.id);
+      openRow('model');
     });
+  });
 
-    // Load models function
-    function loadModels(manufacturerId) {
-        const _lang0 = localStorage.getItem('site_lang') || 'ar';
-        const _loadingMsg = _lang0 === 'en' ? 'Loading...' : 'جاري التحميل...';
-        modelGrid.innerHTML = `<div class="col-span-full text-center text-white/80 py-4">${_loadingMsg}</div>`;
-        
-    const HOME_CAR_TYPE = (carTypeInput && carTypeInput.value === 'auction') ? 'auction' : '';
-    const HOME_LANG = '{{ request.LANGUAGE_CODE|default:"en" }}';
-    fetch('{% url "api_models_by_manufacturer" %}?manufacturer_id=' + manufacturerId + (HOME_CAR_TYPE ? '&car_type=' + HOME_CAR_TYPE : '') + (HOME_LANG ? '&lang=' + HOME_LANG : ''))
-            .then(r => {
-                if (!r.ok) {
-                    throw new Error(`HTTP error! status: ${r.status}`);
-                }
-                return r.json();
-            })
-            .then(models => {
-                modelGrid.innerHTML = '';
-                
-                if (models.length === 0) {
-                    const _lang1 = localStorage.getItem('site_lang') || 'ar';
-                    const _emptyMsg = _lang1 === 'en' ? 'No models available' : 'لا توجد موديلات متاحة';
-                    modelGrid.innerHTML = `<div class="col-span-full text-center text-white/80 py-4">${_emptyMsg}</div>`;
-                    return;
-                }
-                
-                const _lang2 = localStorage.getItem('site_lang') || 'ar';
-                const _carsLabel = _lang2 === 'en' ? 'cars' : 'سيارة';
-                models.forEach(model => {
-                    const modelOption = document.createElement('div');
-                    modelOption.className = 'model-option group cursor-pointer p-4 bg-white/90 backdrop-blur-sm rounded-xl border-2 border-transparent hover:border-white hover:bg-white hover:scale-105 transition-all duration-300 text-center';
-                    modelOption.dataset.id = model.id;
-                    modelOption.dataset.name = model.name;
-                    modelOption.dataset.nameAr = model.name_ar || model.name;
-                    modelOption.dataset.nameEn = model.name_en || model.name;
-
-                    const hasLogo = model.manufacturer_logo && model.manufacturer_logo !== null && model.manufacturer_logo !== '';
-                    const _displayName = _lang2 === 'en' ? (model.name_en || model.name) : (model.name_ar || model.name);
-
-                    modelOption.innerHTML = `
-                        <div class="w-12 h-12 mx-auto mb-2 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
-                            ${hasLogo ?
-                                `<img src="${model.manufacturer_logo}" alt="${_displayName}" class="w-full h-full object-contain">` :
-                                `<svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>
-                                </svg>`
-                            }
-                        </div>
-                        <div class="text-sm font-bold text-gray-800 group-hover:text-brand transition">
-                            ${_displayName}
-                        </div>
-                        <div class="text-xs text-gray-500 mt-1">${model.car_count || 0} ${_carsLabel}</div>
-                    `;
-                    
-                    // Add click handler for model selection
-                    modelOption.addEventListener('click', function() {
-                        // Store selection
-                        selectedData.model = {
-                            id: this.dataset.id,
-                            name: this.dataset.name,
-                            nameAr: this.dataset.nameAr,
-                            nameEn: this.dataset.nameEn
-                        };
-
-                        // Update hidden input
-                        hiddenInputs.model.value = selectedData.model.id;
-
-                        // Show year selection
-                        const _lang3 = localStorage.getItem('site_lang') || 'ar';
-                        const _mdlLabel = _lang3 === 'en' ? 'Selected model' : 'الموديل المحدد';
-                        const _mdlName = _lang3 === 'en' ? selectedData.model.nameEn : selectedData.model.nameAr;
-                        selectedModelName.textContent = `${_mdlLabel}: ${_mdlName}`;
-                        showStep(yearSelection);
-                        updateSelectionSummary();
-                    });
-                    
-                    modelGrid.appendChild(modelOption);
-                });
-            })
-            .catch(error => {
-                const _lang4 = localStorage.getItem('site_lang') || 'ar';
-                const _errMsg = _lang4 === 'en' ? 'Failed to load models' : 'خطأ في تحميل الموديلات';
-                modelGrid.innerHTML = `<div class="col-span-full text-center text-red-300 py-4">${_errMsg}</div>`;
-            });
-    }
-
-    // Update search button state and text
-    function updateSearchButton() {
-        const hasSelection = selectedData.manufacturer || selectedData.model || selectedData.yearFrom || selectedData.yearTo;
-        
-        searchBtn.disabled = !hasSelection;
-        
-        if (hasSelection) {
-            searchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        } else {
-            searchBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-        
-        // Update button text based on current step and selections
-        const _lang5 = localStorage.getItem('site_lang') || 'ar';
-        if (selectedData.manufacturer && selectedData.model && (selectedData.yearFrom || selectedData.yearTo)) {
-            searchBtnText.textContent = _lang5 === 'en' ? 'Search Now' : 'بحث الآن';
-            searchBtnText.classList.remove('bilingual');
-        } else if (selectedData.manufacturer) {
-            const _mfgN = _lang5 === 'en' ? selectedData.manufacturer.nameEn : selectedData.manufacturer.nameAr;
-            searchBtnText.textContent = (_lang5 === 'en' ? 'Search in ' : 'بحث في ') + _mfgN;
-            searchBtnText.classList.remove('bilingual');
-        } else if (hasSelection) {
-            searchBtnText.textContent = _lang5 === 'en' ? 'Advanced Search' : 'بحث متقدم';
-            searchBtnText.classList.remove('bilingual');
-        } else {
-            searchBtnText.textContent = _lang5 === 'en' ? 'Select criteria first' : 'اختر المعايير أولاً';
-            searchBtnText.classList.remove('bilingual');
-        }
-    }
-
-    // Update selection summary
-    function updateSelectionSummary() {
-        const summaryMfg = document.getElementById('summary-manufacturer');
-        const summaryModel = document.getElementById('summary-model');
-        const summaryYears = document.getElementById('summary-years');
-        const selectionSummary = document.getElementById('selection-summary');
-        
-        let hasAnySelection = false;
-        
-        const _lang6 = localStorage.getItem('site_lang') || 'ar';
-
-        if (selectedData.manufacturer) {
-            summaryMfg.classList.remove('hidden');
-            summaryMfg.querySelector('span.font-bold').textContent = _lang6 === 'en' ? selectedData.manufacturer.nameEn : selectedData.manufacturer.nameAr;
-            hasAnySelection = true;
-        } else {
-            summaryMfg.classList.add('hidden');
-        }
-
-        if (selectedData.model) {
-            summaryModel.classList.remove('hidden');
-            summaryModel.querySelector('span.font-bold').textContent = _lang6 === 'en' ? (selectedData.model.nameEn || selectedData.model.name) : (selectedData.model.nameAr || selectedData.model.name);
-            hasAnySelection = true;
-        } else {
-            summaryModel.classList.add('hidden');
-        }
-
-        if (selectedData.yearFrom || selectedData.yearTo) {
-            summaryYears.classList.remove('hidden');
-            let yearText = '';
-            if (selectedData.yearFrom && selectedData.yearTo) {
-                yearText = `${selectedData.yearFrom} - ${selectedData.yearTo}`;
-            } else if (selectedData.yearFrom) {
-                yearText = (_lang6 === 'en' ? 'From ' : 'من ') + selectedData.yearFrom;
-            } else if (selectedData.yearTo) {
-                yearText = (_lang6 === 'en' ? 'To ' : 'إلى ') + selectedData.yearTo;
-            }
-            summaryYears.querySelector('span.font-bold').textContent = yearText;
-            hasAnySelection = true;
-        } else {
-            summaryYears.classList.add('hidden');
-        }
-        
-        if (hasAnySelection) {
-            selectionSummary.classList.remove('hidden');
-        } else {
-            selectionSummary.classList.add('hidden');
-        }
-    }
-
-    // ── Cars / Auctions tabs ──
-    // Each tab sets the car_type the form submits, filters the manufacturer
-    // grid to makes that have inventory for that type, swaps the shown count,
-    // and resets any in-progress selection so it can't carry across tabs.
-    const typeTabs = Array.prototype.slice.call(document.querySelectorAll('.hero-type-tab'));
-    const TAB_ACTIVE = ['bg-white', 'text-brand'];
-    const TAB_INACTIVE = ['bg-white/10', 'text-white', 'border-white/20'];
-    function applyCarType(type) {
-        if (carTypeInput) carTypeInput.value = type;
-        typeTabs.forEach(function (t) {
-            const active = t.dataset.type === type;
-            t.classList.remove.apply(t.classList, active ? TAB_INACTIVE : TAB_ACTIVE);
-            t.classList.add.apply(t.classList, active ? TAB_ACTIVE : TAB_INACTIVE);
+  function loadModels(id) {
+    modelGrid.innerHTML = '<div class="lux-hf-empty">' + (lang() === 'en' ? 'Loading…' : 'جاري التحميل…') + '</div>';
+    var ct = carType.value === 'auction' ? 'auction' : '';
+    fetch(modelsApi + '?manufacturer_id=' + id + (ct ? '&car_type=' + ct : '') + '&lang=' + lang())
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (arr) {
+        modelGrid.innerHTML = '';
+        if (!arr.length) { modelGrid.innerHTML = '<div class="lux-hf-empty">' + (lang() === 'en' ? 'No models' : 'لا توجد موديلات') + '</div>'; return; }
+        arr.sort(function (a, b) { return (b.car_count || 0) - (a.car_count || 0); });
+        arr.forEach(function (m) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'lux-hf-opt lux-hf-model-opt';
+          b.dataset.id = m.id; b.dataset.nameAr = m.name_ar || m.name; b.dataset.nameEn = m.name_en || m.name;
+          b.innerHTML = '<span>' + (lang() === 'en' ? b.dataset.nameEn : b.dataset.nameAr) + '</span>' +
+                        (m.car_count ? '<span class="lux-hf-opt-count">' + m.car_count + '</span>' : '');
+          b.addEventListener('click', function () {
+            modelGrid.querySelectorAll('.lux-hf-model-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+            b.classList.add('is-selected');
+            modelInput.value = b.dataset.id;
+            setLabel(modelLabel, lang() === 'en' ? b.dataset.nameEn : b.dataset.nameAr);
+            openRow('year');
+          });
+          modelGrid.appendChild(b);
         });
-        const attr = type === 'auction' ? 'auctionCount' : 'carsCount';
-        manufacturerOptions.forEach(function (opt) {
-            const n = parseInt(opt.dataset[attr] || '0', 10);
-            opt.style.display = n > 0 ? '' : 'none';
-            const numEl = opt.querySelector('.mfg-count-num');
-            if (numEl) numEl.textContent = n;
-            opt.classList.remove('border-brand', 'bg-white', 'scale-105');
-        });
-        // Reset selection so it never crosses tabs
-        selectedData = { manufacturer: null, model: null, yearFrom: null, yearTo: null };
-        hiddenInputs.manufacturer.value = '';
-        hiddenInputs.model.value = '';
-        hiddenInputs.yearFrom.value = '';
-        hiddenInputs.yearTo.value = '';
-        if (modelGrid) modelGrid.innerHTML = '';
-        showStep(manufacturerSelection);
-        updateSelectionSummary();
-        updateSearchButton();
-    }
-    typeTabs.forEach(function (tab) {
-        tab.addEventListener('click', function () { applyCarType(tab.dataset.type); });
+      })
+      .catch(function () { modelGrid.innerHTML = '<div class="lux-hf-empty">—</div>'; });
+  }
+
+  // Year
+  root.querySelectorAll('.lux-hf-year-opt').forEach(function (opt) {
+    opt.addEventListener('click', function () {
+      root.querySelectorAll('.lux-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+      opt.classList.add('is-selected');
+      yearInput.value = opt.dataset.year;
+      setLabel(yearLabel, opt.dataset.year);
+      openRow(null);
     });
-    if (typeTabs.length) {
-        const hasCars = typeTabs.some(function (t) { return t.dataset.type === 'cars'; });
-        applyCarType(hasCars ? 'cars' : typeTabs[0].dataset.type);
-    }
+  });
 
-    // Initialize
-    updateSearchButton();
-
-    // Re-render dynamic text when the language toggles.
-    document.addEventListener('langchange', function() {
-        updateSearchButton();
-        updateSelectionSummary();
-        // Refresh loaded model names (if any are already in the grid).
-        const curLang = localStorage.getItem('site_lang') || 'ar';
-        document.querySelectorAll('#model-grid .model-option').forEach(function(opt) {
-            const nameEl = opt.querySelector('.text-sm.font-bold');
-            if (nameEl) nameEl.textContent = curLang === 'en' ? (opt.dataset.nameEn || opt.dataset.name) : (opt.dataset.nameAr || opt.dataset.name);
-        });
-        // Re-render the selected-manufacturer caption.
-        if (selectedData.manufacturer) {
-            const lbl = curLang === 'en' ? 'Selected manufacturer' : 'الشركة المحددة';
-            const nm = curLang === 'en' ? selectedData.manufacturer.nameEn : selectedData.manufacturer.nameAr;
-            selectedMfgName.textContent = `${lbl}: ${nm}`;
-        }
-        // Re-render the selected-model caption.
-        if (selectedData.model) {
-            const lbl = curLang === 'en' ? 'Selected model' : 'الموديل المحدد';
-            const nm = curLang === 'en' ? (selectedData.model.nameEn || selectedData.model.name) : (selectedData.model.nameAr || selectedData.model.name);
-            selectedModelName.textContent = `${lbl}: ${nm}`;
-        }
+  // Tabs
+  var tabs = Array.prototype.slice.call(root.querySelectorAll('.lux-hf-tab'));
+  function applyType(type) {
+    tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.type === type); });
+    if (type === 'ours' && siteUrl) { form.action = siteUrl; carType.value = ''; }
+    else { form.action = carListUrl; carType.value = (type === 'auction') ? 'auction' : ''; }
+    var attr = type === 'auction' ? 'auctionCount' : 'carsCount';
+    brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (opt) {
+      var n = (type === 'all')
+        ? (parseInt(opt.dataset.carsCount || '0', 10) + parseInt(opt.dataset.auctionCount || '0', 10))
+        : parseInt(opt.dataset[attr] || '0', 10);
+      opt.style.display = (type === 'ours' || n > 0) ? '' : 'none';
+      var c = opt.querySelector('.lux-hf-opt-count');
+      if (c && type !== 'ours') c.textContent = n;
     });
+    mfgInput.value = ''; modelInput.value = ''; yearInput.value = '';
+    brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    root.querySelectorAll('.lux-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    modelGrid.innerHTML = '';
+    resetBrandLabel(); resetModelLabel(); resetYearLabel();
+    openRow(null);
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { applyType(t.dataset.type); }); });
+  if (tabs.length) applyType(tabs[0].dataset.type);
+
+  form.addEventListener('submit', function () {
+    [carType, mfgInput, modelInput, yearInput].forEach(function (el) {
+      if (el && (!el.value || !el.value.trim())) el.disabled = true;
+    });
+  });
 })();
 </script>
 {% endblock %}
