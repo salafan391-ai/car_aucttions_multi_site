@@ -352,12 +352,11 @@
         </style>
         <div class="lux-hf" id="lux-hf">
           <div class="lux-hf-tabs">
-            <button type="button" class="lux-hf-tab is-active" data-type="all"><span class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</span></button>
-            {% if site_cars_count and show_site_cars %}
-            <button type="button" class="lux-hf-tab" data-type="ours"><span class="bilingual" data-lang-ar="بيع مباشر" data-lang-en="Direct Sale" data-lang-es="Venta directa" data-lang-ru="Прямая продажа">بيع مباشر</span></button>
+            {% if show_encar %}
+            <button type="button" class="lux-hf-tab is-active" data-type="cars"><span class="bilingual" data-lang-ar="بيع مباشر" data-lang-en="Direct Sale" data-lang-es="Venta directa" data-lang-ru="Прямая продажа">بيع مباشر</span></button>
             {% endif %}
             {% if show_auctions %}
-            <button type="button" class="lux-hf-tab" data-type="auction"><span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد</span></button>
+            <button type="button" class="lux-hf-tab{% if not show_encar %} is-active{% endif %}" data-type="auction"><span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد</span></button>
             {% endif %}
           </div>
           <form id="lux-hf-form" method="get" action="{% url 'car_list' %}">
@@ -368,7 +367,7 @@
             <div class="lux-hf-card">
               <div class="lux-hf-row" data-acc="brand">
                 <button type="button" class="lux-hf-row-head"><svg class="lux-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-                  <span class="lux-hf-row-label" id="lux-hf-brand-label"><span class="bilingual" data-lang-ar="جميع البراندات" data-lang-en="All Brands" data-lang-es="Todas las marcas" data-lang-ru="Все бренды">جميع البراندات</span></span>
+                  <span class="lux-hf-row-label" id="lux-hf-brand-label"><span class="bilingual" data-lang-ar="جميع الماركات" data-lang-en="All Brands" data-lang-es="Todas las marcas" data-lang-ru="Все бренды">جميع الماركات</span></span>
                 </button>
                 <div class="lux-hf-row-body">
                   <div class="lux-hf-grid" id="lux-hf-brand-grid">
@@ -584,7 +583,7 @@
     return '<span class="bilingual" data-lang-ar="' + ar + '" data-lang-en="' + en +
            '" data-lang-es="' + (es || en) + '" data-lang-ru="' + (ru || en) + '">' + ar + '</span>';
   }
-  function resetBrandLabel() { brandLabel.innerHTML = bilingual('جميع البراندات','All Brands','Todas las marcas','Все бренды'); rows.brand.classList.remove('is-selected'); }
+  function resetBrandLabel() { brandLabel.innerHTML = bilingual('جميع الماركات','All Brands','Todas las marcas','Все бренды'); rows.brand.classList.remove('is-selected'); }
   function resetModelLabel() { modelLabel.innerHTML = bilingual('جميع الموديلات','All Models','Todos los modelos','Все модели'); rows.model.classList.remove('is-selected'); }
   function resetYearLabel()  { yearLabel.innerHTML  = bilingual('سنة الصنع','Year','Año','Год'); rows.year.classList.remove('is-selected'); }
   function setLabel(el, text) { el.textContent = text; el.closest('.lux-hf-row').classList.add('is-selected'); }
@@ -655,7 +654,7 @@
   function applyType(type) {
     tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.type === type); });
     if (type === 'ours' && siteUrl) { form.action = siteUrl; carType.value = ''; }
-    else { form.action = carListUrl; carType.value = (type === 'auction') ? 'auction' : ''; }
+    else { form.action = carListUrl; carType.value = (type === 'auction') ? 'auction' : 'cars'; }
     var attr = type === 'auction' ? 'auctionCount' : 'carsCount';
     brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (opt) {
       var n = (type === 'all')
