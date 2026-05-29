@@ -328,10 +328,11 @@
                     <input 
                         type="text" 
                         id="hero-search-input"
+                        readonly
                         placeholder="ما هي السيارة التي تبحث عنها؟"
                         data-placeholder-ar="ما هي السيارة التي تبحث عنها؟" data-placeholder-ru="Какую машину вы ищете?" data-placeholder-es="¿Qué coche estás buscando?"
                         data-placeholder-en="What car are you looking for?"
-                        class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-white text-gray-800 placeholder-gray-400 text-sm sm:text-base focus:ring-2 focus:ring-primary-400 outline-none pr-12"
+                        class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-lg sm:rounded-xl bg-white text-gray-800 placeholder-gray-400 text-sm sm:text-base focus:ring-2 focus:ring-primary-400 outline-none pr-12 cursor-pointer"
                     >
                     <button 
                         type="button"
@@ -661,12 +662,18 @@
         });
     }
     
-    // Also show filters when clicking on the search input
-    if (searchInput && filtersPanel && inputContainer) {
-        searchInput.addEventListener('focus', function() {
+    // The whole search bar acts as a button: clicking anywhere on the input
+    // (or its container) opens the makes panel and replaces the bar with it.
+    if (filtersPanel && inputContainer) {
+        function openHeroFilters() {
             inputContainer.classList.add('hidden');
             filtersPanel.classList.remove('hidden');
-        });
+        }
+        inputContainer.addEventListener('click', openHeroFilters);
+        if (searchInput) {
+            searchInput.addEventListener('focus', openHeroFilters);
+            searchInput.addEventListener('click', openHeroFilters);
+        }
     }
 
     // Grid-based selection system with step-by-step navigation
