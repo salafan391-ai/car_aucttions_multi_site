@@ -814,10 +814,10 @@
         });
     });
 
-    // Focusing the search input opens the panel (matches the default theme).
+    // The search box stays a real text input: type a query and press Enter to
+    // search. The advanced (cascading) panel is opened by the magnifier toggle
+    // button instead, so focusing/clicking the field no longer hijacks it.
     var qInput = document.getElementById('lux-mega-q');
-    qInput.addEventListener('focus', openPanel);
-    qInput.addEventListener('click', openPanel);
 
     // Before submit, strip any empty hidden inputs so we never emit
     // `?manufacturer=` etc. into the URL (the server view rejects them).
