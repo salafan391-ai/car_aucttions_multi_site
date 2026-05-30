@@ -902,7 +902,7 @@
         </script>
         {% endif %}
 
-        {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice|only_chosen:car.options.choice %}
+        {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice|only_chosen:car.options %}
 
         {% if car.options.standard or autohub_opts %}
         <section class="lux-section-block">

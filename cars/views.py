@@ -1673,6 +1673,11 @@ def _ensure_origin_price(car):
         pass
 
 
+def _is_auction(car):
+    cat = getattr(car, 'category', None)
+    return bool(cat and (cat.name or '').lower() == 'auction')
+
+
 def _build_price_comparison(car):
     """Encar 신차대비 (vs new-car) price comparison for the detail page.
 
@@ -1682,6 +1687,8 @@ def _build_price_comparison(car):
     the saving and the current/new percentage, or None when data is missing or
     the current price isn't below the new-car price.
     """
+    if _is_auction(car):
+        return None  # comparison is meaningless for auctions (price is a starting bid)
     ef = car.extra_features or {}
     try:
         origin = int(ef.get('originPrice'))
@@ -1690,7 +1697,7 @@ def _build_price_comparison(car):
     if origin <= 0:
         return None
 
-    opts = car.options or {}
+    opts = car.options if isinstance(car.options, dict) else {}
     codes = {str(c).strip() for c in (opts.get('choice') or []) if str(c).strip()}
     chosen, options_total = [], 0  # 만원
     for o in (ef.get('optionsChoice') or []):
@@ -1760,7 +1767,8 @@ def car_detail(request, slug):
     # Non-blocking: render whatever we already know. If originPrice hasn't been
     # fetched yet, the template loads the comparison via AJAX (car_price_comparison).
     _ef = car.extra_features or {}
-    pc_pending = bool(_ef.get('vehicleId')) and 'originPrice' not in _ef
+    pc_pending = (bool(_ef.get('vehicleId')) and 'originPrice' not in _ef
+                  and not _is_auction(car))
 
     context = {
         'car': car,
@@ -1795,6 +1803,8 @@ def car_price_comparison(request, slug):
     car = get_object_or_404(
         ApiCar.objects.select_related('manufacturer', 'model', 'category'), slug=slug
     )
+    if _is_auction(car):
+        return HttpResponse('')
     _ensure_origin_price(car)
     pc = _build_price_comparison(car)
     if not pc:

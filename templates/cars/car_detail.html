@@ -418,7 +418,7 @@
             {% endif %}
 
             <!-- Tabbed: Features / Inspection / History -->
-            {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice|only_chosen:car.options.choice %}
+            {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice|only_chosen:car.options %}
             {% if car.options.standard or insp.has_inspection or rec.openData or autohub_opts or opts_choice %}
             <div class="bg-white rounded-2xl shadow-sm mt-6 overflow-hidden" dir="rtl">
 
