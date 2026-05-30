@@ -183,6 +183,24 @@ def translate_option_en(value):
 
 
 @register.filter
+def only_chosen(options_choice, choice_codes):
+    """Keep only the factory optionsChoice entries actually fitted to this car.
+
+    Encar stores the full catalog of selectable options in ``optionsChoice``
+    (name/price/description per ``optionCd``) but the codes the specific car
+    really has live in ``options.choice``. Intersect them so the detail page
+    matches the Encar listing instead of over-listing every catalog option.
+    """
+    if not isinstance(options_choice, list):
+        return options_choice
+    codes = {str(c).strip() for c in (choice_codes or []) if str(c).strip()}
+    if not codes:
+        return []
+    return [o for o in options_choice
+            if isinstance(o, dict) and str(o.get('optionCd', '')).strip() in codes]
+
+
+@register.filter
 def oc(value, lang='en'):
     """Translate a Korean Encar optionsChoice name/description.
 
