@@ -1626,6 +1626,50 @@ def car_detail_by_pk(request, pk):
     return redirect('car_detail', slug=str(pk), permanent=True)
 
 
+def _build_price_comparison(car):
+    """Encar 신차대비 (vs new-car) price comparison for the detail page.
+
+    New-car price = grade base (extra_features.originPrice, 만원) + the actually
+    fitted choice options (optionsChoice entries whose optionCd is in
+    options.choice). Returns KRW values (for the data-price-krw converter) plus
+    the saving and the current/new percentage, or None when data is missing or
+    the current price isn't below the new-car price.
+    """
+    ef = car.extra_features or {}
+    try:
+        origin = int(ef.get('originPrice'))
+    except (TypeError, ValueError):
+        return None
+    if origin <= 0:
+        return None
+
+    opts = car.options or {}
+    codes = {str(c).strip() for c in (opts.get('choice') or []) if str(c).strip()}
+    chosen, options_total = [], 0  # 만원
+    for o in (ef.get('optionsChoice') or []):
+        if isinstance(o, dict) and str(o.get('optionCd', '')).strip() in codes:
+            try:
+                p = int(o.get('price') or 0)
+            except (TypeError, ValueError):
+                p = 0
+            options_total += p
+            chosen.append({'name': o.get('optionName') or '', 'price_krw': p * 10000})
+
+    newcar_krw = (origin + options_total) * 10000
+    current = car.price or 0
+    if newcar_krw <= 0 or not current or current >= newcar_krw:
+        return None
+    return {
+        'grade_base_krw': origin * 10000,
+        'options_total_krw': options_total * 10000,
+        'options': chosen,
+        'newcar_krw': newcar_krw,
+        'current_krw': current,
+        'savings_krw': newcar_krw - current,
+        'percent': round(current / newcar_krw * 100),
+    }
+
+
 def car_detail(request, slug):
     # Accept either a slug or a numeric string that was previously used as pk
     # Use select_related to fetch all related objects in one query
@@ -1668,6 +1712,7 @@ def car_detail(request, slug):
 
     context = {
         'car': car,
+        'price_comparison': _build_price_comparison(car),
         'ratings': ratings,
         'avg_rating': avg_rating,
         'user_rating': user_rating,
