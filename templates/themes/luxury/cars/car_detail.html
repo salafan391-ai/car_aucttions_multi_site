@@ -889,6 +889,17 @@
                 <div class="bilingual" style="font-size:.85rem;color:#7fc785;margin-bottom:.3rem;" data-lang-ar="أوفر من سعر الجديد بـ" data-lang-en="Cheaper than new by" data-lang-es="Más barato que nuevo en" data-lang-ru="Дешевле нового на">أوفر من سعر الجديد بـ</div>
                 <div style="font-size:1.6rem;font-weight:800;color:#7fc785;" data-price-krw="{{ price_comparison.savings_krw }}">{{ price_comparison.savings_krw|floatformat:0 }} <span style="font-size:.9rem;">₩</span></div>
             </div>
+            <div style="margin-bottom:1.1rem;">
+                <div style="height:1.6rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--lux-line);overflow:hidden;">
+                    <div style="height:100%;width:{{ price_comparison.percent }}%;min-width:3rem;background:var(--lux-gold);display:flex;align-items:center;justify-content:center;">
+                        <span style="font-size:.72rem;font-weight:700;color:var(--lux-bg);">{{ price_comparison.percent }}%</span>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:.7rem;margin-top:.4rem;">
+                    <span class="bilingual" style="color:var(--lux-gold-bright);font-weight:600;" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Actual" data-lang-ru="Текущая">السعر الحالي</span>
+                    <span class="bilingual" style="opacity:.55;" data-lang-ar="سعر الجديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">سعر الجديد</span>
+                </div>
+            </div>
             <div style="display:flex;justify-content:space-between;gap:.75rem;margin-bottom:1.1rem;">
                 <div style="flex:1;text-align:center;padding:.75rem;border:1px solid var(--lux-line);border-radius:.6rem;">
                     <div class="bilingual" style="font-size:.72rem;opacity:.65;margin-bottom:.25rem;" data-lang-ar="سعر الجديد" data-lang-en="New price" data-lang-es="Precio nuevo" data-lang-ru="Цена нового">سعر الجديد</div>
