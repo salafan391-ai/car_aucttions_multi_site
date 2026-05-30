@@ -4,6 +4,7 @@ import json
 import logging
 from urllib.parse import urlencode
 import urllib.request
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -1626,6 +1627,52 @@ def car_detail_by_pk(request, pk):
     return redirect('car_detail', slug=str(pk), permanent=True)
 
 
+_ENCAR_VEHICLE_API = "https://api.encar.com/v1/readside/vehicle/{}"
+
+
+def _ensure_origin_price(car):
+    """Lazily fetch the Encar grade base price (category.originPrice, 만원) the
+    first time a car's detail page is viewed, and store it on extra_features so
+    later views (and the price comparison) reuse it.
+
+    Stores 0 when Encar has no data / the listing is gone (404) so we don't
+    re-fetch on every view; transient network errors are left unstored so a
+    later view can retry. Best-effort: never raises into the request.
+    """
+    ef = car.extra_features or {}
+    if 'originPrice' in ef:
+        return
+    vid = ef.get('vehicleId')
+    if not vid:
+        return
+    try:
+        r = requests.get(
+            _ENCAR_VEHICLE_API.format(vid),
+            timeout=2.5,
+            headers={'User-Agent': 'Mozilla/5.0', 'Referer': 'https://fem.encar.com/',
+                     'Accept': 'application/json'},
+        )
+    except requests.RequestException:
+        return  # transient — allow a retry on a later view
+    val = None
+    if r.status_code == 200:
+        try:
+            val = (r.json().get('category') or {}).get('originPrice')
+        except ValueError:
+            val = None
+    elif r.status_code != 404:
+        return  # unexpected error — retry later, don't poison with 0
+    try:
+        ef['originPrice'] = int(val) if val else 0
+    except (TypeError, ValueError):
+        ef['originPrice'] = 0
+    car.extra_features = ef
+    try:
+        car.save(update_fields=['extra_features'])
+    except Exception:
+        pass
+
+
 def _build_price_comparison(car):
     """Encar 신차대비 (vs new-car) price comparison for the detail page.
 
@@ -1709,6 +1756,7 @@ def car_detail(request, slug):
             user_rating = SiteRating.objects.filter(car=car, user=request.user).first()
 
     insp = _build_inspection_context(car.extra_features or {})
+    _ensure_origin_price(car)
 
     context = {
         'car': car,
