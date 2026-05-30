@@ -880,50 +880,26 @@
         {% endif %}
 
         {% if price_comparison %}
-        <section class="lux-section-block">
-            <h2>
-                <small class="bilingual" data-lang-ar="القيمة" data-lang-en="Value" data-lang-es="Valor" data-lang-ru="Ценность">القيمة</small>
-                <span class="bilingual" data-lang-ar="مقارنة بسعر السيارة الجديدة" data-lang-en="Compared to New" data-lang-es="Comparado con uno nuevo" data-lang-ru="Сравнение с новым">مقارنة بسعر السيارة الجديدة</span>
-            </h2>
-            <div style="text-align:center;padding:1.1rem;border:1px solid rgba(76,175,80,.4);background:rgba(76,175,80,.1);border-radius:.75rem;margin-bottom:1.1rem;">
-                <div class="bilingual" style="font-size:.85rem;color:#7fc785;margin-bottom:.3rem;" data-lang-ar="أوفر من سعر الجديد بـ" data-lang-en="Cheaper than new by" data-lang-es="Más barato que nuevo en" data-lang-ru="Дешевле нового на">أوفر من سعر الجديد بـ</div>
-                <div style="font-size:1.6rem;font-weight:800;color:#7fc785;" data-price-krw="{{ price_comparison.savings_krw }}">{{ price_comparison.savings_krw|floatformat:0 }} <span style="font-size:.9rem;">₩</span></div>
-            </div>
-            <div style="margin-bottom:1.1rem;">
-                <div style="height:1.6rem;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--lux-line);overflow:hidden;">
-                    <div style="height:100%;width:{{ price_comparison.percent }}%;min-width:3rem;background:var(--lux-gold);display:flex;align-items:center;justify-content:center;">
-                        <span style="font-size:.72rem;font-weight:700;color:var(--lux-bg);">{{ price_comparison.percent }}%</span>
-                    </div>
-                </div>
-                <div style="display:flex;justify-content:space-between;font-size:.7rem;margin-top:.4rem;">
-                    <span class="bilingual" style="color:var(--lux-gold-bright);font-weight:600;" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Actual" data-lang-ru="Текущая">السعر الحالي</span>
-                    <span class="bilingual" style="opacity:.55;" data-lang-ar="سعر الجديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">سعر الجديد</span>
-                </div>
-            </div>
-            <div style="display:flex;justify-content:space-between;gap:.75rem;margin-bottom:1.1rem;">
-                <div style="flex:1;text-align:center;padding:.75rem;border:1px solid var(--lux-line);border-radius:.6rem;">
-                    <div class="bilingual" style="font-size:.72rem;opacity:.65;margin-bottom:.25rem;" data-lang-ar="سعر الجديد" data-lang-en="New price" data-lang-es="Precio nuevo" data-lang-ru="Цена нового">سعر الجديد</div>
-                    <div style="font-weight:700;" data-price-krw="{{ price_comparison.newcar_krw }}">{{ price_comparison.newcar_krw|floatformat:0 }} ₩</div>
-                </div>
-                <div style="flex:1;text-align:center;padding:.75rem;border:1px solid var(--lux-gold);border-radius:.6rem;background:rgba(201,164,90,.12);">
-                    <div class="bilingual" style="font-size:.72rem;opacity:.65;margin-bottom:.25rem;" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Precio actual" data-lang-ru="Текущая цена">السعر الحالي</div>
-                    <div style="font-weight:700;color:var(--lux-gold-bright);"><span data-price-krw="{{ price_comparison.current_krw }}">{{ price_comparison.current_krw|floatformat:0 }}</span> ₩ ({{ price_comparison.percent }}%)</div>
-                </div>
-            </div>
-            <div style="border-top:1px solid var(--lux-line);padding-top:.85rem;font-size:.85rem;display:flex;flex-direction:column;gap:.5rem;">
-                <div style="display:flex;justify-content:space-between;"><span class="bilingual" style="opacity:.7;" data-lang-ar="السعر الأساسي للفئة" data-lang-en="Grade base price" data-lang-es="Precio base" data-lang-ru="Базовая цена">السعر الأساسي للفئة</span><span data-price-krw="{{ price_comparison.grade_base_krw }}">{{ price_comparison.grade_base_krw|floatformat:0 }} ₩</span></div>
-                {% if price_comparison.options %}
-                <div style="display:flex;justify-content:space-between;"><span style="opacity:.7;"><span class="bilingual" data-lang-ar="الخيارات المختارة" data-lang-en="Selected options" data-lang-es="Opciones" data-lang-ru="Опции">الخيارات المختارة</span> ({{ price_comparison.options|length }})</span><span data-price-krw="{{ price_comparison.options_total_krw }}">{{ price_comparison.options_total_krw|floatformat:0 }} ₩</span></div>
-                {% for o in price_comparison.options %}
-                <div style="display:flex;justify-content:space-between;padding-inline-start:1rem;font-size:.78rem;opacity:.55;"><span class="bilingual" data-lang-ar="{{ o.name|oc:'ar' }}" data-lang-en="{{ o.name|oc:'en' }}" data-lang-es="{{ o.name|oc:'es' }}" data-lang-ru="{{ o.name|oc:'ru' }}">{{ o.name|oc:'ar' }}</span><span data-price-krw="{{ o.price_krw }}">{{ o.price_krw|floatformat:0 }} ₩</span></div>
-                {% endfor %}
-                {% endif %}
-            </div>
-            <div style="margin-top:1rem;font-size:.7rem;opacity:.45;line-height:1.6;">
-                <div class="bilingual" data-lang-ar="• قد يختلف سعر الجديد عن سعر التسليم الفعلي." data-lang-en="• The new-car price may differ from the actual delivery price." data-lang-es="• El precio nuevo puede diferir del precio real." data-lang-ru="• Цена нового может отличаться от фактической.">• قد يختلف سعر الجديد عن سعر التسليم الفعلي.</div>
-                <div class="bilingual" data-lang-ar="• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة." data-lang-en="• Based on the grade plus selected options." data-lang-es="• Basado en la versión y las opciones." data-lang-ru="• Рассчитано по комплектации и опциям.">• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة.</div>
-            </div>
-        </section>
+        {% include 'themes/luxury/cars/_price_comparison.html' %}
+        {% elif pc_pending %}
+        <div id="price-comparison-slot" data-pc-url="{% url 'car_price_comparison' car.slug %}"></div>
+        <script>
+        (function () {
+          var slot = document.getElementById('price-comparison-slot');
+          if (!slot) return;
+          fetch(slot.dataset.pcUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.ok ? r.text() : ''; })
+            .then(function (html) {
+              if (!html || !html.trim()) { slot.remove(); return; }
+              slot.innerHTML = html;
+              var lang = (window.localStorage && localStorage.getItem('site_lang')) || 'ar';
+              var cur = (window.localStorage && localStorage.getItem('site_currency')) || 'SAR';
+              if (lang !== 'ar' && typeof applyLang === 'function') applyLang(lang);
+              if (typeof applyCurrency === 'function') applyCurrency(cur);
+            })
+            .catch(function () { slot.remove(); });
+        })();
+        </script>
         {% endif %}
 
         {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice|only_chosen:car.options.choice %}

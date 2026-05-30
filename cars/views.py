@@ -1756,11 +1756,16 @@ def car_detail(request, slug):
             user_rating = SiteRating.objects.filter(car=car, user=request.user).first()
 
     insp = _build_inspection_context(car.extra_features or {})
-    _ensure_origin_price(car)
+
+    # Non-blocking: render whatever we already know. If originPrice hasn't been
+    # fetched yet, the template loads the comparison via AJAX (car_price_comparison).
+    _ef = car.extra_features or {}
+    pc_pending = bool(_ef.get('vehicleId')) and 'originPrice' not in _ef
 
     context = {
         'car': car,
         'price_comparison': _build_price_comparison(car),
+        'pc_pending': pc_pending,
         'ratings': ratings,
         'avg_rating': avg_rating,
         'user_rating': user_rating,
@@ -1781,6 +1786,24 @@ def car_detail(request, slug):
         'insp': insp,
     }
     return render(request, 'cars/car_detail.html', context)
+
+
+def car_price_comparison(request, slug):
+    """AJAX endpoint: lazily fetch originPrice from Encar and return the rendered
+    new-car comparison panel (theme-aware). Empty body when there's nothing to
+    show, so the page's placeholder simply removes itself."""
+    car = get_object_or_404(
+        ApiCar.objects.select_related('manufacturer', 'model', 'category'), slug=slug
+    )
+    _ensure_origin_price(car)
+    pc = _build_price_comparison(car)
+    if not pc:
+        return HttpResponse('')
+    tenant = _get_current_tenant()
+    template = 'cars/_price_comparison.html'
+    if tenant is not None and getattr(tenant, 'template_theme', '') == 'luxury':
+        template = 'themes/luxury/cars/_price_comparison.html'
+    return render(request, template, {'car': car, 'price_comparison': pc})
 
 
 def car_request(request):

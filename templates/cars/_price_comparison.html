@@ -1,0 +1,45 @@
+{% load custom_filters humanize %}
+<div class="bg-white rounded-2xl shadow-sm p-6 mt-6" dir="rtl">
+  <h2 class="text-xl font-bold mb-4 bilingual" data-lang-ar="مقارنة بسعر السيارة الجديدة" data-lang-en="Compared to New" data-lang-es="Comparado con uno nuevo" data-lang-ru="Сравнение с новым">مقارنة بسعر السيارة الجديدة</h2>
+  <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-4 text-center">
+    <div class="text-sm text-emerald-700 mb-1 bilingual" data-lang-ar="أوفر من سعر الجديد بـ" data-lang-en="Cheaper than new by" data-lang-es="Más barato que nuevo en" data-lang-ru="Дешевле нового на">أوفر من سعر الجديد بـ</div>
+    <div class="text-2xl font-extrabold text-emerald-700" data-price-krw="{{ price_comparison.savings_krw }}">{{ price_comparison.savings_krw|floatformat:0 }} <span class="text-sm">₩</span></div>
+  </div>
+  <!-- price progress bar: current price as a share of new -->
+  <div class="mb-4">
+    <div class="h-7 rounded-full bg-gray-100 border border-gray-200 overflow-hidden">
+      <div class="h-full bg-brand flex items-center justify-center transition-all" style="width: {{ price_comparison.percent }}%; min-width: 3rem;">
+        <span class="text-xs font-bold text-white">{{ price_comparison.percent }}%</span>
+      </div>
+    </div>
+    <div class="flex justify-between text-[11px] mt-1.5">
+      <span class="text-brand font-semibold bilingual" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Actual" data-lang-ru="Текущая">السعر الحالي</span>
+      <span class="text-gray-400 bilingual" data-lang-ar="سعر الجديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">سعر الجديد</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <div class="bg-gray-50 rounded-xl p-3 text-center">
+      <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="سعر الجديد" data-lang-en="New car price" data-lang-es="Precio nuevo" data-lang-ru="Цена нового">سعر الجديد</div>
+      <div class="font-bold text-gray-800" data-price-krw="{{ price_comparison.newcar_krw }}">{{ price_comparison.newcar_krw|floatformat:0 }} <span class="text-xs text-gray-400">₩</span></div>
+    </div>
+    <div class="bg-brand-light/40 rounded-xl p-3 text-center">
+      <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="السعر الحالي" data-lang-en="Current price" data-lang-es="Precio actual" data-lang-ru="Текущая цена">السعر الحالي</div>
+      <div class="font-bold text-brand"><span data-price-krw="{{ price_comparison.current_krw }}">{{ price_comparison.current_krw|floatformat:0 }}</span> <span class="text-xs">₩</span> <span class="text-xs text-emerald-600 font-bold">({{ price_comparison.percent }}%)</span></div>
+    </div>
+  </div>
+  <div class="border-t border-gray-100 pt-3 space-y-2 text-sm">
+    <div class="flex justify-between"><span class="text-gray-500 bilingual" data-lang-ar="السعر الأساسي للفئة" data-lang-en="Grade base price" data-lang-es="Precio base" data-lang-ru="Базовая цена">السعر الأساسي للفئة</span><span class="font-semibold text-gray-700" data-price-krw="{{ price_comparison.grade_base_krw }}">{{ price_comparison.grade_base_krw|floatformat:0 }} ₩</span></div>
+    {% if price_comparison.options %}
+    <div class="flex justify-between"><span class="text-gray-500"><span class="bilingual" data-lang-ar="الخيارات المختارة" data-lang-en="Selected options" data-lang-es="Opciones" data-lang-ru="Опции">الخيارات المختارة</span> ({{ price_comparison.options|length }})</span><span class="font-semibold text-gray-700" data-price-krw="{{ price_comparison.options_total_krw }}">{{ price_comparison.options_total_krw|floatformat:0 }} ₩</span></div>
+    {% for o in price_comparison.options %}
+    <div class="flex justify-between pr-4 text-gray-400 text-xs"><span class="bilingual" data-lang-ar="{{ o.name|oc:'ar' }}" data-lang-en="{{ o.name|oc:'en' }}" data-lang-es="{{ o.name|oc:'es' }}" data-lang-ru="{{ o.name|oc:'ru' }}">{{ o.name|oc:'ar' }}</span><span data-price-krw="{{ o.price_krw }}">{{ o.price_krw|floatformat:0 }} ₩</span></div>
+    {% endfor %}
+    {% endif %}
+    <div class="flex justify-between border-t border-gray-100 pt-2"><span class="text-gray-500 bilingual" data-lang-ar="سعر الجديد" data-lang-en="New car price" data-lang-es="Precio nuevo" data-lang-ru="Цена нового">سعر الجديد</span><span class="font-bold text-gray-800" data-price-krw="{{ price_comparison.newcar_krw }}">{{ price_comparison.newcar_krw|floatformat:0 }} ₩</span></div>
+    <div class="flex justify-between"><span class="text-gray-500 bilingual" data-lang-ar="سعر البيع الحالي" data-lang-en="Current selling price" data-lang-es="Precio de venta" data-lang-ru="Текущая цена">سعر البيع الحالي</span><span class="font-bold text-brand"><span data-price-krw="{{ price_comparison.current_krw }}">{{ price_comparison.current_krw|floatformat:0 }}</span> ₩ ({{ price_comparison.percent }}%)</span></div>
+  </div>
+  <div class="mt-4 text-[11px] leading-relaxed text-gray-400 space-y-1">
+    <div class="bilingual" data-lang-ar="• قد يختلف سعر الجديد عن سعر التسليم الفعلي." data-lang-en="• The new-car price may differ from the actual delivery price." data-lang-es="• El precio nuevo puede diferir del precio real de entrega." data-lang-ru="• Цена нового может отличаться от фактической цены поставки.">• قد يختلف سعر الجديد عن سعر التسليم الفعلي.</div>
+    <div class="bilingual" data-lang-ar="• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة." data-lang-en="• The new-car price is based on the grade plus selected options." data-lang-es="• El precio nuevo se basa en la versión más las opciones." data-lang-ru="• Цена нового рассчитана по комплектации и выбранным опциям.">• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة.</div>
+  </div>
+</div>
