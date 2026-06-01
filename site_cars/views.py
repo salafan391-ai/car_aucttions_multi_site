@@ -121,6 +121,8 @@ def site_car_list(request):
 
     if v := _pick('make'):
         qs = qs.filter(manufacturer__iexact=v)
+    if v := _pick('model'):
+        qs = qs.filter(model__iexact=v)
     if v := _pick('fuel'):
         qs = qs.filter(fuel__iexact=v)
     if v := _pick('transmission'):

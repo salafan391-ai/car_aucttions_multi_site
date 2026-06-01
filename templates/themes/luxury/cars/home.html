@@ -599,17 +599,26 @@
     });
   });
 
-  // Brand
-  brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (opt) {
-    opt.addEventListener('click', function () {
-      brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (o) { o.classList.remove('is-selected'); });
-      opt.classList.add('is-selected');
-      mfgInput.value = opt.dataset.id;
-      setLabel(brandLabel, nameOf(opt.dataset));
-      modelInput.value = ''; resetModelLabel(); modelGrid.innerHTML = '';
-      loadModels(opt.dataset.id);
-      openRow('model');
-    });
+  // Showroom (Our Cars) make→models+years, and cached Encar grids so we can
+  // swap the accordion contents between catalog mode and showroom mode.
+  var SITE = {{ site_filter_json|default:'{}'|safe }};
+  var yearGrid = document.getElementById('lux-hf-year-grid');
+  var brandGridOrig = brandGrid.innerHTML;
+  var yearGridOrig = yearGrid ? yearGrid.innerHTML : '';
+  var oursMode = false;
+  var sel = { make: '', model: '', year: '' };  // showroom selection (by name)
+
+  // Brand — delegated so it works for both the Encar and showroom grids.
+  brandGrid.addEventListener('click', function (e) {
+    var opt = e.target.closest('.lux-hf-brand-opt');
+    if (!opt) return;
+    brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    opt.classList.add('is-selected');
+    setLabel(brandLabel, nameOf(opt.dataset));
+    modelInput.value = ''; sel.model = ''; resetModelLabel(); modelGrid.innerHTML = '';
+    if (oursMode) { sel.make = opt.dataset.make || nameOf(opt.dataset); loadSiteModels(sel.make); }
+    else { mfgInput.value = opt.dataset.id; loadModels(opt.dataset.id); }
+    openRow('model');
   });
 
   function loadModels(id) {
@@ -628,44 +637,62 @@
           b.dataset.id = m.id; b.dataset.nameAr = m.name_ar || m.name; b.dataset.nameEn = m.name_en || m.name;
           b.innerHTML = '<span>' + (lang() === 'en' ? b.dataset.nameEn : b.dataset.nameAr) + '</span>' +
                         (m.car_count ? '<span class="lux-hf-opt-count">' + m.car_count + '</span>' : '');
-          b.addEventListener('click', function () {
-            modelGrid.querySelectorAll('.lux-hf-model-opt').forEach(function (o) { o.classList.remove('is-selected'); });
-            b.classList.add('is-selected');
-            modelInput.value = b.dataset.id;
-            setLabel(modelLabel, lang() === 'en' ? b.dataset.nameEn : b.dataset.nameAr);
-            openRow('year');
-          });
           modelGrid.appendChild(b);
         });
       })
       .catch(function () { modelGrid.innerHTML = '<div class="lux-hf-empty">—</div>'; });
   }
 
-  // Year
-  root.querySelectorAll('.lux-hf-year-opt').forEach(function (opt) {
-    opt.addEventListener('click', function () {
-      root.querySelectorAll('.lux-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
-      opt.classList.add('is-selected');
-      yearInput.value = opt.dataset.year;
-      setLabel(yearLabel, opt.dataset.year);
-      openRow(null);
-    });
+  function loadSiteModels(make) {
+    var models = (SITE.models && SITE.models[make]) || [];
+    if (!models.length) { modelGrid.innerHTML = '<div class="lux-hf-empty">' + (lang() === 'en' ? 'No models' : 'لا توجد موديلات') + '</div>'; return; }
+    modelGrid.innerHTML = models.map(function (name) {
+      return '<button type="button" class="lux-hf-opt lux-hf-model-opt" data-name="' + name + '"><span>' + name + '</span></button>';
+    }).join('');
+  }
+
+  // Model — delegated.
+  modelGrid.addEventListener('click', function (e) {
+    var b = e.target.closest('.lux-hf-model-opt');
+    if (!b) return;
+    modelGrid.querySelectorAll('.lux-hf-model-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    b.classList.add('is-selected');
+    if (oursMode) { sel.model = b.dataset.name; setLabel(modelLabel, b.dataset.name); }
+    else { modelInput.value = b.dataset.id; setLabel(modelLabel, lang() === 'en' ? b.dataset.nameEn : b.dataset.nameAr); }
+    openRow('year');
+  });
+
+  // Year — delegated (grid is rebuilt for showroom mode).
+  if (yearGrid) yearGrid.addEventListener('click', function (e) {
+    var opt = e.target.closest('.lux-hf-year-opt');
+    if (!opt) return;
+    yearGrid.querySelectorAll('.lux-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    opt.classList.add('is-selected');
+    sel.year = opt.dataset.year;
+    yearInput.value = opt.dataset.year;
+    setLabel(yearLabel, opt.dataset.year);
+    openRow(null);
   });
 
   // Tabs
   var tabs = Array.prototype.slice.call(root.querySelectorAll('.lux-hf-tab'));
   function applyType(type) {
     tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.type === type); });
-    // "Our cars" (showroom) doesn't use the brand/model/year accordion — its
-    // listing filters by name/year-range, not the catalog IDs — so hide the
-    // rows and just route the search button to the showroom.
-    var isOurs = (type === 'ours' && siteUrl);
-    root.querySelectorAll('.lux-hf-row').forEach(function (r) { r.style.display = isOurs ? 'none' : ''; });
-    if (isOurs) {
+    oursMode = (type === 'ours' && siteUrl);
+    if (oursMode) {
       form.action = siteUrl;
+      // Build the make + year grids from the showroom's own inventory.
+      brandGrid.innerHTML = (SITE.makes || []).map(function (m) {
+        return '<button type="button" class="lux-hf-opt lux-hf-brand-opt" data-make="' + m + '" data-name-ar="' + m + '" data-name-en="' + m + '"><span>' + m + '</span></button>';
+      }).join('') || '<div class="lux-hf-empty">—</div>';
+      if (yearGrid) yearGrid.innerHTML = (SITE.years || []).map(function (y) {
+        return '<button type="button" class="lux-hf-opt lux-hf-year-opt" data-year="' + y + '">' + y + '</button>';
+      }).join('');
       [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = true; });
     } else {
       form.action = carListUrl;
+      brandGrid.innerHTML = brandGridOrig;       // restore Encar catalog grid
+      if (yearGrid) yearGrid.innerHTML = yearGridOrig;
       [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = false; });
       carType.value = (type === 'auction') ? 'auction' : 'cars';
       var attr = type === 'auction' ? 'auctionCount' : 'carsCount';
@@ -676,9 +703,8 @@
         if (c) c.textContent = n;
       });
     }
+    sel = { make: '', model: '', year: '' };
     mfgInput.value = ''; modelInput.value = ''; yearInput.value = '';
-    brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (o) { o.classList.remove('is-selected'); });
-    root.querySelectorAll('.lux-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
     modelGrid.innerHTML = '';
     resetBrandLabel(); resetModelLabel(); resetYearLabel();
     openRow(null);
@@ -686,7 +712,18 @@
   tabs.forEach(function (t) { t.addEventListener('click', function () { applyType(t.dataset.type); }); });
   if (tabs.length) applyType(tabs[0].dataset.type);
 
-  form.addEventListener('submit', function () {
+  form.addEventListener('submit', function (e) {
+    if (oursMode) {
+      // Showroom listing filters by name + year range, not catalog IDs.
+      e.preventDefault();
+      var p = new URLSearchParams();
+      if (sel.make) p.set('make', sel.make);
+      if (sel.model) p.set('model', sel.model);
+      if (sel.year) { p.set('year_min', sel.year); p.set('year_max', sel.year); }
+      var qs = p.toString();
+      window.location.href = siteUrl + (qs ? '?' + qs : '');
+      return;
+    }
     [carType, mfgInput, modelInput, yearInput].forEach(function (el) {
       if (el && (!el.value || !el.value.trim())) el.disabled = true;
     });

@@ -362,6 +362,7 @@ def home(request):
         damaged_cars = []
         site_cars_count = 0
         damaged_cars_count = 0
+        site_filter_json = '{}'
         tenant = _get_current_tenant()
         if tenant and tenant.schema_name != 'public':
             from site_cars.models import SiteCar
@@ -380,6 +381,29 @@ def home(request):
             )
             site_cars_count = _own_qs.count()
             damaged_cars_count = _damaged_qs.count()
+
+            # Showroom make → models + years, for the homepage "Our Cars" filter
+            # tab (site cars use free-text make/model strings, filtered by name).
+            from collections import defaultdict as _dd
+            _site_models = _dd(set)
+            _site_years = set()
+            for _man, _mod, _yr in (_own_qs.exclude(status='sold')
+                                    .exclude(manufacturer__isnull=True)
+                                    .exclude(manufacturer__exact='')
+                                    .values_list('manufacturer', 'model', 'year')):
+                _man = (_man or '').strip()
+                if not _man:
+                    continue
+                _site_models[_man]
+                if _mod and str(_mod).strip():
+                    _site_models[_man].add(str(_mod).strip())
+                if _yr:
+                    _site_years.add(int(_yr))
+            site_filter_json = json.dumps({
+                'makes': sorted(_site_models.keys()),
+                'models': {k: sorted(v) for k, v in _site_models.items()},
+                'years': sorted(_site_years, reverse=True),
+            }, ensure_ascii=False)
 
         # Posts (filtered by tenant)
         posts_qs = Post.objects.filter(is_published=True)
@@ -415,6 +439,7 @@ def home(request):
             'home_sections_order': home_sections_order,
             'site_cars_count': site_cars_count,
             'damaged_cars_count': damaged_cars_count,
+            'site_filter_json': site_filter_json,
             'manufacturers': manufacturers,
             'body_types': body_types,
             'years': years,
