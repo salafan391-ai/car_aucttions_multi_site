@@ -358,6 +358,9 @@
             {% if show_auctions %}
             <button type="button" class="lux-hf-tab{% if not show_encar %} is-active{% endif %}" data-type="auction"><span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد</span></button>
             {% endif %}
+            {% if site_cars_count and show_site_cars %}
+            <button type="button" class="lux-hf-tab{% if not show_encar and not show_auctions %} is-active{% endif %}" data-type="ours"><span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</span></button>
+            {% endif %}
           </div>
           <form id="lux-hf-form" method="get" action="{% url 'car_list' %}">
             <input type="hidden" name="car_type" id="lux-hf-cartype" value="">
@@ -653,17 +656,26 @@
   var tabs = Array.prototype.slice.call(root.querySelectorAll('.lux-hf-tab'));
   function applyType(type) {
     tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.type === type); });
-    if (type === 'ours' && siteUrl) { form.action = siteUrl; carType.value = ''; }
-    else { form.action = carListUrl; carType.value = (type === 'auction') ? 'auction' : 'cars'; }
-    var attr = type === 'auction' ? 'auctionCount' : 'carsCount';
-    brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (opt) {
-      var n = (type === 'all')
-        ? (parseInt(opt.dataset.carsCount || '0', 10) + parseInt(opt.dataset.auctionCount || '0', 10))
-        : parseInt(opt.dataset[attr] || '0', 10);
-      opt.style.display = (type === 'ours' || n > 0) ? '' : 'none';
-      var c = opt.querySelector('.lux-hf-opt-count');
-      if (c && type !== 'ours') c.textContent = n;
-    });
+    // "Our cars" (showroom) doesn't use the brand/model/year accordion — its
+    // listing filters by name/year-range, not the catalog IDs — so hide the
+    // rows and just route the search button to the showroom.
+    var isOurs = (type === 'ours' && siteUrl);
+    root.querySelectorAll('.lux-hf-row').forEach(function (r) { r.style.display = isOurs ? 'none' : ''; });
+    if (isOurs) {
+      form.action = siteUrl;
+      [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = true; });
+    } else {
+      form.action = carListUrl;
+      [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = false; });
+      carType.value = (type === 'auction') ? 'auction' : 'cars';
+      var attr = type === 'auction' ? 'auctionCount' : 'carsCount';
+      brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (opt) {
+        var n = parseInt(opt.dataset[attr] || '0', 10);
+        opt.style.display = n > 0 ? '' : 'none';
+        var c = opt.querySelector('.lux-hf-opt-count');
+        if (c) c.textContent = n;
+      });
+    }
     mfgInput.value = ''; modelInput.value = ''; yearInput.value = '';
     brandGrid.querySelectorAll('.lux-hf-brand-opt').forEach(function (o) { o.classList.remove('is-selected'); });
     root.querySelectorAll('.lux-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
