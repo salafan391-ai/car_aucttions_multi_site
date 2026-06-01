@@ -249,7 +249,7 @@
         box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
     .lux-section-block h2 {
-        font-size: 2rem; font-weight: 600; margin: 0 0 1.5rem;
+        font-size: 2.1rem; font-weight: 700; margin: 0 0 1.5rem;
         padding-bottom: 1rem; border-bottom: 1px solid var(--lux-line);
         letter-spacing: 0.02em; color: var(--lux-gold-bright);
     }
@@ -513,6 +513,30 @@
         .lux-similar h2 { font-size: 1.2rem; margin-bottom: 1rem; }
         .lux-similar h2 small { font-size: 0.6rem; letter-spacing: 0.3em; }
     }
+
+    /* Clearer secondary labels in both modes */
+    .lux-section-block h2 small,
+    .lux-insp-title { font-size: 0.82rem; }
+    .lux-spec-card .label { font-size: 0.72rem; }
+    .lux-spec-card .value { font-size: 1.02rem; }
+
+    /* ── Light-luxury mode: dark, high-contrast text on the cream background ──
+       (the gold/cream values otherwise wash out and read as small/faint). */
+    :root.lux-light .lux-section-block h2,
+    :root.lux-light .lux-model,
+    :root.lux-light .lux-price { color: #281c08; }
+    :root.lux-light .lux-section-block h2 small,
+    :root.lux-light .lux-make,
+    :root.lux-light .lux-spec-card .label,
+    :root.lux-light .lux-insp-title,
+    :root.lux-light .lux-similar-make,
+    :root.lux-light .lux-price-label { color: #7a5a1c; }
+    :root.lux-light .lux-specs li span:first-child,
+    :root.lux-light .lux-year,
+    :root.lux-light .lux-lot { color: #574322; }
+    :root.lux-light .lux-spec-card .value,
+    :root.lux-light .lux-specs li,
+    :root.lux-light .lux-desc { color: #281f12; }
 </style>
 
 <div class="lux-page">
