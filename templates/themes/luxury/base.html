@@ -291,6 +291,16 @@
             --lux-text: #241a0c;          /* deep brown body text */
             --lux-text-dim: #54432a;      /* darker secondary text — no longer fades into the bg */
         }
+        /* The hero keeps its cinematic dark video/overlay background in light
+           mode, so its contents must use the light (cream/gold) palette to stay
+           legible — otherwise the dark light-mode text disappears on it. */
+        .lux-light .lux-hero {
+            --lux-text: #ece4d3;
+            --lux-text-dim: #cbbf9f;
+            --lux-gold: #c9a45a;
+            --lux-gold-bright: #e9c87a;
+            --lux-line: rgba(201, 164, 90, 0.22);
+        }
         /* Re-skin panels that hard-code the dark gradient. Specific class chains
            keep us from needing !important. */
         .lux-light .lux-aside,
