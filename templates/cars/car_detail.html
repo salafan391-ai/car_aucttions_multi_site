@@ -611,7 +611,7 @@
                         <span class="text-gray-400 text-xs w-24 shrink-0">{{ a.date }}</span>
                         {% if a.type == "1" %}<span class="bilingual text-gray-700" data-lang-ar="حادث (تحمّلت التكلفة)" data-lang-ru="Несчастный случай (расходы взял на себя я)" data-lang-es="Accidente (yo pagué los gastos)" data-lang-en="Accident (my cost)">حادث (تحمّلت التكلفة)</span>{% elif a.type == "2" %}<span class="bilingual text-gray-700" data-lang-ar="حادث (الطرف الآخر تحمّل)" data-lang-ru="Несчастный случай (ответственность лежит на другой стороне)" data-lang-es="Accidente (la responsabilidad recae sobre la otra parte)" data-lang-en="Accident (other party's cost)">حادث (الطرف الآخر تحمّل)</span>{% else %}<span class="bilingual text-gray-700" data-lang-ar="حادث آخر" data-lang-ru="Ещё один инцидент" data-lang-es="Otro incidente" data-lang-en="Other accident">حادث آخر</span>{% endif %}
                       </div>
-                      <span class="text-red-600 font-semibold shrink-0">{{ a.insuranceBenefit|default:"—" }}</span>
+                      {% if a.insuranceBenefit %}<span class="text-red-600 font-semibold shrink-0" data-price-krw="{{ a.insuranceBenefit }}">{{ a.insuranceBenefit|intcomma }} ₩</span>{% else %}<span class="text-red-600 font-semibold shrink-0">—</span>{% endif %}
                     </div>
                     {% endfor %}
                   </div>
@@ -629,8 +629,8 @@
                 {% endif %}
                 {% if rec.myAccidentCost or rec.otherAccidentCost %}
                 <div class="grid grid-cols-2 gap-3 text-sm">
-                  {% if rec.myAccidentCost %}<div class="bg-red-50 rounded-xl p-3"><div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="إجمالي تكلفة حوادثي" data-lang-ru="Общая стоимость моих аварий" data-lang-es="Coste total de mis accidentes" data-lang-en="Total cost of my accidents">إجمالي تكلفة حوادثي</div><div class="font-bold text-red-700">{{ rec.myAccidentCost }} ₩</div></div>{% endif %}
-                  {% if rec.otherAccidentCost %}<div class="bg-gray-50 rounded-xl p-3"><div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="إجمالي تكلفة حوادث الطرف الآخر" data-lang-ru="Общая стоимость несчастных случаев другой стороны" data-lang-es="Costo total de los accidentes de la otra parte" data-lang-en="Total cost of other-party accidents">إجمالي تكلفة حوادث الطرف الآخر</div><div class="font-bold text-gray-700">{{ rec.otherAccidentCost }} ₩</div></div>{% endif %}
+                  {% if rec.myAccidentCost %}<div class="bg-red-50 rounded-xl p-3"><div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="إجمالي تكلفة حوادثي" data-lang-ru="Общая стоимость моих аварий" data-lang-es="Coste total de mis accidentes" data-lang-en="Total cost of my accidents">إجمالي تكلفة حوادثي</div><div class="font-bold text-red-700" data-price-krw="{{ rec.myAccidentCost }}">{{ rec.myAccidentCost|intcomma }} ₩</div></div>{% endif %}
+                  {% if rec.otherAccidentCost %}<div class="bg-gray-50 rounded-xl p-3"><div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="إجمالي تكلفة حوادث الطرف الآخر" data-lang-ru="Общая стоимость несчастных случаев другой стороны" data-lang-es="Costo total de los accidentes de la otra parte" data-lang-en="Total cost of other-party accidents">إجمالي تكلفة حوادث الطرف الآخر</div><div class="font-bold text-gray-700" data-price-krw="{{ rec.otherAccidentCost }}">{{ rec.otherAccidentCost|intcomma }} ₩</div></div>{% endif %}
                 </div>
                 {% endif %}
               </div>

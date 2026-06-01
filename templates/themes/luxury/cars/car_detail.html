@@ -242,18 +242,20 @@
 
     /* Full-width sections below the gallery+aside row */
     .lux-section-block {
-        margin-top: 3rem; padding: 2rem 2.25rem;
-        border: 1px solid var(--lux-line);
-        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        margin-top: 3rem; padding: 2.25rem;
+        border: 1px solid rgba(201, 164, 90, 0.32);
+        border-radius: 0.6rem;
+        background: linear-gradient(180deg, #241e16 0%, #15110b 100%);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
     .lux-section-block h2 {
-        font-size: 1.4rem; font-weight: 400; margin: 0 0 1.5rem;
+        font-size: 2rem; font-weight: 600; margin: 0 0 1.5rem;
         padding-bottom: 1rem; border-bottom: 1px solid var(--lux-line);
-        letter-spacing: 0.05em;
+        letter-spacing: 0.02em; color: var(--lux-gold-bright);
     }
     .lux-section-block h2 small {
-        display: block; color: var(--lux-gold); font-size: 0.65rem;
-        letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.4rem;
+        display: block; color: var(--lux-gold); font-size: 0.72rem; font-weight: 400;
+        letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5rem;
     }
 
     /* Comprehensive specs grid (full-width) */
@@ -479,7 +481,7 @@
             margin-top: 1.75rem;
             padding: 1.25rem 1.1rem;
         }
-        .lux-section-block h2 { font-size: 1.15rem; margin-bottom: 1rem; padding-bottom: 0.75rem; }
+        .lux-section-block h2 { font-size: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; }
         .lux-section-block h2 small { letter-spacing: 0.3em; font-size: 0.6rem; }
 
         .lux-specs-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
@@ -1091,7 +1093,7 @@
                         {% elif a.type == "2" %}<span class="bilingual" data-lang-ar="حادث (الطرف الآخر تحمّل)" data-lang-en="Accident (other-party cost)" data-lang-es="Accidente (otra parte)" data-lang-ru="Авария (другая сторона)">حادث (الطرف الآخر تحمّل)</span>
                         {% else %}<span class="bilingual" data-lang-ar="حادث آخر" data-lang-en="Other accident" data-lang-es="Otro accidente" data-lang-ru="Другая авария">حادث آخر</span>{% endif %}
                     </div>
-                    <span class="cost">{{ a.insuranceBenefit|default:"—" }}</span>
+                    {% if a.insuranceBenefit %}<span class="cost" data-price-krw="{{ a.insuranceBenefit }}">{{ a.insuranceBenefit|intcomma }} ₩</span>{% else %}<span class="cost">—</span>{% endif %}
                 </div>
                 {% endfor %}
             </div>
