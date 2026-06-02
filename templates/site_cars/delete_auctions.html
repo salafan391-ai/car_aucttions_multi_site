@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}حذف المزادات - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">حذف المزادات</h1>
+            <p class="text-gray-500 mt-1 text-sm">احذف سيارات المزادات حسب اسم المزاد والتاريخ.</p>
+        </div>
+        <a href="{% url 'site_dashboard' %}" class="text-sm text-gray-500 hover:text-gray-700">&larr; لوحة التحكم</a>
+    </div>
+
+    <!-- Platform-wide warning -->
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex gap-3">
+        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div>
+            هذه السيارات مشتركة بين جميع المواقع، لذا سيؤدي الحذف إلى إزالتها من كل المواقع وليس هذا الموقع فقط.
+            تُحذف فقط المزادات <strong>المتاحة</strong>؛ أما المرتبطة بطلبات أو مبيعات فتبقى محمية.
+            إجمالي مزادات النظام حالياً: <strong>{{ total_auctions }}</strong>.
+        </div>
+    </div>
+
+    <!-- Filter form -->
+    <form method="get" action="{% url 'delete_auctions' %}" class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        <h2 class="text-lg font-bold mb-4">الفلتر</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">اسم المزاد</label>
+                <select name="auction_name" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand focus:border-transparent">
+                    <option value="">— أي مزاد —</option>
+                    {% for name in auction_names %}
+                    <option value="{{ name }}" {% if name == sel_name %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">حسب التاريخ</label>
+                <select name="date_op" id="date_op" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand focus:border-transparent" onchange="toggleDateTo()">
+                    <option value="before" {% if sel_op == 'before' %}selected{% endif %}>قبل تاريخ</option>
+                    <option value="after"  {% if sel_op == 'after' %}selected{% endif %}>بعد تاريخ</option>
+                    <option value="between" {% if sel_op == 'between' %}selected{% endif %}>بين تاريخين</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1" id="from_label">التاريخ</label>
+                <input type="date" name="date_from" value="{{ sel_from }}" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand focus:border-transparent">
+            </div>
+            <div id="to_wrap">
+                <label class="block text-sm font-medium text-gray-700 mb-1">إلى تاريخ</label>
+                <input type="date" name="date_to" value="{{ sel_to }}" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-brand focus:border-transparent">
+            </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-3">حدد اسم المزاد و/أو التاريخ، ثم اعرض النتيجة قبل الحذف.</p>
+        <button type="submit" class="mt-4 inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">
+            عرض النتائج
+        </button>
+    </form>
+
+    {% if has_filter %}
+    <!-- Preview -->
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-baseline justify-between mb-4">
+            <h2 class="text-lg font-bold">النتيجة</h2>
+            <span class="text-sm text-gray-500">
+                <strong class="text-red-600 text-lg">{{ preview_count }}</strong> سيارة سيتم حذفها
+                {% if skipped_count %}<span class="text-gray-400">· {{ skipped_count }} محمية</span>{% endif %}
+            </span>
+        </div>
+
+        {% if preview_count %}
+        <div class="overflow-x-auto border border-gray-100 rounded-xl mb-5">
+            <table class="w-full text-sm text-right">
+                <thead class="bg-gray-50 text-gray-500">
+                    <tr>
+                        <th class="px-3 py-2 font-medium">السيارة</th>
+                        <th class="px-3 py-2 font-medium">المزاد</th>
+                        <th class="px-3 py-2 font-medium">تاريخ المزاد</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for car in sample %}
+                    <tr>
+                        <td class="px-3 py-2">{{ car.title }}</td>
+                        <td class="px-3 py-2 text-gray-500">{{ car.auction_name }}</td>
+                        <td class="px-3 py-2 text-gray-500">{{ car.auction_date|date:"Y-m-d"|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if preview_count > sample|length %}
+        <p class="text-xs text-gray-400 mb-5">يُعرض أول {{ sample|length }} فقط من أصل {{ preview_count }}.</p>
+        {% endif %}
+
+        <!-- Confirm delete -->
+        <form method="post" action="{% url 'delete_auctions' %}" onsubmit="return confirm('سيتم حذف {{ preview_count }} سيارة من جميع المواقع نهائياً. هل أنت متأكد؟');" class="border-t border-gray-100 pt-5">
+            {% csrf_token %}
+            <input type="hidden" name="auction_name" value="{{ sel_name }}">
+            <input type="hidden" name="date_op" value="{{ sel_op }}">
+            <input type="hidden" name="date_from" value="{{ sel_from }}">
+            <input type="hidden" name="date_to" value="{{ sel_to }}">
+            <label class="block text-sm font-medium text-gray-700 mb-1">للتأكيد، اكتب <code class="bg-gray-100 px-1.5 py-0.5 rounded text-red-600 font-bold">DELETE</code></label>
+            <div class="flex gap-3">
+                <input type="text" name="confirm" autocomplete="off" placeholder="DELETE" class="flex-1 border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-red-400 focus:border-transparent">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-xl transition whitespace-nowrap">
+                    حذف نهائي
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-gray-500 text-sm">لا توجد سيارات مطابقة قابلة للحذف.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</section>
+
+<script>
+    function toggleDateTo() {
+        var op = document.getElementById('date_op').value;
+        document.getElementById('to_wrap').style.display = (op === 'between') ? '' : 'none';
+        document.getElementById('from_label').textContent = (op === 'between') ? 'من تاريخ' : 'التاريخ';
+    }
+    toggleDateTo();
+</script>
+{% endblock %}

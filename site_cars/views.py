@@ -1227,6 +1227,136 @@ def delete_unsold_damaged(request):
     return redirect('import_happycar')
 
 
+def _collect_protected_auction_car_ids():
+    """Return the set of ApiCar ids referenced by ANY tenant's orders, sales,
+    ratings or questions. ApiCar is a SHARED model, but these references live
+    in each tenant's own schema, so a plain ORM cascade can't see them and the
+    shared-row delete would raise a cross-schema FK violation. We protect every
+    referenced id — mirroring the delete_expired_auctions management command.
+    """
+    from django_tenants.utils import schema_context, get_public_schema_name
+    from tenants.models import Tenant
+
+    protected = set()
+    public = get_public_schema_name()
+    for tenant in Tenant.objects.exclude(schema_name=public):
+        with schema_context(tenant.schema_name):
+            protected.update(SiteOrder.objects.values_list('car_id', flat=True))
+            protected.update(SiteSoldCar.objects.values_list('car_id', flat=True))
+            protected.update(SiteRating.objects.values_list('car_id', flat=True))
+            protected.update(
+                SiteQuestion.objects.exclude(car_id=None).values_list('car_id', flat=True)
+            )
+    return protected
+
+
+@staff_member_required
+def delete_auctions(request):
+    """Dashboard tool: filter auction cars by auction name + date and bulk-delete.
+
+    NOTE: these are shared ApiCar rows, so a delete here removes the cars from
+    EVERY tenant site, not just this one. Only `status='available'` auctions are
+    deletable, and any car referenced by an order/sale/rating/question (in any
+    tenant) is protected from deletion to avoid data loss and cross-schema FK
+    errors. Runs in a tenant schema so cascades resolve correctly.
+    """
+    from django.utils.dateparse import parse_date
+
+    if _is_public_schema():
+        messages.error(request, "غير متاح في مخطط 'public'.")
+        return redirect('site_dashboard')
+
+    # Auction cars only (category 'auction' with a named auction house).
+    base = ApiCar.objects.filter(category__name='auction').exclude(
+        auction_name__isnull=True
+    ).exclude(auction_name='')
+
+    auction_names = list(
+        base.values_list('auction_name', flat=True).distinct().order_by('auction_name')
+    )
+
+    src = request.POST if request.method == 'POST' else request.GET
+    sel_name = (src.get('auction_name') or '').strip()
+    sel_op = (src.get('date_op') or 'before').strip() or 'before'
+    sel_from = (src.get('date_from') or '').strip()
+    sel_to = (src.get('date_to') or '').strip()
+
+    def _apply_filters(qs):
+        if sel_name:
+            qs = qs.filter(auction_name=sel_name)
+        d_from = parse_date(sel_from) if sel_from else None
+        d_to = parse_date(sel_to) if sel_to else None
+        if sel_op == 'before' and d_from:
+            qs = qs.filter(auction_date__date__lt=d_from)
+        elif sel_op == 'after' and d_from:
+            qs = qs.filter(auction_date__date__gt=d_from)
+        elif sel_op == 'between' and d_from and d_to:
+            qs = qs.filter(auction_date__date__gte=d_from, auction_date__date__lte=d_to)
+        return qs
+
+    # Require at least one filter so we never offer a "delete every auction" path.
+    if sel_op == 'between':
+        has_filter = bool(sel_name) or (bool(sel_from) and bool(sel_to))
+    else:
+        has_filter = bool(sel_name) or bool(sel_from)
+
+    # Only available auctions are ever deletable; sold/pending are kept.
+    deletable = _apply_filters(base.filter(status='available'))
+
+    if request.method == 'POST':
+        if not has_filter:
+            messages.error(request, 'حدد فلتراً واحداً على الأقل (اسم المزاد أو التاريخ) قبل الحذف.')
+            return redirect('delete_auctions')
+        if src.get('confirm') != 'DELETE':
+            messages.error(request, 'لم يتم تأكيد الحذف. اكتب DELETE في خانة التأكيد.')
+            return redirect('delete_auctions')
+
+        protected = _collect_protected_auction_car_ids()
+        target = deletable.exclude(id__in=protected)
+        count = target.count()
+        skipped = deletable.filter(id__in=protected).count()
+        if count == 0:
+            messages.warning(
+                request,
+                'لا توجد سيارات قابلة للحذف بهذا الفلتر (قد تكون محمية بسبب ارتباطها بطلبات أو مبيعات).'
+            )
+            return redirect('delete_auctions')
+
+        target.delete()
+        msg = f'تم حذف {count} سيارة مزاد (على مستوى جميع المواقع).'
+        if skipped:
+            msg += f' وتم تجاوز {skipped} لارتباطها بطلبات/مبيعات.'
+        messages.success(request, msg)
+        return redirect('delete_auctions')
+
+    # GET — build an accurate preview (count + sample) when a filter is set.
+    preview_count = None
+    skipped_count = 0
+    sample = []
+    if has_filter:
+        protected = _collect_protected_auction_car_ids()
+        target = deletable.exclude(id__in=protected)
+        preview_count = target.count()
+        skipped_count = deletable.filter(id__in=protected).count()
+        sample = list(
+            target.select_related('manufacturer', 'model').order_by('auction_date')[:25]
+        )
+
+    context = {
+        'auction_names': auction_names,
+        'sel_name': sel_name,
+        'sel_op': sel_op,
+        'sel_from': sel_from,
+        'sel_to': sel_to,
+        'has_filter': has_filter,
+        'preview_count': preview_count,
+        'skipped_count': skipped_count,
+        'sample': sample,
+        'total_auctions': base.count(),
+    }
+    return render(request, 'site_cars/delete_auctions.html', context)
+
+
 @staff_member_required
 def auction_browse(request):
     """
