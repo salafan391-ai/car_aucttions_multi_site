@@ -1252,18 +1252,20 @@ def _collect_protected_auction_car_ids():
 
 @staff_member_required
 def delete_auctions(request):
-    """Dashboard tool: filter auction cars by auction name + date and bulk-delete.
+    """Owner-only tool: filter auction cars by auction name + date and bulk-delete.
 
-    NOTE: these are shared ApiCar rows, so a delete here removes the cars from
-    EVERY tenant site, not just this one. Only `status='available'` auctions are
-    deletable, and any car referenced by an order/sale/rating/question (in any
-    tenant) is protected from deletion to avoid data loss and cross-schema FK
-    errors. Runs in a tenant schema so cascades resolve correctly.
+    These are shared ApiCar rows, so a delete removes the cars from EVERY tenant
+    site. It is therefore restricted to the PUBLIC (owner) dashboard and the
+    superadmin — never exposed to individual tenants. Only `status='available'`
+    auctions are deletable, and any car referenced by an order/sale/rating/
+    question (in any tenant) is protected to avoid data loss and cross-schema FK
+    errors. The actual delete runs inside a tenant schema so cascades resolve.
     """
     from django.utils.dateparse import parse_date
 
-    if _is_public_schema():
-        messages.error(request, "غير متاح في مخطط 'public'.")
+    # Platform-wide operation: owner dashboard (public schema) + superuser only.
+    if not _is_public_schema() or not request.user.is_superuser:
+        messages.error(request, "هذه الأداة متاحة فقط للمشرف العام من اللوحة الرئيسية.")
         return redirect('site_dashboard')
 
     # Auction cars only (category 'auction' with a named auction house).
@@ -1311,9 +1313,12 @@ def delete_auctions(request):
             messages.error(request, 'لم يتم تأكيد الحذف. اكتب DELETE في خانة التأكيد.')
             return redirect('delete_auctions')
 
+        from django_tenants.utils import schema_context, get_public_schema_name
+        from tenants.models import Tenant
+
         protected = _collect_protected_auction_car_ids()
-        target = deletable.exclude(id__in=protected)
-        count = target.count()
+        target_ids = list(deletable.exclude(id__in=protected).values_list('id', flat=True))
+        count = len(target_ids)
         skipped = deletable.filter(id__in=protected).count()
         if count == 0:
             messages.warning(
@@ -1322,7 +1327,18 @@ def delete_auctions(request):
             )
             return redirect('delete_auctions')
 
-        target.delete()
+        # ApiCar is shared, but its FK referencers (SiteOrder/SiteSoldCar/…) live in
+        # tenant schemas that don't exist in 'public'. Run the delete inside a tenant
+        # schema so Django's cascade collector can resolve those tables. The targets
+        # carry no references in any tenant (all protected ids are excluded), so the
+        # cascade is a no-op for tenant data and simply clears the shared rows.
+        worker = Tenant.objects.exclude(schema_name=get_public_schema_name()).first()
+        if worker is None:
+            messages.error(request, 'لا توجد مواقع لتنفيذ الحذف.')
+            return redirect('delete_auctions')
+        with schema_context(worker.schema_name):
+            ApiCar.objects.filter(id__in=target_ids).delete()
+
         msg = f'تم حذف {count} سيارة مزاد (على مستوى جميع المواقع).'
         if skipped:
             msg += f' وتم تجاوز {skipped} لارتباطها بطلبات/مبيعات.'
