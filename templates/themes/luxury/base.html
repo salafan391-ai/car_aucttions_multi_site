@@ -57,6 +57,19 @@
         html, body { background: var(--lux-bg); color: var(--lux-text); }
         body { font-family: 'Playfair Display', 'Tajawal', serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 
+        /* ── Arabic legibility ─────────────────────────────────────────
+           Arabic is a cursive script: any positive letter-spacing forces
+           gaps between letters that must stay joined (the "cuts between
+           letters"), and text-transform: uppercase is a no-op. When Arabic
+           is the active language (applyLang sets html[lang=ar]), zero out
+           the theme's wide tracking everywhere and give text a touch more
+           weight so it stops looking thin. The Latin brand wordmark keeps
+           its tracking. */
+        html[lang="ar"] * { letter-spacing: 0 !important; }
+        html[lang="ar"] .lux-brand,
+        html[lang="ar"] .lux-footer-brand { letter-spacing: 0.12em !important; }
+        html[lang="ar"] body { font-weight: 500; }
+
         .lux-nav {
             position: sticky; top: 0; z-index: 50;
             background: rgba(10, 10, 10, 0.85);

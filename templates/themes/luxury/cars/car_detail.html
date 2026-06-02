@@ -401,6 +401,14 @@
     .lux-history-item .date { color: var(--lux-text-dim); margin-right: 1rem; min-width: 6rem; }
     .lux-history-item .cost { color: #e57373; font-weight: 600; }
 
+    /* Light mode: the dark glass card + light-salmon figures wash out on
+       cream. Re-skin the stat cards to match the other panels and darken
+       the alert/cost reds so the accident numbers read clearly. */
+    :root.lux-light .lux-history-stat { background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%); }
+    :root.lux-light .lux-history-stat.alert .value,
+    :root.lux-light .lux-history-item .cost { color: #b3261d; }
+    :root.lux-light .lux-history-tag.alert { background: rgba(179,38,29,0.1); border-color: rgba(179,38,29,0.4); color: #b3261d; }
+
     /* Lightbox */
     .lux-gallery-main img,
     .lux-thumb img,
