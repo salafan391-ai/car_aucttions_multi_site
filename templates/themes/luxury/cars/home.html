@@ -309,6 +309,17 @@
     .lux-card-meta-ico svg { width: 100%; height: 100%; display: block; }
     .lux-card-price { color: var(--lux-gold-bright); font-size: 1.25rem; font-weight: 600; margin-top: 0.75rem; letter-spacing: 0.05em; }
 
+    /* ── Light-mode polish (homepage) ──
+       Cream cards: undim the photos (the brightness drop is a dark-theme look)
+       and give the trim badge real contrast instead of a faint gold wash. */
+    .lux-light .lux-card-img img { filter: none; }
+    .lux-light .lux-card:hover .lux-card-img img { filter: brightness(1.03); }
+    .lux-light .lux-card-trim {
+        background: rgba(120, 92, 30, 0.12);
+        border-color: rgba(120, 92, 30, 0.45);
+        color: var(--lux-gold);
+    }
+
     .lux-empty { text-align: center; color: var(--lux-text-dim); padding: 3rem; font-style: italic; }
 </style>
 

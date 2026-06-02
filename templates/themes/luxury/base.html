@@ -298,11 +298,11 @@
         :root.lux-light {
             --lux-bg: #f5efe1;
             --lux-bg-soft: #ebe1c8;
-            --lux-gold: #785818;          /* darker bronze — eyebrows/accents read clearly on cream */
-            --lux-gold-bright: #4a3410;   /* near-black bronze — titles/prices stand out */
-            --lux-line: rgba(138, 106, 37, 0.34);
-            --lux-text: #241a0c;          /* deep brown body text */
-            --lux-text-dim: #54432a;      /* darker secondary text — no longer fades into the bg */
+            --lux-gold: #6b4d10;          /* richer bronze — eyebrows/accents read clearly on cream */
+            --lux-gold-bright: #432f0d;   /* near-black bronze — titles/prices stand out */
+            --lux-line: rgba(120, 92, 30, 0.5);  /* firmer borders so panels/dividers stay visible */
+            --lux-text: #1d1407;          /* deep brown body text */
+            --lux-text-dim: #433216;      /* darker secondary text — no longer fades into the bg */
         }
         /* The hero keeps its cinematic dark video/overlay background in light
            mode, so its contents must use the light (cream/gold) palette to stay
@@ -348,7 +348,21 @@
         .lux-light .lux-gallery-main,
         .lux-light .lux-similar-img,
         .lux-light .lux-thumb { background: #c8b787; }
-        .lux-light .lux-card:hover { box-shadow: 0 18px 36px rgba(138, 106, 37, 0.18); }
+        /* Resting definition: cream-on-cream panels need a firm edge + a little
+           lift, otherwise they dissolve into the page. */
+        .lux-light .lux-card,
+        .lux-light .lux-similar-card,
+        .lux-light .lux-section-block,
+        .lux-light .lux-info-card,
+        .lux-light .lux-spec-card,
+        .lux-light .lux-feature-card,
+        .lux-light .lux-form-card,
+        .lux-light .lux-auth-card,
+        .lux-light .lux-preview {
+            border: 1px solid rgba(120, 92, 30, 0.30);
+            box-shadow: 0 4px 16px rgba(120, 92, 30, 0.10);
+        }
+        .lux-light .lux-card:hover { border-color: var(--lux-gold); box-shadow: 0 18px 38px rgba(120, 92, 30, 0.22); }
         .lux-light .lux-cta-solid { color: #fbf6e8; }
         .lux-light .lux-cta-solid:hover { color: #fbf6e8; }
         .lux-light .lux-submit { color: #fbf6e8; }
