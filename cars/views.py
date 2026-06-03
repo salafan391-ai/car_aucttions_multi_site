@@ -1402,10 +1402,15 @@ def car_list(request):
             _hero_imgs(_enc.filter(is_luxury=True).order_by('-created_at'))
             or _hero_imgs(_enc.order_by('-created_at'))
         )
-        _na = (
+        # Upcoming auctions grouped by name — there can be several auction
+        # houses, each with its own next date. Earliest date per name, soonest first.
+        from django.db.models import Min as _Min
+        upcoming_auctions = list(
             _auc.filter(status='available').exclude(auction_name__isnull=True).exclude(auction_name='')
-            .order_by('auction_date').values('auction_name', 'auction_date').first()
+            .values('auction_name').annotate(auction_date=_Min('auction_date'))
+            .order_by('auction_date')[:6]
         )
+        _na = upcoming_auctions[0] if upcoming_auctions else None
         hero = {
             'added_today': ApiCar.objects.filter(created_at__gte=_today_start).count(),
             # Genuine updates to EXISTING cars (exclude ones added today, whose
@@ -1417,6 +1422,7 @@ def car_list(request):
             'encar_imgs': encar_imgs,
             'next_auction_name': _na['auction_name'] if _na else None,
             'next_auction_date': _na['auction_date'] if _na else None,
+            'upcoming_auctions': upcoming_auctions,
         }
         cache.set(_hero_key, hero, 60 * 10)
 

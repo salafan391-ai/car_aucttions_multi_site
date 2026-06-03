@@ -641,6 +641,13 @@
                 <h2 class="text-2xl sm:text-3xl font-extrabold mt-1 bilingual" data-lang-ar="مزادات السيارات" data-lang-en="Car Auctions" data-lang-es="Subastas" data-lang-ru="Автоаукционы">مزادات السيارات</h2>
                 {% endif %}
                 <p class="text-sm text-white/85 mt-2 max-w-2xl bilingual" data-lang-ar="نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة." data-lang-en="Auction cars are refreshed daily. Add an amount on top of the listed price to raise your bid and win the car." data-lang-es="Los coches de subasta se actualizan a diario. Añade una cantidad para ganar la puja." data-lang-ru="Автомобили аукциона обновляются ежедневно. Добавьте сумму к цене, чтобы выиграть торги.">نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة.</p>
+                {% if hero.upcoming_auctions|length > 1 %}
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
+                    {% for a in hero.upcoming_auctions %}
+                    <span class="inline-flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">{{ a.auction_name }} <span class="text-white/70 font-normal">{{ a.auction_date|date:"Y/m/d" }}</span></span>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
