@@ -1141,11 +1141,11 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 </section>
 
 <!-- FAQ -->
-{% if site_faqs %}
 <section class="max-w-3xl mx-auto px-3 sm:px-4 mt-10 sm:mt-16 mb-8 sm:mb-12">
     <div class="text-center mb-6">
         <h2 class="text-xl sm:text-2xl font-bold bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="Frequently Asked Questions" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</h2>
     </div>
+    {% if site_faqs %}
     <div class="space-y-3">
         {% for f in site_faqs %}
         <details class="bg-white rounded-xl shadow-sm border border-gray-100 group">
@@ -1157,11 +1157,13 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         </details>
         {% endfor %}
     </div>
+    {% else %}
+    <p class="text-center text-gray-500 bilingual" data-lang-ar="هل لديك سؤال؟ يسعدنا الإجابة عليه." data-lang-en="Have a question? We'd be happy to answer." data-lang-es="¿Tienes una pregunta? Con gusto te respondemos." data-lang-ru="Есть вопрос? Мы рады ответить.">هل لديك سؤال؟ يسعدنا الإجابة عليه.</p>
+    {% endif %}
     <div class="text-center mt-5">
-        <a href="{% url 'faq' %}" class="text-brand font-semibold text-sm hover:underline bilingual" data-lang-ar="عرض كل الأسئلة واطرح سؤالك ←" data-lang-en="See all questions & ask yours →" data-lang-es="Ver todas y preguntar →" data-lang-ru="Все вопросы и задать свой →">عرض كل الأسئلة واطرح سؤالك ←</a>
+        <a href="{% url 'faq' %}" class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white font-bold text-sm px-6 py-2.5 rounded-xl transition bilingual" data-lang-ar="اطرح سؤالك" data-lang-en="Ask a question" data-lang-es="Haz una pregunta" data-lang-ru="Задать вопрос">اطرح سؤالك</a>
     </div>
 </section>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}

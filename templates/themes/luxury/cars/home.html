@@ -643,12 +643,12 @@
 </section>
 
 <!-- FAQ -->
-{% if site_faqs %}
 <section class="lux-section lux-section--bordered">
     <div class="lux-section-head">
         <div class="lux-section-eyebrow bilingual" data-lang-ar="أسئلة متكررة" data-lang-en="Common Questions" data-lang-es="Preguntas" data-lang-ru="Вопросы">أسئلة متكررة</div>
         <h2 class="lux-section-title bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="FAQ" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</h2>
     </div>
+    {% if site_faqs %}
     <div class="lux-faq-list">
         {% for f in site_faqs %}
         <details class="group">
@@ -657,11 +657,13 @@
         </details>
         {% endfor %}
     </div>
+    {% else %}
+    <p style="text-align:center;color:var(--lux-text-dim);" class="bilingual" data-lang-ar="هل لديك سؤال؟ يسعدنا الإجابة عليه." data-lang-en="Have a question? We'd be happy to answer." data-lang-es="¿Tienes una pregunta?" data-lang-ru="Есть вопрос? Мы рады ответить.">هل لديك سؤال؟ يسعدنا الإجابة عليه.</p>
+    {% endif %}
     <div style="text-align:center;margin-top:1.75rem;">
-        <a href="{% url 'faq' %}" class="lux-cta bilingual" data-lang-ar="كل الأسئلة واطرح سؤالك" data-lang-en="All questions & ask yours" data-lang-es="Todas y preguntar" data-lang-ru="Все вопросы">كل الأسئلة واطرح سؤالك</a>
+        <a href="{% url 'faq' %}" class="lux-cta bilingual" data-lang-ar="اطرح سؤالك" data-lang-en="Ask a question" data-lang-es="Haz una pregunta" data-lang-ru="Задать вопрос">اطرح سؤالك</a>
     </div>
 </section>
-{% endif %}
 
 <script>
 (function () {
