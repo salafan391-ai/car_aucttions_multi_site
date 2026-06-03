@@ -431,7 +431,11 @@ def my_orders(request):
     if _is_public_schema():
         return redirect('home')
     orders = SiteOrder.objects.filter(user=request.user).select_related('car')
-    return render(request, 'site_cars/my_orders.html', {'orders': orders})
+    invoices = (
+        SiteBill.objects.filter(buyer_user=request.user)
+        .prefetch_related('items__site_car').order_by('-date')
+    )
+    return render(request, 'site_cars/my_orders.html', {'orders': orders, 'invoices': invoices})
 
 
 @login_required

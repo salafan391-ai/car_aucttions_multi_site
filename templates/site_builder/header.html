@@ -50,7 +50,7 @@
                     <span id="wishlist-count" class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                 </a>
                 {% if user.is_authenticated %}
-                <a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition">طلباتي</a>
+                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition">طلباتي</a>{% endif %}
                 <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition">الرسائل</a>
                 {% if user.is_staff %}
                 <a href="{% url 'site_car_add' %}"
@@ -183,7 +183,7 @@
                     <span id="wishlist-count-mobile" class="absolute top-2 right-8 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                 </a>
                 {% if user.is_authenticated %}
-                <a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلباتي</a>
+                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلباتي</a>{% endif %}
                 <a href="{% url 'inbox' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرسائل</a>
                 {% if user.is_staff %}
                 <a href="{% url 'site_car_add' %}" class="flex items-center gap-2 py-2 px-3 rounded-lg bg-brand text-white font-bold">

@@ -13,7 +13,32 @@
 
     <h1 class="text-2xl font-bold mb-6">طلباتي</h1>
 
+    {% if orders or invoices %}
+
+    {% if invoices %}
+    <h2 class="text-lg font-bold mb-3 text-gray-800">سياراتي</h2>
+    <div class="space-y-4 mb-8">
+        {% for bill in invoices %}
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden p-5">
+            <div class="flex items-start justify-between gap-3 mb-2">
+                <div class="min-w-0">
+                    <h3 class="font-bold text-gray-900">{% for item in bill.items.all %}{{ item.title|default:item.site_car.title }}{% if not forloop.last %}، {% endif %}{% endfor %}</h3>
+                    <p class="text-sm text-gray-500">فاتورة {{ bill.receipt_number }} · {{ bill.date|date:"Y/m/d" }}</p>
+                </div>
+                {% if bill.is_paid %}
+                <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">مدفوعة</span>
+                {% else %}
+                <span class="bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">غير مدفوعة</span>
+                {% endif %}
+            </div>
+            <div class="text-sm"><span class="text-gray-500">الإجمالي:</span> <span class="font-bold text-brand">{{ bill.total|floatformat:0 }}</span></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {% if orders %}
+    {% if invoices %}<h2 class="text-lg font-bold mb-3 text-gray-800">طلباتي</h2>{% endif %}
     <div class="space-y-4">
         {% for order in orders %}
         <a href="{% url 'order_detail' order.pk %}" class="block bg-white rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden">
@@ -68,6 +93,8 @@
         </a>
         {% endfor %}
     </div>
+    {% endif %}
+
     {% else %}
     <div class="bg-white rounded-2xl shadow-sm p-12 text-center">
         <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

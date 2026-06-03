@@ -35,9 +35,24 @@ def site_chrome(request):
         # Tables not yet migrated for this tenant.
         return {}
 
+    # Only show the "my orders" nav link once a car is actually linked to the
+    # user — an order they placed or an invoice linked to their account.
+    user_has_orders = False
+    u = getattr(request, "user", None)
+    if u is not None and getattr(u, "is_authenticated", False):
+        try:
+            from site_cars.models import SiteOrder, SiteBill
+            user_has_orders = (
+                SiteOrder.objects.filter(user=u).exists()
+                or SiteBill.objects.filter(buyer_user=u).exists()
+            )
+        except (ProgrammingError, OperationalError):
+            user_has_orders = False
+
     return {
         "sb_nav_links": nav_links,
         "sb_footer_columns": footer_columns,
         "sb_nav_pages": nav_pages,
         "sb_listing_config": listing_config,
+        "user_has_orders": user_has_orders,
     }
