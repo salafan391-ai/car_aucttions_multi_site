@@ -167,6 +167,9 @@ class SiteBill(models.Model):
     buyer_id_number = models.CharField(max_length=50, blank=True, default='', verbose_name="رقم الهوية")
     buyer_phone = models.CharField(max_length=50, blank=True, default='', verbose_name="جوال المشتري")
     buyer_address = models.CharField(max_length=255, blank=True, default='', verbose_name="عنوان المشتري")
+    # Optional link to a registered customer. When set, their account is the
+    # source of truth; otherwise the typed buyer_* fields are used.
+    buyer_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_bills', verbose_name="حساب العميل")
     date = models.DateField(verbose_name="التاريخ")
     is_paid = models.BooleanField(default=False, verbose_name="مدفوعة")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -179,6 +182,27 @@ class SiteBill(models.Model):
     def __str__(self):
         return f"فاتورة {self.receipt_number or self.pk}"
 
+    @property
+    def total(self):
+        """Invoice total: sum of line items, falling back to `price` for
+        legacy single-car invoices that have no items."""
+        agg = self.items.aggregate(s=models.Sum('price'))['s']
+        return agg if agg is not None else self.price
+
+    @property
+    def customer_display(self):
+        """Buyer name to show — the linked user's name if attached, else typed."""
+        if self.buyer_user_id:
+            return self.buyer_user.get_full_name() or self.buyer_user.username
+        return self.buyer_name
+
+    def recalc_total(self):
+        """Sync `price` to the sum of line items (if any) and persist."""
+        agg = self.items.aggregate(s=models.Sum('price'))['s']
+        if agg is not None:
+            type(self).objects.filter(pk=self.pk).update(price=agg)
+            self.price = agg
+
     def save(self, *args, **kwargs):
         if not self.receipt_number:
             super().save(*args, **kwargs)
@@ -186,6 +210,21 @@ class SiteBill(models.Model):
             type(self).objects.filter(pk=self.pk).update(receipt_number=self.receipt_number)
             return
         super().save(*args, **kwargs)
+
+
+class SiteBillItem(models.Model):
+    """A single car line on an invoice. An invoice can have many."""
+    bill = models.ForeignKey(SiteBill, on_delete=models.CASCADE, related_name='items', verbose_name="الفاتورة")
+    site_car = models.ForeignKey(SiteCar, on_delete=models.SET_NULL, related_name='bill_items', null=True, blank=True, verbose_name="السيارة")
+    title = models.CharField(max_length=255, blank=True, default='', verbose_name="البيان")
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="السعر")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.title or (self.site_car and self.site_car.title) or 'بند'} — {self.price}"
 
 
 class SiteShipment(models.Model):

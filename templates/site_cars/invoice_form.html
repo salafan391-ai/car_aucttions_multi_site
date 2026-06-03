@@ -52,7 +52,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="اسم المشتري *" data-lang-ru="Имя покупателя *" data-lang-es="Nombre del comprador *" data-lang-en="Buyer name *">اسم المشتري *</label>
-                    <input type="text" name="buyer_name" required value="{{ bill.buyer_name|default:'' }}"
+                    <input type="text" name="buyer_name" {% if not bill %}required{% endif %} value="{{ bill.buyer_name|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
@@ -70,18 +70,71 @@
                     <input type="text" name="buyer_address" value="{{ bill.buyer_address|default:'' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
+                {% if not bill %}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="سعر البيع *" data-lang-ru="Цена продажи *" data-lang-es="Precio de venta *" data-lang-en="Sale price *">سعر البيع *</label>
                     <input type="number" name="sale_price" required min="0"
-                           value="{% if bill %}{{ bill.price|floatformat:0 }}{% else %}{{ car.price }}{% endif %}"
+                           value="{{ car.price }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
+                {% endif %}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="تاريخ البيع" data-lang-ru="Дата продажи" data-lang-es="Fecha de venta" data-lang-en="Sale date">تاريخ البيع</label>
                     <input type="date" name="sale_date" value="{{ bill.date|date:'Y-m-d' }}"
                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
+
+            {% if bill %}
+            <!-- Customer account link -->
+            <div class="border-t border-gray-100 pt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ربط بحساب عميل (اختياري)" data-lang-en="Link to a customer account (optional)" data-lang-es="Vincular a una cuenta (opcional)" data-lang-ru="Привязать к аккаунту (необязательно)">ربط بحساب عميل (اختياري)</label>
+                {% if bill.buyer_user %}
+                <div class="flex items-center gap-3 text-sm mb-2">
+                    <span class="bg-green-50 text-green-700 px-2 py-1 rounded">@{{ bill.buyer_user.username }} — {{ bill.buyer_user.get_full_name|default:bill.buyer_user.username }}</span>
+                    <label class="flex items-center gap-1 text-xs text-red-600 cursor-pointer"><input type="checkbox" name="detach_user"> <span class="bilingual" data-lang-ar="فك الربط" data-lang-en="Unlink" data-lang-es="Desvincular" data-lang-ru="Отвязать">فك الربط</span></label>
+                </div>
+                {% endif %}
+                <input type="text" name="buyer_user_query" placeholder="اسم المستخدم أو البريد الإلكتروني" data-placeholder-ar="اسم المستخدم أو البريد الإلكتروني" data-placeholder-en="Username or email" data-placeholder-es="Usuario o correo" data-placeholder-ru="Логин или эл. почта"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p class="text-xs text-gray-400 mt-1 bilingual" data-lang-ar="اكتب اسم المستخدم أو بريده لربط الفاتورة بحسابه. إن لم يكن مسجلاً، تكفي بيانات المشتري أعلاه." data-lang-en="Enter a username/email to link this invoice to their account. If they aren't registered, the typed buyer info above is enough." data-lang-es="Si no está registrado, basta con los datos arriba." data-lang-ru="Если он не зарегистрирован, достаточно данных выше.">اكتب اسم المستخدم أو بريده لربط الفاتورة بحسابه. إن لم يكن مسجلاً، تكفي بيانات المشتري أعلاه.</p>
+            </div>
+
+            <!-- Cars on this invoice -->
+            <div class="border-t border-gray-100 pt-4">
+                <div class="text-sm font-bold text-gray-700 mb-2 bilingual" data-lang-ar="السيارات في الفاتورة" data-lang-en="Cars on this invoice" data-lang-es="Coches en la factura" data-lang-ru="Автомобили в счёте">السيارات في الفاتورة</div>
+                <div class="space-y-2 mb-3">
+                    {% for item in bill.items.all %}
+                    <div class="flex items-center gap-2">
+                        <span class="flex-1 text-sm text-gray-800">{{ item.title|default:item.site_car.title }}</span>
+                        <input type="number" name="item_price_{{ item.id }}" value="{{ item.price|floatformat:0 }}" min="0"
+                               class="w-32 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-end focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% if bill.items.all|length > 1 %}
+                        <button type="submit" name="delete_item_id" value="{{ item.id }}" title="حذف"
+                                onclick="return confirm('حذف هذا البند من الفاتورة؟')"
+                                class="text-red-500 hover:text-red-700 px-2 text-lg leading-none">&times;</button>
+                        {% else %}
+                        <span class="w-7"></span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="flex items-end gap-2 bg-gray-50 border border-gray-200 p-3 rounded-lg">
+                    <div class="flex-1">
+                        <label class="block text-xs text-gray-500 mb-1 bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add a car" data-lang-es="Añadir coche" data-lang-ru="Добавить авто">أضف سيارة</label>
+                        <select name="site_car_id" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">— اختر سيارة —</option>
+                            {% for sc in addable_cars %}
+                            <option value="{{ sc.pk }}" data-price="{{ sc.price }}">{{ sc.title }} — {{ sc.price|floatformat:0 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="number" name="item_price" min="0" placeholder="السعر" data-placeholder-ar="السعر" data-placeholder-en="Price"
+                           class="w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" name="do_add" value="1" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold px-4 py-1.5 rounded-lg whitespace-nowrap bilingual" data-lang-ar="إضافة" data-lang-en="Add" data-lang-es="Añadir" data-lang-ru="Добавить">إضافة</button>
+                </div>
+            </div>
+            {% endif %}
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ملاحظات" data-lang-ru="комментарии" data-lang-es="comentarios" data-lang-en="Notes">ملاحظات</label>

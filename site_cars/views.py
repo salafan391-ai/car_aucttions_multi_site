@@ -19,7 +19,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
-from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq
+from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteBillItem, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq
 from .image_utils import optimize_image, batch_optimize_images
 
 
@@ -1656,6 +1656,8 @@ def invoice_new(request, pk):
             description=request.POST.get('description', '').strip(),
             is_paid=request.POST.get('is_paid') == 'on',
         )
+        # First line item (more cars can be added on the edit page).
+        SiteBillItem.objects.create(bill=bill, site_car=car, title=car.title, price=sale_price)
 
         if car.status != 'sold':
             car.status = 'sold'
@@ -1677,16 +1679,52 @@ def invoice_edit(request, pk, bill_pk):
     bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
 
     if request.method == 'POST':
-        buyer_name = request.POST.get('buyer_name', '').strip()
-        if not buyer_name:
-            messages.error(request, 'يرجى إدخال اسم المشتري.')
-            return render(request, 'site_cars/invoice_form.html', {'car': car, 'bill': bill})
+        # ── Remove a line item ──
+        if request.POST.get('delete_item_id'):
+            if bill.items.count() <= 1:
+                messages.error(request, 'لا يمكن حذف البند الوحيد في الفاتورة.')
+            else:
+                SiteBillItem.objects.filter(pk=request.POST.get('delete_item_id'), bill=bill).delete()
+                bill.recalc_total()
+                messages.success(request, 'تم حذف البند.')
+            return redirect('invoice_edit', pk=car.pk, bill_pk=bill.pk)
 
-        try:
-            sale_price = int(request.POST.get('sale_price') or bill.price)
-        except ValueError:
-            messages.error(request, 'السعر غير صالح.')
-            return render(request, 'site_cars/invoice_form.html', {'car': car, 'bill': bill})
+        # ── Add another car as a line item ──
+        if request.POST.get('do_add'):
+            sc = SiteCar.objects.filter(pk=request.POST.get('site_car_id') or 0).first()
+            if sc is None:
+                messages.error(request, 'اختر سيارة صحيحة.')
+            else:
+                try:
+                    item_price = int(request.POST.get('item_price') or sc.price or 0)
+                except ValueError:
+                    item_price = int(sc.price or 0)
+                SiteBillItem.objects.create(bill=bill, site_car=sc, title=sc.title, price=item_price)
+                if sc.status != 'sold':
+                    sc.status = 'sold'
+                    sc.save(update_fields=['status'])
+                bill.recalc_total()
+                messages.success(request, 'تمت إضافة السيارة إلى الفاتورة.')
+            return redirect('invoice_edit', pk=car.pk, bill_pk=bill.pk)
+
+        # ── Save buyer info + customer link + item prices ──
+        # Resolve / detach the customer account.
+        if request.POST.get('detach_user'):
+            bill.buyer_user = None
+        q = (request.POST.get('buyer_user_query') or '').strip()
+        if q:
+            from django.contrib.auth.models import User
+            u = (User.objects.filter(username__iexact=q).first()
+                 or User.objects.filter(email__iexact=q).first())
+            if u:
+                bill.buyer_user = u
+            else:
+                messages.warning(request, f'لم يُعثر على حساب مطابق لـ «{q}»؛ سيتم استخدام بيانات المشتري المُدخلة.')
+
+        buyer_name = request.POST.get('buyer_name', '').strip()
+        if not buyer_name and not bill.buyer_user_id:
+            messages.error(request, 'يرجى إدخال اسم المشتري أو ربط حساب عميل.')
+            return redirect('invoice_edit', pk=car.pk, bill_pk=bill.pk)
 
         sale_date_str = request.POST.get('sale_date', '').strip()
         if sale_date_str:
@@ -1696,7 +1734,16 @@ def invoice_edit(request, pk, bill_pk):
             except ValueError:
                 pass
 
-        bill.price = sale_price
+        # Per-item price edits (item_price_<id>).
+        for item in bill.items.all():
+            raw = request.POST.get(f'item_price_{item.id}')
+            if raw is not None and str(raw).strip() != '':
+                try:
+                    item.price = int(raw)
+                    item.save(update_fields=['price'])
+                except ValueError:
+                    pass
+
         bill.buyer_name = buyer_name
         bill.buyer_id_number = request.POST.get('buyer_id_number', '').strip()
         bill.buyer_phone = request.POST.get('buyer_phone', '').strip()
@@ -1704,11 +1751,16 @@ def invoice_edit(request, pk, bill_pk):
         bill.description = request.POST.get('description', '').strip()
         bill.is_paid = request.POST.get('is_paid') == 'on'
         bill.save()
+        bill.recalc_total()
 
         messages.success(request, 'تم تحديث الفاتورة.')
         return redirect('invoice_view', pk=car.pk, bill_pk=bill.pk)
 
-    return render(request, 'site_cars/invoice_form.html', {'car': car, 'bill': bill})
+    used_ids = list(bill.items.values_list('site_car_id', flat=True))
+    addable_cars = SiteCar.objects.exclude(pk__in=[i for i in used_ids if i]).order_by('-created_at')[:300]
+    return render(request, 'site_cars/invoice_form.html', {
+        'car': car, 'bill': bill, 'addable_cars': addable_cars,
+    })
 
 
 @staff_member_required

@@ -86,7 +86,7 @@
         <div class="py-6 border-b border-gray-200">
             <div class="text-sm font-bold text-gray-500 mb-2 bilingual" data-lang-ar="بيانات المشتري" data-lang-ru="данные о покупателях" data-lang-es="Datos del comprador" data-lang-en="Buyer">بيانات المشتري</div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div><span class="text-gray-500 bilingual" data-lang-ar="الاسم:" data-lang-ru="имя:" data-lang-es="el nombre:" data-lang-en="Name:">الاسم:</span> <span class="font-medium">{{ bill.buyer_name }}</span></div>
+                <div><span class="text-gray-500 bilingual" data-lang-ar="الاسم:" data-lang-ru="имя:" data-lang-es="el nombre:" data-lang-en="Name:">الاسم:</span> <span class="font-medium">{{ bill.customer_display }}</span>{% if bill.buyer_user %} <span class="text-xs text-gray-400">(@{{ bill.buyer_user.username }})</span>{% endif %}</div>
                 {% if bill.buyer_id_number %}<div><span class="text-gray-500 bilingual" data-lang-ar="رقم الهوية:" data-lang-ru="Идентификационный номер:" data-lang-es="Número de identificación:" data-lang-en="ID:">رقم الهوية:</span> <span class="font-medium">{{ bill.buyer_id_number }}</span></div>{% endif %}
                 {% if bill.buyer_phone %}<div><span class="text-gray-500 bilingual" data-lang-ar="الجوال:" data-lang-ru="Мобильный телефон:" data-lang-es="Móvil:" data-lang-en="Phone:">الجوال:</span> <span class="font-medium">{{ bill.buyer_phone }}</span></div>{% endif %}
                 {% if bill.buyer_address %}<div><span class="text-gray-500 bilingual" data-lang-ar="العنوان:" data-lang-ru="Адрес:" data-lang-es="La dirección:" data-lang-en="Address:">العنوان:</span> <span class="font-medium">{{ bill.buyer_address }}</span></div>{% endif %}
@@ -104,15 +104,21 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for item in bill.items.all %}
+                    <tr>
+                        <td class="font-medium">{{ item.title|pretty_en|default:item.site_car.title }}</td>
+                        <td class="text-gray-600">
+                            {% if item.site_car %}{{ item.site_car.manufacturer }} {{ item.site_car.model }} · {{ item.site_car.year }}{% if item.site_car.color %} · {{ item.site_car.color }}{% endif %}{% if item.site_car.mileage %} · {{ item.site_car.mileage|floatformat:0 }} km{% endif %}{% endif %}
+                        </td>
+                        <td class="text-end font-mono">{{ item.price|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
                     <tr>
                         <td class="font-medium">{{ car.title|pretty_en }}</td>
-                        <td class="text-gray-600">
-                            {{ car.manufacturer }} {{ car.model }} · {{ car.year }}
-                            {% if car.color %} · {{ car.color }}{% endif %}
-                            {% if car.mileage %} · {{ car.mileage|floatformat:0 }} km{% endif %}
-                        </td>
+                        <td class="text-gray-600">{{ car.manufacturer }} {{ car.model }} · {{ car.year }}</td>
                         <td class="text-end font-mono">{{ bill.price|floatformat:0 }}</td>
                     </tr>
+                    {% endfor %}
                     {% if bill.description %}
                     <tr>
                         <td colspan="3" class="text-gray-600 text-xs">{{ bill.description }}</td>
@@ -122,7 +128,7 @@
                 <tfoot>
                     <tr>
                         <td colspan="2" class="text-end font-bold bilingual" data-lang-ar="الإجمالي" data-lang-ru="Общий" data-lang-es="Total" data-lang-en="Total">الإجمالي</td>
-                        <td class="text-end font-bold font-mono text-lg">{{ bill.price|floatformat:0 }}</td>
+                        <td class="text-end font-bold font-mono text-lg">{{ bill.total|floatformat:0 }}</td>
                     </tr>
                 </tfoot>
             </table>
