@@ -1369,8 +1369,43 @@ def car_list(request):
                 .order_by('-car_count')
             )
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
+    # ── Car-list hero data (tenant-wide, cached 10 min — not per-user) ──
+    _hero_key = f"car_list_hero_v1:{schema}"
+    hero = cache.get(_hero_key)
+    if hero is None:
+        _today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        def _hero_imgs(qs, n=6):
+            return [i for i in qs.exclude(image__isnull=True).exclude(image='')
+                    .values_list('image', flat=True)[:n] if i]
+
+        _auc = ApiCar.objects.filter(category__name='auction', auction_date__gte=now)
+        auction_imgs = (
+            _hero_imgs(_auc.filter(manufacturer__name__icontains='genesis', year__gte=2020).order_by('-created_at'))
+            or _hero_imgs(_auc.order_by('-created_at'))
+        )
+        _enc = ApiCar.objects.exclude(category__name='auction')
+        encar_imgs = (
+            _hero_imgs(_enc.filter(is_luxury=True).order_by('-created_at'))
+            or _hero_imgs(_enc.order_by('-created_at'))
+        )
+        _na = (
+            _auc.filter(status='available').exclude(auction_name__isnull=True).exclude(auction_name='')
+            .order_by('auction_date').values('auction_name', 'auction_date').first()
+        )
+        hero = {
+            'added_today': ApiCar.objects.filter(created_at__gte=_today_start).count(),
+            'updated_today': ApiCar.objects.filter(updated_at__gte=_today_start).count(),
+            'auction_imgs': auction_imgs,
+            'encar_imgs': encar_imgs,
+            'next_auction_name': _na['auction_name'] if _na else None,
+            'next_auction_date': _na['auction_date'] if _na else None,
+        }
+        cache.set(_hero_key, hero, 60 * 10)
+
     context = {
         'page_obj': page_obj,
+        'hero': hero,
         'manufacturers': manufacturers,
         'popular_manufacturers': popular_manufacturers,
         'models': models_qs,
