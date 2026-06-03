@@ -1019,23 +1019,38 @@
             <!-- Import cost calculator (editable estimate) -->
             <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
                 <div class="text-[11px] font-semibold tracking-widest uppercase text-brand mb-1 bilingual" data-lang-ar="تقديري" data-lang-en="Estimate" data-lang-es="Estimado" data-lang-ru="Оценка">تقديري</div>
-                <h2 class="text-lg font-bold mb-4 bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</h2>
-                <label class="block mb-4">
-                    <span class="block text-xs text-gray-500 mb-1 bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
-                    <select id="imp-calc-country" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand focus:border-transparent">
-                        <option value="SA" selected>🇸🇦 السعودية</option>
-                    </select>
-                </label>
-                <div id="imp-calc-rows" class="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-100 text-sm"></div>
-                <div class="flex items-center justify-between gap-2 mt-4 p-3 rounded-xl bg-gray-50 border border-gray-200">
-                    <span class="font-semibold text-gray-800 bilingual" data-lang-ar="الإجمالي التقديري" data-lang-en="Estimated total" data-lang-es="Total estimado" data-lang-ru="Итого (оценка)">الإجمالي التقديري</span>
-                    <span id="imp-calc-total" class="font-extrabold text-brand text-lg whitespace-nowrap">—</span>
+                <h2 class="text-lg font-bold mb-3 bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</h2>
+                <button type="button" onclick="impCalcOpen()" class="w-full flex items-center justify-center gap-2 bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+                    <span class="bilingual" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</span>
+                </button>
+            </div>
+
+            <!-- Calculator modal (opened by the button above; high z-index so it
+                 never hides behind other elements, and works on phones) -->
+            <div id="imp-calc-modal" class="fixed inset-0 z-[70] items-center justify-center p-4" style="display:none;background:rgba(0,0,0,.55)" onclick="if(event.target===this)impCalcClose()">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6" dir="rtl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</h3>
+                        <button type="button" onclick="impCalcClose()" class="text-gray-400 hover:text-gray-700 text-3xl leading-none">&times;</button>
+                    </div>
+                    <label class="block mb-4">
+                        <span class="block text-xs text-gray-500 mb-1 bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
+                        <select id="imp-calc-country" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand focus:border-transparent">
+                            <option value="SA" selected>🇸🇦 السعودية</option>
+                        </select>
+                    </label>
+                    <div id="imp-calc-rows" class="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-100 text-sm"></div>
+                    <div class="flex items-center justify-between gap-2 mt-4 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                        <span class="font-semibold text-gray-800 bilingual" data-lang-ar="الإجمالي التقديري" data-lang-en="Estimated total" data-lang-es="Total estimado" data-lang-ru="Итого (оценка)">الإجمالي التقديري</span>
+                        <span id="imp-calc-total" class="font-extrabold text-brand text-lg whitespace-nowrap">—</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400 leading-relaxed mt-3 bilingual"
+                       data-lang-ar="* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم."
+                       data-lang-en="* Figures are estimates and may vary with exchange rate, weight, shipping line and customs rules. Not a binding quote."
+                       data-lang-es="* Las cifras son estimaciones y pueden variar. No es una cotización vinculante."
+                       data-lang-ru="* Цифры являются ориентировочными и могут меняться. Не является обязательной офертой.">* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم.</p>
                 </div>
-                <p class="text-[11px] text-gray-400 leading-relaxed mt-3 bilingual"
-                   data-lang-ar="* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم."
-                   data-lang-en="* Figures are estimates and may vary with exchange rate, weight, shipping line and customs rules. Not a binding quote."
-                   data-lang-es="* Las cifras son estimaciones y pueden variar. No es una cotización vinculante."
-                   data-lang-ru="* Цифры являются ориентировочными и могут меняться. Не является обязательной офертой.">* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم.</p>
             </div>
             <script>
             (function () {
@@ -1086,10 +1101,14 @@
                     var opt = document.querySelector('#imp-calc-country option[value="SA"]');
                     if (opt) opt.text = (L === 'ar') ? '🇸🇦 السعودية' : '🇸🇦 Saudi Arabia';
                 }
+                window.impCalcRender = render;
+                window.impCalcOpen = function () { var m = document.getElementById('imp-calc-modal'); if (m) m.style.display = 'flex'; render(); };
+                window.impCalcClose = function () { var m = document.getElementById('imp-calc-modal'); if (m) m.style.display = 'none'; };
                 render();
                 document.addEventListener('langchange', render);
                 var sel = document.getElementById('imp-calc-country');
                 if (sel) sel.addEventListener('change', render);
+                document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.impCalcClose(); });
             })();
             </script>
             {% endif %}
