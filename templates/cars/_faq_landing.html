@@ -1,0 +1,23 @@
+{# Self-contained FAQ band for landing pages (works on any design). #}
+<section style="background:#f5f5f7;padding:3.5rem 1rem 4rem;direction:rtl;font-family:'Tajawal','Cairo',sans-serif;">
+    <div style="max-width:760px;margin:0 auto;">
+        <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:#111827;margin:0 0 1.5rem;" class="bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="Frequently Asked Questions" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</h2>
+        {% if site_faqs %}
+        <div style="display:flex;flex-direction:column;gap:.6rem;">
+            {% for f in site_faqs %}
+            <details style="background:#fff;border:1px solid #e5e7eb;border-radius:.75rem;overflow:hidden;">
+                <summary style="cursor:pointer;padding:1rem 1.25rem;font-weight:600;color:#111827;list-style:none;display:flex;justify-content:space-between;gap:1rem;align-items:center;">
+                    <span>{{ f.question }}</span><span style="color:#9ca3af;flex-shrink:0;">▾</span>
+                </summary>
+                <div style="padding:0 1.25rem 1rem;color:#4b5563;line-height:1.7;white-space:pre-line;">{{ f.answer }}</div>
+            </details>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="text-align:center;color:#6b7280;margin:0 0 .5rem;" class="bilingual" data-lang-ar="هل لديك سؤال؟ يسعدنا الإجابة عليه." data-lang-en="Have a question? We'd be happy to answer." data-lang-es="¿Tienes una pregunta?" data-lang-ru="Есть вопрос? Мы рады ответить.">هل لديك سؤال؟ يسعدنا الإجابة عليه.</p>
+        {% endif %}
+        <div style="text-align:center;margin-top:1.5rem;">
+            <a href="{% url 'faq' %}" style="display:inline-block;background:{{ primary_color|default:'#111827' }};color:#fff;font-weight:700;padding:.8rem 1.9rem;border-radius:.75rem;text-decoration:none;" class="bilingual" data-lang-ar="اطرح سؤالك" data-lang-en="Ask a question" data-lang-es="Haz una pregunta" data-lang-ru="Задать вопрос">اطرح سؤالك</a>
+        </div>
+    </div>
+</section>

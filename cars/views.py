@@ -217,6 +217,12 @@ def landing(request):
     if cached_html:
         return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
 
+    try:
+        from site_cars.models import SiteFaq
+        landing_faqs = list(SiteFaq.objects.filter(is_published=True)[:6])
+    except Exception:
+        landing_faqs = []
+
     context = {
         'cars_count': agg['cars_count'],
         'auction_count': agg['auction_count'],
@@ -225,6 +231,7 @@ def landing(request):
         'next_auction_day_en': next_auction_day_en,
         'site_cars_count': site_cars_count,
         'damaged_cars_count': damaged_cars_count,
+        'site_faqs': landing_faqs,
         'auction_names': list(
             ApiCar.objects.filter(
                 category__name='auction',
