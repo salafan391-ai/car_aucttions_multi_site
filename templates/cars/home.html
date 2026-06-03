@@ -1103,7 +1103,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         {% if user.is_authenticated %}
         <form method="post" action="{% url 'rate_site' %}" class="bg-gray-50 rounded-xl p-4 mb-6">
             {% csrf_token %}
-            <div class="font-semibold mb-2 bilingual" data-lang-ar="قيّم موقعنا" data-lang-en="Rate our website" data-lang-es="Valora nuestro sitio" data-lang-ru="Оцените наш сайт">قيّم موقعنا</div>
+            <div class="font-semibold mb-2 bilingual" data-lang-ar="قم بتقييمنا" data-lang-en="Rate us" data-lang-es="Valóranos" data-lang-ru="Оцените нас">قم بتقييمنا</div>
             <div class="flex items-center gap-1 mb-3" dir="ltr">
                 {% for i in "12345" %}
                 <label class="cursor-pointer">
