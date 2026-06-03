@@ -623,9 +623,11 @@
     <!-- ── RIGHT COLUMN: cars + pagination ───────────────── -->
     <div class="flex-1 min-w-0" id="car-results">
 
-    <!-- ═══════════════ SORT BAR ═══════════════ -->
+    <!-- One panel: tabs + count + sort header on top, cars grid below -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <!-- ═══════════════ TABS + COUNT + SORT (panel header) ═══════════════ -->
     {% with current_sort=request.GET.sort|default:"-created_at" %}
-    <div class="flex flex-wrap items-center justify-between gap-2 bg-white rounded-xl shadow-sm border border-gray-100 px-2.5 py-2 mb-4 sm:mb-6" id="sort-bar">
+    <div class="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 border-b border-gray-100" id="sort-bar">
         <div id="type-tabs" class="flex items-center gap-2 flex-wrap">
             <div class="flex gap-1 overflow-x-auto scrollbar-hide">
                 {% if show_encar %}
@@ -700,8 +702,10 @@
     </div>
     {% endwith %}
 
-
+    <div class="p-3 sm:p-4">
     {% include 'cars/_car_grid.html' %}
+    </div>
+    </div><!-- end panel -->
 
     </div><!-- end right column -->
     </div><!-- end sidebar+grid flex wrapper -->
