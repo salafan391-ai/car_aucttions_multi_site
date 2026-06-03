@@ -474,6 +474,32 @@ def rate_car(request, pk):
     return redirect('car_detail', slug=car.slug)
 
 
+@login_required
+def rate_site(request):
+    """Rate the website itself (not a specific car). One rating per user."""
+    if _is_public_schema():
+        return redirect('home')
+
+    back = request.META.get('HTTP_REFERER') or reverse('home')
+    if request.method == 'POST':
+        rating_val = request.POST.get('rating', '').strip()
+        comment = request.POST.get('comment', '').strip()
+        if not rating_val or not rating_val.isdigit() or int(rating_val) not in range(1, 6):
+            messages.error(request, 'يرجى اختيار تقييم من 1 إلى 5.')
+            return redirect(back)
+        SiteRating.objects.update_or_create(
+            user=request.user,
+            car=None,
+            defaults={
+                'rating': int(rating_val),
+                'comment': comment,
+                'is_approved': False,  # needs admin approval
+            },
+        )
+        messages.success(request, 'شكراً لتقييمك! سيظهر بعد مراجعة المشرف.')
+    return redirect(back)
+
+
 @staff_member_required
 def approve_rating(request, pk):
     """Approve a rating"""

@@ -431,12 +431,26 @@ def home(request):
             )
         ]
 
+        # Website rating (aggregated over ALL approved ratings — legacy per-car
+        # ratings count toward the site score too).
+        from site_cars.models import SiteRating
+        from django.db.models import Avg as _Avg
+        _site_ratings = SiteRating.objects.filter(is_approved=True)
+        site_rating_avg = round(_site_ratings.aggregate(a=_Avg('rating'))['a'] or 0, 1)
+        site_rating_count = _site_ratings.count()
+        site_reviews = list(
+            _site_ratings.exclude(comment='').select_related('user').order_by('-created_at')[:8]
+        )
+
         context = {
             'latest_cars': latest_cars,
             'latest_auctions': latest_auctions,
             'site_cars': site_cars,
             'damaged_cars': damaged_cars,
             'home_sections_order': home_sections_order,
+            'site_rating_avg': site_rating_avg,
+            'site_rating_count': site_rating_count,
+            'site_reviews': site_reviews,
             'site_cars_count': site_cars_count,
             'damaged_cars_count': damaged_cars_count,
             'site_filter_json': site_filter_json,

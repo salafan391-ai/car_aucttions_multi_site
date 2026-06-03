@@ -227,7 +227,9 @@ class SiteShipment(models.Model):
 
 class SiteRating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='site_ratings')
-    car = models.ForeignKey(ApiCar, on_delete=models.CASCADE, verbose_name="السيارة")
+    # Website rating: car is optional. Legacy per-car ratings keep their car FK
+    # and still count toward the site score; new ratings rate the site (car=None).
+    car = models.ForeignKey(ApiCar, on_delete=models.CASCADE, null=True, blank=True, verbose_name="السيارة")
     rating = models.IntegerField(verbose_name="التقييم")
     comment = models.TextField(blank=True, verbose_name="التعليق")
     is_approved = models.BooleanField(default=False, verbose_name="موافق عليه")
@@ -238,10 +240,20 @@ class SiteRating(models.Model):
         ordering = ['-created_at']
         verbose_name = "تقييم"
         verbose_name_plural = "التقييمات"
-        unique_together = ['user', 'car']
+        constraints = [
+            # One website rating per user (car is null); legacy per-car ratings
+            # are still unique per (user, car).
+            models.UniqueConstraint(
+                fields=['user'], condition=models.Q(car__isnull=True),
+                name='unique_site_rating_per_user',
+            ),
+            models.UniqueConstraint(
+                fields=['user', 'car'], name='unique_car_rating_per_user',
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.user} - {self.car} ({self.rating}/5)"
+        return f"{self.user} - {self.car or 'website'} ({self.rating}/5)"
 
 
 class SiteQuestion(models.Model):
