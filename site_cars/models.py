@@ -274,6 +274,28 @@ class SiteQuestion(models.Model):
         return f"{self.user} - {self.question[:50]}"
 
 
+class SiteFaq(models.Model):
+    """General website FAQ. Admin-authored entries are published directly;
+    visitor-submitted questions arrive unpublished and unanswered, and the
+    admin answers + publishes them so they appear in the public FAQ."""
+    question = models.TextField(verbose_name="السؤال")
+    answer = models.TextField(blank=True, verbose_name="الإجابة")
+    is_published = models.BooleanField(default=False, verbose_name="منشور")
+    is_user_submitted = models.BooleanField(default=False, verbose_name="من زائر")
+    submitter_name = models.CharField(max_length=120, blank=True, verbose_name="اسم المُرسِل")
+    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', '-created_at']
+        verbose_name = "سؤال شائع"
+        verbose_name_plural = "الأسئلة الشائعة"
+
+    def __str__(self):
+        return self.question[:60]
+
+
 class SiteSoldCar(models.Model):
     car = models.ForeignKey(ApiCar, on_delete=models.CASCADE, verbose_name="السيارة")
     buyer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchased_cars', verbose_name="المشتري")

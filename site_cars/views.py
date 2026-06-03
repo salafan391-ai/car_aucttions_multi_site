@@ -19,7 +19,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
-from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
+from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq
 from .image_utils import optimize_image, batch_optimize_images
 
 
@@ -498,6 +498,73 @@ def rate_site(request):
         )
         messages.success(request, 'شكراً لتقييمك! سيظهر بعد مراجعة المشرف.')
     return redirect(back)
+
+
+def faq(request):
+    """Public FAQ page: published entries + a visitor 'ask a question' form.
+    Submitted questions arrive unpublished/unanswered for the admin to handle."""
+    if _is_public_schema():
+        return redirect('home')
+
+    if request.method == 'POST':
+        q = (request.POST.get('question') or '').strip()
+        name = (request.POST.get('name') or '').strip()
+        if not q:
+            messages.error(request, 'يرجى كتابة سؤالك.')
+        else:
+            SiteFaq.objects.create(
+                question=q[:2000],
+                submitter_name=name[:120],
+                is_user_submitted=True,
+                is_published=False,
+            )
+            messages.success(request, 'تم إرسال سؤالك! سيظهر بعد مراجعة وإجابة المشرف.')
+        return redirect('faq')
+
+    faqs = SiteFaq.objects.filter(is_published=True)
+    return render(request, 'site_cars/faq.html', {'faqs': faqs})
+
+
+@staff_member_required
+def faq_manage(request):
+    """Dashboard FAQ manager: add admin Q&A, answer/publish visitor questions."""
+    if _is_public_schema():
+        return redirect('home')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'add':
+            q = (request.POST.get('question') or '').strip()
+            a = (request.POST.get('answer') or '').strip()
+            if q:
+                try:
+                    order = int(request.POST.get('order') or 0)
+                except ValueError:
+                    order = 0
+                SiteFaq.objects.create(question=q, answer=a, is_published=True, order=order)
+                messages.success(request, 'تمت إضافة السؤال.')
+        elif action == 'update':
+            obj = get_object_or_404(SiteFaq, pk=request.POST.get('id'))
+            obj.question = (request.POST.get('question') or obj.question).strip()
+            obj.answer = (request.POST.get('answer') or '').strip()
+            obj.is_published = 'is_published' in request.POST
+            try:
+                obj.order = int(request.POST.get('order') or 0)
+            except ValueError:
+                pass
+            obj.save()
+            messages.success(request, 'تم حفظ التغييرات.')
+        elif action == 'delete':
+            SiteFaq.objects.filter(pk=request.POST.get('id')).delete()
+            messages.success(request, 'تم حذف السؤال.')
+        return redirect('faq_manage')
+
+    pending = SiteFaq.objects.filter(is_published=False)
+    published = SiteFaq.objects.filter(is_published=True)
+    return render(request, 'site_cars/faq_manage.html', {
+        'pending': pending,
+        'published': published,
+    })
 
 
 @staff_member_required

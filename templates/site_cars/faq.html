@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}الأسئلة الشائعة - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-10">
+    <div class="text-center mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="Frequently Asked Questions" data-lang-es="Preguntas frecuentes" data-lang-ru="Часто задаваемые вопросы">الأسئلة الشائعة</h1>
+        <p class="text-gray-500 mt-2 bilingual" data-lang-ar="إجابات على أكثر الأسئلة شيوعاً" data-lang-en="Answers to the most common questions" data-lang-es="Respuestas a las preguntas más comunes" data-lang-ru="Ответы на самые частые вопросы">إجابات على أكثر الأسئلة شيوعاً</p>
+    </div>
+
+    {% if faqs %}
+    <div class="space-y-3 mb-12">
+        {% for f in faqs %}
+        <details class="bg-white rounded-xl shadow-sm border border-gray-100 group">
+            <summary class="flex items-center justify-between gap-3 cursor-pointer list-none p-4 font-semibold text-gray-800">
+                <span>{{ f.question }}</span>
+                <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </summary>
+            <div class="px-4 pb-4 text-gray-600 leading-relaxed whitespace-pre-line">{{ f.answer }}</div>
+        </details>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center text-gray-400 mb-12 bilingual" data-lang-ar="لا توجد أسئلة بعد. كن أول من يسأل!" data-lang-en="No questions yet. Be the first to ask!" data-lang-es="Aún no hay preguntas." data-lang-ru="Пока нет вопросов.">لا توجد أسئلة بعد. كن أول من يسأل!</p>
+    {% endif %}
+
+    <!-- Ask a question -->
+    <div class="bg-gray-50 rounded-2xl p-6">
+        <h2 class="text-lg font-bold mb-1 bilingual" data-lang-ar="لم تجد إجابتك؟ اسألنا" data-lang-en="Didn't find your answer? Ask us" data-lang-es="¿No encontraste tu respuesta? Pregúntanos" data-lang-ru="Не нашли ответ? Спросите нас">لم تجد إجابتك؟ اسألنا</h2>
+        <p class="text-gray-500 text-sm mb-4 bilingual" data-lang-ar="سيتم نشر سؤالك مع الإجابة بعد مراجعة المشرف." data-lang-en="Your question will be published with an answer after admin review." data-lang-es="Tu pregunta se publicará tras la revisión." data-lang-ru="Ваш вопрос будет опубликован после проверки.">سيتم نشر سؤالك مع الإجابة بعد مراجعة المشرف.</p>
+        <form method="post" action="{% url 'faq' %}" class="space-y-3">
+            {% csrf_token %}
+            <input type="text" name="name" maxlength="120" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition" placeholder="اسمك (اختياري)" data-placeholder-ar="اسمك (اختياري)" data-placeholder-en="Your name (optional)" data-placeholder-es="Tu nombre (opcional)" data-placeholder-ru="Ваше имя (необязательно)">
+            <textarea name="question" rows="3" required class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none" placeholder="اكتب سؤالك..." data-placeholder-ar="اكتب سؤالك..." data-placeholder-en="Write your question..." data-placeholder-es="Escribe tu pregunta..." data-placeholder-ru="Напишите свой вопрос..."></textarea>
+            <button type="submit" class="bg-brand bg-brand-hover text-white text-sm font-bold px-6 py-2.5 rounded-lg transition bilingual" data-lang-ar="إرسال السؤال" data-lang-en="Send question" data-lang-es="Enviar pregunta" data-lang-ru="Отправить вопрос">إرسال السؤال</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

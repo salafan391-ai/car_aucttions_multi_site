@@ -442,7 +442,11 @@ def home(request):
             _site_ratings.exclude(comment='').select_related('user').order_by('-created_at')[:8]
         )
 
+        from site_cars.models import SiteFaq
+        site_faqs = list(SiteFaq.objects.filter(is_published=True)[:6])
+
         context = {
+            'site_faqs': site_faqs,
             'latest_cars': latest_cars,
             'latest_auctions': latest_auctions,
             'site_cars': site_cars,

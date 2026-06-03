@@ -1139,6 +1139,29 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         {% endif %}
     </div>
 </section>
+
+<!-- FAQ -->
+{% if site_faqs %}
+<section class="max-w-3xl mx-auto px-3 sm:px-4 mt-10 sm:mt-16 mb-8 sm:mb-12">
+    <div class="text-center mb-6">
+        <h2 class="text-xl sm:text-2xl font-bold bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="Frequently Asked Questions" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</h2>
+    </div>
+    <div class="space-y-3">
+        {% for f in site_faqs %}
+        <details class="bg-white rounded-xl shadow-sm border border-gray-100 group">
+            <summary class="flex items-center justify-between gap-3 cursor-pointer list-none p-4 font-semibold text-gray-800">
+                <span>{{ f.question }}</span>
+                <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </summary>
+            <div class="px-4 pb-4 text-gray-600 leading-relaxed whitespace-pre-line">{{ f.answer }}</div>
+        </details>
+        {% endfor %}
+    </div>
+    <div class="text-center mt-5">
+        <a href="{% url 'faq' %}" class="text-brand font-semibold text-sm hover:underline bilingual" data-lang-ar="عرض كل الأسئلة واطرح سؤالك ←" data-lang-en="See all questions & ask yours →" data-lang-es="Ver todas y preguntar →" data-lang-ru="Все вопросы и задать свой →">عرض كل الأسئلة واطرح سؤالك ←</a>
+    </div>
+</section>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
