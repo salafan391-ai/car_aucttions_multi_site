@@ -1,9 +1,6 @@
 {% load static humanize i18n safe_query custom_filters %}
-{# Out-of-band swaps: keep the result count + tab badges in sync with the #}
-{# HTMX-swapped car grid below (they live outside #htmx-main on the page). #}
-<span id="results-count" hx-swap-oob="true" class="font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span>
-{% if show_encar %}<span id="tab-count-cars" hx-swap-oob="true" class="{% if request.GET.car_type == 'cars' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_cars|intcomma }}</span>{% endif %}
-{% if show_auctions %}<span id="tab-count-auction" hx-swap-oob="true" class="{% if request.GET.car_type == 'auction' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_auction|intcomma }}</span>{% endif %}
+{# Tabs + counts now live inside #car-results (re-rendered on each HTMX swap), #}
+{# so no out-of-band count spans are needed here. #}
     <!-- ═══════════════ ACTIVE FILTER CHIPS ═══════════════ -->
     <div id="active-chips" class="hidden lg:block">{% if sel_manufacturers or sel_models or sel_badges or request.GET.year_from or request.GET.year_to or sel_colors or sel_fuels or sel_transmissions or sel_seat_counts or sel_seat_colors or sel_auction_names or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
     <div class="flex flex-wrap items-center gap-2 mb-5">
@@ -374,7 +371,36 @@
 
     <!-- ═══════════════ SORT BAR ═══════════════ -->
     {% with current_sort=request.GET.sort|default:"-created_at" %}
-    <div class="flex items-center justify-end mb-4 sm:mb-6" id="sort-bar">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6" id="sort-bar">
+        <div id="type-tabs" class="flex items-center gap-3 flex-wrap w-full sm:w-auto">
+            <div class="flex gap-1 bg-white rounded-xl p-1 shadow-sm border border-gray-100 overflow-x-auto scrollbar-hide">
+                {% if show_encar %}
+                <a href="?car_type=cars{% if request.GET.q %}&q={{ request.GET.q|qs_value }}{% endif %}" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if request.GET.car_type == 'cars' %}bg-brand text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
+                    <span class="bilingual" data-lang-ar="سيارات" data-lang-ru="автомобили" data-lang-es="coches" data-lang-en="Cars">سيارات</span>
+                    <span id="tab-count-cars" class="{% if request.GET.car_type == 'cars' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_cars|intcomma }}</span>
+                </a>
+                {% endif %}
+                {% if show_auctions %}
+                <a href="?car_type=auction{% if request.GET.q %}&q={{ request.GET.q|qs_value }}{% endif %}" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if request.GET.car_type == 'auction' %}bg-purple-600 text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
+                    <span class="bilingual" data-lang-ar="مزادات" data-lang-ru="Аукционы" data-lang-es="Subastas" data-lang-en="Auctions">مزادات</span>
+                    <span id="tab-count-auction" class="{% if request.GET.car_type == 'auction' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_auction|intcomma }}</span>
+                </a>
+                {% endif %}
+                {% if site_cars_count and show_site_cars %}
+                <a href="{% url 'site_car_list' %}" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:bg-gray-50">
+                    <span class="bilingual" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</span>
+                    <span class="bg-emerald-100 text-emerald-700 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ site_cars_count|intcomma }}</span>
+                </a>
+                {% endif %}
+                {% if damaged_cars_count %}
+                <a href="{% url 'site_car_list' %}?source=auctions" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:bg-gray-50">
+                    <span class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-ru="Поврежденные" data-lang-es="Dañados" data-lang-en="Damaged">سيارات مصدومة</span>
+                    <span class="bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ damaged_cars_count|intcomma }}</span>
+                </a>
+                {% endif %}
+            </div>
+            <span class="text-xs sm:text-sm text-gray-500"><span id="results-count" class="font-bold text-gray-900">{{ page_obj.paginator.count|intcomma }}</span> <span class="bilingual" data-lang-ar="نتيجة" data-lang-ru="результат" data-lang-es="un resultado" data-lang-en="results">نتيجة</span></span>
+        </div>
         <div class="relative">
             <button type="button" id="sort-btn" onclick="document.getElementById('sort-menu').classList.toggle('hidden')"
                     class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-700 hover:border-gray-300 shadow-sm transition">
