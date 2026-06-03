@@ -86,6 +86,10 @@
             --color-body-bg: {{ body_bg_color|default:'#ffffff' }};
         }
         body { font-family: 'Tajawal', Arial, sans-serif; background-color: var(--color-body-bg); }
+        /* Full-width pages: let page content span the whole viewport instead of a
+           centered ~1280px column. Side padding (px-*) on the containers is kept
+           so content doesn't touch the screen edges. */
+        .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl { max-width: 100% !important; }
         html[lang="en"] body, html[lang="ko"] body { font-family: 'Tajawal', Arial, sans-serif; }
         .car-card:hover { transform: translateY(-4px); }
         .car-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
