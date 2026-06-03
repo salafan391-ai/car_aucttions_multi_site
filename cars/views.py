@@ -1376,8 +1376,20 @@ def car_list(request):
         _today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
         def _hero_imgs(qs, n=6):
-            return [i for i in qs.exclude(image__isnull=True).exclude(image='')
-                    .values_list('image', flat=True)[:n] if i]
+            # Imported cars often keep the photo in the `images` JSON list with
+            # the `image` field empty — fall back to images[0].
+            out = []
+            for c in qs.values('image', 'images')[:n * 4]:
+                img = c.get('image') or ''
+                if not img:
+                    _imgs = c.get('images')
+                    if isinstance(_imgs, list) and _imgs:
+                        img = _imgs[0]
+                if img:
+                    out.append(img)
+                    if len(out) >= n:
+                        break
+            return out
 
         _auc = ApiCar.objects.filter(category__name='auction', auction_date__gte=now)
         auction_imgs = (
