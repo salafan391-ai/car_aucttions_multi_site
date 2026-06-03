@@ -1373,7 +1373,8 @@ def car_list(request):
     _hero_key = f"car_list_hero_v1:{schema}"
     hero = cache.get(_hero_key)
     if hero is None:
-        _today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        # Anchor "today" to the local timezone, not UTC.
+        _today_start = timezone.localtime(now).replace(hour=0, minute=0, second=0, microsecond=0)
 
         def _hero_imgs(qs, n=6):
             # Imported cars often keep the photo in the `images` JSON list with
@@ -1407,7 +1408,11 @@ def car_list(request):
         )
         hero = {
             'added_today': ApiCar.objects.filter(created_at__gte=_today_start).count(),
-            'updated_today': ApiCar.objects.filter(updated_at__gte=_today_start).count(),
+            # Genuine updates to EXISTING cars (exclude ones added today, whose
+            # updated_at is also today — otherwise it just duplicates "added").
+            'updated_today': ApiCar.objects.filter(
+                updated_at__gte=_today_start, created_at__lt=_today_start
+            ).count(),
             'auction_imgs': auction_imgs,
             'encar_imgs': encar_imgs,
             'next_auction_name': _na['auction_name'] if _na else None,
