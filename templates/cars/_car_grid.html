@@ -1,6 +1,6 @@
 {% load static humanize i18n safe_query custom_filters %}
     <!-- ═══════════════ CAR LISTING ═══════════════ -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-5">
+    <div class="car-results-grid">
         {% for car in page_obj %}
 
         {# ════════════ DARK theme ════════════ #}

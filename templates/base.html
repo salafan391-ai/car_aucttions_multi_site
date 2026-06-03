@@ -90,6 +90,10 @@
            centered ~1280px column. Side padding (px-*) on the containers is kept
            so content doesn't touch the screen edges. */
         .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl { max-width: 100% !important; }
+        /* Car results grid: column count follows the available width (more
+           columns as the page gets wider). Two-up on phones. */
+        .car-results-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        @media (max-width: 640px) { .car-results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
         html[lang="en"] body, html[lang="ko"] body { font-family: 'Tajawal', Arial, sans-serif; }
         .car-card:hover { transform: translateY(-4px); }
         .car-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
