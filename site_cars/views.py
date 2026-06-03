@@ -14,6 +14,7 @@ from django.db import connection
 from django.db.models import Avg, Sum, Count, Q
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -457,7 +458,7 @@ def rate_car(request, pk):
 
         if not rating_val or int(rating_val) not in range(1, 6):
             messages.error(request, 'يرجى اختيار تقييم من 1 إلى 5.')
-            return redirect('car_detail', pk=pk)
+            return redirect('car_detail', slug=car.slug)
 
         SiteRating.objects.update_or_create(
             user=request.user,
@@ -470,7 +471,7 @@ def rate_car(request, pk):
         )
         messages.success(request, 'تم حفظ تقييمك بنجاح! سيتم عرضه بعد مراجعة المشرف.')
 
-    return redirect('car_detail', pk=pk)
+    return redirect('car_detail', slug=car.slug)
 
 
 @staff_member_required
@@ -483,9 +484,9 @@ def approve_rating(request, pk):
     rating.is_approved = True
     rating.save()
     messages.success(request, f'تم الموافقة على تقييم {rating.user.username}')
-    
-    # Redirect back to the car detail page or referrer
-    return redirect(request.META.get('HTTP_REFERER', 'car_detail'), pk=rating.car.id)
+
+    # Redirect back to the referrer, else the car detail page (by slug).
+    return redirect(request.META.get('HTTP_REFERER') or reverse('car_detail', kwargs={'slug': rating.car.slug}))
 
 
 @staff_member_required
@@ -495,13 +496,13 @@ def reject_rating(request, pk):
         return redirect('home')
     
     rating = get_object_or_404(SiteRating, pk=pk)
-    car_id = rating.car.id
+    car_slug = rating.car.slug
     username = rating.user.username
     rating.delete()
     messages.success(request, f'تم رفض وحذف تقييم {username}')
-    
-    # Redirect back to the car detail page or referrer
-    return redirect(request.META.get('HTTP_REFERER', 'car_detail'), pk=car_id)
+
+    # Redirect back to the referrer, else the car detail page (by slug).
+    return redirect(request.META.get('HTTP_REFERER') or reverse('car_detail', kwargs={'slug': car_slug}))
 
 
 # ── Inbox / Messaging ──
