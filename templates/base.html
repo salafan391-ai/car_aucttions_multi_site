@@ -228,7 +228,11 @@
             background-color: rgba(255,255,255,0.95) !important;
             box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
         }
-        /* Mobile menu on light theme */
+        /* Mobile menu on light theme.
+           The menu's inline style hardcodes background:var(--color-primary); on a
+           light theme the text is also var(--color-primary), so without this the
+           menu is one solid colour (text == background). Force a light panel. */
+        [data-theme="light"] #mobile-menu { background-color: #ffffff !important; }
         [data-theme="light"] #mobile-menu a,
         [data-theme="light"] #mobile-menu button,
         [data-theme="light"] #mobile-menu span { color: var(--color-primary) !important; }
