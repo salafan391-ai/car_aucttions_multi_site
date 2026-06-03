@@ -1370,7 +1370,7 @@ def car_list(request):
             )
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     # ── Car-list hero data (tenant-wide, cached 10 min — not per-user) ──
-    _hero_key = f"car_list_hero_v1:{schema}"
+    _hero_key = f"car_list_hero_v2:{schema}"
     hero = cache.get(_hero_key)
     if hero is None:
         # Anchor "today" to the local timezone, not UTC.
@@ -1405,11 +1405,17 @@ def car_list(request):
         # Upcoming auctions grouped by name — there can be several auction
         # houses, each with its own next date. Earliest date per name, soonest first.
         from django.db.models import Min as _Min
+        _WD_AR = {0: 'الإثنين', 1: 'الثلاثاء', 2: 'الأربعاء', 3: 'الخميس', 4: 'الجمعة', 5: 'السبت', 6: 'الأحد'}
+        _WD_EN = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday', 5: 'Saturday', 6: 'Sunday'}
         upcoming_auctions = list(
             _auc.filter(status='available').exclude(auction_name__isnull=True).exclude(auction_name='')
             .values('auction_name').annotate(auction_date=_Min('auction_date'))
             .order_by('auction_date')[:6]
         )
+        for _a in upcoming_auctions:
+            _wd = timezone.localtime(_a['auction_date']).weekday()
+            _a['day_ar'] = _WD_AR[_wd]
+            _a['day_en'] = _WD_EN[_wd]
         _na = upcoming_auctions[0] if upcoming_auctions else None
         hero = {
             'added_today': ApiCar.objects.filter(created_at__gte=_today_start).count(),
@@ -1422,6 +1428,8 @@ def car_list(request):
             'encar_imgs': encar_imgs,
             'next_auction_name': _na['auction_name'] if _na else None,
             'next_auction_date': _na['auction_date'] if _na else None,
+            'next_auction_day_ar': _na['day_ar'] if _na else None,
+            'next_auction_day_en': _na['day_en'] if _na else None,
             'upcoming_auctions': upcoming_auctions,
         }
         cache.set(_hero_key, hero, 60 * 10)

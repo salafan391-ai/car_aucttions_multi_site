@@ -633,7 +633,7 @@
             {% endif %}
             <div class="flex-1 text-center sm:text-start min-w-0">
                 <div class="text-[11px] font-bold uppercase tracking-widest text-white/80">
-                    {% if hero.next_auction_name %}{{ hero.next_auction_name }} · {% endif %}<span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد</span>{% if hero.next_auction_date %} · {{ hero.next_auction_date|date:"Y/m/d" }}{% endif %}
+                    {% if hero.next_auction_name %}{{ hero.next_auction_name }} · {% endif %}<span class="bilingual" data-lang-ar="مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}" data-lang-en="{% if hero.next_auction_day_en %}{{ hero.next_auction_day_en }} {% endif %}Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}</span>{% if hero.next_auction_date %} · {{ hero.next_auction_date|date:"Y/m/d" }}{% endif %}
                 </div>
                 {% if hero.next_auction_date %}
                 <div class="text-2xl sm:text-3xl font-extrabold mt-1 font-mono" data-auction-hero-timer data-date="{{ hero.next_auction_date|date:'c' }}">—</div>
@@ -644,7 +644,7 @@
                 {% if hero.upcoming_auctions|length > 1 %}
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-3">
                     {% for a in hero.upcoming_auctions %}
-                    <span class="inline-flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">{{ a.auction_name }} <span class="text-white/70 font-normal">{{ a.auction_date|date:"Y/m/d" }}</span></span>
+                    <span class="inline-flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1 text-xs font-semibold">{{ a.auction_name }} <span class="bilingual text-white/70 font-normal" data-lang-ar="{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}" data-lang-en="{{ a.day_en }} {{ a.auction_date|date:'Y/m/d' }}">{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}</span></span>
                     {% endfor %}
                 </div>
                 {% endif %}
