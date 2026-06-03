@@ -570,6 +570,99 @@
     {% endfor %}
 </div>
 
+<style>
+    .lux-rev-avg { display:flex; align-items:center; justify-content:center; gap:.6rem; margin-bottom:2rem; }
+    .lux-rev-avg .num { font-size:2.5rem; font-weight:600; color:var(--lux-gold-bright); line-height:1; }
+    .lux-rev-avg .cnt { color:var(--lux-text-dim); font-size:.85rem; }
+    .lux-stars-static { display:inline-flex; gap:.1rem; font-size:1.15rem; }
+    .lux-rate-stars { display:inline-flex; flex-direction:row-reverse; gap:.15rem; }
+    .lux-rate-stars input { display:none; }
+    .lux-rate-stars label { color:var(--lux-line); font-size:1.9rem; cursor:pointer; transition:color .15s; line-height:1; }
+    .lux-rate-stars label:hover, .lux-rate-stars label:hover ~ label, .lux-rate-stars input:checked ~ label { color:var(--lux-gold); }
+    .lux-rev-form { max-width:560px; margin:0 auto 2.5rem; border:1px solid var(--lux-line); padding:1.5rem; text-align:center; }
+    .lux-rev-form textarea { width:100%; background:var(--lux-bg-soft); border:1px solid var(--lux-line); color:var(--lux-text); padding:.75rem; font-family:inherit; margin:.85rem 0; box-sizing:border-box; }
+    .lux-rev-grid { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+    .lux-rev-card { border:1px solid var(--lux-line); padding:1.25rem; }
+    .lux-rev-card .who { display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem; color:var(--lux-text); font-size:.85rem; }
+    .lux-rev-card .ini { width:2rem; height:2rem; border:1px solid var(--lux-line); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:var(--lux-gold); flex-shrink:0; }
+    .lux-rev-card p { color:var(--lux-text-dim); font-size:.85rem; line-height:1.6; margin:.4rem 0 0; }
+    .lux-faq-list { max-width:760px; margin:0 auto; }
+    .lux-faq-list details { border:1px solid var(--lux-line); margin-bottom:.75rem; }
+    .lux-faq-list summary { cursor:pointer; padding:1rem 1.25rem; color:var(--lux-text); font-weight:500; list-style:none; display:flex; justify-content:space-between; gap:1rem; }
+    .lux-faq-list summary::-webkit-details-marker { display:none; }
+    .lux-faq-list summary .chev { color:var(--lux-gold); transition:transform .2s; flex-shrink:0; }
+    .lux-faq-list details[open] summary .chev { transform:rotate(180deg); }
+    .lux-faq-list .ans { padding:0 1.25rem 1rem; color:var(--lux-text-dim); line-height:1.7; white-space:pre-line; }
+</style>
+
+<!-- Customer reviews / website rating -->
+<section class="lux-section lux-section--bordered">
+    <div class="lux-section-head">
+        <div class="lux-section-eyebrow bilingual" data-lang-ar="آراء العملاء" data-lang-en="Testimonials" data-lang-es="Testimonios" data-lang-ru="Отзывы">آراء العملاء</div>
+        <h2 class="lux-section-title bilingual" data-lang-ar="تقييمات العملاء" data-lang-en="Customer Reviews" data-lang-es="Opiniones" data-lang-ru="Отзывы клиентов">تقييمات العملاء</h2>
+    </div>
+
+    {% if site_rating_count %}
+    <div class="lux-rev-avg">
+        <span class="lux-stars-static" dir="ltr">{% for i in "12345" %}<span style="color:{% if forloop.counter <= site_rating_avg %}var(--lux-gold){% else %}var(--lux-line){% endif %}">★</span>{% endfor %}</span>
+        <span class="num">{{ site_rating_avg }}</span>
+        <span class="cnt">/5 · {{ site_rating_count }} <span class="bilingual" data-lang-ar="تقييم" data-lang-en="reviews" data-lang-es="opiniones" data-lang-ru="отзывов">تقييم</span></span>
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'rate_site' %}" class="lux-rev-form">
+        {% csrf_token %}
+        <div class="bilingual" style="color:var(--lux-text-dim);font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;margin-bottom:.75rem;" data-lang-ar="قم بتقييمنا" data-lang-en="Rate us" data-lang-es="Valóranos" data-lang-ru="Оцените нас">قم بتقييمنا</div>
+        <div class="lux-rate-stars" dir="ltr">
+            {% for i in "54321" %}
+            <input type="radio" name="rating" id="lrs{{ i }}" value="{{ i }}" required>
+            <label for="lrs{{ i }}">★</label>
+            {% endfor %}
+        </div>
+        <textarea name="comment" rows="2" placeholder="اكتب تعليقك (اختياري)..." data-placeholder-ar="اكتب تعليقك (اختياري)..." data-placeholder-en="Write your comment (optional)..." data-placeholder-es="Escribe tu comentario (opcional)..." data-placeholder-ru="Напишите свой комментарий (по желанию)..."></textarea>
+        <button type="submit" class="lux-cta bilingual" data-lang-ar="إرسال التقييم" data-lang-en="Submit rating" data-lang-es="Enviar" data-lang-ru="Отправить">إرسال التقييم</button>
+    </form>
+    {% else %}
+    <p style="text-align:center;margin-bottom:2.5rem;"><a href="{% url 'login' %}?next=/" class="bilingual" style="color:var(--lux-gold);text-decoration:none;letter-spacing:.05em;" data-lang-ar="سجّل الدخول لتقييمنا ←" data-lang-en="Sign in to rate us →" data-lang-es="Inicia sesión para valorar →" data-lang-ru="Войдите, чтобы оценить →">سجّل الدخول لتقييمنا ←</a></p>
+    {% endif %}
+
+    {% if site_reviews %}
+    <div class="lux-rev-grid">
+        {% for r in site_reviews %}
+        <div class="lux-rev-card">
+            <div class="who"><span class="ini">{{ r.user.username|first|upper }}</span><span>{{ r.user.get_short_name|default:r.user.username }}</span></div>
+            <span class="lux-stars-static" dir="ltr">{% for i in "12345" %}<span style="color:{% if forloop.counter <= r.rating %}var(--lux-gold){% else %}var(--lux-line){% endif %};font-size:.9rem">★</span>{% endfor %}</span>
+            <p>{{ r.comment }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% elif not site_rating_count %}
+    <p style="text-align:center;color:var(--lux-text-dim);" class="bilingual" data-lang-ar="كن أول من يضع تقييما لنا" data-lang-en="Be the first to review us." data-lang-es="Sé el primero." data-lang-ru="Будьте первым.">كن أول من يضع تقييما لنا</p>
+    {% endif %}
+</section>
+
+<!-- FAQ -->
+{% if site_faqs %}
+<section class="lux-section lux-section--bordered">
+    <div class="lux-section-head">
+        <div class="lux-section-eyebrow bilingual" data-lang-ar="أسئلة متكررة" data-lang-en="Common Questions" data-lang-es="Preguntas" data-lang-ru="Вопросы">أسئلة متكررة</div>
+        <h2 class="lux-section-title bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="FAQ" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</h2>
+    </div>
+    <div class="lux-faq-list">
+        {% for f in site_faqs %}
+        <details class="group">
+            <summary><span>{{ f.question }}</span><span class="chev">▾</span></summary>
+            <div class="ans">{{ f.answer }}</div>
+        </details>
+        {% endfor %}
+    </div>
+    <div style="text-align:center;margin-top:1.75rem;">
+        <a href="{% url 'faq' %}" class="lux-cta bilingual" data-lang-ar="كل الأسئلة واطرح سؤالك" data-lang-en="All questions & ask yours" data-lang-es="Todas y preguntar" data-lang-ru="Все вопросы">كل الأسئلة واطرح سؤالك</a>
+    </div>
+</section>
+{% endif %}
+
 <script>
 (function () {
   var root = document.getElementById('lux-hf');
