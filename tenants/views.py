@@ -89,6 +89,28 @@ def site_settings(request):
         tenant.email_use_tls = 'email_use_tls' in request.POST
         tenant.email_from_name = request.POST.get('email_from_name', tenant.email_from_name)
 
+        # Import-cost calculator settings
+        tenant.import_calc_enabled = 'import_calc_enabled' in request.POST
+
+        def _num(field, current, cast):
+            raw = request.POST.get(field)
+            if raw is None or str(raw).strip() == '':
+                return current
+            try:
+                return cast(str(raw).strip())
+            except (TypeError, ValueError):
+                return current
+
+        tenant.import_calc_shipping = _num('import_calc_shipping', tenant.import_calc_shipping, int)
+        tenant.import_calc_duty_pct = _num('import_calc_duty_pct', tenant.import_calc_duty_pct, float)
+        tenant.import_calc_vat_pct = _num('import_calc_vat_pct', tenant.import_calc_vat_pct, float)
+        tenant.import_calc_clearance = _num('import_calc_clearance', tenant.import_calc_clearance, int)
+        tenant.import_calc_inspection = _num('import_calc_inspection', tenant.import_calc_inspection, int)
+        tenant.import_calc_registration = _num('import_calc_registration', tenant.import_calc_registration, int)
+        tenant.import_calc_agent = _num('import_calc_agent', tenant.import_calc_agent, int)
+        tenant.import_calc_preyear = _num('import_calc_preyear', tenant.import_calc_preyear, int)
+        tenant.import_calc_preyear_extra = _num('import_calc_preyear_extra', tenant.import_calc_preyear_extra, int)
+
         tenant.save()
         
         # Handle multiple phone numbers

@@ -131,6 +131,17 @@ def tenant_branding(request):
     "eid_is_active": getattr(tenant, 'eid_is_active', False),
     # Billing visibility (controlled by SaaS owner)
     "billing_visible": getattr(tenant, 'billing_visible', False),
+    # Import-cost calculator (car detail page)
+    "import_calc_enabled": bool(getattr(tenant, 'import_calc_enabled', True)),
+    "import_calc_shipping": int(getattr(tenant, 'import_calc_shipping', 5000) or 0),
+    "import_calc_duty_pct": float(getattr(tenant, 'import_calc_duty_pct', 5) or 0),
+    "import_calc_vat_pct": float(getattr(tenant, 'import_calc_vat_pct', 15) or 0),
+    "import_calc_clearance": int(getattr(tenant, 'import_calc_clearance', 1500) or 0),
+    "import_calc_inspection": int(getattr(tenant, 'import_calc_inspection', 500) or 0),
+    "import_calc_registration": int(getattr(tenant, 'import_calc_registration', 1000) or 0),
+    "import_calc_agent": int(getattr(tenant, 'import_calc_agent', 2000) or 0),
+    "import_calc_preyear": int(getattr(tenant, 'import_calc_preyear', 2021) or 0),
+    "import_calc_preyear_extra": int(getattr(tenant, 'import_calc_preyear_extra', 23000) or 0),
     }
     # Cache for 30 minutes — tenant branding rarely changes.
     # Currency rates are NOT in this dict; they are merged in at request time

@@ -1015,7 +1015,7 @@
 
             </div>
 
-            {% if car.price %}
+            {% if car.price and import_calc_enabled %}
             <!-- Import cost calculator (editable estimate) -->
             <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
                 <div class="text-[11px] font-semibold tracking-widest uppercase text-brand mb-1 bilingual" data-lang-ar="تقديري" data-lang-en="Estimate" data-lang-es="Estimado" data-lang-ru="Оценка">تقديري</div>
@@ -1043,23 +1043,24 @@
                 var YEAR = {{ car.year|default:0 }};
                 if (!PRICE_KRW) return;
 
-                // ── Editable estimate config (Saudi Arabia) ───────────────────
-                // Replace with real figures. Fixed fees in SAR; dutyPct/vatPct are
-                // fractions (0.05 = 5%). preYearExtra is the known pre-2021 surcharge.
+                // Rates come from the tenant's dashboard settings (Site settings →
+                // Import calculator). Percentages are stored as whole numbers.
+                var DUTY_PCT = {{ import_calc_duty_pct|floatformat:"-2" }};
+                var VAT_PCT = {{ import_calc_vat_pct|floatformat:"-2" }};
                 var RATES = {
                     SA: {
                         curAr: 'ر.س', curEn: 'SAR',
                         krwToCur: {{ rate_sar|default:"0.0025" }},  // KRW → SAR
-                        shipping: 5000, dutyPct: 0.05, vatPct: 0.15,
-                        clearance: 1500, inspection: 500, registration: 1000, agent: 2000,
-                        preYear: 2021, preYearExtra: 23000
+                        shipping: {{ import_calc_shipping }}, dutyPct: DUTY_PCT / 100, vatPct: VAT_PCT / 100,
+                        clearance: {{ import_calc_clearance }}, inspection: {{ import_calc_inspection }}, registration: {{ import_calc_registration }}, agent: {{ import_calc_agent }},
+                        preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }}
                     }
                 };
                 var LABELS = {
-                    ar: { car:'سعر السيارة', shipping:'الشحن (كوريا ← الوجهة)', duty:'الرسوم الجمركية (5%)', extra:'رسوم جمركية إضافية (موديل أقدم من 2021)', vat:'ضريبة القيمة المضافة (15%)', clearance:'التخليص الجمركي', inspection:'الفحص', registration:'اللوحات والاستمارة', agent:'عمولة الوكيل' },
-                    en: { car:'Car price', shipping:'Shipping (Korea → destination)', duty:'Customs duty (5%)', extra:'Extra customs (pre-2021 model)', vat:'VAT (15%)', clearance:'Customs clearance', inspection:'Inspection', registration:'Plates & registration', agent:'Agent fee' },
-                    es: { car:'Precio del coche', shipping:'Envío (Corea → destino)', duty:'Aranceles (5%)', extra:'Aduana adicional (anterior a 2021)', vat:'IVA (15%)', clearance:'Despacho de aduana', inspection:'Inspección', registration:'Placas y registro', agent:'Comisión del agente' },
-                    ru: { car:'Цена автомобиля', shipping:'Доставка (Корея → страна)', duty:'Пошлина (5%)', extra:'Доп. пошлина (до 2021)', vat:'НДС (15%)', clearance:'Таможенное оформление', inspection:'Осмотр', registration:'Номера и регистрация', agent:'Комиссия агента' }
+                    ar: { car:'سعر السيارة', shipping:'الشحن (كوريا ← الوجهة)', duty:'الرسوم الجمركية', extra:'رسوم جمركية إضافية (موديل أقدم)', vat:'ضريبة القيمة المضافة', clearance:'التخليص الجمركي', inspection:'الفحص', registration:'اللوحات والاستمارة', agent:'عمولة الوكيل' },
+                    en: { car:'Car price', shipping:'Shipping (Korea → destination)', duty:'Customs duty', extra:'Extra customs (older model)', vat:'VAT', clearance:'Customs clearance', inspection:'Inspection', registration:'Plates & registration', agent:'Agent fee' },
+                    es: { car:'Precio del coche', shipping:'Envío (Corea → destino)', duty:'Aranceles', extra:'Aduana adicional (modelo antiguo)', vat:'IVA', clearance:'Despacho de aduana', inspection:'Inspección', registration:'Placas y registro', agent:'Comisión del agente' },
+                    ru: { car:'Цена автомобиля', shipping:'Доставка (Корея → страна)', duty:'Пошлина', extra:'Доп. пошлина (старая модель)', vat:'НДС', clearance:'Таможенное оформление', inspection:'Осмотр', registration:'Номера и регистрация', agent:'Комиссия агента' }
                 };
                 function lang() { try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; } }
                 function fmt(n, sym) { return Math.round(n).toLocaleString('en-US') + ' ' + sym; }
@@ -1076,7 +1077,10 @@
                     if (extra) rows.push(['extra', extra]);
                     rows.push(['vat', vat], ['clearance', c.clearance], ['inspection', c.inspection], ['registration', c.registration], ['agent', c.agent]);
                     document.getElementById('imp-calc-rows').innerHTML = rows.map(function (r) {
-                        return '<div class="flex justify-between gap-2 px-3 py-2"><span class="text-gray-500">' + lbl[r[0]] + '</span><span class="font-medium text-gray-800 whitespace-nowrap">' + fmt(r[1], sym) + '</span></div>';
+                        var name = lbl[r[0]];
+                        if (r[0] === 'duty') name += ' (' + DUTY_PCT + '%)';
+                        if (r[0] === 'vat') name += ' (' + VAT_PCT + '%)';
+                        return '<div class="flex justify-between gap-2 px-3 py-2"><span class="text-gray-500">' + name + '</span><span class="font-medium text-gray-800 whitespace-nowrap">' + fmt(r[1], sym) + '</span></div>';
                     }).join('');
                     document.getElementById('imp-calc-total').textContent = fmt(total, sym);
                     var opt = document.querySelector('#imp-calc-country option[value="SA"]');

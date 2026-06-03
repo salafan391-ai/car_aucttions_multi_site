@@ -33,6 +33,22 @@ class Tenant(TenantMixin):
         verbose_name="عرض ‘سياراتنا‘ والسماح بإضافتها",
         help_text="عند التعطيل تختفي ‘سياراتنا‘ (سيارات الموقع الخاصة بك) من الصفحة الرئيسية، وتُخفى أزرار الإضافة في لوحة التحكم.",
     )
+
+    # ── Import-cost calculator (shown on the car detail page) ──
+    import_calc_enabled = models.BooleanField(
+        default=True,
+        verbose_name="عرض حاسبة تكلفة الاستيراد",
+        help_text="إظهار/إخفاء حاسبة تكلفة الاستيراد (الشحن والجمارك والضريبة) في صفحة تفاصيل السيارة.",
+    )
+    import_calc_shipping = models.PositiveIntegerField(default=5000, verbose_name="تكلفة الشحن (ر.س)")
+    import_calc_duty_pct = models.DecimalField(max_digits=5, decimal_places=2, default=5, verbose_name="الرسوم الجمركية (%)")
+    import_calc_vat_pct = models.DecimalField(max_digits=5, decimal_places=2, default=15, verbose_name="ضريبة القيمة المضافة (%)")
+    import_calc_clearance = models.PositiveIntegerField(default=1500, verbose_name="التخليص الجمركي (ر.س)")
+    import_calc_inspection = models.PositiveIntegerField(default=500, verbose_name="الفحص (ر.س)")
+    import_calc_registration = models.PositiveIntegerField(default=1000, verbose_name="اللوحات والاستمارة (ر.س)")
+    import_calc_agent = models.PositiveIntegerField(default=2000, verbose_name="عمولة الوكيل (ر.س)")
+    import_calc_preyear = models.PositiveIntegerField(default=2021, verbose_name="سنة الموديل للرسوم الإضافية")
+    import_calc_preyear_extra = models.PositiveIntegerField(default=23000, verbose_name="رسوم جمركية إضافية للموديلات الأقدم (ر.س)")
     LANDING_DESIGN_CHOICES = [
         ('cosmos',  '🌌 Cosmos (Dark Animated)'),
         ('minimal', '⚡ Minimal (Clean Light)'),
