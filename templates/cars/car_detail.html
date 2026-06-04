@@ -1012,20 +1012,16 @@
                 </div>
                 {% endif %}
 
+                {% if car.price and import_calc_enabled %}
+                <button type="button" onclick="impCalcOpen()" class="mt-4 w-full flex items-center justify-center gap-2 bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+                    <span class="bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import cost calculator" data-lang-es="Calcular costo" data-lang-ru="Калькулятор стоимости">حاسبة تكلفة الاستيراد</span>
+                </button>
+                {% endif %}
 
             </div>
 
             {% if car.price and import_calc_enabled %}
-            <!-- Import cost calculator (editable estimate) -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
-                <div class="text-[11px] font-semibold tracking-widest uppercase text-brand mb-1 bilingual" data-lang-ar="تقديري" data-lang-en="Estimate" data-lang-es="Estimado" data-lang-ru="Оценка">تقديري</div>
-                <h2 class="text-lg font-bold mb-3 bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</h2>
-                <button type="button" onclick="impCalcOpen()" class="w-full flex items-center justify-center gap-2 bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
-                    <span class="bilingual" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</span>
-                </button>
-            </div>
-
             <!-- Calculator modal (opened by the button above; high z-index so it
                  never hides behind other elements, and works on phones) -->
             <div id="imp-calc-modal" class="fixed inset-0 z-[70] items-center justify-center p-4" style="display:none;background:rgba(0,0,0,.55)" onclick="if(event.target===this)impCalcClose()">
