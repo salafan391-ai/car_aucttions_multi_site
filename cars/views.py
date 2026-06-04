@@ -22,7 +22,7 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.core.cache import cache
 from django.views.decorators.cache import cache_control
-from django.db import connection
+from django.db import connection, ProgrammingError, OperationalError
 
 from .models import ApiCar, Manufacturer, CarModel, CarRequest, Contact, CarColor, BodyType, Category, CarBadge, Wishlist, CarSeatColor, Post, PostLike, PostComment, PostImage
 from .utils import car_models_dict
@@ -438,19 +438,24 @@ def home(request):
             )
         ]
 
-        # Website rating (aggregated over ALL approved ratings — legacy per-car
-        # ratings count toward the site score too).
-        from site_cars.models import SiteRating
-        from django.db.models import Avg as _Avg
-        _site_ratings = SiteRating.objects.filter(is_approved=True)
-        site_rating_avg = round(_site_ratings.aggregate(a=_Avg('rating'))['a'] or 0, 1)
-        site_rating_count = _site_ratings.count()
-        site_reviews = list(
-            _site_ratings.exclude(comment='').select_related('user').order_by('-created_at')[:8]
-        )
-
-        from site_cars.models import SiteFaq
-        site_faqs = list(SiteFaq.objects.filter(is_published=True)[:6])
+        # Website rating + FAQ (site_cars are tenant tables — absent on the
+        # public schema / unmigrated tenants, so guard like the SiteCar query).
+        site_rating_avg = 0
+        site_rating_count = 0
+        site_reviews = []
+        site_faqs = []
+        try:
+            from site_cars.models import SiteRating, SiteFaq
+            from django.db.models import Avg as _Avg
+            _site_ratings = SiteRating.objects.filter(is_approved=True)
+            site_rating_avg = round(_site_ratings.aggregate(a=_Avg('rating'))['a'] or 0, 1)
+            site_rating_count = _site_ratings.count()
+            site_reviews = list(
+                _site_ratings.exclude(comment='').select_related('user').order_by('-created_at')[:8]
+            )
+            site_faqs = list(SiteFaq.objects.filter(is_published=True)[:6])
+        except (ProgrammingError, OperationalError):
+            pass
 
         context = {
             'site_faqs': site_faqs,
