@@ -27,6 +27,11 @@ class Manufacturer(models.Model):
     country = models.CharField(max_length=100,null=True,blank=True)
     logo = models.CharField(max_length=255,null=True,blank=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name'], name='uniq_manufacturer_name'),
+        ]
+
     def save(self, *args, **kwargs):
         self.name = normalize_name(self.name)
         super().save(*args, **kwargs)
@@ -38,6 +43,11 @@ class CarModel(models.Model):
     name = models.CharField(max_length=100)
     name_ar = models.CharField(max_length=100, null=True, blank=True, verbose_name="الاسم بالعربي")
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'manufacturer'], name='uniq_carmodel_name_per_manufacturer'),
+        ]
 
     def save(self, *args, **kwargs):
         self.name = normalize_name(self.name)
