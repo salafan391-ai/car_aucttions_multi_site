@@ -1074,7 +1074,8 @@
                     ru: { car:'Цена автомобиля', shipping:'Доставка (Корея → страна)', duty:'Пошлина', extra:'Доп. пошлина (старая модель)', vat:'НДС', clearance:'Таможенное оформление', inspection:'Осмотр', registration:'Номера и регистрация', agent:'Комиссия агента' }
                 };
                 function lang() { try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; } }
-                function fmt(n, sym) { return Math.round(n).toLocaleString('en-US') + ' ' + sym; }
+                var FREE = { ar: 'مجاني', en: 'Free', es: 'Gratis', ru: 'Бесплатно' };
+                function fmt(n, sym, L) { return Math.round(n) <= 0 ? (FREE[L] || FREE.en) : Math.round(n).toLocaleString('en-US') + ' ' + sym; }
                 function render() {
                     var L = lang(), lbl = LABELS[L] || LABELS.en, c = RATES.SA;
                     var sym = (L === 'ar') ? c.curAr : c.curEn;
@@ -1091,9 +1092,9 @@
                         var name = lbl[r[0]];
                         if (r[0] === 'duty') name += ' (' + DUTY_PCT + '%)';
                         if (r[0] === 'vat') name += ' (' + VAT_PCT + '%)';
-                        return '<div class="flex justify-between gap-2 px-3 py-2"><span class="text-gray-500">' + name + '</span><span class="font-medium text-gray-800 whitespace-nowrap">' + fmt(r[1], sym) + '</span></div>';
+                        return '<div class="flex justify-between gap-2 px-3 py-2"><span class="text-gray-500">' + name + '</span><span class="font-medium text-gray-800 whitespace-nowrap">' + fmt(r[1], sym, L) + '</span></div>';
                     }).join('');
-                    document.getElementById('imp-calc-total').textContent = fmt(total, sym);
+                    document.getElementById('imp-calc-total').textContent = fmt(total, sym, L);
                     var opt = document.querySelector('#imp-calc-country option[value="SA"]');
                     if (opt) opt.text = (L === 'ar') ? '🇸🇦 السعودية' : '🇸🇦 Saudi Arabia';
                 }

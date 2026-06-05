@@ -807,8 +807,9 @@
                 try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
             }
 
-            function fmt(n, sym) {
-                return Math.round(n).toLocaleString('en-US') + ' ' + sym;
+            var FREE = { ar: 'مجاني', en: 'Free', es: 'Gratis', ru: 'Бесплатно' };
+            function fmt(n, sym, L) {
+                return Math.round(n) <= 0 ? (FREE[L] || FREE.en) : Math.round(n).toLocaleString('en-US') + ' ' + sym;
             }
 
             function render() {
@@ -832,9 +833,9 @@
                     var name = lbl[r[0]];
                     if (r[0] === 'duty') name += ' (' + DUTY_PCT + '%)';
                     if (r[0] === 'vat') name += ' (' + VAT_PCT + '%)';
-                    return '<div class="lux-calc-row"><span class="k">' + name + '</span><span class="v">' + fmt(r[1], sym) + '</span></div>';
+                    return '<div class="lux-calc-row"><span class="k">' + name + '</span><span class="v">' + fmt(r[1], sym, L) + '</span></div>';
                 }).join('');
-                document.getElementById('lux-calc-total').textContent = fmt(total, sym);
+                document.getElementById('lux-calc-total').textContent = fmt(total, sym, L);
 
                 var opt = document.querySelector('#lux-calc-country option[value="SA"]');
                 if (opt) opt.text = (L === 'ar') ? '🇸🇦 السعودية' : '🇸🇦 Saudi Arabia';
