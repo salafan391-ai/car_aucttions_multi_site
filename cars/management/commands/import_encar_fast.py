@@ -372,6 +372,18 @@ class Command(BaseCommand):
             else:
                 extra = {"optionsChoice": options_choice}
 
+        # Optional new CSV column `originPrice` (만원, grade base) — added once
+        # the scraper's parse.py started emitting it. Skips the per-car Encar
+        # API fetch in _ensure_origin_price when present.
+        raw_origin = norm.get("originPrice")
+        if raw_origin not in (None, "", "null", "None"):
+            if not isinstance(extra, dict):
+                extra = {}
+            try:
+                extra["originPrice"] = int(float(raw_origin))
+            except (TypeError, ValueError):
+                pass
+
         vin = norm.get("inner_id") or norm.get("id") or ""
 
         return {
