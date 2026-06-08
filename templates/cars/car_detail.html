@@ -1076,18 +1076,33 @@
                 function lang() { try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; } }
                 var FREE = { ar: 'مجاني', en: 'Free', es: 'Gratis', ru: 'Бесплатно' };
                 function fmt(n, sym, L) { return Math.round(n) <= 0 ? (FREE[L] || FREE.en) : Math.round(n).toLocaleString('en-US') + ' ' + sym; }
+                function curInfo() {
+                    var code = 'SAR';
+                    try { code = localStorage.getItem('site_currency') || 'SAR'; } catch (e) {}
+                    var all = window.SITE_CURRENCIES || {};
+                    var info = all[code];
+                    if (!info) { code = 'SAR'; info = { symbol: '﷼', rate: RATES.SA.krwToCur }; }
+                    return { code: code, rate: info.rate, symbol: info.symbol };
+                }
                 function render() {
                     var L = lang(), lbl = LABELS[L] || LABELS.en, c = RATES.SA;
-                    var sym = (L === 'ar') ? c.curAr : c.curEn;
-                    var carCur = PRICE_KRW * c.krwToCur;
-                    var cif = carCur + c.shipping;
+                    var cur = curInfo(), sym = cur.symbol;
+                    var markup = window.SITE_PRICE_MARKUP || 1, sarRate = c.krwToCur;
+                    // Car price is KRW; the configured fees are in SAR. Convert both
+                    // into the visitor's selected currency.
+                    function carAmt() { return cur.code === 'KRW' ? PRICE_KRW : PRICE_KRW * cur.rate * markup; }
+                    function feeAmt(sar) { return cur.code === 'KRW' ? (sar / sarRate) : (sar / sarRate * cur.rate); }
+                    var carCur = carAmt();
+                    var shipping = feeAmt(c.shipping);
+                    var cif = carCur + shipping;
                     var duty = cif * c.dutyPct;
-                    var extra = (YEAR && YEAR < c.preYear) ? c.preYearExtra : 0;
+                    var extra = (YEAR && YEAR < c.preYear) ? feeAmt(c.preYearExtra) : 0;
                     var vat = (cif + duty + extra) * c.vatPct;
-                    var total = carCur + c.shipping + duty + extra + vat + c.clearance + c.inspection + c.registration + c.agent;
-                    var rows = [['car', carCur], ['shipping', c.shipping], ['duty', duty]];
+                    var clearance = feeAmt(c.clearance), inspection = feeAmt(c.inspection), registration = feeAmt(c.registration), agent = feeAmt(c.agent);
+                    var total = carCur + shipping + duty + extra + vat + clearance + inspection + registration + agent;
+                    var rows = [['car', carCur], ['shipping', shipping], ['duty', duty]];
                     if (extra) rows.push(['extra', extra]);
-                    rows.push(['vat', vat], ['clearance', c.clearance], ['inspection', c.inspection], ['registration', c.registration], ['agent', c.agent]);
+                    rows.push(['vat', vat], ['clearance', clearance], ['inspection', inspection], ['registration', registration], ['agent', agent]);
                     document.getElementById('imp-calc-rows').innerHTML = rows.map(function (r) {
                         var name = lbl[r[0]];
                         if (r[0] === 'duty') name += ' (' + DUTY_PCT + '%)';
@@ -1103,6 +1118,7 @@
                 window.impCalcClose = function () { var m = document.getElementById('imp-calc-modal'); if (m) m.style.display = 'none'; };
                 render();
                 document.addEventListener('langchange', render);
+                document.addEventListener('currencychange', render);
                 var sel = document.getElementById('imp-calc-country');
                 if (sel) sel.addEventListener('change', render);
                 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.impCalcClose(); });

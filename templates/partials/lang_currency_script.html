@@ -188,7 +188,12 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
             var converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate * PRICE_MARKUP);
             el.innerHTML = converted.toLocaleString() + ' <span class="lux-cur-sym">' + cfg.symbol + '</span>';
         });
+        document.dispatchEvent(new CustomEvent('currencychange', { detail: { code: code } }));
     }
+    // Expose currency config + markup so other widgets (e.g. the import
+    // calculator) can convert into the visitor's selected currency.
+    window.SITE_CURRENCIES = CURRENCIES;
+    window.SITE_PRICE_MARKUP = PRICE_MARKUP;
 
     /* Detect a supported language from the browser locale, fall back to 'ar'. */
     function detectBrowserLang() {
