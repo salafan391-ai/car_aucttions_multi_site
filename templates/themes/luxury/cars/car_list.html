@@ -437,10 +437,83 @@
 
         .lux-grid { gap: 1rem; grid-template-columns: 1fr; }
     }
+
+    /* ── Car-list hero (auction / encar) ── */
+    .lux-hero-strip {
+        display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+        padding: 1.5rem 1.75rem; margin-bottom: 1.5rem;
+        border: 1px solid var(--lux-gold); border-radius: 0.6rem;
+        background: linear-gradient(135deg, rgba(201,164,90,0.16), rgba(15,13,10,0.5));
+    }
+    .lux-hero-imgs { display: flex; flex-shrink: 0; }
+    .lux-hero-imgs img {
+        width: 7rem; height: 5rem; object-fit: cover; border-radius: 0.5rem;
+        border: 2px solid var(--lux-gold); box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .lux-hero-imgs img + img { margin-inline-start: -1.4rem; }
+    .lux-hero-body { flex: 1; min-width: 0; }
+    .lux-hero-eyebrow { color: var(--lux-gold-bright); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; }
+    .lux-hero-timer { font-size: 2rem; font-weight: 800; color: var(--lux-text); font-variant-numeric: tabular-nums; margin-top: 0.3rem; letter-spacing: 0.02em; }
+    .lux-hero-title { font-size: 1.6rem; font-weight: 600; color: var(--lux-text); margin: 0.1rem 0 0; }
+    .lux-hero-sub { color: var(--lux-text-dim); font-size: 0.85rem; line-height: 1.6; margin-top: 0.5rem; max-width: 46rem; }
+    .lux-hero-chips, .lux-hero-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .lux-hero-chip, .lux-hero-stat { background: rgba(201,164,90,0.14); border: 1px solid var(--lux-line); border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.75rem; color: var(--lux-text); }
+    .lux-hero-stat b { color: var(--lux-gold-bright); font-size: 1rem; font-weight: 800; }
+    @media (max-width: 700px) {
+        .lux-hero-strip { padding: 1.1rem; gap: 1rem; }
+        .lux-hero-imgs img { width: 5rem; height: 3.75rem; }
+        .lux-hero-imgs img + img { margin-inline-start: -1rem; }
+        .lux-hero-timer { font-size: 1.6rem; }
+        .lux-hero-title { font-size: 1.3rem; }
+    }
 </style>
 
 <div class="lux-page">
     <div class="lux-wrap">
+        {% if hero %}
+        {% if request.GET.car_type == 'auction' %}
+        <!-- ═══ AUCTION HERO ═══ -->
+        <div class="lux-hero-strip">
+            {% if hero.auction_imgs %}
+            <div class="lux-hero-imgs">
+                {% for img in hero.auction_imgs|slice:":4" %}<img src="{{ img|img_small }}" alt="" loading="lazy">{% endfor %}
+            </div>
+            {% endif %}
+            <div class="lux-hero-body">
+                <div class="lux-hero-eyebrow">{% if hero.next_auction_name %}{{ hero.next_auction_name }} · {% endif %}<span class="bilingual" data-lang-ar="مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}" data-lang-en="{% if hero.next_auction_day_en %}{{ hero.next_auction_day_en }} {% endif %}Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}</span>{% if hero.next_auction_date %} · {{ hero.next_auction_date|date:"Y/m/d" }}{% endif %}</div>
+                {% if hero.next_auction_date %}
+                <div class="lux-hero-timer" data-auction-hero-timer data-date="{{ hero.next_auction_date|date:'c' }}">—</div>
+                {% else %}
+                <h2 class="lux-hero-title bilingual" data-lang-ar="مزادات السيارات" data-lang-en="Car Auctions" data-lang-es="Subastas" data-lang-ru="Автоаукционы">مزادات السيارات</h2>
+                {% endif %}
+                <p class="lux-hero-sub bilingual" data-lang-ar="نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة." data-lang-en="Auction cars are refreshed daily. Add an amount on top of the listed price to raise your bid and win the car." data-lang-es="Los coches de subasta se actualizan a diario. Añade una cantidad para ganar la puja." data-lang-ru="Автомобили аукциона обновляются ежедневно. Добавьте сумму к цене, чтобы выиграть торги.">نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة.</p>
+                {% if hero.upcoming_auctions|length > 1 %}
+                <div class="lux-hero-chips">
+                    {% for a in hero.upcoming_auctions %}<span class="lux-hero-chip">{{ a.auction_name }} <span class="bilingual" style="color:var(--lux-text-dim);" data-lang-ar="{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}" data-lang-en="{{ a.day_en }} {{ a.auction_date|date:'Y/m/d' }}">{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}</span></span>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- ═══ ENCAR HERO ═══ -->
+        <div class="lux-hero-strip">
+            {% if hero.encar_imgs %}
+            <div class="lux-hero-imgs">
+                {% for img in hero.encar_imgs|slice:":4" %}<img src="{{ img|img_small }}" alt="" loading="lazy">{% endfor %}
+            </div>
+            {% endif %}
+            <div class="lux-hero-body">
+                <h2 class="lux-hero-title bilingual" data-lang-ar="سيارات كورية مستوردة" data-lang-en="Imported Korean cars" data-lang-es="Coches coreanos importados" data-lang-ru="Импортные авто из Кореи">سيارات كورية مستوردة</h2>
+                <p class="lux-hero-sub bilingual" data-lang-ar="الأسعار المعروضة هي السعر الفعلي للسيارة، وتبقى رسوم إضافية (شحن وجمارك). استخدم حاسبة الاستيراد لمعرفة التكلفة الكاملة." data-lang-en="Prices shown are the car's actual price; additional costs (shipping & customs) still apply. Use the import calculator for the full landed cost." data-lang-es="Los precios son el precio real del coche; aún hay costos adicionales (envío y aduana)." data-lang-ru="Указанные цены — реальная цена авто; остаются доп. расходы (доставка и таможня).">الأسعار المعروضة هي السعر الفعلي للسيارة، وتبقى رسوم إضافية (شحن وجمارك). استخدم حاسبة الاستيراد لمعرفة التكلفة الكاملة.</p>
+                <div class="lux-hero-stats">
+                    <div class="lux-hero-stat"><b>{{ hero.added_today|intcomma }}</b> <span class="bilingual" data-lang-ar="أُضيفت اليوم" data-lang-en="added today" data-lang-es="añadidos hoy" data-lang-ru="добавлено сегодня">أُضيفت اليوم</span></div>
+                    {% if hero.updated_today %}<div class="lux-hero-stat"><b>{{ hero.updated_today|intcomma }}</b> <span class="bilingual" data-lang-ar="حُدّثت اليوم" data-lang-en="updated today" data-lang-es="actualizados hoy" data-lang-ru="обновлено сегодня">حُدّثت اليوم</span></div>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
         <div class="lux-toolbar">
             <div class="lux-h1">
                 <small class="bilingual" data-lang-ar="المجموعة" data-lang-en="The Collection" data-lang-es="La colección" data-lang-ru="Коллекция">المجموعة</small>
@@ -1091,5 +1164,27 @@ function toggleLuxWishlist(carId) {
     })
     .catch(function(err) { console.error('Wishlist error:', err); });
 }
+</script>
+
+<script>
+// Auction hero countdown
+(function () {
+    var el = document.querySelector('[data-auction-hero-timer]');
+    if (!el || !el.dataset.date) return;
+    var target = new Date(el.dataset.date).getTime();
+    if (isNaN(target)) { el.textContent = ''; return; }
+    function pad(n) { return ('0' + n).slice(-2); }
+    function tick() {
+        var diff = target - Date.now();
+        if (diff <= 0) { el.textContent = '—'; return; }
+        var days = Math.floor(diff / 864e5),
+            h = Math.floor(diff % 864e5 / 36e5),
+            m = Math.floor(diff % 36e5 / 6e4),
+            s = Math.floor(diff % 6e4 / 1e3);
+        el.textContent = (days > 0 ? days + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
 </script>
 {% endblock %}
