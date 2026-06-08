@@ -575,6 +575,52 @@ function toggleWishlist(carId) {
     .catch(function(e) { console.error(e); });
 }
 </script>
+
+<!-- ── Auction Countdown Engine (same behaviour as the default theme) ── -->
+<style>
+    .auction-countdown { display:inline-flex; align-items:center; gap:2px; font-variant-numeric:tabular-nums; font-weight:700; border-radius:6px; padding:2px 6px; font-size:0.7rem; letter-spacing:0.02em; transition:background .4s, color .4s; }
+    .auction-countdown .cd-unit { display:inline-flex; flex-direction:column; align-items:center; line-height:1.1; }
+    .auction-countdown .cd-unit small { font-size:0.55em; font-weight:500; opacity:0.8; line-height:1; }
+    .auction-countdown .cd-sep { opacity:0.6; font-weight:400; }
+    .countdown-ok     { background:rgba(34,197,94,.15); color:#22c55e; }
+    .countdown-soon   { background:rgba(234,179,8,.15);  color:#eab308; }
+    .countdown-urgent { background:rgba(239,68,68,.15);  color:#ef4444; animation:pulse-red 1s ease-in-out infinite; }
+    .auction-ended    { background:rgba(255,255,255,.08); color:var(--lux-text-dim); }
+    .auction-ended-badge { font-size:0.7rem; font-weight:600; }
+    @keyframes pulse-red { 0%,100% { opacity:1; } 50% { opacity:0.65; } }
+</style>
+<script>
+(function () {
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function renderCountdown(el, targetMs) {
+        var curLang = localStorage.getItem('site_lang') || 'ar';
+        var U = curLang === 'en'
+            ? { d:'d', h:'h', m:'m', s:'s', ended:'Auction ended' }
+            : { d:'ي', h:'س', m:'د', s:'ث', ended:'انتهى المزاد' };
+        var diff = targetMs - Date.now();
+        if (diff <= 0) { el.innerHTML = '<span class="auction-ended-badge">' + U.ended + '</span>'; el.classList.add('auction-ended'); return false; }
+        var t = Math.floor(diff/1000), days = Math.floor(t/86400), hours = Math.floor((t%86400)/3600), mins = Math.floor((t%3600)/60), secs = t%60;
+        var urgency = diff < 3600000 ? 'countdown-urgent' : diff < 86400000 ? 'countdown-soon' : 'countdown-ok';
+        el.classList.remove('countdown-urgent','countdown-soon','countdown-ok'); el.classList.add(urgency);
+        if (days > 0) {
+            el.innerHTML = '<span class="cd-unit">'+days+'<small>'+U.d+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(hours)+'<small>'+U.h+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(mins)+'<small>'+U.m+'</small></span>';
+        } else {
+            el.innerHTML = '<span class="cd-unit">'+pad(hours)+'<small>'+U.h+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(mins)+'<small>'+U.m+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(secs)+'<small>'+U.s+'</small></span>';
+        }
+        return true;
+    }
+    function initCountdowns() {
+        document.querySelectorAll('[data-auction-date]').forEach(function (el) {
+            var iso = el.getAttribute('data-auction-date'); if (!iso) return;
+            var targetMs = new Date(iso).getTime(); if (isNaN(targetMs)) return;
+            if (!renderCountdown(el, targetMs)) return;
+            var timer = setInterval(function () { if (!renderCountdown(el, targetMs)) clearInterval(timer); }, 1000);
+        });
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initCountdowns); } else { initCountdowns(); }
+    window.initAuctionCountdowns = initCountdowns;
+})();
+</script>
 {% block extra_js %}{% endblock %}
 
 {% block mobile_bottom_nav %}
