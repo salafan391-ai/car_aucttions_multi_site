@@ -459,6 +459,9 @@
     .lux-hero-chips, .lux-hero-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
     .lux-hero-chip, .lux-hero-stat { background: rgba(201,164,90,0.14); border: 1px solid var(--lux-line); border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.75rem; color: var(--lux-text); }
     .lux-hero-stat b { color: var(--lux-gold-bright); font-size: 1rem; font-weight: 800; }
+    /* Light mode: warm gold→cream gradient instead of the dark one */
+    :root.lux-light .lux-hero-strip { background: linear-gradient(135deg, rgba(201,164,90,0.32), rgba(250,244,233,0.75)); border-color: var(--lux-gold); }
+    :root.lux-light .lux-hero-chip, :root.lux-light .lux-hero-stat { background: rgba(107,77,16,0.1); }
     @media (max-width: 700px) {
         .lux-hero-strip { padding: 1.1rem; gap: 1rem; }
         .lux-hero-imgs img { width: 5rem; height: 3.75rem; }
