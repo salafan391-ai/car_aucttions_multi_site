@@ -86,6 +86,12 @@
     .lux-wishlist-btn svg { width: 16px; height: 16px; color: var(--lux-text-dim); transition: color 0.3s ease; }
     .lux-wishlist-btn:hover svg { color: var(--lux-gold-bright); }
     .lux-wishlist-btn.active svg { color: #e84a4a; fill: #e84a4a; }
+    /* Light mode: white button with a dark heart (the dark button + dim icon was invisible) */
+    :root.lux-light .lux-wishlist-btn { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.12); }
+    :root.lux-light .lux-wishlist-btn:hover { background: #fff; border-color: var(--lux-gold); }
+    :root.lux-light .lux-wishlist-btn svg { color: #6b5a3a; }
+    :root.lux-light .lux-wishlist-btn:hover svg { color: var(--lux-gold); }
+    :root.lux-light .lux-wishlist-btn.active svg { color: #e84a4a; fill: #e84a4a; }
     .lux-card-body { padding: 1.25rem 1.5rem 1.5rem; }
     .lux-card-make { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.5rem; }
     .lux-card-name { color: var(--lux-text); font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 400; }
