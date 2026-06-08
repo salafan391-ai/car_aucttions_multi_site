@@ -746,31 +746,49 @@
             .lux-calc-total .k { color: var(--lux-text); font-size: 0.95rem; letter-spacing: 0.05em; }
             .lux-calc-total .v { color: var(--lux-gold-bright); font-weight: 700; font-size: 1.25rem; white-space: nowrap; }
             .lux-calc-note { color: var(--lux-text-dim); font-size: 0.72rem; line-height: 1.65; margin-top: 0.9rem; }
+            .lux-calc-btn { display:inline-flex; align-items:center; gap:.6rem; background:var(--lux-gold); color:var(--lux-bg); border:0; padding:.9rem 1.9rem; font-family:inherit; font-size:.78rem; letter-spacing:.2em; text-transform:uppercase; cursor:pointer; font-weight:600; transition:background .2s; }
+            .lux-calc-btn:hover { background:var(--lux-gold-bright); }
+            .lux-calc-modal { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; padding:1rem; background:rgba(5,5,5,.72); }
+            .lux-calc-modal-inner { background:var(--lux-bg); border:1px solid var(--lux-line); width:100%; max-width:480px; max-height:90vh; overflow-y:auto; padding:1.75rem; box-shadow:0 30px 60px rgba(0,0,0,.5); }
+            .lux-calc-modal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; }
+            .lux-calc-modal-head h3 { margin:0; font-size:1.1rem; font-weight:500; color:var(--lux-text); }
+            .lux-calc-modal-close { background:transparent; border:0; color:var(--lux-text-dim); font-size:1.7rem; line-height:1; cursor:pointer; }
+            .lux-calc-modal-close:hover { color:var(--lux-gold); }
         </style>
         <section class="lux-section-block">
             <h2>
                 <small class="bilingual" data-lang-ar="تقديري" data-lang-en="Estimate" data-lang-es="Estimado" data-lang-ru="Оценка">تقديري</small>
                 <span class="bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</span>
             </h2>
-            <div class="lux-calc">
-                <label class="lux-calc-field">
-                    <span class="bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
-                    <select id="lux-calc-country">
-                        <option value="SA" selected>🇸🇦 السعودية</option>
-                    </select>
-                </label>
-                <div class="lux-calc-rows" id="lux-calc-rows"></div>
-                <div class="lux-calc-total">
-                    <span class="k bilingual" data-lang-ar="الإجمالي التقديري" data-lang-en="Estimated total" data-lang-es="Total estimado" data-lang-ru="Итого (оценка)">الإجمالي التقديري</span>
-                    <span class="v" id="lux-calc-total">—</span>
-                </div>
-                <p class="lux-calc-note bilingual"
-                   data-lang-ar="* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم."
-                   data-lang-en="* Figures are estimates and may vary with exchange rate, weight, shipping line and customs rules. Not a binding quote."
-                   data-lang-es="* Las cifras son estimaciones y pueden variar. No es una cotización vinculante."
-                   data-lang-ru="* Цифры являются ориентировочными и могут меняться. Не является обязательной офертой.">* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم.</p>
-            </div>
+            <button type="button" class="lux-calc-btn bilingual" onclick="luxCalcOpen()" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</button>
         </section>
+
+        <div class="lux-calc-modal" id="lux-calc-modal" onclick="if(event.target===this)luxCalcClose()">
+            <div class="lux-calc-modal-inner" dir="rtl">
+                <div class="lux-calc-modal-head">
+                    <h3 class="bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</h3>
+                    <button type="button" class="lux-calc-modal-close" onclick="luxCalcClose()">&times;</button>
+                </div>
+                <div class="lux-calc">
+                    <label class="lux-calc-field">
+                        <span class="bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
+                        <select id="lux-calc-country">
+                            <option value="SA" selected>🇸🇦 السعودية</option>
+                        </select>
+                    </label>
+                    <div class="lux-calc-rows" id="lux-calc-rows"></div>
+                    <div class="lux-calc-total">
+                        <span class="k bilingual" data-lang-ar="الإجمالي التقديري" data-lang-en="Estimated total" data-lang-es="Total estimado" data-lang-ru="Итого (оценка)">الإجمالي التقديري</span>
+                        <span class="v" id="lux-calc-total">—</span>
+                    </div>
+                    <p class="lux-calc-note bilingual"
+                       data-lang-ar="* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم."
+                       data-lang-en="* Figures are estimates and may vary with exchange rate, weight, shipping line and customs rules. Not a binding quote."
+                       data-lang-es="* Las cifras son estimaciones y pueden variar. No es una cotización vinculante."
+                       data-lang-ru="* Цифры являются ориентировочными и могут меняться. Не является обязательной офертой.">* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم.</p>
+                </div>
+            </div>
+        </div>
         <script>
         (function () {
             var PRICE_KRW = {{ car.price|default:0 }};
@@ -859,6 +877,19 @@
             document.addEventListener('currencychange', render);
             var sel = document.getElementById('lux-calc-country');
             if (sel) sel.addEventListener('change', render);
+
+            window.luxCalcOpen = function () {
+                var m = document.getElementById('lux-calc-modal');
+                if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+                render();
+            };
+            window.luxCalcClose = function () {
+                var m = document.getElementById('lux-calc-modal');
+                if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+            };
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') window.luxCalcClose();
+            });
         })();
         </script>
         {% endif %}
