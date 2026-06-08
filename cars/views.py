@@ -1891,8 +1891,24 @@ def car_detail(request, slug):
     pc_pending = (bool(_ef.get('vehicleId')) and 'originPrice' not in _ef
                   and not _is_auction(car))
 
+    # Shipping cost varies by car size — resolve the tier from the body type.
+    import_calc_shipping_value = None
+    if tenant and getattr(tenant, 'schema_name', 'public') != 'public':
+        _SHIP_SMALL = {'mini car', 'compact car', 'hatchback', 'sedan/hatchback', 'mini'}
+        _SHIP_LARGE = {'full-size car', 'truck', 'rv', 'van', 'minivan',
+                       'light commercial vehicle', 'bus', 'microbus'}
+        _body = (getattr(getattr(car, 'body', None), 'name', '') or '').strip().lower()
+        _med = getattr(tenant, 'import_calc_shipping', 5000)
+        if _body in _SHIP_SMALL:
+            import_calc_shipping_value = getattr(tenant, 'import_calc_shipping_small', _med)
+        elif _body in _SHIP_LARGE:
+            import_calc_shipping_value = getattr(tenant, 'import_calc_shipping_large', _med)
+        else:
+            import_calc_shipping_value = _med
+
     context = {
         'car': car,
+        'import_calc_shipping_value': import_calc_shipping_value,
         'price_comparison': _build_price_comparison(car),
         'pc_pending': pc_pending,
         'ratings': ratings,

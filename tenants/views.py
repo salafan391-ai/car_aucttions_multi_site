@@ -102,6 +102,8 @@ def site_settings(request):
                 return current
 
         tenant.import_calc_shipping = _num('import_calc_shipping', tenant.import_calc_shipping, int)
+        tenant.import_calc_shipping_small = _num('import_calc_shipping_small', tenant.import_calc_shipping_small, int)
+        tenant.import_calc_shipping_large = _num('import_calc_shipping_large', tenant.import_calc_shipping_large, int)
         tenant.import_calc_duty_pct = _num('import_calc_duty_pct', tenant.import_calc_duty_pct, float)
         tenant.import_calc_vat_pct = _num('import_calc_vat_pct', tenant.import_calc_vat_pct, float)
         tenant.import_calc_clearance = _num('import_calc_clearance', tenant.import_calc_clearance, int)

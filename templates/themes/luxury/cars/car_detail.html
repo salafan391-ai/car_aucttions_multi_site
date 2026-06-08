@@ -785,7 +785,7 @@
                 SA: {
                     curAr: 'ر.س', curEn: 'SAR',
                     krwToCur: {{ rate_sar|default:"0.0025" }},  // KRW → SAR
-                    shipping: {{ import_calc_shipping }},
+                    shipping: {{ import_calc_shipping_value|default:import_calc_shipping }},
                     dutyPct: DUTY_PCT / 100,
                     vatPct: VAT_PCT / 100,
                     clearance: {{ import_calc_clearance }},

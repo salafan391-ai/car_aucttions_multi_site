@@ -40,7 +40,9 @@ class Tenant(TenantMixin):
         verbose_name="عرض حاسبة تكلفة الاستيراد",
         help_text="إظهار/إخفاء حاسبة تكلفة الاستيراد (الشحن والجمارك والضريبة) في صفحة تفاصيل السيارة.",
     )
-    import_calc_shipping = models.PositiveIntegerField(default=5000, verbose_name="تكلفة الشحن (ر.س)")
+    import_calc_shipping = models.PositiveIntegerField(default=5000, verbose_name="تكلفة الشحن - حجم متوسط (ر.س)")
+    import_calc_shipping_small = models.PositiveIntegerField(default=4000, verbose_name="تكلفة الشحن - حجم صغير (ر.س)")
+    import_calc_shipping_large = models.PositiveIntegerField(default=7000, verbose_name="تكلفة الشحن - حجم كبير (ر.س)")
     import_calc_duty_pct = models.DecimalField(max_digits=5, decimal_places=2, default=5, verbose_name="الرسوم الجمركية (%)")
     import_calc_vat_pct = models.DecimalField(max_digits=5, decimal_places=2, default=15, verbose_name="ضريبة القيمة المضافة (%)")
     import_calc_clearance = models.PositiveIntegerField(default=1500, verbose_name="التخليص الجمركي (ر.س)")
