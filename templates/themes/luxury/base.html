@@ -585,15 +585,14 @@ function toggleWishlist(carId) {
     .auction-countdown.cd-lg { font-size:1.7rem; padding:10px 16px; gap:9px; border-width:2px; border-radius:10px; width:100%; justify-content:center; }
     .auction-countdown.cd-lg .cd-unit small { font-size:0.4em; }
     .countdown-ok     { background:#15a34a; color:#fff; border-color:#15a34a; }
-    .countdown-soon   { background:#d97706; color:#fff; border-color:#d97706; }
+    .countdown-soon   { background:var(--lux-gold); color:#2a1d08; border-color:var(--lux-gold); }
+    :root.lux-light .countdown-soon { color:#fdf6e8; }
     .countdown-urgent { background:#dc2626; color:#fff; border-color:#dc2626; animation:pulse-red 1s ease-in-out infinite; box-shadow:0 0 18px rgba(220,38,38,.55); }
     .auction-ended    { background:rgba(255,255,255,.08); color:var(--lux-text-dim); border-color:transparent; }
     .auction-ended-badge { font-size:0.8rem; font-weight:700; }
     /* Detail header "auction ends in" banner */
     .lux-auction-cd { margin-top:1rem; padding:1rem 1rem 1.1rem; border:1px solid var(--lux-gold); border-radius:.6rem; background:linear-gradient(180deg,rgba(201,164,90,.1),rgba(201,164,90,.02)); text-align:center; }
     .lux-auction-cd-lbl { color:var(--lux-gold-bright); font-size:.7rem; letter-spacing:.18em; text-transform:uppercase; margin-bottom:.65rem; }
-    :root.lux-light .lux-auction-cd { background:var(--lux-gold); border-color:var(--lux-gold); }
-    :root.lux-light .lux-auction-cd-lbl { color:#f6ecd8; }
     @keyframes pulse-red { 0%,100% { opacity:1; } 50% { opacity:0.65; } }
 </style>
 <script>
