@@ -649,6 +649,13 @@
                 </div>
                 {% endif %}
 
+                {% if car.category.name == 'auction' and car.auction_date %}
+                <div style="margin-top:1rem;padding:1rem 1rem 1.1rem;border:1px solid var(--lux-gold);border-radius:.6rem;background:linear-gradient(180deg,rgba(201,164,90,.1),rgba(201,164,90,.02));text-align:center;">
+                    <div class="bilingual" style="color:var(--lux-gold-bright);font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:.65rem;" data-lang-ar="ينتهي المزاد خلال" data-lang-en="Auction ends in" data-lang-es="La subasta termina en" data-lang-ru="Аукцион заканчивается через">ينتهي المزاد خلال</div>
+                    <span class="auction-countdown cd-lg" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y-m-d H:i" }}</span>
+                </div>
+                {% endif %}
+
                 {% if car.lot_number %}
                 <script>
                 (function () {
