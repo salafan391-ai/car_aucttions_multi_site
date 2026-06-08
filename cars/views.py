@@ -871,7 +871,7 @@ def car_list(request):
             f"{int(getattr(_t, 'show_auctions', True))}"
             f"{int(getattr(_t, 'show_site_cars', True))}"
         ) if _t is not None else '111'
-        cache_key = f"car_list_v6:{schema}:{_variant}:{_toggles}:{_params_hash}"
+        cache_key = f"car_list_v7:{schema}:{_variant}:{_toggles}:{_params_hash}"
         cached_html = cache.get(cache_key)
         if cached_html:
             return HttpResponse(cached_html)
