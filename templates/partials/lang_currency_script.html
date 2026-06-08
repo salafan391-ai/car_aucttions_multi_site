@@ -240,9 +240,11 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        /* Language: prefer saved choice; otherwise auto-detect from browser. */
+        /* Language: prefer the visitor's saved choice; otherwise default to
+           Arabic (these are Arabic-market sites — don't auto-switch to the
+           browser locale). detectBrowserLang remains available if needed. */
         var savedLang = localStorage.getItem('site_lang');
-        var lang = savedLang || detectBrowserLang();
+        var lang = savedLang || 'ar';
         if (!savedLang) localStorage.setItem('site_lang', lang);
 
         if (lang !== 'ar') applyLang(lang);
