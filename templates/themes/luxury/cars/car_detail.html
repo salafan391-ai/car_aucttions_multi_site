@@ -59,6 +59,19 @@
         color: var(--lux-gold-bright); font-size: 1.4rem; font-weight: 600;
         letter-spacing: 0.05em; white-space: nowrap;
     }
+    /* Dedup the header vs side card:
+       Desktop (≥901px) → the side CARD is the info hub; the top bar keeps only the share controls.
+       Phone (≤900px)   → the top bar is the info HEADER; the card drops the duplicated identity. */
+    @media (min-width: 901px) {
+        .lux-preview-text { display: none; }
+        .lux-preview-side > *:not(.lux-share) { display: none; }
+        .lux-preview { padding: 0.4rem 0; margin-bottom: 0.5rem; background: transparent; border-color: transparent; justify-content: flex-end; }
+    }
+    @media (max-width: 900px) {
+        .lux-aside > .lux-make,
+        .lux-aside > h1.lux-model,
+        .lux-aside > .lux-year { display: none; }
+    }
     .lux-share { display: inline-flex; align-items: center; gap: 0.4rem; }
     .lux-share-btn {
         width: 2.25rem; height: 2.25rem;
