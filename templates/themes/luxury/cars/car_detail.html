@@ -721,6 +721,9 @@
                 {% whatsapp_order_message car site_name as lux_wa_msg %}
                 <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ lux_wa_msg }}" target="_blank" rel="noopener" class="lux-cta lux-cta-solid bilingual" data-lang-ar="استفسار عبر واتساب" data-lang-en="Inquire via WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить через WhatsApp">استفسار عبر واتساب</a>
                 {% endif %}
+                {% if car.price and import_calc_enabled %}
+                <button type="button" onclick="luxCalcOpen()" class="lux-cta bilingual" style="width:100%;cursor:pointer;" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</button>
+                {% endif %}
                 {% if site_phone %}
                 <a href="tel:{{ site_phone }}" class="lux-cta bilingual" data-lang-ar="اتصل {{ site_phone }}" data-lang-en="Call {{ site_phone }}" data-lang-es="Llamar {{ site_phone }}" data-lang-ru="Позвонить {{ site_phone }}">اتصل {{ site_phone }}</a>
                 {% endif %}
@@ -805,14 +808,6 @@
             .lux-calc-modal-close { background:transparent; border:0; color:var(--lux-text-dim); font-size:1.7rem; line-height:1; cursor:pointer; }
             .lux-calc-modal-close:hover { color:var(--lux-gold); }
         </style>
-        <section class="lux-section-block">
-            <h2>
-                <small class="bilingual" data-lang-ar="تقديري" data-lang-en="Estimate" data-lang-es="Estimado" data-lang-ru="Оценка">تقديري</small>
-                <span class="bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</span>
-            </h2>
-            <button type="button" class="lux-calc-btn bilingual" onclick="luxCalcOpen()" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</button>
-        </section>
-
         <div class="lux-calc-modal" id="lux-calc-modal" onclick="if(event.target===this)luxCalcClose()">
             <div class="lux-calc-modal-inner" dir="rtl">
                 <div class="lux-calc-modal-head">
