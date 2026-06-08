@@ -727,6 +727,56 @@
             </aside>
         </div>
 
+        {% if insp.has_inspection %}
+        <section class="lux-section-block">
+            <h2>
+                <small class="bilingual" data-lang-ar="موثوق" data-lang-en="Verified" data-lang-es="Verificado" data-lang-ru="Проверено">موثوق</small>
+                <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-en="Inspection Report" data-lang-es="Informe de inspección" data-lang-ru="Отчет об инспекции">تقرير الفحص</span>
+            </h2>
+            {% if not insp.has_outer %}
+            <div class="lux-history-tag" style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(76,175,80,0.12);border-color:rgba(76,175,80,0.4);color:#7fc785;margin-bottom:1.25rem;">
+                <span class="bilingual" data-lang-ar="لا توجد أضرار مُسجَّلة على هيكل هذه السيارة" data-lang-en="No damage recorded on this vehicle's body" data-lang-es="No se han registrado daños en la carrocería" data-lang-ru="Повреждений кузова не зафиксировано">لا توجد أضرار مُسجَّلة على هيكل هذه السيارة</span>
+            </div>
+            {% endif %}
+            <div class="lux-inspection-grid" dir="ltr">
+                <div>
+                    <div class="lux-insp-title">Outer Panel{% if insp.has_outer %} — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}{% endif %}</div>
+                    <div class="insp-diagram">
+                        <img src="{{ insp.sedan_img }}" alt="Outer panel">
+                        {{ insp.outer_badges_html|safe }}
+                    </div>
+                </div>
+                <div>
+                    <div class="lux-insp-title">Structural</div>
+                    <div class="insp-diagram">
+                        <img src="{{ insp.truck_img }}" alt="Structural">
+                        {{ insp.structural_badges_html|safe }}
+                    </div>
+                </div>
+            </div>
+            {% if insp.has_outer %}
+            <div class="lux-insp-legend">
+                <span><span class="insp-lb X">X</span><span class="bilingual" data-lang-ar="تغيير" data-lang-en="Replaced" data-lang-es="Cambio" data-lang-ru="Замена">تغيير</span></span>
+                <span><span class="insp-lb W">W</span><span class="bilingual" data-lang-ar="رش" data-lang-en="Paint" data-lang-es="Pintura" data-lang-ru="Покраска">رش</span></span>
+                <span><span class="insp-lb C">C</span><span class="bilingual" data-lang-ar="صدأ" data-lang-en="Rust" data-lang-es="Óxido" data-lang-ru="Ржавчина">صدأ</span></span>
+                <span><span class="insp-lb A">A</span><span class="bilingual" data-lang-ar="خدش" data-lang-en="Scratch" data-lang-es="Rasguño" data-lang-ru="Царапина">خدش</span></span>
+                <span><span class="insp-lb U">U</span><span class="bilingual" data-lang-ar="انبعاج" data-lang-en="Dent" data-lang-es="Bulto" data-lang-ru="Вмятина">انبعاج</span></span>
+                <span><span class="insp-lb T">T</span><span class="bilingual" data-lang-ar="تلف" data-lang-en="Damage" data-lang-es="Daño" data-lang-ru="Повреждение">تلف</span></span>
+            </div>
+            <div class="lux-insp-table-wrap">
+                <table class="lux-insp-table">
+                    <thead><tr>
+                        <th class="bilingual" data-lang-ar="القطعة" data-lang-en="Part" data-lang-es="Parte" data-lang-ru="Деталь">القطعة</th>
+                        <th class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition" data-lang-es="Condición" data-lang-ru="Состояние">الحالة</th>
+                        <th class="bilingual" data-lang-ar="الدرجة" data-lang-en="Rank" data-lang-es="Grado" data-lang-ru="Степень">الدرجة</th>
+                    </tr></thead>
+                    <tbody>{{ insp.table_rows_html|safe }}</tbody>
+                </table>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
         {% if car.price and import_calc_enabled %}
         <style>
             .lux-calc { max-width: 600px; }
@@ -1193,56 +1243,6 @@
                     <span class="bilingual" data-lang-ar="{{ label_ar }}" data-lang-en="{{ label_en }}">{{ label_ar }}</span>
                 </div>
                 {% endfor %}
-            </div>
-            {% endif %}
-        </section>
-        {% endif %}
-
-        {% if insp.has_inspection %}
-        <section class="lux-section-block">
-            <h2>
-                <small class="bilingual" data-lang-ar="موثوق" data-lang-en="Verified" data-lang-es="Verificado" data-lang-ru="Проверено">موثوق</small>
-                <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-en="Inspection Report" data-lang-es="Informe de inspección" data-lang-ru="Отчет об инспекции">تقرير الفحص</span>
-            </h2>
-            {% if not insp.has_outer %}
-            <div class="lux-history-tag" style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(76,175,80,0.12);border-color:rgba(76,175,80,0.4);color:#7fc785;margin-bottom:1.25rem;">
-                <span class="bilingual" data-lang-ar="لا توجد أضرار مُسجَّلة على هيكل هذه السيارة" data-lang-en="No damage recorded on this vehicle's body" data-lang-es="No se han registrado daños en la carrocería" data-lang-ru="Повреждений кузова не зафиксировано">لا توجد أضرار مُسجَّلة على هيكل هذه السيارة</span>
-            </div>
-            {% endif %}
-            <div class="lux-inspection-grid" dir="ltr">
-                <div>
-                    <div class="lux-insp-title">Outer Panel{% if insp.has_outer %} — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}{% endif %}</div>
-                    <div class="insp-diagram">
-                        <img src="{{ insp.sedan_img }}" alt="Outer panel">
-                        {{ insp.outer_badges_html|safe }}
-                    </div>
-                </div>
-                <div>
-                    <div class="lux-insp-title">Structural</div>
-                    <div class="insp-diagram">
-                        <img src="{{ insp.truck_img }}" alt="Structural">
-                        {{ insp.structural_badges_html|safe }}
-                    </div>
-                </div>
-            </div>
-            {% if insp.has_outer %}
-            <div class="lux-insp-legend">
-                <span><span class="insp-lb X">X</span><span class="bilingual" data-lang-ar="تغيير" data-lang-en="Replaced" data-lang-es="Cambio" data-lang-ru="Замена">تغيير</span></span>
-                <span><span class="insp-lb W">W</span><span class="bilingual" data-lang-ar="رش" data-lang-en="Paint" data-lang-es="Pintura" data-lang-ru="Покраска">رش</span></span>
-                <span><span class="insp-lb C">C</span><span class="bilingual" data-lang-ar="صدأ" data-lang-en="Rust" data-lang-es="Óxido" data-lang-ru="Ржавчина">صدأ</span></span>
-                <span><span class="insp-lb A">A</span><span class="bilingual" data-lang-ar="خدش" data-lang-en="Scratch" data-lang-es="Rasguño" data-lang-ru="Царапина">خدش</span></span>
-                <span><span class="insp-lb U">U</span><span class="bilingual" data-lang-ar="انبعاج" data-lang-en="Dent" data-lang-es="Bulto" data-lang-ru="Вмятина">انبعاج</span></span>
-                <span><span class="insp-lb T">T</span><span class="bilingual" data-lang-ar="تلف" data-lang-en="Damage" data-lang-es="Daño" data-lang-ru="Повреждение">تلف</span></span>
-            </div>
-            <div class="lux-insp-table-wrap">
-                <table class="lux-insp-table">
-                    <thead><tr>
-                        <th class="bilingual" data-lang-ar="القطعة" data-lang-en="Part" data-lang-es="Parte" data-lang-ru="Деталь">القطعة</th>
-                        <th class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition" data-lang-es="Condición" data-lang-ru="Состояние">الحالة</th>
-                        <th class="bilingual" data-lang-ar="الدرجة" data-lang-en="Rank" data-lang-es="Grado" data-lang-ru="Степень">الدرجة</th>
-                    </tr></thead>
-                    <tbody>{{ insp.table_rows_html|safe }}</tbody>
-                </table>
             </div>
             {% endif %}
         </section>
