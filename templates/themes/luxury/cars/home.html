@@ -449,6 +449,9 @@
                     {% if car.price %}
                     <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
                     {% endif %}
+                    {% if car.auction_date %}
+                    <div style="margin:.1rem 0 .4rem;"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>
+                    {% endif %}
                     <div class="lux-card-meta">
                         {% if car.year %}
                         <span class="lux-card-meta-item">
@@ -500,6 +503,9 @@
                     {% if car.badge.name %}<div class="lux-card-trim">{{ car.badge.name }}</div>{% endif %}
                     {% if car.price %}
                     <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                    {% endif %}
+                    {% if car.auction_date %}
+                    <div style="margin:.1rem 0 .4rem;"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>
                     {% endif %}
                     <div class="lux-card-meta">
                         {% if car.year %}
