@@ -242,29 +242,50 @@
 
     /* Full-width sections below the gallery+aside row */
     .lux-section-block {
-        margin-top: 3rem; padding: 2.25rem;
+        margin-top: 1.4rem; padding: 1.3rem 1.5rem;
         border: 1px solid rgba(201, 164, 90, 0.32);
         border-radius: 0.6rem;
         background: linear-gradient(180deg, #241e16 0%, #15110b 100%);
         box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        scroll-margin-top: 70px;
     }
     .lux-section-block h2 {
-        font-size: 2.1rem; font-weight: 700; margin: 0 0 1.5rem;
-        padding-bottom: 1rem; border-bottom: 1px solid var(--lux-line);
+        font-size: 1.45rem; font-weight: 700; margin: 0 0 1rem;
+        padding-bottom: 0.65rem; border-bottom: 1px solid var(--lux-line);
         letter-spacing: 0.02em; color: var(--lux-gold-bright);
     }
     .lux-section-block h2 small {
-        display: block; color: var(--lux-gold); font-size: 0.72rem; font-weight: 400;
-        letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5rem;
+        display: block; color: var(--lux-gold); font-size: 0.65rem; font-weight: 400;
+        letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 0.3rem;
     }
+
+    /* Sticky in-page quick navigation */
+    .lux-secnav {
+        position: sticky; top: 62px; z-index: 40;
+        display: flex; gap: 0.5rem; overflow-x: auto;
+        padding: 0.6rem 0.1rem; margin: 0.75rem 0 0.25rem;
+        background: var(--lux-bg);
+        border-top: 1px solid var(--lux-line); border-bottom: 1px solid var(--lux-line);
+        scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .lux-secnav::-webkit-scrollbar { display: none; }
+    .lux-secnav:empty { display: none; }
+    .lux-secnav-pill {
+        flex: 0 0 auto; white-space: nowrap; cursor: pointer; text-decoration: none;
+        padding: 0.4rem 0.95rem; border: 1px solid var(--lux-line); border-radius: 999px;
+        color: var(--lux-text-dim); font-size: 0.78rem; font-weight: 500;
+        letter-spacing: 0.02em; transition: background .2s, color .2s, border-color .2s;
+    }
+    .lux-secnav-pill:hover { color: var(--lux-text); border-color: var(--lux-gold); }
+    .lux-secnav-pill.active { background: var(--lux-gold); color: #1a1308; border-color: var(--lux-gold); font-weight: 600; }
 
     /* Comprehensive specs grid (full-width) */
     .lux-specs-grid {
-        display: grid; gap: 1rem;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        display: grid; gap: 0.55rem;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
     .lux-spec-card {
-        padding: 1rem 1.25rem; border: 1px solid var(--lux-line);
+        padding: 0.6rem 0.85rem; border: 1px solid var(--lux-line);
         background: rgba(0,0,0,0.25);
         position: relative;
     }
@@ -273,8 +294,8 @@
         letter-spacing: 0.3em; text-transform: uppercase;
     }
     .lux-spec-head {
-        display: flex; align-items: center; gap: 0.5rem;
-        margin-bottom: 0.45rem;
+        display: flex; align-items: center; gap: 0.45rem;
+        margin-bottom: 0.25rem;
     }
     .lux-spec-card .lux-spec-ico {
         flex-shrink: 0; width: 1rem; height: 1rem;
@@ -486,10 +507,11 @@
         .lux-cta { padding: 0.85rem; font-size: 0.78rem; }
 
         .lux-section-block {
-            margin-top: 1.75rem;
-            padding: 1.25rem 1.1rem;
+            margin-top: 1.1rem;
+            padding: 1.1rem 1rem;
         }
-        .lux-section-block h2 { font-size: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; }
+        .lux-section-block h2 { font-size: 1.3rem; margin-bottom: 0.85rem; padding-bottom: 0.6rem; }
+        .lux-secnav { top: 56px; }
         .lux-section-block h2 small { letter-spacing: 0.3em; font-size: 0.6rem; }
 
         .lux-specs-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
@@ -736,6 +758,8 @@
                 {% endif %}
             </aside>
         </div>
+
+        <nav id="lux-secnav" class="lux-secnav" aria-label="Sections"></nav>
 
         {% if insp.has_inspection %}
         <section class="lux-section-block">
@@ -1427,6 +1451,59 @@
             navigator.share({ title: title, url: url }).catch(function() {});
         });
     }
+})();
+</script>
+
+<!-- Sticky in-page section navigation (built from the sections present) -->
+<script>
+(function () {
+    function buildSecNav() {
+        var nav = document.getElementById('lux-secnav');
+        if (!nav) return;
+        var secs = document.querySelectorAll('.lux-section-block');
+        if (secs.length < 2) { nav.style.display = 'none'; return; }
+        var lang = (function () { try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; } })();
+        var pills = [];
+        secs.forEach(function (sec, i) {
+            if (!sec.id) sec.id = 'lux-sec-' + i;
+            var h2 = sec.querySelector('h2');
+            var spans = h2 ? h2.querySelectorAll('span.bilingual') : [];
+            var span = spans.length ? spans[spans.length - 1] : null;
+            var pill = document.createElement('a');
+            pill.href = '#' + sec.id;
+            pill.className = 'lux-secnav-pill';
+            if (span) {
+                ['ar', 'en', 'es', 'ru'].forEach(function (l) {
+                    var v = span.getAttribute('data-lang-' + l);
+                    if (v) pill.setAttribute('data-lang-' + l, v);
+                });
+                pill.classList.add('bilingual');
+                pill.textContent = (span.getAttribute('data-lang-' + lang) || span.textContent || '').trim();
+            } else {
+                pill.textContent = (h2 ? h2.textContent : '').trim() || ('#' + (i + 1));
+            }
+            pill.addEventListener('click', function (e) {
+                e.preventDefault();
+                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            nav.appendChild(pill);
+            pills.push({ pill: pill, sec: sec });
+        });
+        // sync pill text to the current language (pills were added after init)
+        if (typeof applyLang === 'function') applyLang(lang);
+        // scroll-spy: highlight the section currently in view
+        if ('IntersectionObserver' in window) {
+            var obs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (en) {
+                    if (!en.isIntersecting) return;
+                    pills.forEach(function (p) { p.pill.classList.toggle('active', p.sec === en.target); });
+                });
+            }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+            pills.forEach(function (p) { obs.observe(p.sec); });
+        }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildSecNav);
+    else buildSecNav();
 })();
 </script>
 {% endblock %}
