@@ -11,7 +11,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Avg, Sum, Count, Q
+from django.db.models import Avg, Sum, Count, Q, F, Func, Value, CharField
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -1503,7 +1503,15 @@ def auction_browse(request):
     if auction_name:
         qs = qs.filter(auction_name=auction_name)
     if entry:
-        qs = qs.filter(entry__icontains=entry)
+        # Accept one OR many entries (comma / space / newline / semicolon
+        # separated) and match leading-zero-insensitively, so "0123", "00123"
+        # and "123" are all treated as the same entry.
+        import re as _re
+        _tokens = [t for t in _re.split(r"[\s,;]+", entry) if t]
+        _norm = list({t.lstrip("0") for t in _tokens})  # strip leading zeros each side
+        qs = qs.annotate(
+            _entry_norm=Func(F("entry"), Value("0"), function="LTRIM", output_field=CharField())
+        ).filter(_entry_norm__in=_norm)
     if q:
         qs = qs.filter(
             Q(title__icontains=q)

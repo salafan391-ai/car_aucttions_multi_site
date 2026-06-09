@@ -39,9 +39,10 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">رقم الدخول (Entry)</label>
-                <input type="text" name="entry" value="{{ filters.entry }}" placeholder="مثال: 12345"
-                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand">
+                <label class="block text-xs font-semibold text-gray-600 mb-1">رقم الدخول (Entry) — رقم أو أكثر</label>
+                <textarea name="entry" rows="2" placeholder="مثال: 12345، 0123، 9981 (افصل بفاصلة أو سطر)"
+                       class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand">{{ filters.entry }}</textarea>
+                <p class="text-[11px] text-gray-400 mt-1">يتجاهل الأصفار البادئة — «0123» و«123» نفس النتيجة</p>
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">بحث (موديل / شركة / لوت)</label>
