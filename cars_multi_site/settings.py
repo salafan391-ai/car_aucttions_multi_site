@@ -58,11 +58,19 @@ SHARED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "django_htmx",
     "cars",
     "django.contrib.humanize",
     "tailwind",
     "theme",
+    # allauth in SHARED too (mirrors auth) so the tables exist in the public
+    # schema; per-tenant social data still lives in each tenant schema.
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.apple",
 ]
 
 TENANT_APPS = [
@@ -74,6 +82,12 @@ TENANT_APPS = [
     "django.contrib.staticfiles",
     "site_cars",
     "site_builder",
+    # Social login (per-tenant users) — Google + Apple via django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.apple",
 ]
 TAILWIND_APP_NAME = "theme"
 
@@ -95,6 +109,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
@@ -290,6 +305,48 @@ CSRF_TRUSTED_ORIGINS = (
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
+
+# ── Authentication: keep model backend (email/password) + allauth (social) ──
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+SITE_ID = 1
+
+# ── django-allauth: Google + Apple social sign-in ──
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "none"   # social providers already verify the email
+ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_LOGIN_ON_GET = True      # one click — skip the "continue?" interstitial
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+
+# Provider credentials come from env (per the deployment); a provider only
+# appears (and its button only renders) when its credentials are present.
+_GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
+_GOOGLE_SECRET = os.environ.get("GOOGLE_OAUTH_SECRET", "")
+_APPLE_CLIENT_ID = os.environ.get("APPLE_CLIENT_ID", "")        # Services ID, e.g. com.brand.signin
+_APPLE_KEY_ID = os.environ.get("APPLE_KEY_ID", "")
+_APPLE_TEAM_ID = os.environ.get("APPLE_TEAM_ID", "")
+_APPLE_PRIVATE_KEY = os.environ.get("APPLE_PRIVATE_KEY", "").replace("\\n", "\n")
+
+SOCIALACCOUNT_PROVIDERS = {}
+if _GOOGLE_CLIENT_ID and _GOOGLE_SECRET:
+    SOCIALACCOUNT_PROVIDERS["google"] = {
+        "APP": {"client_id": _GOOGLE_CLIENT_ID, "secret": _GOOGLE_SECRET, "key": ""},
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
+if _APPLE_CLIENT_ID and _APPLE_KEY_ID and _APPLE_TEAM_ID and _APPLE_PRIVATE_KEY:
+    SOCIALACCOUNT_PROVIDERS["apple"] = {
+        "APP": {
+            "client_id": _APPLE_CLIENT_ID,
+            "secret": _APPLE_KEY_ID,
+            "key": _APPLE_TEAM_ID,
+            "settings": {"certificate_key": _APPLE_PRIVATE_KEY},
+        },
+    }
 
 EMAIL_BACKEND = "site_cars.email_backend.TenantEmailBackend"
 

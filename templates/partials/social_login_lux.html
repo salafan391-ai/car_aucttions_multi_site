@@ -1,0 +1,31 @@
+{% load socialaccount %}
+{% get_providers as socialaccount_providers %}
+{% if socialaccount_providers %}
+<style>
+    .lux-social { margin-top: 1.5rem; }
+    .lux-social-divider { display: flex; align-items: center; gap: 0.75rem; color: var(--lux-text-dim); font-size: 0.68rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 1rem; }
+    .lux-social-divider::before, .lux-social-divider::after { content: ""; flex: 1; height: 1px; background: var(--lux-line); }
+    .lux-social-btn { display: flex; align-items: center; justify-content: center; gap: 0.65rem; width: 100%; padding: 0.85rem 1rem; margin-bottom: 0.6rem; border: 1px solid var(--lux-line); color: var(--lux-text); font-family: inherit; font-size: 0.85rem; letter-spacing: 0.02em; text-decoration: none; background: rgba(255,255,255,0.03); transition: border-color 0.2s, background 0.2s; }
+    .lux-social-btn:hover { border-color: var(--lux-gold); }
+    .lux-social-btn svg { flex-shrink: 0; }
+    .lux-social-apple { background: #000; color: #fff; border-color: #000; }
+    .lux-social-apple:hover { background: #141414; border-color: #000; }
+    :root.lux-light .lux-social-btn { background: rgba(0,0,0,0.02); }
+</style>
+<div class="lux-social">
+    <div class="lux-social-divider"><span class="bilingual" data-lang-ar="أو" data-lang-en="or" data-lang-es="o" data-lang-ru="или">أو</span></div>
+    {% for provider in socialaccount_providers %}
+    {% if provider.id == 'google' %}
+    <a href="{% provider_login_url provider.id process='login' %}" class="lux-social-btn lux-social-google">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.79 2.72v2.26h2.9c1.7-1.57 2.69-3.88 2.69-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.96 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/></svg>
+        <span class="bilingual" data-lang-ar="المتابعة عبر Google" data-lang-en="Continue with Google" data-lang-es="Continuar con Google" data-lang-ru="Войти через Google">المتابعة عبر Google</span>
+    </a>
+    {% elif provider.id == 'apple' %}
+    <a href="{% provider_login_url provider.id process='login' %}" class="lux-social-btn lux-social-apple">
+        <svg width="15" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.89-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.89 2.65 3.23 2.6 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.38.81 1.4-.02 2.28-1.27 3.13-2.53.99-1.45 1.4-2.85 1.42-2.92-.03-.01-2.72-1.04-2.75-4.14M14.53 4.32c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-2.99 1.54-.66.76-1.23 1.98-1.08 3.15 1.14.09 2.3-.58 3.01-1.44"/></svg>
+        <span class="bilingual" data-lang-ar="المتابعة عبر Apple" data-lang-en="Continue with Apple" data-lang-es="Continuar con Apple" data-lang-ru="Войти через Apple">المتابعة عبر Apple</span>
+    </a>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endif %}

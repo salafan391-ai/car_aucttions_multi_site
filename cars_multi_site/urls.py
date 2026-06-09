@@ -138,6 +138,7 @@ urlpatterns = [
     path("settings/", site_settings, name="site_settings"),
     path("billing/", include("billing.urls")),
     path("stripe/webhook/", stripe_webhook, name="stripe_webhook"),
+    path("accounts/", include("allauth.urls")),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
     path("", include("site_builder.urls")),
