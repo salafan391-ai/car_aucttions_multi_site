@@ -53,7 +53,17 @@
             --lux-line: rgba(201, 164, 90, 0.18);
             --lux-text: #ece4d3;
             --lux-text-dim: #a89a7a;
+            /* For default-markup dashboard pages rendered under the luxury base */
+            --color-primary: {{ primary_color|default:'#c9a45a' }};
+            --color-secondary: {{ secondary_color|default:primary_color|default:'#b8923f' }};
         }
+        /* Brand utilities the shared dashboard templates rely on (bg-brand etc.) */
+        .bg-brand { background-color: var(--color-primary); }
+        .bg-brand-hover:hover { background-color: var(--color-secondary); }
+        .text-brand { color: var(--color-primary); }
+        .border-brand { border-color: var(--color-primary); }
+        .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .focus\:ring-brand:focus { --tw-ring-color: var(--color-primary); }
         html, body { background: var(--lux-bg); color: var(--lux-text); }
         body { font-family: 'Playfair Display', 'Tajawal', serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
         /* Arabic luxury headings: El Messiri (elegant); body stays Tajawal for legibility */
