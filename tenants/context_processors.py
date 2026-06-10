@@ -80,16 +80,14 @@ def tenant_branding(request):
     # ── Global default SEO — every tenant gets strong meta out of the box,
     #    derived from its name (+ city); the admin's own values override these.
     _seo_name = tenant.name or "سيارات"
-    _seo_city = (tenant.city or "").strip()
-    _seo_city_t = f" - {_seo_city}" if _seo_city else ""
-    _default_seo_title = f"{_seo_name}{_seo_city_t} | استيراد سيارات كورية، مزادات وبيع مباشر"
+    _default_seo_title = f"{_seo_name} | استيراد سيارات كورية، مزادات وبيع مباشر"
     _default_seo_desc = (
         f"{_seo_name} — استيراد وبيع سيارات كورية مستعملة وجديدة، مزادات إنكار، "
-        f"سيارات مفحوصة بأفضل الأسعار مع الشحن والتخليص{(' في ' + _seo_city) if _seo_city else ''}."
+        f"سيارات مفحوصة بأفضل الأسعار مع الشحن والتخليص."
     )
     _default_seo_kw = (
         f"{_seo_name}, استيراد سيارات, سيارات كورية, سيارات من كوريا, مزادات سيارات, "
-        f"انكار, encar, سيارات مستعملة, سيارات للبيع{(', ' + _seo_city) if _seo_city else ''}"
+        f"انكار, encar, سيارات مستعملة, سيارات للبيع"
     )
     _socials = [tenant.instagram, tenant.facebook, tenant.twitter, tenant.youtube, tenant.tiktok]
     _social_links = [s for s in _socials if s and str(s).startswith("http")]
