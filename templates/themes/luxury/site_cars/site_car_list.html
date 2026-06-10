@@ -240,6 +240,13 @@
         .lux-hero h1 { font-size: 1.6rem; }
         .lux-tab { padding: 0.55rem 0.9rem; font-size: 0.65rem; letter-spacing: 0.15em; }
     }
+
+    /* Light mode: re-skin the dark-hardcoded filter form + inputs/options. */
+    :root.lux-light .lux-filter-form { background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%); }
+    :root.lux-light .lux-filter-form input,
+    :root.lux-light .lux-filter-form select { background: #fffdf7; }
+    :root.lux-light .lux-filter-form select option { background: #fffdf7; color: var(--lux-text); }
+    :root.lux-light .lux-card-tag { background: rgba(120, 92, 30, 0.06); }
 </style>
 
 <section class="lux-page">

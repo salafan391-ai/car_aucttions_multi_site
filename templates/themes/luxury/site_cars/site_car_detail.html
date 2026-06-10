@@ -196,6 +196,12 @@
         .lux-section { padding: 1.5rem 1.25rem; }
         .lux-aside { padding: 1.5rem 1.25rem; }
     }
+
+    /* Light mode: re-skin panels that hard-code the dark gradient (base only
+       covers .lux-aside / .lux-spec-card, not these). */
+    :root.lux-light .lux-section { background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%); }
+    :root.lux-light .lux-spec { background: rgba(255, 252, 240, 0.7); }
+    :root.lux-light .lux-pill { background: rgba(120, 92, 30, 0.06); }
 </style>
 
 <section class="lux-page">
