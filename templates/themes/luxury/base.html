@@ -174,9 +174,10 @@
             .lux-brand { font-size: 1rem; letter-spacing: 0.12em; }
             .lux-brand img { height: 30px; }
             .lux-nav-links, .lux-nav-actions { display: none; }
+            .lux-mode-toggle-mobile { display: inline-flex; margin-inline-start: auto; flex-shrink: 0; }
             .lux-nav-toggle {
                 display: inline-flex;
-                margin-inline-start: auto; flex-shrink: 0;
+                margin-inline-start: 0; flex-shrink: 0;
             }
             .lux-nav-mobile-open .lux-nav-links,
             .lux-nav-mobile-open .lux-nav-actions {
@@ -433,6 +434,7 @@
         .lux-mode-toggle svg { width: 1rem; height: 1rem; }
         .lux-mode-toggle .lux-mode-icon-light { display: inline-flex; }
         .lux-mode-toggle .lux-mode-icon-dark  { display: none; }
+        .lux-mode-toggle-mobile { display: none; }  /* desktop: hidden (the nav-actions toggle is shown) */
         .lux-light .lux-mode-toggle .lux-mode-icon-light { display: none; }
         .lux-light .lux-mode-toggle .lux-mode-icon-dark  { display: inline-flex; }
     </style>
@@ -446,6 +448,10 @@
             {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
             <span>{{ site_name|default:"Premium Motors" }}</span>
         </a>
+        <button type="button" class="lux-mode-toggle lux-mode-toggle-mobile" onclick="luxToggleMode()" aria-label="Toggle light mode" title="Toggle light mode">
+            <span class="lux-mode-icon-light" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg></span>
+            <span class="lux-mode-icon-dark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
+        </button>
         <button type="button" class="lux-nav-toggle" onclick="document.getElementById('lux-nav').classList.toggle('lux-nav-mobile-open')" aria-label="Menu">
             <svg class="lux-icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
             <svg class="lux-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
