@@ -321,8 +321,18 @@
             <div class="lux-form-section-title bilingual" data-lang-ar="السعر والحالة" data-lang-en="Price & Status" data-lang-es="Precio y estado" data-lang-ru="Цена и статус">السعر والحالة</div>
             <div class="lux-form-grid cols-3">
                 <div>
-                    <label class="bilingual" data-lang-ar="السعر (₩)" data-lang-en="Price (₩)" data-lang-es="Precio (₩)" data-lang-ru="Цена (₩)">السعر (₩)<span class="req">*</span></label>
+                    <label class="bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر<span class="req">*</span></label>
                     <input type="number" name="price" value="{{ car.price|default:0 }}" min="0" required>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="العملة" data-lang-en="Currency" data-lang-es="Moneda" data-lang-ru="Валюта">العملة</label>
+                    <select name="currency">
+                        <option value="KRW" {% if car.currency == 'KRW' or not car.currency %}selected{% endif %}>₩ KRW</option>
+                        <option value="SAR" {% if car.currency == 'SAR' %}selected{% endif %}>﷼ SAR</option>
+                        <option value="USD" {% if car.currency == 'USD' %}selected{% endif %}>$ USD</option>
+                        <option value="AED" {% if car.currency == 'AED' %}selected{% endif %}>د.إ AED</option>
+                        <option value="EUR" {% if car.currency == 'EUR' %}selected{% endif %}>€ EUR</option>
+                    </select>
                 </div>
                 <div>
                     <label class="bilingual" data-lang-ar="الحالة" data-lang-en="Status" data-lang-es="Estado" data-lang-ru="Статус">الحالة</label>

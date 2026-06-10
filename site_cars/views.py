@@ -226,6 +226,7 @@ def site_car_add(request):
             color=request.POST.get('color', ''),
             mileage=int(request.POST.get('mileage', 0) or 0),
             price=int(request.POST.get('price', 0) or 0),
+            currency=(request.POST.get('currency') or 'KRW').upper(),
             transmission=request.POST.get('transmission', ''),
             fuel=request.POST.get('fuel', ''),
             body_type=request.POST.get('body_type', ''),
@@ -284,6 +285,7 @@ def site_car_edit(request, pk):
         car.color = request.POST.get('color', car.color)
         car.mileage = int(request.POST.get('mileage', car.mileage) or 0)
         car.price = int(request.POST.get('price', car.price) or 0)
+        car.currency = (request.POST.get('currency') or car.currency or 'KRW').upper()
         car.transmission = request.POST.get('transmission', car.transmission)
         car.fuel = request.POST.get('fuel', car.fuel)
         car.body_type = request.POST.get('body_type', car.body_type)

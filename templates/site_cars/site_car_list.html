@@ -223,7 +223,7 @@
                         {% endif %}
                     </div>
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-brand font-extrabold text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-xs">₩</span></span>
+                        <span class="text-brand font-extrabold text-lg" data-price-src="{{ car.price }}" data-cur-src="{{ car.currency|default:'KRW' }}">{{ car.price|floatformat:0 }} <span class="text-xs">{{ car.currency|default:'KRW' }}</span></span>
                     </div>
                     {% if car.location or car.auction_end %}
                     <div class="text-xs text-gray-500 space-y-0.5">

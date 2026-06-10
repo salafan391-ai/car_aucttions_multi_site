@@ -392,7 +392,7 @@
 
                 <div class="lux-price-block">
                     <div class="lux-price-label bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</div>
-                    <div class="lux-price" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} ₩</div>
+                    <div class="lux-price" data-price-src="{{ car.price }}" data-cur-src="{{ car.currency|default:'KRW' }}">{{ car.price|floatformat:0 }} {{ car.currency|default:'KRW' }}</div>
                 </div>
 
                 {% if user.is_staff %}

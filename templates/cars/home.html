@@ -827,7 +827,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                     {% endif %}
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
+                    <span class="text-brand font-extrabold text-sm sm:text-lg"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">{{ car.currency }}</span>{% else %} data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span>{% endif %}</span>
                     {% if car.transmission %}
                     <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     {% endif %}
@@ -913,7 +913,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                 </div>
                 {% endif %}
                 <div class="flex justify-between items-center">
-                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
+                    <span class="text-brand font-extrabold text-sm sm:text-lg"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">{{ car.currency }}</span>{% else %} data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span>{% endif %}</span>
                     {% if car.transmission %}
                     <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     {% endif %}
@@ -990,7 +990,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                     {% endif %}
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-brand font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
+                    <span class="text-brand font-extrabold text-sm sm:text-lg"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">{{ car.currency }}</span>{% else %} data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span>{% endif %}</span>
                     {% if car.transmission %}
                     <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
                     {% endif %}
@@ -1060,7 +1060,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                         {% endif %}
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-red-500 font-extrabold text-sm sm:text-lg" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span></span>
+                        <span class="text-red-500 font-extrabold text-sm sm:text-lg"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">{{ car.currency }}</span>{% else %} data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span>{% endif %}</span>
                     </div>
                 </div>
             </a>

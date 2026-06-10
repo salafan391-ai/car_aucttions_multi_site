@@ -23,6 +23,11 @@ class SiteCar(models.Model):
     color = models.CharField(max_length=100, blank=True, null=True, verbose_name="اللون")
     mileage = models.BigIntegerField(default=0, verbose_name="المسافة المقطوعة")
     price = models.BigIntegerField(verbose_name="السعر")
+    CURRENCY_CHOICES = [
+        ('KRW', '₩ KRW'), ('SAR', '﷼ SAR'), ('USD', '$ USD'),
+        ('AED', 'د.إ AED'), ('EUR', '€ EUR'),
+    ]
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='KRW', verbose_name="عملة السعر")
     transmission = models.CharField(max_length=100, blank=True, null=True, verbose_name="ناقل الحركة")
     fuel = models.CharField(max_length=100, blank=True, null=True, verbose_name="الوقود")
     body_type = models.CharField(max_length=100, blank=True, null=True, verbose_name="نوع الهيكل")

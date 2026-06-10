@@ -131,9 +131,19 @@
             <h2 class="text-lg font-bold mb-4">السعر والحالة</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">السعر (₩) *</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">السعر *</label>
                     <input type="number" name="price" value="{{ car.price|default:0 }}" min="0" required
                         class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">العملة</label>
+                    <select name="currency" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand focus:border-transparent outline-none">
+                        <option value="KRW" {% if car.currency == 'KRW' or not car.currency %}selected{% endif %}>₩ KRW</option>
+                        <option value="SAR" {% if car.currency == 'SAR' %}selected{% endif %}>﷼ SAR</option>
+                        <option value="USD" {% if car.currency == 'USD' %}selected{% endif %}>$ USD</option>
+                        <option value="AED" {% if car.currency == 'AED' %}selected{% endif %}>د.إ AED</option>
+                        <option value="EUR" {% if car.currency == 'EUR' %}selected{% endif %}>€ EUR</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">الحالة</label>

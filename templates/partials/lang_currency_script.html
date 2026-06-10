@@ -188,6 +188,21 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
             var converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate * PRICE_MARKUP);
             el.innerHTML = converted.toLocaleString() + ' <span class="lux-cur-sym">' + cfg.symbol + '</span>';
         });
+        // Prices entered in an explicit source currency (e.g. the tenant's own
+        // cars). Convert from that currency to the selected one; show the exact
+        // amount when displaying in its own currency, and no import markup.
+        document.querySelectorAll('[data-price-src]').forEach(function(el) {
+            var amt = parseFloat(el.getAttribute('data-price-src'));
+            if (isNaN(amt)) return;
+            var src = (el.getAttribute('data-cur-src') || 'KRW').toUpperCase();
+            var srcCfg = CURRENCIES[src] || CURRENCIES.KRW;
+            var krw = (src === 'KRW') ? amt : amt / srcCfg.rate;
+            var out;
+            if (code === src) { out = Math.round(amt); }
+            else if (code === 'KRW') { out = Math.round(krw); }
+            else { out = Math.round(krw * cfg.rate); }
+            el.innerHTML = out.toLocaleString() + ' <span class="lux-cur-sym">' + cfg.symbol + '</span>';
+        });
         document.dispatchEvent(new CustomEvent('currencychange', { detail: { code: code } }));
     }
     // Expose currency config + markup so other widgets (e.g. the import

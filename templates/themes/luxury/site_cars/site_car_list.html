@@ -440,7 +440,7 @@
                             {% if car.mileage %}<span class="lux-card-tag bilingual" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span>{% endif %}
                             {% if car.engine_cc %}<span class="lux-card-tag">{{ car.engine_cc|floatformat:"0g" }}cc</span>{% endif %}
                         </div>
-                        <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} ₩</div>
+                        <div class="lux-card-price" data-price-src="{{ car.price }}" data-cur-src="{{ car.currency|default:'KRW' }}">{{ car.price|floatformat:0 }} {{ car.currency|default:'KRW' }}</div>
                         {% if car.location or car.auction_end %}
                         <div class="lux-card-foot">
                             {% if car.location %}<div class="bilingual" data-lang-ar="📍 {{ car.location|translate_location }}" data-lang-ru="📍 {{ car.location|translate_location:'ru' }}" data-lang-es="📍 {{ car.location|translate_location:'es' }}" data-lang-en="📍 {{ car.location|translate_location:'en' }}">📍 {{ car.location|translate_location }}</div>{% endif %}

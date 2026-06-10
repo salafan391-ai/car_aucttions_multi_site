@@ -428,7 +428,7 @@
             <a href="{% url 'site_car_list' %}" class="lux-view-all bilingual" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
         </div>
         <div class="lux-scroll-row">
-            {% for car in site_cars %}
+            {% for car in site_cars %}{# our cars — prices use the per-car source currency #}
             <a href="{% url 'site_car_detail' car.id %}" class="lux-card">
                 <div class="lux-card-img car-img-wm">
                     {% if car.image %}
@@ -447,7 +447,7 @@
                     <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
                     <h3 class="lux-card-name">{{ car.title|pretty_en }}</h3>
                     {% if car.price %}
-                    <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                    <div class="lux-card-price"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>
                     {% endif %}
                     {% if car.auction_date %}
                     <div style="margin:.1rem 0 .4rem;"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>
@@ -502,7 +502,7 @@
                     <h3 class="lux-card-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
                     {% if car.badge.name %}<div class="lux-card-trim">{{ car.badge.name }}</div>{% endif %}
                     {% if car.price %}
-                    <div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                    <div class="lux-card-price"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>
                     {% endif %}
                     {% if car.auction_date %}
                     <div style="margin:.1rem 0 .4rem;"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>
@@ -552,7 +552,7 @@
                     <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
                     <h3 class="lux-card-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
                     {% if car.badge.name %}<div class="lux-card-trim">{{ car.badge.name }}</div>{% endif %}
-                    {% if car.price %}<div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
+                    {% if car.price %}<div class="lux-card-price"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>{% endif %}
                     <div class="lux-card-meta">
                         {% if car.year %}
                         <span class="lux-card-meta-item">

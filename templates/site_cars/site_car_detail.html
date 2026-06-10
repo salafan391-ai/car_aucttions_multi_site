@@ -226,7 +226,7 @@
 
                 <div class="border-t border-gray-100 pt-4 mb-4">
                     <div class="bilingual text-sm text-gray-500 mb-1" data-lang-ar="السعر" data-lang-en="price" data-lang-es="precio" data-lang-ru="цена">السعر</div>
-                    <div class="text-3xl font-extrabold text-brand" data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-lg">₩</span></div>
+                    <div class="text-3xl font-extrabold text-brand" data-price-src="{{ car.price }}" data-cur-src="{{ car.currency|default:'KRW' }}">{{ car.price|floatformat:0 }} <span class="text-lg">{{ car.currency|default:'KRW' }}</span></div>
                 </div>
 
                 {% if user.is_staff %}
