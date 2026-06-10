@@ -16,6 +16,7 @@ Run on PRODUCTION (the domains must resolve and serve the verification meta tag)
 import json
 import os
 import re
+import time
 
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
@@ -102,11 +103,26 @@ class Command(BaseCommand):
                 tenant = dom.tenant
                 tenant.gsc_verification_token = content
                 tenant.save(update_fields=["gsc_verification_token"])
-                for pat in ("home_html", "home_ctx", "landing_html"):
-                    try:
-                        cache.delete_many([f"{pat}:{tenant.schema_name}"])
-                    except Exception:
-                        pass
+                # The token is exposed via the (cached) tenant_branding context and
+                # baked into the (cached) home/landing HTML. Bust all of those for
+                # this schema so the verification meta tag is LIVE before Google fetches.
+                _schema = tenant.schema_name
+                try:
+                    from django_redis import get_redis_connection
+                    rconn = get_redis_connection("default")
+                    for pat in (f"*tenant_branding:{_schema}*", f"*home_html*{_schema}*",
+                                f"*home_ctx*{_schema}*", f"*landing_html:{_schema}*"):
+                        rk = rconn.keys(pat)
+                        if rk:
+                            rconn.delete(*rk)
+                except Exception:
+                    for key in (f"tenant_branding:{_schema}", f"home_html_v9:{_schema}",
+                                f"home_ctx_v9:{_schema}"):
+                        try:
+                            cache.delete(key)
+                        except Exception:
+                            pass
+                time.sleep(3)  # let the next render re-cache with the meta tag
 
                 # 2) Verify ownership — Google fetches the domain and checks the meta tag.
                 sv.webResource().insert(verificationMethod="META", body={
