@@ -398,7 +398,17 @@
                     <div class="lux-current-img"><a href="{{ car.inspection_image.url }}" target="_blank"><img src="{{ car.inspection_image.url }}" alt="Inspection"></a></div>
                     {% endif %}
                     <input type="file" name="inspection_image" accept="image/*" class="lux-file">
-                    <p class="lux-file-hint bilingual" data-lang-ar="تقرير الفحص الفني (اختياري)" data-lang-en="Mechanical inspection report (optional)" data-lang-es="Informe de inspección (opcional)" data-lang-ru="Отчёт об осмотре (необязательно)">تقرير الفحص الفني (اختياري)</p>
+                    <p class="lux-file-hint bilingual" data-lang-ar="تقرير الفحص الفني (اختياري)" data-lang-en="Mechanical inspection report (optional)" data-lang-es="Informe de inspección (opcional)" data-lang-ru="Отчёт об осمотре (необязательно)">تقرير الفحص الفني (اختياري)</p>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="فيديو الفحص" data-lang-en="Inspection Video" data-lang-es="Vídeo de inspección" data-lang-ru="Видео осмотра">فيديو الفحص</label>
+                    {% if car.inspection_video %}
+                    <div class="lux-file-hint"><a href="{{ car.inspection_video.url }}" target="_blank" style="color:var(--lux-gold);">▶ {{ car.inspection_video.name|cut:"site_cars/videos/" }}</a></div>
+                    {% endif %}
+                    <input type="file" name="inspection_video" accept="video/*" class="lux-file">
+                    <p class="lux-file-hint bilingual" data-lang-ar="ارفع ملف فيديو (يُحفظ خارج خادم الموقع)" data-lang-en="Upload a video file (stored off the web server)" data-lang-es="Sube un vídeo (almacenado fuera del servidor)" data-lang-ru="Загрузите видео (хранится вне сервера)">ارفع ملف فيديو (يُحفظ خارج خادم الموقع)</p>
+                    <input type="url" name="inspection_video_url" value="{{ car.inspection_video_url|default:'' }}" placeholder="https://youtu.be/…" class="lux-file" style="margin-top:.5rem;">
+                    <p class="lux-file-hint bilingual" data-lang-ar="أو الصق رابط فيديو (يوتيوب / رابط مباشر) — أفضل للملفات الكبيرة" data-lang-en="…or paste a video link (YouTube / direct) — best for large files" data-lang-es="…o pega un enlace de vídeo" data-lang-ru="…или вставьте ссылку на видео">أو الصق رابط فيديو (يوتيوب / رابط مباشر) — أفضل للملفات الكبيرة</p>
                 </div>
             </div>
         </div>

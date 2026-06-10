@@ -644,3 +644,19 @@ def translate_location(value, lang='ar'):
         return value
     from site_cars.happycar import locations as _locations
     return _locations.translate(value, lang)
+
+
+@register.filter
+def video_embed(url):
+    """Return an embeddable iframe URL for a YouTube/Vimeo link, else '' (the
+    caller then falls back to a <video> tag for a direct file/link)."""
+    if not isinstance(url, str) or not url:
+        return ''
+    import re
+    m = re.search(r'(?:youtube\.com/(?:watch\?v=|embed/|shorts/)|youtu\.be/)([A-Za-z0-9_-]{6,})', url)
+    if m:
+        return 'https://www.youtube.com/embed/' + m.group(1)
+    m = re.search(r'vimeo\.com/(?:video/)?(\d+)', url)
+    if m:
+        return 'https://player.vimeo.com/video/' + m.group(1)
+    return ''

@@ -236,6 +236,7 @@ def site_car_add(request):
             is_featured=request.POST.get('is_featured') == 'on',
             vin=(request.POST.get('vin') or '').strip() or None,
             plate_number=(request.POST.get('plate_number') or '').strip() or None,
+            inspection_video_url=(request.POST.get('inspection_video_url') or '').strip() or None,
         )
         
         # Handle main image with optimization
@@ -246,6 +247,11 @@ def site_car_add(request):
         # Handle inspection image
         if 'inspection_image' in request.FILES:
             car.inspection_image = optimize_image(request.FILES['inspection_image'])
+            car.save()
+
+        # Handle inspection video (stored on external object storage; no image optimization)
+        if 'inspection_video' in request.FILES:
+            car.inspection_video = request.FILES['inspection_video']
             car.save()
         
         # Handle gallery images with batch optimization
@@ -295,15 +301,20 @@ def site_car_edit(request, pk):
         car.is_featured = request.POST.get('is_featured') == 'on'
         car.vin = (request.POST.get('vin') or '').strip() or None
         car.plate_number = (request.POST.get('plate_number') or '').strip() or None
+        car.inspection_video_url = (request.POST.get('inspection_video_url') or '').strip() or None
 
         # Handle main image with optimization
         if 'image' in request.FILES:
             car.image = optimize_image(request.FILES['image'])
-        
+
         # Handle inspection image
         if 'inspection_image' in request.FILES:
             car.inspection_image = optimize_image(request.FILES['inspection_image'])
-        
+
+        # Handle inspection video (external storage; no optimization)
+        if 'inspection_video' in request.FILES:
+            car.inspection_video = request.FILES['inspection_video']
+
         car.save()
         
         # Handle gallery images with batch optimization

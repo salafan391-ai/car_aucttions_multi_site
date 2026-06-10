@@ -36,6 +36,9 @@ class SiteCar(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name="الحالة")
     is_featured = models.BooleanField(default=False, verbose_name="مميزة")
     inspection_image = models.ImageField(upload_to='site_cars/inspections/', blank=True, null=True, verbose_name="صورة الفحص")
+    # Stored on external object storage (S3/R2) in production — not the web server.
+    inspection_video = models.FileField(upload_to='site_cars/videos/', blank=True, null=True, verbose_name="فيديو الفحص")
+    inspection_video_url = models.URLField(blank=True, null=True, verbose_name="رابط فيديو الفحص (يوتيوب/رابط مباشر)")
     # Extra specs surfaced on the source listing (HappyCar) that weren't
     # captured by the earlier importer. Freeform; safe for admin-created rows.
     trim = models.CharField(max_length=100, blank=True, default='', verbose_name="الطراز")
