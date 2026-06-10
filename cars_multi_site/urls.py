@@ -124,8 +124,57 @@ def robots_txt(request):
         "Allow: /",
         "",
         "Crawl-delay: 5",
+        "",
+        f"Sitemap: {request.scheme}://{request.get_host()}/sitemap.xml",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def sitemap_xml(request):
+    """Per-tenant XML sitemap — built from the request host so each domain lists
+    its own catalog (shared Encar/auction cars it shows + its own SiteCars)."""
+    from django.core.cache import cache
+    from django.urls import reverse
+    from django.template.loader import render_to_string
+    from django.db import connection as _conn
+    from cars.models import ApiCar
+
+    schema = getattr(_conn, "schema_name", "public")
+    host = request.get_host()
+    cache_key = f"sitemap_xml:{schema}:{host}"
+    xml = cache.get(cache_key)
+    if xml is None:
+        base = f"{request.scheme}://{host}"
+        urls = []
+        for name, freq, pri in [("home", "daily", "1.0"), ("car_list", "daily", "0.9"),
+                                 ("site_car_list", "daily", "0.7"), ("faq", "monthly", "0.5")]:
+            try:
+                urls.append({"loc": base + reverse(name), "lastmod": None, "changefreq": freq, "priority": pri})
+            except Exception:
+                pass
+
+        tenant = getattr(_conn, "tenant", None)
+        api_qs = ApiCar.objects.exclude(slug__isnull=True).exclude(slug="")
+        if tenant is not None:
+            if not getattr(tenant, "show_auctions", True):
+                api_qs = api_qs.exclude(category__name="auction")
+            if not getattr(tenant, "show_encar", True):
+                api_qs = api_qs.filter(category__name="auction")
+        for slug, upd in api_qs.order_by("-updated_at").values_list("slug", "updated_at")[:30000]:
+            urls.append({"loc": f"{base}/cars/{slug}/", "lastmod": upd, "changefreq": "weekly", "priority": "0.7"})
+
+        if tenant is not None and schema != "public" and getattr(tenant, "show_site_cars", True):
+            try:
+                from site_cars.models import SiteCar
+                for pk, upd in (SiteCar.objects.exclude(status="sold")
+                                .order_by("-updated_at").values_list("pk", "updated_at")[:10000]):
+                    urls.append({"loc": f"{base}/our-cars/{pk}/", "lastmod": upd, "changefreq": "weekly", "priority": "0.6"})
+            except Exception:
+                pass
+
+        xml = render_to_string("sitemap.xml", {"urls": urls})
+        cache.set(cache_key, xml, 60 * 60 * 3)  # 3h
+    return HttpResponse(xml, content_type="application/xml; charset=utf-8")
 
 
 urlpatterns = [
@@ -134,6 +183,7 @@ urlpatterns = [
     path(".well-known/<path:subpath>", lambda req, subpath: HttpResponse('', status=404, content_type='text/plain')),
     path("favicon.ico", lambda req: HttpResponse('', status=404, content_type='text/plain')),
     path("robots.txt", robots_txt),
+    path("sitemap.xml", sitemap_xml),
     path("admin/", admin.site.urls),
     path("settings/", site_settings, name="site_settings"),
     path("billing/", include("billing.urls")),
