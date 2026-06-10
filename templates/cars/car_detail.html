@@ -19,7 +19,7 @@
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
-    "@type": {% if car.category.name == 'auction' %}"Offer"{% else %}"Vehicle"{% endif %},
+    "@type": "Car",
     "name": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}",
     "description": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال",
     "brand": {
@@ -27,14 +27,21 @@
         "name": "{{ car.manufacturer.name }}"
     },
     "model": "{{ car.model.name }}",
-    "year": {{ car.year }},
+    "vehicleModelDate": "{{ car.year }}",
+    {% if car.mileage %}"mileageFromOdometer": { "@type": "QuantitativeValue", "value": {{ car.mileage }}, "unitCode": "KMT" },{% endif %}
+    {% if car.transmission %}"vehicleTransmission": "{{ car.transmission }}",{% endif %}
+    {% if car.fuel %}"fuelType": "{{ car.fuel }}",{% endif %}
+    {% if car.color and car.color.name %}"color": "{{ car.color.name }}",{% endif %}
+    {% if car.vin %}"vehicleIdentificationNumber": "{{ car.vin }}",{% endif %}
+    "itemCondition": "https://schema.org/UsedCondition",
     "offers": {
         "@type": "Offer",
         "price": "{{ car.price }}",
         "priceCurrency": "SAR",
-        "availability": "{% if car.status == 'available' %}InStock{% else %}OutOfStock{% endif %}",
+        "availability": "{% if car.status == 'available' %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+        "itemCondition": "https://schema.org/UsedCondition",
         "seller": {
-            "@type": "Organization",
+            "@type": "AutoDealer",
             "name": "{{ site_name|default:'سيارات' }}"
         }
     },

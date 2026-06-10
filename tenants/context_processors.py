@@ -95,6 +95,10 @@ def tenant_branding(request):
         "footer_text": tenant.footer_text or "",
         "footer_text_en": tenant.footer_text_en or "",
         "car_display": getattr(tenant, 'car_display', 'classic') or 'classic',
+        # SEO (per-tenant; templates fall back to generic defaults if blank)
+        "seo_title": getattr(tenant, 'seo_title', '') or "",
+        "seo_description": getattr(tenant, 'seo_description', '') or "",
+        "seo_keywords": getattr(tenant, 'seo_keywords', '') or "",
         # Business info
         "site_tagline": tenant.tagline or "",
         "site_tagline_en": tenant.tagline_en or "",

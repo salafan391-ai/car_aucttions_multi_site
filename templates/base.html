@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ site_name|default:"سيارات" }}{% endblock %}</title>
+    <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
     {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="{% block meta_description %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}سيارات, بيع سيارات, شراء سيارات, سيارات مستعملة, سيارات جديدة, مزادات سيارات, تجارة سيارات, {{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endif %}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{% if seo_keywords %}{{ seo_keywords }}{% else %}سيارات, بيع سيارات, شراء سيارات, سيارات مستعملة, سيارات جديدة, مزادات سيارات, تجارة سيارات, {{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
     <meta name="author" content="{{ site_name|default:'سيارات' }}">
     <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
     <meta name="language" content="ar">
@@ -18,7 +18,7 @@
     <meta name="ICBM" content="24.7136, 46.6753">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="{% block og_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endblock %}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">

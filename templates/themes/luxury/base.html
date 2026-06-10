@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ site_name|default:"سيارات" }}{% endblock %}</title>
+    <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
     {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
 
-    <meta name="description" content="{% block meta_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
-    <meta name="keywords" content="{% block meta_keywords %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{% if seo_keywords %}{{ seo_keywords }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
     <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
 
-    <meta property="og:title" content="{% block og_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">

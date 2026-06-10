@@ -128,6 +128,10 @@ class Tenant(TenantMixin):
     tagline_en = models.CharField(max_length=255, blank=True, null=True, verbose_name="Site Tagline (EN)", help_text="Shown with typewriter effect on the home and landing pages")
     about = models.TextField(blank=True, null=True, verbose_name="نبذة عنا (عربي)")
     about_en = models.TextField(blank=True, null=True, verbose_name="About Us (EN)")
+    # ── SEO (per-tenant; overrides the generic defaults on home/list pages) ──
+    seo_title = models.CharField(max_length=70, blank=True, null=True, verbose_name="عنوان SEO", help_text="عنوان الصفحة في نتائج البحث (≤60 حرفاً). مثال: استيراد سيارات كوريا - الرياض")
+    seo_description = models.CharField(max_length=320, blank=True, null=True, verbose_name="وصف SEO", help_text="الوصف الذي يظهر تحت العنوان في جوجل (≤160 حرفاً)")
+    seo_keywords = models.CharField(max_length=500, blank=True, null=True, verbose_name="كلمات مفتاحية SEO", help_text="كلمات مفصولة بفواصل — مدينتك واسم العلامات التي تبيعها")
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم الهاتف")
     phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم هاتف إضافي")
     whatsapp = models.CharField(max_length=20, blank=True, null=True, verbose_name="واتساب")
