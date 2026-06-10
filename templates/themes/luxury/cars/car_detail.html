@@ -793,6 +793,20 @@
                 </form>
                 {% endif %}
 
+                {% if contact_person_name or contact_person_photo %}
+                <div style="display:flex;align-items:center;gap:.8rem;margin:0.5rem 0 1.1rem;padding-top:1.1rem;border-top:1px solid var(--lux-line);">
+                    {% if contact_person_photo %}
+                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" style="width:3rem;height:3rem;border-radius:50%;object-fit:cover;border:1px solid var(--lux-gold);flex-shrink:0;">
+                    {% else %}
+                    <div style="width:3rem;height:3rem;border-radius:50%;background:rgba(201,164,90,.15);color:var(--lux-gold-bright);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;flex-shrink:0;">{{ contact_person_name|first }}</div>
+                    {% endif %}
+                    <div style="min-width:0;">
+                        <div style="color:var(--lux-text);font-weight:600;font-size:.92rem;">{{ contact_person_name }}</div>
+                        <div class="bilingual" style="color:var(--lux-text-dim);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;margin-top:.15rem;" data-lang-ar="مسؤول المبيعات" data-lang-en="Sales Representative" data-lang-es="Gerente de ventas" data-lang-ru="Менеджер по продажам">مسؤول المبيعات</div>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if site_whatsapp %}
                 {% whatsapp_order_message car site_name as lux_wa_msg %}
                 <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ lux_wa_msg }}" target="_blank" rel="noopener" class="lux-cta lux-cta-solid bilingual" data-lang-ar="استفسار عبر واتساب" data-lang-en="Inquire via WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить через WhatsApp">استفسار عبر واتساب</a>
