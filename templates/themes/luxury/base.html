@@ -24,6 +24,23 @@
 
     <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
 
+    <!-- Global business structured data (every page) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoDealer",
+      "name": "{{ site_name|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
+      {% if site_logo %}"logo": "{{ site_logo }}",
+      "image": "{{ site_logo }}",{% endif %}
+      "description": "{{ seo_description|escapejs }}",
+      {% if site_phone %}"telephone": "{{ site_phone|escapejs }}",{% endif %}
+      {% if site_city or site_address %}"address": {"@type": "PostalAddress",{% if site_address %}"streetAddress": "{{ site_address|escapejs }}",{% endif %}{% if site_city %}"addressLocality": "{{ site_city|escapejs }}",{% endif %}"addressCountry": "SA"},{% endif %}
+      "areaServed": {"@type": "Country", "name": "SA"}{% if social_links %},
+      "sameAs": [{% for s in social_links %}{% if not forloop.first %},{% endif %}"{{ s|escapejs }}"{% endfor %}]{% endif %}
+    }
+    </script>
+
     {% tailwind_css %}
     {% htmx_script %}
 

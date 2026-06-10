@@ -76,6 +76,24 @@ def tenant_branding(request):
         "body_bg_color": "#fffbe6",  # Light gold/white
     }
     theme = getattr(tenant, 'theme', 'light') or 'light'
+
+    # ── Global default SEO — every tenant gets strong meta out of the box,
+    #    derived from its name (+ city); the admin's own values override these.
+    _seo_name = tenant.name or "سيارات"
+    _seo_city = (tenant.city or "").strip()
+    _seo_city_t = f" - {_seo_city}" if _seo_city else ""
+    _default_seo_title = f"{_seo_name}{_seo_city_t} | استيراد سيارات كورية، مزادات وبيع مباشر"
+    _default_seo_desc = (
+        f"{_seo_name} — استيراد وبيع سيارات كورية مستعملة وجديدة، مزادات إنكار، "
+        f"سيارات مفحوصة بأفضل الأسعار مع الشحن والتخليص{(' في ' + _seo_city) if _seo_city else ''}."
+    )
+    _default_seo_kw = (
+        f"{_seo_name}, استيراد سيارات, سيارات كورية, سيارات من كوريا, مزادات سيارات, "
+        f"انكار, encar, سيارات مستعملة, سيارات للبيع{(', ' + _seo_city) if _seo_city else ''}"
+    )
+    _socials = [tenant.instagram, tenant.facebook, tenant.twitter, tenant.youtube, tenant.tiktok]
+    _social_links = [s for s in _socials if s and str(s).startswith("http")]
+
     result = {
         "site_name": tenant.name or "سيارات",
         "site_logo": _file_url(getattr(tenant, 'logo', None)),
@@ -96,9 +114,10 @@ def tenant_branding(request):
         "footer_text_en": tenant.footer_text_en or "",
         "car_display": getattr(tenant, 'car_display', 'classic') or 'classic',
         # SEO (per-tenant; templates fall back to generic defaults if blank)
-        "seo_title": getattr(tenant, 'seo_title', '') or "",
-        "seo_description": getattr(tenant, 'seo_description', '') or "",
-        "seo_keywords": getattr(tenant, 'seo_keywords', '') or "",
+        "seo_title": (getattr(tenant, 'seo_title', '') or "").strip() or _default_seo_title,
+        "seo_description": (getattr(tenant, 'seo_description', '') or "").strip() or _default_seo_desc,
+        "seo_keywords": (getattr(tenant, 'seo_keywords', '') or "").strip() or _default_seo_kw,
+        "social_links": _social_links,
         "gsc_verification": getattr(tenant, 'gsc_verification_token', '') or "",
         # Business info
         "site_tagline": tenant.tagline or "",
