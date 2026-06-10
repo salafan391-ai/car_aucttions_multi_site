@@ -99,6 +99,7 @@ def tenant_branding(request):
         "seo_title": getattr(tenant, 'seo_title', '') or "",
         "seo_description": getattr(tenant, 'seo_description', '') or "",
         "seo_keywords": getattr(tenant, 'seo_keywords', '') or "",
+        "gsc_verification": getattr(tenant, 'gsc_verification_token', '') or "",
         # Business info
         "site_tagline": tenant.tagline or "",
         "site_tagline_en": tenant.tagline_en or "",
