@@ -190,6 +190,15 @@
     .lux-lightbox-nav:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
     .lux-lightbox-nav svg { width: 1.25rem; height: 1.25rem; }
     .lux-lightbox-hint { text-align: center; color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.75rem; }
+    @media (max-width: 600px) {
+        /* Fill the screen: overlay the nav buttons instead of squeezing the image */
+        .lux-lightbox { padding: 0.5rem; }
+        .lux-lightbox-body { gap: 0; position: relative; }
+        .lux-lightbox-body img { max-width: 100%; max-height: 84vh; flex: 1; }
+        .lux-lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 2.5rem; height: 2.5rem; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); z-index: 2; }
+        #lightbox-prev { inset-inline-start: 0.25rem; }
+        #lightbox-next { inset-inline-end: 0.25rem; }
+    }
 
     @media (max-width: 600px) {
         .lux-page { padding: 2rem 1rem; }
