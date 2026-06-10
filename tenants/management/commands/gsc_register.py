@@ -15,7 +15,6 @@ Run on PRODUCTION (the domains must resolve and serve the verification meta tag)
 """
 import json
 import os
-import re
 import time
 
 from django.core.cache import cache
@@ -83,49 +82,28 @@ class Command(BaseCommand):
             site_url = f"https://{name}/"
             self.stdout.write(self.style.MIGRATE_HEADING(f"\n== {name} =="))
             try:
-                # 1) Get the meta-tag verification token and store it so the tenant
-                #    renders <meta name="google-site-verification" ...> on every page.
+                # 1) Get the FILE verification token (a filename like
+                #    "google<hash>.html"). Served from a dedicated, never-cached
+                #    endpoint — so verification never races the home-page cache.
                 token_resp = sv.webResource().getToken(body={
-                    "verificationMethod": "META",
+                    "verificationMethod": "FILE",
                     "site": {"type": "SITE", "identifier": site_url},
                 }).execute()
-                meta_tag = token_resp.get("token", "")
-                m = re.search(r'content="([^"]+)"', meta_tag)
-                content = m.group(1) if m else meta_tag
-                self.stdout.write(f"   token: {content[:24]}…")
+                content = token_resp.get("token", "")  # e.g. "google1a2b3c.html"
+                self.stdout.write(f"   file: /{content}")
 
                 if dry:
                     self.stdout.write("   (dry-run) would save token, verify, add property, submit sitemap.")
                     continue
 
-                # Persist the token on the tenant's row (rendered in <head>), then
-                # bust the cached home HTML so the meta tag is live when Google fetches.
+                # Persist on the tenant — the /<file>.html view reads it fresh (uncached).
                 tenant = dom.tenant
                 tenant.gsc_verification_token = content
                 tenant.save(update_fields=["gsc_verification_token"])
-                # The token is exposed via the (cached) tenant_branding context and
-                # baked into the (cached) home/landing HTML. Bust all of those for
-                # this schema so the verification meta tag is LIVE before Google fetches.
-                _schema = tenant.schema_name
-                try:
-                    from django_redis import get_redis_connection
-                    rconn = get_redis_connection("default")
-                    for pat in (f"*tenant_branding:{_schema}*", f"*home_html*{_schema}*",
-                                f"*home_ctx*{_schema}*", f"*landing_html:{_schema}*"):
-                        rk = rconn.keys(pat)
-                        if rk:
-                            rconn.delete(*rk)
-                except Exception:
-                    for key in (f"tenant_branding:{_schema}", f"home_html_v9:{_schema}",
-                                f"home_ctx_v9:{_schema}"):
-                        try:
-                            cache.delete(key)
-                        except Exception:
-                            pass
-                time.sleep(3)  # let the next render re-cache with the meta tag
+                time.sleep(2)  # ensure the saved token is visible to Google's fetch
 
-                # 2) Verify ownership — Google fetches the domain and checks the meta tag.
-                sv.webResource().insert(verificationMethod="META", body={
+                # 2) Verify ownership — Google fetches /<file>.html and checks its content.
+                sv.webResource().insert(verificationMethod="FILE", body={
                     "site": {"type": "SITE", "identifier": site_url},
                 }).execute()
                 self.stdout.write(self.style.SUCCESS("   ✓ verified"))

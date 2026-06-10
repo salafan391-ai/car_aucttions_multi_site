@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
     {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
-    {% if gsc_verification %}<meta name="google-site-verification" content="{{ gsc_verification }}">{% endif %}
 
     <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
     <meta name="keywords" content="{% block meta_keywords %}{% if seo_keywords %}{{ seo_keywords }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">

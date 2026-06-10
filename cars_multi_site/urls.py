@@ -20,7 +20,7 @@ import os
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
@@ -130,6 +130,22 @@ def robots_txt(request):
     return HttpResponse("\n".join(lines), content_type="text/plain")
 
 
+def gsc_verify_file(request, fname):
+    """Serve Google's site-verification FILE (e.g. /google<hash>.html) from a
+    never-cached endpoint, so verification never depends on the home-page cache.
+    Returns the file only when it matches the current tenant's stored token."""
+    from django.db import connection as _c
+    from tenants.models import Tenant
+    schema = getattr(_c, "schema_name", "public")
+    token = (Tenant.objects.filter(schema_name=schema)
+             .values_list("gsc_verification_token", flat=True).first() or "")
+    if token and fname == token:
+        resp = HttpResponse(f"google-site-verification: {token}", content_type="text/html")
+        resp["Cache-Control"] = "no-store, max-age=0"
+        return resp
+    return HttpResponse(status=404)
+
+
 def sitemap_xml(request):
     """Per-tenant XML sitemap — built from the request host so each domain lists
     its own catalog (shared Encar/auction cars it shows + its own SiteCars)."""
@@ -184,6 +200,7 @@ urlpatterns = [
     path("favicon.ico", lambda req: HttpResponse('', status=404, content_type='text/plain')),
     path("robots.txt", robots_txt),
     path("sitemap.xml", sitemap_xml),
+    re_path(r"^(?P<fname>google[\w-]+\.html)$", gsc_verify_file),
     path("admin/", admin.site.urls),
     path("settings/", site_settings, name="site_settings"),
     path("billing/", include("billing.urls")),
