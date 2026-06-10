@@ -1439,9 +1439,32 @@ def car_list(request):
         }
         cache.set(_hero_key, hero, 60 * 10)
 
+    # "Our cars" tab carries the active filter (brand/search/year/price) so the
+    # visitor's selection persists when switching to the our-cars listing.
+    from urllib.parse import urlencode
+    from django.urls import reverse as _reverse
+    _ours_params = {}
+    if q:
+        _ours_params['q'] = q
+    if sel_manufacturers:
+        _mk = (Manufacturer.objects.filter(id__in=sel_manufacturers)
+               .values_list('name', flat=True).first())
+        if _mk:
+            _ours_params['make'] = _mk
+    if year_from:
+        _ours_params['year_min'] = year_from
+    if year_to:
+        _ours_params['year_max'] = year_to
+    if price_min:
+        _ours_params['price_min'] = price_min
+    if price_max:
+        _ours_params['price_max'] = price_max
+    ours_url = _reverse('site_car_list') + (('?' + urlencode(_ours_params)) if _ours_params else '')
+
     context = {
         'page_obj': page_obj,
         'hero': hero,
+        'ours_url': ours_url,
         'manufacturers': manufacturers,
         'popular_manufacturers': popular_manufacturers,
         'models': models_qs,

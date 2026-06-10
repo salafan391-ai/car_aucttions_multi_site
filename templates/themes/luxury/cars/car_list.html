@@ -537,7 +537,7 @@
                 <a href="?{% if request.GET.q %}q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if not request.GET.car_type %}active{% endif %}" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todo" data-lang-ru="Все">الكل</a>
                 <a href="?car_type=cars{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if request.GET.car_type == 'cars' %}active{% endif %}" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</a>
                 <a href="?car_type=auction{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="lux-tab bilingual {% if request.GET.car_type == 'auction' %}active{% endif %}" data-lang-ar="مزادات" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزادات</a>
-                <a href="{% url 'site_car_list' %}" class="lux-tab bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</a>
+                <a href="{% if ours_url %}{{ ours_url }}{% else %}{% url 'site_car_list' %}{% endif %}" class="lux-tab bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</a>
             </div>
         </div>
 
