@@ -99,6 +99,7 @@ def absolute_url(context, url):
 _UPPERCASE_TOKENS = {
     'bmw', 'gmc', 'mg', 'vw', 'suv', 'cvt', 'cng', 'lpg', 'vin', 'rv', 'ev',
     'hud', 'epb', 'abs', 'usa', 'uk', 'uae', 'ksa', 'kia', 'id',
+    '4wd', '2wd', 'awd', 'rwd', 'fwd', 'gdi', 'tdi', 'crdi', 'hev', 'phev',
 }
 
 # Manual overrides for tokens that aren't just "uppercase".
@@ -424,7 +425,7 @@ def translate_model(value, lang='ar'):
     if not isinstance(name, str):
         return name
     if lang == 'ar':
-        return car_models_dict.get(name.lower(), name.lower())
+        return car_models_dict.get(name.lower(), pretty_en(name))
     if lang == 'en':
         return pretty_en(name)
     return _extra_dict('car_models_dict', lang).get(name.lower()) or pretty_en(name)
@@ -444,8 +445,6 @@ def translate_manufacturer(value, lang='ar'):
         return name_ar
     if not isinstance(name, str):
         return name
-    if lang == 'ar':
-        return name.lower()
     return pretty_en(name)
 
 

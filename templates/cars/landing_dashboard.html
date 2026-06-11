@@ -451,8 +451,10 @@
       if (enText) rounds.push({ text: enText, dir: 'ltr' });
       if (rounds.length) {
         var SPEED = 45, ERASE = 22, HOLD = 2200;
+        var textNode = document.createTextNode('');
         var cursor = document.createElement('span');
         cursor.className = 'tw-cursor';
+        tagEl.appendChild(textNode);
         tagEl.appendChild(cursor);
 
         function typeText(text, dir, cb) {
@@ -460,7 +462,7 @@
           var chars = [...text], i = 0;
           function tick() {
             if (i < chars.length) {
-              cursor.insertAdjacentText('beforebegin', chars[i]);
+              textNode.nodeValue += chars[i];
               i++;
               setTimeout(tick, SPEED);
             } else {
@@ -471,12 +473,10 @@
         }
         function eraseText(cb) {
           function tick() {
-            var node = cursor.previousSibling;
-            if (node && node.nodeValue && node.nodeValue.length) {
-              node.nodeValue = node.nodeValue.slice(0, -1);
+            if (textNode.nodeValue.length) {
+              textNode.nodeValue = textNode.nodeValue.slice(0, -1);
               setTimeout(tick, ERASE);
             } else {
-              if (node) node.remove();
               cb();
             }
           }

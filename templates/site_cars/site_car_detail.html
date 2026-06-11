@@ -321,7 +321,8 @@
                 {% if contact_person_name or contact_person_photo %}
                 <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
                     {% if contact_person_photo %}
-                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200">
+                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="w-12 h-12 rounded-full bg-brand-light items-center justify-center text-brand font-bold text-lg" style="display:none;">{{ contact_person_name|first }}</div>
                     {% else %}
                     <div class="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center text-brand font-bold text-lg">{{ contact_person_name|first }}</div>
                     {% endif %}

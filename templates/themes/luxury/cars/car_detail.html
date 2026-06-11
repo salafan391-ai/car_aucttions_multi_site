@@ -628,7 +628,7 @@
                 </div>
                 <div class="lux-preview-name">
                     {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}" data-lang-es="{{ car.model|translate_model:'en' }}" data-lang-ru="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
-                    {% if car.badge.name %}<span class="lux-preview-trim">{{ car.badge.name }}</span>{% endif %}
+                    {% if car.badge.name %}<span class="lux-preview-trim"><bdi>{{ car.badge.name|pretty_en }}</bdi></span>{% endif %}
                 </div>
             </div>
             <div class="lux-preview-side">
@@ -690,7 +690,7 @@
                 {% endif %}
                 <div class="lux-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
                 <h1 class="lux-model">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h1>
-                <div class="lux-year">{{ car.year }}{% if car.badge.name %} · {{ car.badge.name }}{% endif %}</div>
+                <div class="lux-year">{{ car.year }}{% if car.badge.name %} · <bdi>{{ car.badge.name|pretty_en }}</bdi>{% endif %}</div>
                 {% if car.lot_number %}
                 <div class="lux-lot"><span class="bilingual" data-lang-ar="رقم القطعة" data-lang-en="Lot #" data-lang-es="Lote #" data-lang-ru="Лот #">رقم القطعة</span>: {{ car.lot_number }}</div>
                 {% elif car.entry %}
@@ -796,7 +796,8 @@
                 {% if contact_person_name or contact_person_photo %}
                 <div style="display:flex;align-items:center;gap:.8rem;margin:0.5rem 0 1.1rem;padding-top:1.1rem;border-top:1px solid var(--lux-line);">
                     {% if contact_person_photo %}
-                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" style="width:3rem;height:3rem;border-radius:50%;object-fit:cover;border:1px solid var(--lux-gold);flex-shrink:0;">
+                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" style="width:3rem;height:3rem;border-radius:50%;object-fit:cover;border:1px solid var(--lux-gold);flex-shrink:0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div style="display:none;width:3rem;height:3rem;border-radius:50%;background:rgba(201,164,90,.15);color:var(--lux-gold-bright);align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;flex-shrink:0;">{{ contact_person_name|first }}</div>
                     {% else %}
                     <div style="width:3rem;height:3rem;border-radius:50%;background:rgba(201,164,90,.15);color:var(--lux-gold-bright);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;flex-shrink:0;">{{ contact_person_name|first }}</div>
                     {% endif %}
@@ -835,14 +836,14 @@
             {% endif %}
             <div class="lux-inspection-grid" dir="ltr">
                 <div>
-                    <div class="lux-insp-title">Outer Panel{% if insp.has_outer %} — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}{% endif %}</div>
+                    <div class="lux-insp-title bilingual" data-lang-ar="الهيكل الخارجي{% if insp.has_outer %} — {% if insp.damage_count == 1 %}ضرر واحد{% else %}{{ insp.damage_count }} أضرار{% endif %}{% endif %}" data-lang-en="Outer Panel{% if insp.has_outer %} — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}{% endif %}" data-lang-es="Panel exterior{% if insp.has_outer %} — {{ insp.damage_count }}{% endif %}" data-lang-ru="Кузовные панели{% if insp.has_outer %} — {{ insp.damage_count }}{% endif %}">الهيكل الخارجي{% if insp.has_outer %} — {% if insp.damage_count == 1 %}ضرر واحد{% else %}{{ insp.damage_count }} أضرار{% endif %}{% endif %}</div>
                     <div class="insp-diagram">
                         <img src="{{ insp.sedan_img }}" alt="Outer panel">
                         {{ insp.outer_badges_html|safe }}
                     </div>
                 </div>
                 <div>
-                    <div class="lux-insp-title">Structural</div>
+                    <div class="lux-insp-title bilingual" data-lang-ar="الهيكل الأساسي" data-lang-en="Structural" data-lang-es="Estructura" data-lang-ru="Силовая структура">الهيكل الأساسي</div>
                     <div class="insp-diagram">
                         <img src="{{ insp.truck_img }}" alt="Structural">
                         {{ insp.structural_badges_html|safe }}
@@ -1061,7 +1062,7 @@
                         <span class="lux-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/></svg></span>
                         <div class="label bilingual" data-lang-ar="تفاصيل الموديل" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">تفاصيل الموديل</div>
                     </div>
-                    <div class="value">{{ car.badge.name }}</div>
+                    <div class="value"><bdi>{{ car.badge.name|pretty_en }}</bdi></div>
                 </div>
                 {% endif %}
                 {% if car.year %}
@@ -1124,7 +1125,7 @@
                         <span class="lux-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M14 20c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/></svg></span>
                         <div class="label bilingual" data-lang-ar="عدد المقاعد" data-lang-en="Seats" data-lang-es="Asientos" data-lang-ru="Сидений">عدد المقاعد</div>
                     </div>
-                    <div class="value">{{ car.seat_count }}</div>
+                    <div class="value">{{ car.seat_count|floatformat:0 }}</div>
                 </div>
                 {% endif %}
                 {% if car.body %}
@@ -1133,7 +1134,7 @@
                         <span class="lux-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l1-3a2 2 0 011.7-1.4L8 9l1.5-3a2 2 0 011.7-1H15a2 2 0 011.7 1L18 9l2.3.6A2 2 0 0122 11.6V14"/><path d="M2 14h20v3a1 1 0 01-1 1h-1a2 2 0 01-4 0H8a2 2 0 01-4 0H3a1 1 0 01-1-1v-3z"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/></svg></span>
                         <div class="label bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Кузов">نوع الهيكل</div>
                     </div>
-                    <div class="value">{{ car.body.name }}</div>
+                    <div class="value bilingual" data-lang-ar="{{ car.body|translate_body }}" data-lang-en="{{ car.body|translate_body:'en' }}" data-lang-es="{{ car.body|translate_body:'es' }}" data-lang-ru="{{ car.body|translate_body:'ru' }}">{{ car.body|translate_body }}</div>
                 </div>
                 {% endif %}
                 {% if car.power %}
@@ -1142,7 +1143,7 @@
                         <span class="lux-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
                         <div class="label bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</div>
                     </div>
-                    <div class="value">{{ car.power }} cc</div>
+                    <div class="value"><bdi dir="ltr">{{ car.power }} cc</bdi></div>
                 </div>
                 {% elif car.points %}
                 <div class="lux-spec-card">
@@ -1416,7 +1417,7 @@
                             · {{ s.year }}
                         </div>
                         <h3 class="lux-similar-name">{% if s.model %}<span class="bilingual" data-lang-ar="{{ s.model|translate_model }}" data-lang-en="{{ s.model|translate_model:'en' }}">{{ s.model|translate_model }}</span>{% else %}{{ s.title }}{% endif %}</h3>
-                        {% if s.badge.name %}<div class="lux-similar-trim">{{ s.badge.name }}</div>{% endif %}
+                        {% if s.badge.name %}<div class="lux-similar-trim"><bdi>{{ s.badge.name|pretty_en }}</bdi></div>{% endif %}
                         {% if s.price %}<div class="lux-similar-price" data-price-krw="{{ s.price }}">{{ s.price|intcomma }} ₩</div>{% endif %}
                     </div>
                 </a>

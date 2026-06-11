@@ -486,7 +486,7 @@
                 {% if contact_person_name or contact_person_photo %}
                 <div class="lux-rep">
                     <div class="lux-rep-img">
-                        {% if contact_person_photo %}<img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}">{% else %}{{ contact_person_name|first }}{% endif %}
+                        {% if contact_person_photo %}<img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" onerror="this.replaceWith(this.alt.charAt(0));">{% else %}{{ contact_person_name|first }}{% endif %}
                     </div>
                     <div>
                         <div class="lux-rep-name">{{ contact_person_name }}</div>
