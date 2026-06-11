@@ -1,0 +1,437 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ site_name|default:"سيارات" }}</title>
+  {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --p: {{ primary_color|default:"#2563eb" }};
+      --s: {{ secondary_color|default:"#1e3a8a" }};
+      --a: {{ accent_color|default:"#3b82f6" }};
+      --ocean-0: #050e1a;
+      --ocean-1: #081726;
+      --ocean-2: #0c2238;
+      --line: rgba(148, 197, 255, .14);
+      --ink: #e8f1fb;
+      --muted: #8fa8c2;
+      --gold: #f5b942;
+      --teal: #2dd4bf;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100dvh; font-family: 'Tajawal', sans-serif; color: var(--ink);
+      background:
+        radial-gradient(ellipse 90% 60% at 70% -10%, color-mix(in srgb, var(--p) 22%, transparent), transparent),
+        radial-gradient(ellipse 70% 50% at 10% 110%, color-mix(in srgb, var(--s) 30%, transparent), transparent),
+        linear-gradient(180deg, var(--ocean-0) 0%, var(--ocean-1) 45%, var(--ocean-2) 100%);
+      overflow-x: hidden;
+    }
+
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.25rem; }
+
+    /* ── Header ── */
+    .hdr { display: flex; align-items: center; justify-content: space-between; padding: 1.4rem 0 .6rem; animation: fade-up .5s ease both; }
+    .hdr-brand { display: flex; align-items: center; gap: .8rem; text-decoration: none; color: var(--ink); }
+    .hdr-brand img { height: 56px; width: auto; max-width: 190px; object-fit: contain; filter: drop-shadow(0 2px 10px rgba(0,0,0,.5)); }
+    .hdr-logo-fallback {
+      width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--p), var(--s));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,.35);
+    }
+    .hdr-name { font-size: 1.15rem; font-weight: 900; letter-spacing: -.01em; }
+    .hdr-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .42rem .85rem; border-radius: 99px;
+      font-size: .74rem; font-weight: 700; color: var(--teal);
+      background: rgba(45,212,191,.08); border: 1px solid rgba(45,212,191,.25);
+    }
+    .hdr-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); animation: pulse 2s ease infinite; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 2.2rem 0 1rem; }
+    .hero-kicker {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-size: .76rem; font-weight: 700; letter-spacing: .12em; color: var(--gold);
+      border: 1px solid rgba(245,185,66,.3); background: rgba(245,185,66,.07);
+      padding: .4rem .9rem; border-radius: 99px; margin-bottom: 1.1rem;
+      animation: fade-up .5s .05s ease both;
+    }
+    .hero h1 {
+      font-size: clamp(1.7rem, 4.6vw, 3rem); font-weight: 900; line-height: 1.25;
+      letter-spacing: -.02em; animation: fade-up .55s .1s ease both;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(90deg, var(--gold), #ffd98a 50%, var(--gold));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .tagline { margin-top: .9rem; font-size: clamp(.85rem, 2vw, 1rem); color: var(--muted); line-height: 1.7; min-height: 3.4em; animation: fade-up .6s .15s ease both; }
+    .typewriter-1, .typewriter-2 { display: block; min-height: 1.7em; }
+    .tw-cursor { display: inline-block; width: 2px; height: .9em; background: var(--gold); margin-inline-start: 2px; vertical-align: middle; animation: blink .75s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* stats pills */
+    .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 1.3rem; animation: fade-up .65s .2s ease both; }
+    .stat {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .5rem 1rem; border-radius: 12px;
+      background: rgba(255,255,255,.04); border: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+    }
+    .stat b { font-size: 1.05rem; font-weight: 900; color: var(--ink); }
+    .stat span { font-size: .74rem; color: var(--muted); font-weight: 600; }
+    .stat .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── Route map ── */
+    .route { margin: 1.8rem auto .4rem; max-width: 860px; animation: fade-up .7s .25s ease both; }
+    .route svg { width: 100%; height: auto; display: block; }
+    .route-caption { text-align: center; font-size: .72rem; color: var(--muted); margin-top: .2rem; letter-spacing: .06em; }
+
+    /* ── Sections ── */
+    .sec { padding: 2.6rem 0 0; }
+    .sec-head { text-align: center; margin-bottom: 1.5rem; }
+    .sec-label {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: .5rem;
+    }
+    .sec-label::before, .sec-label::after { content: ''; width: 28px; height: 1px; background: rgba(45,212,191,.35); }
+    .sec-title { font-size: clamp(1.25rem, 3vw, 1.7rem); font-weight: 900; letter-spacing: -.01em; }
+
+    /* journey steps */
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; counter-reset: step; }
+    .step {
+      position: relative; padding: 1.3rem 1.1rem 1.2rem; border-radius: 16px;
+      background: rgba(255,255,255,.035); border: 1px solid var(--line);
+      transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .25s, background .25s;
+    }
+    .step:hover { transform: translateY(-4px); border-color: rgba(245,185,66,.35); background: rgba(255,255,255,.055); }
+    .step-num {
+      position: absolute; top: 1rem; inset-inline-end: 1rem;
+      font-size: 1.6rem; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1;
+    }
+    .step-icon {
+      width: 46px; height: 46px; border-radius: 12px; margin-bottom: .8rem;
+      display: flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--step-c) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--step-c) 28%, transparent);
+    }
+    .step-icon svg { width: 23px; height: 23px; color: var(--step-c); }
+    .step-title { font-size: .95rem; font-weight: 800; margin-bottom: .3rem; }
+    .step-sub { font-size: .74rem; color: var(--muted); line-height: 1.6; }
+    .step-1 { --step-c: var(--a); }
+    .step-2 { --step-c: var(--gold); }
+    .step-3 { --step-c: var(--teal); }
+    .step-4 { --step-c: #a78bfa; }
+
+    /* section entry cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .9rem; }
+    .card {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1.15rem 1.2rem; border-radius: 16px;
+      text-decoration: none; color: var(--ink);
+      background: rgba(255,255,255,.04); border: 1px solid var(--line);
+      position: relative; overflow: hidden;
+      transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .25s, box-shadow .25s;
+    }
+    .card::before {
+      content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--card-accent);
+    }
+    .card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--card-accent) 45%, var(--line)); box-shadow: 0 14px 40px -16px color-mix(in srgb, var(--card-accent) 45%, transparent); }
+    .card-cars    { --card-accent: var(--a); }
+    .card-auction { --card-accent: var(--gold); }
+    .card-site    { --card-accent: var(--teal); }
+    .card-icon {
+      width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--card-accent) 26%, transparent);
+    }
+    .card-icon svg { width: 23px; height: 23px; color: var(--card-accent); }
+    .card-body { flex: 1; min-width: 0; }
+    .card-label { font-size: 1rem; font-weight: 800; }
+    .card-sub { font-size: .74rem; color: var(--muted); display: flex; align-items: center; gap: .35rem; margin-top: .25rem; flex-wrap: wrap; }
+    .card-badge {
+      display: inline-flex; padding: .06rem .45rem; border-radius: 6px;
+      font-size: .64rem; font-weight: 800;
+      background: color-mix(in srgb, var(--card-accent) 16%, transparent);
+      color: color-mix(in srgb, var(--card-accent) 85%, #fff);
+      border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
+    }
+    .card-arrow {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.05); border: 1px solid var(--line);
+      transition: background .25s, border-color .25s, transform .25s;
+    }
+    .card:hover .card-arrow { background: var(--card-accent); border-color: var(--card-accent); transform: translateX(-3px); }
+    .card:hover .card-arrow svg { color: #06121f; }
+    .card-arrow svg { width: 13px; height: 13px; color: var(--muted); }
+
+    /* footer */
+    .ftr { text-align: center; padding: 2.6rem 0 2rem; font-size: .74rem; color: var(--muted); }
+
+    @keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+    @keyframes port-pulse { 0% { r: 7; opacity: .7; } 100% { r: 18; opacity: 0; } }
+
+    @media (max-width: 860px) {
+      .steps { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .hdr { flex-direction: column; gap: .8rem; }
+      .steps { grid-template-columns: 1fr; }
+      .hero { padding-top: 1.4rem; }
+      /* SVG scales with viewBox — bump label sizes so ports stay readable on small screens */
+      .route svg .pt-name { font-size: 26px; }
+      .route svg .pt-sub  { font-size: 19px; }
+      .route svg .pt-cap  { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- ── Header ── -->
+    <header class="hdr">
+      <a href="{% url 'home' %}" class="hdr-brand">
+        {% if site_logo %}
+          <img src="{{ site_logo }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+        {% else %}
+          <div class="hdr-logo-fallback">
+            <svg width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/></svg>
+          </div>
+        {% endif %}
+        <span class="hdr-name">{{ site_name|default:"سيارات" }}</span>
+      </a>
+      <span class="hdr-badge">
+        <span class="dot"></span>
+        <span data-ar="تصدير مباشر من كوريا الجنوبية" data-en="Direct export from South Korea">تصدير مباشر من كوريا الجنوبية</span>
+      </span>
+    </header>
+
+    {% include "cars/_damaged_cars_notif.html" %}
+
+    <!-- ── Hero ── -->
+    <section class="hero">
+      <div class="hero-kicker">
+        <span>🚢</span>
+        <span data-ar="من ميناء بوسان إلى باب بيتك" data-en="From Busan port to your doorstep">من ميناء بوسان إلى باب بيتك</span>
+      </div>
+      <h1>
+        <span data-ar="نصدّر سيارتك من" data-en="We export your car from">نصدّر سيارتك من</span>
+        <span class="grad" data-ar="كوريا" data-en="Korea">كوريا</span>
+        <br>
+        <span data-ar="بكل شفافية وأمان" data-en="with full transparency">بكل شفافية وأمان</span>
+      </h1>
+      <p class="tagline">
+        <span class="typewriter-1" {% if site_tagline %}data-tw-ar="{{ site_tagline }}"{% endif %} {% if site_tagline_en %}data-tw-en="{{ site_tagline_en }}"{% endif %}></span>
+        <span class="typewriter-2"></span>
+      </p>
+
+      {% if cars_count or auction_count or site_cars_count %}
+      <div class="stats">
+        {% if cars_count %}
+        <div class="stat"><span class="dot" style="background:var(--a);"></span><b>{{ cars_count }}</b><span data-ar="سيارة من المعارض" data-en="dealer cars">سيارة من المعارض</span></div>
+        {% endif %}
+        {% if auction_count %}
+        <div class="stat"><span class="dot" style="background:var(--gold);"></span><b>{{ auction_count }}</b><span data-ar="سيارة في المزاد" data-en="auction cars">سيارة في المزاد</span></div>
+        {% endif %}
+        {% if site_cars_count %}
+        <div class="stat"><span class="dot" style="background:var(--teal);"></span><b>{{ site_cars_count }}</b><span data-ar="بيع مباشر" data-en="direct sale">بيع مباشر</span></div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- ── Route: Busan → Gulf ── -->
+    <div class="route" aria-hidden="true">
+      <svg viewBox="0 0 860 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="rgba(148,197,255,.06)"/>
+            <stop offset="1" stop-color="rgba(148,197,255,0)"/>
+          </linearGradient>
+          <linearGradient id="routeLine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#2dd4bf"/>
+            <stop offset="1" stop-color="#f5b942"/>
+          </linearGradient>
+        </defs>
+
+        <!-- water -->
+        <rect x="0" y="120" width="860" height="120" fill="url(#sea)"/>
+        <path d="M0 150 Q 60 142 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150" stroke="rgba(148,197,255,.10)" stroke-width="1.5" fill="none">
+          <animate attributeName="d" dur="6s" repeatCount="indefinite"
+            values="M0 150 Q 60 142 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150;
+                    M0 150 Q 60 158 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150;
+                    M0 150 Q 60 142 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150"/>
+        </path>
+        <path d="M0 180 Q 70 172 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180" stroke="rgba(148,197,255,.07)" stroke-width="1.5" fill="none">
+          <animate attributeName="d" dur="8s" repeatCount="indefinite"
+            values="M0 180 Q 70 172 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180;
+                    M0 180 Q 70 188 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180;
+                    M0 180 Q 70 172 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180"/>
+        </path>
+
+        <!-- route arc: Busan (right) → Gulf (left) -->
+        <path id="shipRoute" d="M 760 120 C 620 38, 240 38, 100 120" fill="none" stroke="url(#routeLine)" stroke-width="2" stroke-dasharray="7 8" opacity=".75">
+          <animate attributeName="stroke-dashoffset" from="0" to="-60" dur="3s" repeatCount="indefinite"/>
+        </path>
+
+        <!-- Busan port (start, right) -->
+        <g>
+          <circle cx="760" cy="120" r="7" fill="#f5b942"/>
+          <circle cx="760" cy="120" r="7" fill="none" stroke="#f5b942" stroke-width="1.5"><animate attributeName="r" values="7;18" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;0" dur="2s" repeatCount="indefinite"/></circle>
+          <text x="760" y="158" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-name" font-size="15" font-weight="800" fill="#e8f1fb" data-ar="🇰🇷 بوسان" data-en="🇰🇷 Busan">🇰🇷 بوسان</text>
+          <text x="760" y="178" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-sub" font-size="10.5" fill="#8fa8c2" data-ar="كوريا الجنوبية" data-en="South Korea">كوريا الجنوبية</text>
+        </g>
+
+        <!-- Gulf port (end, left) -->
+        <g>
+          <circle cx="100" cy="120" r="7" fill="#2dd4bf"/>
+          <circle cx="100" cy="120" r="7" fill="none" stroke="#2dd4bf" stroke-width="1.5"><animate attributeName="r" values="7;18" dur="2s" begin="1s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;0" dur="2s" begin="1s" repeatCount="indefinite"/></circle>
+          <text x="100" y="158" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-name" font-size="15" font-weight="800" fill="#e8f1fb" data-ar="ميناء الدمام" data-en="Dammam Port">ميناء الدمام</text>
+          <text x="100" y="178" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-sub" font-size="10.5" fill="#8fa8c2" data-ar="الخليج العربي" data-en="Arabian Gulf">الخليج العربي</text>
+        </g>
+
+        <!-- ship sailing the route -->
+        <g>
+          <text font-size="26" text-anchor="middle" dominant-baseline="middle" style="transform: scaleX(-1); transform-box: fill-box; transform-origin: center;">🚢</text>
+          <animateMotion dur="14s" repeatCount="indefinite" rotate="0">
+            <mpath href="#shipRoute"/>
+          </animateMotion>
+        </g>
+
+        <!-- duration label on the arc -->
+        <text x="430" y="48" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-cap" font-size="11.5" font-weight="700" fill="#8fa8c2" data-ar="شحن بحري ٣٠–٤٥ يوماً" data-en="Sea freight 30–45 days">شحن بحري ٣٠–٤٥ يوماً</text>
+      </svg>
+    </div>
+
+    <!-- ── Journey steps ── -->
+    <section class="sec">
+      <div class="sec-head">
+        <div class="sec-label"><span data-ar="رحلة سيارتك" data-en="Your car's journey">رحلة سيارتك</span></div>
+        <h2 class="sec-title" data-ar="من المزاد الكوري إلى مفتاحك" data-en="From the Korean auction to your keys">من المزاد الكوري إلى مفتاحك</h2>
+      </div>
+      <div class="steps">
+        <div class="step step-1">
+          <span class="step-num">01</span>
+          <div class="step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></div>
+          <div class="step-title" data-ar="اختر سيارتك" data-en="Pick your car">اختر سيارتك</div>
+          <div class="step-sub" data-ar="تصفّح آلاف السيارات من معارض ومزادات كوريا بالصور والمواصفات الكاملة." data-en="Browse thousands of cars from Korean dealers and auctions with full photos and specs.">تصفّح آلاف السيارات من معارض ومزادات كوريا بالصور والمواصفات الكاملة.</div>
+        </div>
+        <div class="step step-2">
+          <span class="step-num">02</span>
+          <div class="step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6 2A9 9 0 1112 3a9 9 0 018.6 9z"/></svg></div>
+          <div class="step-title" data-ar="الفحص والشراء" data-en="Inspection & purchase">الفحص والشراء</div>
+          <div class="step-sub" data-ar="نفحص السيارة ميدانياً ونرسل لك تقريراً مفصلاً قبل إتمام الشراء." data-en="We inspect the car on the ground and send you a detailed report before purchase.">نفحص السيارة ميدانياً ونرسل لك تقريراً مفصلاً قبل إتمام الشراء.</div>
+        </div>
+        <div class="step step-3">
+          <span class="step-num">03</span>
+          <div class="step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h18M5 17l1.5-6h11L19 17M9 11V7h6v4M2 21h20"/></svg></div>
+          <div class="step-title" data-ar="الشحن البحري" data-en="Sea freight">الشحن البحري</div>
+          <div class="step-sub" data-ar="نشحن سيارتك من ميناء بوسان مع تتبّع مباشر لرحلتها حتى الوصول." data-en="We ship from Busan port with live tracking until arrival.">نشحن سيارتك من ميناء بوسان مع تتبّع مباشر لرحلتها حتى الوصول.</div>
+        </div>
+        <div class="step step-4">
+          <span class="step-num">04</span>
+          <div class="step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.74 5.74L9 19l-2 1-1.5-1.5L7 17l-1.5-1.5L7 14l-1-1 4.26-4.26A6 6 0 1121 9z"/></svg></div>
+          <div class="step-title" data-ar="التخليص والتسليم" data-en="Customs & delivery">التخليص والتسليم</div>
+          <div class="step-sub" data-ar="نخلّص الجمارك ونسلّمك المفتاح — مع حاسبة تكلفة استيراد واضحة من البداية." data-en="We clear customs and hand you the keys — with a clear import-cost calculator from day one.">نخلّص الجمارك ونسلّمك المفتاح — مع حاسبة تكلفة استيراد واضحة من البداية.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Entry cards ── -->
+    <section class="sec">
+      <div class="sec-head">
+        <div class="sec-label"><span data-ar="ابدأ الآن" data-en="Start now">ابدأ الآن</span></div>
+        <h2 class="sec-title" data-ar="اختر قسمك" data-en="Select your section">اختر قسمك</h2>
+      </div>
+      <div class="cards">
+
+        {% if show_encar %}<a href="{% url 'car_list' %}?car_type=cars" class="card card-cars">
+          <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/></svg></div>
+          <div class="card-body">
+            <div class="card-label" data-ar="المعارض الكورية" data-en="Korean Dealers">المعارض الكورية</div>
+            <div class="card-sub">
+              {% if cars_count %}<span class="card-badge">{{ cars_count }}</span><span data-ar="سيارة متاحة" data-en="cars available">سيارة متاحة</span>
+              {% else %}<span data-ar="استعرض الكتالوج" data-en="Browse the catalog">استعرض الكتالوج</span>{% endif %}
+            </div>
+          </div>
+          <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+        </a>{% endif %}
+
+        {% if show_auctions %}<a href="{% url 'car_list' %}?car_type=auction" class="card card-auction">
+          <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/></svg></div>
+          <div class="card-body">
+            <div class="card-label" data-ar="سيارات المزاد" data-en="Auction Cars">سيارات المزاد</div>
+            <div class="card-sub">
+              {% if auction_count %}<span class="card-badge">{{ auction_count }}</span>
+                {% if next_auction_date %}<span data-ar="مزاد {{ next_auction_day_ar }}" data-en="Auction {{ next_auction_day_en }}">مزاد {{ next_auction_day_ar }}</span>
+                {% else %}<span data-ar="مزاد نشط" data-en="active auctions">مزاد نشط</span>{% endif %}
+              {% else %}<span data-ar="شارك في المزادات" data-en="Join the auctions">شارك في المزادات</span>{% endif %}
+            </div>
+            {% if auction_names %}<div style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.25rem;">{% for name in auction_names %}<span style="font-size:.6rem;font-weight:700;padding:.08rem .4rem;border-radius:6px;background:rgba(245,185,66,.1);color:#f5b942;border:1px solid rgba(245,185,66,.25);">{{ name }}</span>{% endfor %}</div>{% endif %}
+          </div>
+          <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+        </a>{% endif %}
+
+        {% if site_cars_count %}
+        {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="card card-site">
+          <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 21V12h6v9"/></svg></div>
+          <div class="card-body">
+            <div class="card-label" data-ar="البيع المباشر" data-en="Direct Sales">البيع المباشر</div>
+            <div class="card-sub"><span class="card-badge">{{ site_cars_count }}</span><span data-ar="سيارات وصلت وجاهزة للتسليم" data-en="cars landed & ready">سيارات وصلت وجاهزة للتسليم</span></div>
+          </div>
+          <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+        </a>{% endif %}
+        {% endif %}
+
+      </div>
+    </section>
+
+    <footer class="ftr">
+      <span data-ar="{{ site_name|default:'سيارات' }} — تصدير السيارات من كوريا الجنوبية" data-en="{{ site_name|default:'Cars' }} — Exporting cars from South Korea">{{ site_name|default:'سيارات' }} — تصدير السيارات من كوريا الجنوبية</span>
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const el1=document.querySelector('.typewriter-1'),el2=document.querySelector('.typewriter-2');
+      if(!el1||!el2)return;
+      const SPEED=46,ERASE=22,HOLD=2500;
+      const rounds=[
+        {line1:el1.dataset.twAr||'من مزادات ومعارض كوريا إلى ميناء بلدك',line2:(el1.dataset.twAr||el1.dataset.twEn)?'':'فحص، شراء، شحن، وتخليص — كل شيء علينا',dir:'rtl'},
+        {line1:el1.dataset.twEn||'From Korea’s auctions and dealers to your port',line2:(el1.dataset.twAr||el1.dataset.twEn)?'':'Inspection, purchase, shipping & customs — all on us',dir:'ltr'},
+      ];
+      function typeLine(el,text,dir,speed,cb){const chars=[...text];el.setAttribute('dir',dir);el.textContent='';const cur=document.createElement('span');cur.className='tw-cursor';el.appendChild(cur);let i=0;(function tick(){if(i<chars.length){cur.previousSibling?cur.previousSibling.nodeValue=chars.slice(0,i+1).join(''):el.insertBefore(document.createTextNode(chars.slice(0,i+1).join('')),cur);i++;setTimeout(tick,speed);}else{cur.remove();if(cb)cb();}})();}
+      function eraseLine(el,cb){const chars=[...el.textContent];let i=chars.length;(function tick(){if(i>=0){el.textContent=chars.slice(0,i).join('');i--;setTimeout(tick,ERASE);}else if(cb)cb();})();}
+      // flip every bilingual element (data-ar / data-en) in sync with the typewriter language
+      const i18nEls=document.querySelectorAll('[data-ar][data-en]');
+      function flip(dir){
+        const key=dir==='rtl'?'ar':'en';
+        i18nEls.forEach(e=>{
+          const t=e.dataset[key];if(!t)return;
+          if(e.namespaceURI==='http://www.w3.org/2000/svg'){e.textContent=t;return;}
+          // background tabs throttle timers: swap instantly there or the page is left at opacity 0
+          if(document.hidden){e.textContent=t;e.setAttribute('dir',dir);return;}
+          e.style.opacity='0';
+          setTimeout(()=>{e.textContent=t;e.setAttribute('dir',dir);e.style.transition='opacity .22s';e.style.opacity='';},220);
+        });
+      }
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)i18nEls.forEach(e=>{if(e.style)e.style.opacity='';});});
+      let round=0;
+      function run(){const{line1,line2,dir}=rounds[round++%rounds.length];if(round>1)flip(dir);typeLine(el1,line1,dir,SPEED,()=>typeLine(el2,line2,dir,SPEED,()=>setTimeout(()=>eraseLine(el2,()=>eraseLine(el1,()=>setTimeout(run,300))),HOLD)));}
+      setTimeout(run,700);
+    })();
+  </script>
+{% include 'cars/_faq_landing.html' %}
+</body>
+</html>

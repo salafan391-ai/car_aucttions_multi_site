@@ -61,6 +61,7 @@ class Tenant(TenantMixin):
         ('split',     '▌ Split (Hero Panel)'),
         ('dashboard', '📊 Dashboard (Clean Stats)'),
         ('cockpit',   '🎛️ Cockpit (Car Gauges)'),
+        ('export',    '🚢 Export (Korea → Gulf)'),
     ]
     landing_is_active = models.BooleanField(
         default=True,

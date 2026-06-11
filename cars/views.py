@@ -203,6 +203,7 @@ def landing(request):
         'split':     'cars/landing_split.html',
         'dashboard': 'cars/landing_dashboard.html',
         'cockpit':   'cars/landing_cockpit.html',
+        'export':    'cars/landing_export.html',
     }
     landing_design = getattr(connection.tenant, 'landing_design', 'cosmos') or 'cosmos'
     landing_template = _design_map.get(landing_design, 'cars/landing.html')
