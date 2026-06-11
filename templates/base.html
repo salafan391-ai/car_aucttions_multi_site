@@ -680,6 +680,139 @@
             );
             border-radius: 2px;
         }
+        /* ════════════════════════════════════════════
+           🌊 OCEAN THEME — Korean maritime (navy/teal/gold)
+           Matches the Export landing: deep sea backgrounds,
+           teal accents, gold highlights.
+           ════════════════════════════════════════════ */
+        [data-theme="ocean"] {
+            --ocean-deep:   #050e1a;   /* abyss — footer / darkest      */
+            --ocean-body:   #081726;   /* open sea — page background    */
+            --ocean-card:   #0e2236;   /* card surface                  */
+            --ocean-raise:  #14304a;   /* hover / raised surface        */
+            --ocean-teal:   #2dd4bf;   /* port-marker teal accent       */
+            --ocean-gold:   #f5b942;   /* cargo gold accent             */
+            --ocean-text:   #e8f1fb;
+            --ocean-muted:  #8fa8c2;
+            --ocean-border: #24405c;
+            --color-body-bg:    var(--ocean-body);
+            --color-card-bg:    var(--ocean-card);
+            --color-nav-bg:     rgba(5,14,26,.92);
+            --color-text:       var(--ocean-text);
+            --color-text-muted: var(--ocean-muted);
+            --color-border:     var(--ocean-border);
+            --color-input-bg:   var(--ocean-card);
+        }
+        [data-theme="ocean"] body {
+            color: var(--ocean-text);
+            background-color: var(--ocean-body);
+            background-image:
+                radial-gradient(ellipse 90% 50% at 70% -10%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent),
+                radial-gradient(ellipse 70% 45% at 10% 110%, rgba(45,212,191,.07), transparent);
+            background-attachment: fixed;
+        }
+        /* ── Signature: teal→gold route stripe across the top ── */
+        [data-theme="ocean"]::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--ocean-teal), var(--ocean-gold));
+            z-index: 100;
+            pointer-events: none;
+        }
+        /* ── Surfaces ── */
+        [data-theme="ocean"] .bg-white { background-color: var(--ocean-card) !important; }
+        [data-theme="ocean"] .bg-gray-50  { background-color: #0c1e30 !important; }
+        [data-theme="ocean"] .bg-gray-100 { background-color: #112a42 !important; }
+        [data-theme="ocean"] .bg-gray-200 { background-color: var(--ocean-raise) !important; }
+        [data-theme="ocean"] .bg-gray-800 { background-color: var(--ocean-deep) !important; }
+        [data-theme="ocean"] .bg-gray-900 { background-color: var(--ocean-deep) !important; }
+        [data-theme="ocean"] .hover\:bg-gray-50:hover,
+        [data-theme="ocean"] .hover\:bg-gray-100:hover { background-color: var(--ocean-raise) !important; }
+        /* ── Text ── */
+        [data-theme="ocean"] .text-gray-900,
+        [data-theme="ocean"] .text-gray-800,
+        [data-theme="ocean"] .text-gray-700,
+        [data-theme="ocean"] .text-gray-600 { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] .text-gray-500,
+        [data-theme="ocean"] .text-gray-400 { color: var(--ocean-muted) !important; }
+        /* ── Borders / dividers / shadows ── */
+        [data-theme="ocean"] .border-gray-200,
+        [data-theme="ocean"] .border-gray-100 { border-color: var(--ocean-border) !important; }
+        [data-theme="ocean"] .divide-gray-200 > * + * { border-color: var(--ocean-border) !important; }
+        [data-theme="ocean"] .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,.5) !important; }
+        [data-theme="ocean"] .shadow { box-shadow: 0 2px 8px rgba(0,0,0,.55) !important; }
+        /* ── Navbar: deep sea glass with teal underline ── */
+        [data-theme="ocean"] nav#main-nav {
+            background-color: var(--color-nav-bg) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(45,212,191,.18);
+        }
+        [data-theme="ocean"] nav a,
+        [data-theme="ocean"] nav span,
+        [data-theme="ocean"] nav button { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] nav a:hover { color: var(--ocean-gold) !important; }
+        [data-theme="ocean"] #mobile-menu { background-color: var(--ocean-deep) !important; }
+        [data-theme="ocean"] #mobile-menu a,
+        [data-theme="ocean"] #mobile-menu span,
+        [data-theme="ocean"] #mobile-menu button { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] #mobile-menu .bg-gray-100 { background-color: #112a42 !important; }
+        [data-theme="ocean"] #mobile-menu .border-gray-100 { border-color: var(--ocean-border) !important; }
+        [data-theme="ocean"] #mobile-menu .hover\:bg-gray-100:hover { background-color: var(--ocean-raise) !important; }
+        /* ── Forms ── */
+        [data-theme="ocean"] input,
+        [data-theme="ocean"] select,
+        [data-theme="ocean"] textarea {
+            background-color: var(--ocean-card) !important;
+            border-color: var(--ocean-border) !important;
+            color: var(--ocean-text) !important;
+        }
+        [data-theme="ocean"] input::placeholder,
+        [data-theme="ocean"] textarea::placeholder { color: var(--ocean-muted) !important; }
+        [data-theme="ocean"] input:focus,
+        [data-theme="ocean"] select:focus,
+        [data-theme="ocean"] textarea:focus { border-color: var(--ocean-teal) !important; }
+        /* ── Cards: teal lift on hover ── */
+        [data-theme="ocean"] .car-card {
+            background-color: var(--ocean-card) !important;
+            border: 1px solid var(--ocean-border) !important;
+        }
+        [data-theme="ocean"] .car-card:hover {
+            border-color: color-mix(in srgb, var(--ocean-teal) 45%, var(--ocean-border)) !important;
+            box-shadow: 0 14px 36px -16px rgba(45,212,191,.35) !important;
+        }
+        /* ── Footer: the abyss ── */
+        [data-theme="ocean"] footer {
+            background-color: var(--ocean-deep) !important;
+            border-top: 1px solid rgba(45,212,191,.15);
+        }
+        /* ── Hero filter panel option cards ── */
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option,
+        [data-theme="ocean"] #hero-search-filters .year-from-option,
+        [data-theme="ocean"] #hero-search-filters .year-to-option,
+        [data-theme="ocean"] #hero-search-filters .model-option {
+            background-color: var(--ocean-card) !important;
+            border-color: rgba(148,197,255,.18) !important;
+            color: var(--ocean-text) !important;
+        }
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option:hover,
+        [data-theme="ocean"] #hero-search-filters .year-from-option:hover,
+        [data-theme="ocean"] #hero-search-filters .year-to-option:hover,
+        [data-theme="ocean"] #hero-search-filters .model-option:hover {
+            background-color: var(--ocean-raise) !important;
+            border-color: var(--ocean-teal) !important;
+        }
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option .text-gray-800 { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option .text-gray-500 { color: var(--ocean-muted) !important; }
+        [data-theme="ocean"] #hero-search-filters .bg-gray-100 { background-color: var(--ocean-card) !important; }
+        /* ── Mobile FAB buttons ── */
+        [data-theme="ocean"] .fixed.bottom-4 .bg-white.rounded-full {
+            background: linear-gradient(135deg, var(--ocean-card), var(--ocean-raise)) !important;
+            border: 1px solid rgba(45,212,191,.3) !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,.5) !important;
+        }
+
         {% if site_logo and show_watermark %}
         :root { --site-logo-url: url("{{ site_logo }}"); }
         .car-img-wm { position: relative; }

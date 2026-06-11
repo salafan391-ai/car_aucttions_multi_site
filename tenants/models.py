@@ -107,6 +107,7 @@ class Tenant(TenantMixin):
         ('light',  'فاتح (Light)'),
         ('dark',   'داكن (Dark)'),
         ('desert', '🐪 صحراوي عربي (Desert Arabia)'),
+        ('ocean',  '🌊 بحري كوري (Korean Ocean)'),
         ('custom', 'مخصص (Custom Colors)'),
         ('eid',    '🎉 عيد (Eid Theme)'),
     ]
