@@ -164,6 +164,9 @@ def tenant_branding(request):
     "import_calc_agent": int(getattr(tenant, 'import_calc_agent', 2000) or 0),
     "import_calc_preyear": int(getattr(tenant, 'import_calc_preyear', 2021) or 0),
     "import_calc_preyear_extra": int(getattr(tenant, 'import_calc_preyear_extra', 23000) or 0),
+    "import_calc_shipping_small": int(getattr(tenant, 'import_calc_shipping_small', 6500) or 0),
+    "import_calc_shipping_large": int(getattr(tenant, 'import_calc_shipping_large', 9200) or 0),
+    "import_calc_countries": getattr(tenant, 'import_calc_countries', None) or [],
     }
     # Cache for 30 minutes — tenant branding rarely changes.
     # Currency rates are NOT in this dict; they are merged in at request time

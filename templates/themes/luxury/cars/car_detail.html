@@ -912,6 +912,7 @@
                         <span class="bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
                         <select id="lux-calc-country">
                             <option value="SA" selected>🇸🇦 السعودية</option>
+                            {% for co in import_calc_countries %}<option value="{{ forloop.counter }}">{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
                         </select>
                     </label>
                     <div class="lux-calc-rows" id="lux-calc-rows"></div>
@@ -933,23 +934,35 @@
             var YEAR = {{ car.year|default:0 }};
             if (!PRICE_KRW) return;
 
-            // Rates come from the tenant's dashboard settings (Site settings →
-            // Import calculator). Percentages are stored as whole numbers.
-            var DUTY_PCT = {{ import_calc_duty_pct|floatformat:"-2" }};
-            var VAT_PCT = {{ import_calc_vat_pct|floatformat:"-2" }};
+            // Rates per destination country. Saudi is the default (the flat
+            // dashboard fields); extra countries come from import_calc_countries.
+            // Each country's fees are in its own currency; the calc shows in it.
+            var SIZE_TIER = '{{ import_calc_size_tier|default:"medium" }}';
+            function shipFor(s, m, l) { return SIZE_TIER === 'small' ? s : (SIZE_TIER === 'large' ? l : m); }
+            var CURMAP = {
+                SAR: { symbol: 'ر.س', rate: {{ rate_sar|default:"0.0025" }} },
+                AED: { symbol: 'د.إ', rate: {{ rate_aed|default:"0.00272" }} },
+                USD: { symbol: '$',   rate: {{ rate_usd|default:"0.00067" }} },
+                EUR: { symbol: '€',   rate: {{ rate_eur|default:"0.00069" }} },
+                KRW: { symbol: '₩',   rate: 1 }
+            };
             var RATES = {
                 SA: {
-                    curAr: 'ر.س', curEn: 'SAR',
-                    krwToCur: {{ rate_sar|default:"0.0025" }},  // KRW → SAR
-                    shipping: {{ import_calc_shipping_value|default:import_calc_shipping }},
-                    dutyPct: DUTY_PCT / 100,
-                    vatPct: VAT_PCT / 100,
-                    clearance: {{ import_calc_clearance }},
-                    inspection: {{ import_calc_inspection }},
-                    registration: {{ import_calc_registration }},
-                    agent: {{ import_calc_agent }},
+                    nameAr: 'السعودية', nameEn: 'Saudi Arabia', flag: '🇸🇦', currency: 'SAR',
+                    shipping: shipFor({{ import_calc_shipping_small }}, {{ import_calc_shipping }}, {{ import_calc_shipping_large }}),
+                    dutyPct: {{ import_calc_duty_pct|floatformat:"-2" }}, vatPct: {{ import_calc_vat_pct|floatformat:"-2" }},
+                    clearance: {{ import_calc_clearance }}, inspection: {{ import_calc_inspection }},
+                    registration: {{ import_calc_registration }}, agent: {{ import_calc_agent }},
                     preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }}
-                }
+                }{% for co in import_calc_countries %},
+                "{{ forloop.counter }}": {
+                    nameAr: '{{ co.name_ar|escapejs }}', nameEn: '{{ co.name_en|default:co.name_ar|escapejs }}', flag: '{{ co.flag|escapejs }}', currency: '{{ co.currency|default:"SAR"|escapejs }}',
+                    shipping: shipFor({{ co.shipping_small|default:0 }}, {{ co.shipping_medium|default:0 }}, {{ co.shipping_large|default:0 }}),
+                    dutyPct: {{ co.duty_pct|default:0 }}, vatPct: {{ co.vat_pct|default:0 }},
+                    clearance: {{ co.clearance|default:0 }}, inspection: {{ co.inspection|default:0 }},
+                    registration: {{ co.registration|default:0 }}, agent: {{ co.agent|default:0 }},
+                    preYear: {{ co.preyear|default:0 }}, preYearExtra: {{ co.preyear_extra|default:0 }}
+                }{% endfor %}
             };
 
             var LABELS = {
@@ -968,46 +981,36 @@
                 return Math.round(n) <= 0 ? (FREE[L] || FREE.en) : Math.round(n).toLocaleString('en-US') + ' ' + sym;
             }
 
-            function curInfo() {
-                var code = 'SAR';
-                try { code = localStorage.getItem('site_currency') || 'SAR'; } catch (e) {}
-                var all = window.SITE_CURRENCIES || {};
-                var info = all[code];
-                if (!info) { code = 'SAR'; info = { symbol: 'ر.س', rate: RATES.SA.krwToCur }; }
-                return { code: code, rate: info.rate, symbol: info.symbol };
-            }
             function render() {
-                var L = lang();
-                var lbl = LABELS[L] || LABELS.en;
-                var c = RATES.SA;
-                var cur = curInfo(), sym = cur.symbol;
-                var markup = window.SITE_PRICE_MARKUP || 1, sarRate = c.krwToCur;
-                function carAmt() { return cur.code === 'KRW' ? PRICE_KRW : PRICE_KRW * cur.rate * markup; }
-                function feeAmt(sar) { return cur.code === 'KRW' ? (sar / sarRate) : (sar / sarRate * cur.rate); }
+                var L = lang(), lbl = LABELS[L] || LABELS.en;
+                var sel = document.getElementById('lux-calc-country');
+                var c = (sel && RATES[sel.value]) ? RATES[sel.value] : RATES.SA;
+                var cm = CURMAP[c.currency] || CURMAP.SAR;
+                var rate = cm.rate, sym = cm.symbol;
 
-                var carCur = carAmt();
-                var shipping = feeAmt(c.shipping);
-                var cif = carCur + shipping;
-                var duty = cif * c.dutyPct;
-                var extra = (YEAR && YEAR < c.preYear) ? feeAmt(c.preYearExtra) : 0;
-                var vat = (cif + duty + extra) * c.vatPct;
-                var clearance = feeAmt(c.clearance), inspection = feeAmt(c.inspection), registration = feeAmt(c.registration), agent = feeAmt(c.agent);
-                var total = carCur + shipping + duty + extra + vat + clearance + inspection + registration + agent;
+                var carCur = PRICE_KRW * rate;
+                var cif = carCur + c.shipping;
+                var duty = cif * (c.dutyPct / 100);
+                var extra = (YEAR && YEAR < c.preYear) ? c.preYearExtra : 0;
+                var vat = (cif + duty + extra) * (c.vatPct / 100);
+                var total = carCur + c.shipping + duty + extra + vat + c.clearance + c.inspection + c.registration + c.agent;
 
-                var rows = [['car', carCur], ['shipping', shipping], ['duty', duty]];
+                var rows = [['car', carCur], ['shipping', c.shipping], ['duty', duty]];
                 if (extra) rows.push(['extra', extra]);
-                rows.push(['vat', vat], ['clearance', clearance], ['inspection', inspection], ['registration', registration], ['agent', agent]);
+                rows.push(['vat', vat], ['clearance', c.clearance], ['inspection', c.inspection], ['registration', c.registration], ['agent', c.agent]);
 
                 document.getElementById('lux-calc-rows').innerHTML = rows.map(function (r) {
                     var name = lbl[r[0]];
-                    if (r[0] === 'duty') name += ' (' + DUTY_PCT + '%)';
-                    if (r[0] === 'vat') name += ' (' + VAT_PCT + '%)';
+                    if (r[0] === 'duty') name += ' (' + c.dutyPct + '%)';
+                    if (r[0] === 'vat') name += ' (' + c.vatPct + '%)';
                     return '<div class="lux-calc-row"><span class="k">' + name + '</span><span class="v">' + fmt(r[1], sym, L) + '</span></div>';
                 }).join('');
                 document.getElementById('lux-calc-total').textContent = fmt(total, sym, L);
 
-                var opt = document.querySelector('#lux-calc-country option[value="SA"]');
-                if (opt) opt.text = (L === 'ar') ? '🇸🇦 السعودية' : '🇸🇦 Saudi Arabia';
+                if (sel) Array.prototype.forEach.call(sel.options, function (o) {
+                    var rc = RATES[o.value];
+                    if (rc) o.text = (rc.flag ? rc.flag + ' ' : '') + (L === 'ar' ? rc.nameAr : rc.nameEn);
+                });
             }
 
             render();

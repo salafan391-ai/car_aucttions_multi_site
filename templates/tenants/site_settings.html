@@ -551,6 +551,60 @@
                     </div>
                 </div>
                 <p class="text-xs text-gray-400 mt-3">مثال: تُضاف رسوم «الموديلات الأقدم» للسيارات التي موديلها أقدم من السنة المحددة (افتراضياً 23,000 ر.س لما قبل 2021).</p>
+
+                <!-- Extra destination countries -->
+                <div class="mt-6 pt-5 border-t border-gray-100">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-base font-bold text-gray-800">دول إضافية للحاسبة</h3>
+                        <button type="button" id="ic-add-country" class="text-sm text-white px-3 py-1.5 rounded-lg" style="background-color:var(--color-primary);">+ إضافة دولة</button>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">السعودية مضبوطة بالأعلى (الوجهة الافتراضية). أضف دولاً أخرى بعملتها ورسومها — يختار المشتري الوجهة في صفحة السيارة وتُحسب بعملة تلك الدولة.</p>
+                    <div id="ic-countries" class="space-y-4"></div>
+                    {{ tenant.import_calc_countries|json_script:"ic-countries-data" }}
+                </div>
+                <script>
+                (function () {
+                    var data = [];
+                    try { data = JSON.parse(document.getElementById('ic-countries-data').textContent || '[]') || []; } catch (e) {}
+                    if (!Array.isArray(data)) data = [];
+                    var wrap = document.getElementById('ic-countries');
+                    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+                    var CUR = ['SAR', 'AED', 'USD', 'EUR', 'KRW'];
+                    function field(label, name, val, step) {
+                        return '<div><label class="block text-[11px] text-gray-500 mb-1">' + label + '</label>' +
+                            '<input type="number" min="0" step="' + (step || '1') + '" name="' + name + '[]" value="' + esc(val) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm"></div>';
+                    }
+                    function row(c) {
+                        c = c || {};
+                        var div = document.createElement('div');
+                        div.className = 'ic-country border border-gray-200 rounded-xl p-4 bg-gray-50 relative';
+                        var opts = CUR.map(function (k) { return '<option value="' + k + '"' + (c.currency === k ? ' selected' : '') + '>' + k + '</option>'; }).join('');
+                        div.innerHTML =
+                            '<button type="button" class="ic-remove absolute top-2 left-2 text-red-500 text-lg leading-none">&times;</button>' +
+                            '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">الدولة (عربي)</label><input type="text" name="c_name_ar[]" value="' + esc(c.name_ar) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm" placeholder="الإمارات"></div>' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">Country (EN)</label><input type="text" name="c_name_en[]" value="' + esc(c.name_en) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm" placeholder="UAE"></div>' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">العلم (إيموجي)</label><input type="text" name="c_flag[]" value="' + esc(c.flag) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm" placeholder="🇦🇪"></div>' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">العملة</label><select name="c_currency[]" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm">' + opts + '</select></div>' +
+                            field('الشحن صغير', 'c_shipping_small', c.shipping_small) +
+                            field('الشحن متوسط', 'c_shipping_medium', c.shipping_medium) +
+                            field('الشحن كبير', 'c_shipping_large', c.shipping_large) +
+                            field('الجمارك %', 'c_duty_pct', c.duty_pct, '0.01') +
+                            field('ض.ق.م %', 'c_vat_pct', c.vat_pct, '0.01') +
+                            field('التخليص', 'c_clearance', c.clearance) +
+                            field('الفحص', 'c_inspection', c.inspection) +
+                            field('اللوحات', 'c_registration', c.registration) +
+                            field('عمولة الوكيل', 'c_agent', c.agent) +
+                            field('سنة الرسوم الإضافية', 'c_preyear', c.preyear) +
+                            field('رسوم الموديل الأقدم', 'c_preyear_extra', c.preyear_extra) +
+                            '</div>';
+                        return div;
+                    }
+                    data.forEach(function (c) { wrap.appendChild(row(c)); });
+                    document.getElementById('ic-add-country').addEventListener('click', function () { wrap.appendChild(row({})); });
+                    wrap.addEventListener('click', function (e) { var b = e.target.closest('.ic-remove'); if (b) b.closest('.ic-country').remove(); });
+                })();
+                </script>
             </div>
 
             <!-- Submit Button -->

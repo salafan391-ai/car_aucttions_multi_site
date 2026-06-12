@@ -116,6 +116,44 @@ def site_settings(request):
         tenant.import_calc_preyear = _num('import_calc_preyear', tenant.import_calc_preyear, int)
         tenant.import_calc_preyear_extra = _num('import_calc_preyear_extra', tenant.import_calc_preyear_extra, int)
 
+        # Extra destination countries (repeatable rows -> JSON list)
+        _c_names = request.POST.getlist('c_name_ar[]')
+        if _c_names is not None:
+            _c_en = request.POST.getlist('c_name_en[]')
+            _c_flag = request.POST.getlist('c_flag[]')
+            _c_cur = request.POST.getlist('c_currency[]')
+
+            def _carr(n):
+                return request.POST.getlist(n + '[]')
+
+            def _at(lst, i, cast, default=0):
+                try:
+                    v = lst[i]
+                    return cast(v) if str(v).strip() != '' else default
+                except (IndexError, ValueError, TypeError):
+                    return default
+
+            _ship_s, _ship_m, _ship_l = _carr('c_shipping_small'), _carr('c_shipping_medium'), _carr('c_shipping_large')
+            _duty, _vat = _carr('c_duty_pct'), _carr('c_vat_pct')
+            _clr, _insp, _reg, _ag = _carr('c_clearance'), _carr('c_inspection'), _carr('c_registration'), _carr('c_agent')
+            _py, _pye = _carr('c_preyear'), _carr('c_preyear_extra')
+            _countries = []
+            for i, nm in enumerate(_c_names):
+                if not (nm or '').strip():
+                    continue
+                _countries.append({
+                    'name_ar': nm.strip(),
+                    'name_en': (_c_en[i].strip() if i < len(_c_en) else ''),
+                    'flag': (_c_flag[i].strip() if i < len(_c_flag) else ''),
+                    'currency': (_c_cur[i].strip() if i < len(_c_cur) and _c_cur[i] else 'SAR'),
+                    'shipping_small': _at(_ship_s, i, int), 'shipping_medium': _at(_ship_m, i, int), 'shipping_large': _at(_ship_l, i, int),
+                    'duty_pct': _at(_duty, i, float), 'vat_pct': _at(_vat, i, float),
+                    'clearance': _at(_clr, i, int), 'inspection': _at(_insp, i, int),
+                    'registration': _at(_reg, i, int), 'agent': _at(_ag, i, int),
+                    'preyear': _at(_py, i, int), 'preyear_extra': _at(_pye, i, int),
+                })
+            tenant.import_calc_countries = _countries
+
         tenant.save()
         
         # Handle multiple phone numbers

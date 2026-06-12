@@ -51,6 +51,10 @@ class Tenant(TenantMixin):
     import_calc_agent = models.PositiveIntegerField(default=2000, verbose_name="عمولة الوكيل (ر.س)")
     import_calc_preyear = models.PositiveIntegerField(default=2021, verbose_name="سنة الموديل للرسوم الإضافية")
     import_calc_preyear_extra = models.PositiveIntegerField(default=23000, verbose_name="رسوم جمركية إضافية للموديلات الأقدم (ر.س)")
+    # Extra destination countries (Saudi = the fields above is the default). Each item:
+    # {name_ar,name_en,flag,currency, shipping_small,shipping_medium,shipping_large,
+    #  duty_pct,vat_pct, clearance,inspection,registration,agent, preyear,preyear_extra}
+    import_calc_countries = models.JSONField(default=list, blank=True, verbose_name="دول إضافية لحاسبة الاستيراد")
     LANDING_DESIGN_CHOICES = [
         ('cosmos',  '🌌 Cosmos (Dark Animated)'),
         ('minimal', '⚡ Minimal (Clean Light)'),

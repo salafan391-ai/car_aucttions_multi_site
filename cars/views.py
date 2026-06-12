@@ -1916,7 +1916,10 @@ def car_detail(request, slug):
                   and not _is_auction(car))
 
     # Shipping cost varies by car size — resolve the tier from the body type.
+    # The tier name is also passed so the (multi-country) calculator JS can pick
+    # the right shipping tier for whichever destination country is selected.
     import_calc_shipping_value = None
+    import_calc_size_tier = 'medium'
     if tenant and getattr(tenant, 'schema_name', 'public') != 'public':
         _SHIP_SMALL = {'mini car', 'compact car', 'hatchback', 'sedan/hatchback', 'mini'}
         _SHIP_LARGE = {'full-size car', 'truck', 'rv', 'van', 'minivan',
@@ -1924,15 +1927,19 @@ def car_detail(request, slug):
         _body = (getattr(getattr(car, 'body', None), 'name', '') or '').strip().lower()
         _med = getattr(tenant, 'import_calc_shipping', 5000)
         if _body in _SHIP_SMALL:
+            import_calc_size_tier = 'small'
             import_calc_shipping_value = getattr(tenant, 'import_calc_shipping_small', _med)
         elif _body in _SHIP_LARGE:
+            import_calc_size_tier = 'large'
             import_calc_shipping_value = getattr(tenant, 'import_calc_shipping_large', _med)
         else:
+            import_calc_size_tier = 'medium'
             import_calc_shipping_value = _med
 
     context = {
         'car': car,
         'import_calc_shipping_value': import_calc_shipping_value,
+        'import_calc_size_tier': import_calc_size_tier,
         'price_comparison': _build_price_comparison(car),
         'pc_pending': pc_pending,
         'ratings': ratings,
