@@ -318,7 +318,9 @@
 
         .mod-field-row { margin-bottom: 1.1rem; }
         .mod-field-row label {
-            display: block; color: var(--mod-ink);
+            /* inline-block so a trailing required-asterisk span stays on the
+               same line; the width:100% input below still wraps to its own */
+            display: inline-block; color: var(--mod-ink);
             font-size: 0.82rem; font-weight: 700;
             margin-bottom: 0.4rem;
         }
