@@ -121,7 +121,7 @@ class Tenant(TenantMixin):
     )
     primary_color = models.CharField(max_length=7, default="#2563eb", help_text="Hex color e.g. #2563eb (used in Custom theme)")
     secondary_color = models.CharField(max_length=7, default="#1e3a8a", help_text="Hex color e.g. #1e3a8a (used in Custom theme)")
-    accent_color = models.CharField(max_length=7, default="#3b82f6", help_text="Hex color e.g. #3b82f6 (used in Custom theme)")
+    accent_color = models.CharField(max_length=7, default="#3b82f6", help_text="Hex color e.g. #3b82f6 (used in Custom theme; in the Modern template theme it is the second color of the brand gradient — leave at default for the standard cyan)")
     body_bg_color = models.CharField(max_length=7, default="#ffffff", blank=True, verbose_name="Body Background Color", help_text="Hex color for the page background (used in Custom theme).")
     footer_text = models.CharField(max_length=255, blank=True, null=True, verbose_name="نص الفوتر (عربي)")
     footer_text_en = models.CharField(max_length=255, blank=True, null=True, verbose_name="Footer Text (EN)")

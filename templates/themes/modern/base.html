@@ -79,7 +79,9 @@
             --mod-muted:     #5b6b82;   /* secondary text                       */
             --mod-line:      #e3e9f2;   /* hairline borders                     */
             --mod-brand:     {{ primary_color|default:'#2563eb' }};
-            --mod-brand-2:   #06b6d4;   /* gradient partner — electric cyan     */
+            /* Gradient partner: tenant accent color; tenants still on the stock
+               accent default (#3b82f6) keep the K-tech electric-cyan signature. */
+            --mod-brand-2:   {% if accent_color and accent_color != '#3b82f6' %}{{ accent_color }}{% else %}#06b6d4{% endif %};
             --mod-grad:      linear-gradient(135deg, var(--mod-brand), var(--mod-brand-2));
             --mod-ok:        #10b981;
             --mod-warn:      #f59e0b;
