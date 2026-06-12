@@ -11,62 +11,66 @@
        Exceptions: scrim + light text over the hero photo/video.
        ════════════════════════════════════════════════════════════ */
 
-    /* ── Hero: full-bleed media + soft dark scrim + light text ── */
+    /* ── Hero: light in-theme canvas + soft brand gradient mesh ──
+       No full-bleed media, no dark scrim — the K-Modern hero lives on
+       the theme background (flips with dark mode). The tenant's hero
+       photo, when set, shows as a rounded showcase panel below. */
     .mod-hero {
         position: relative;
-        padding: 6.5rem 1.25rem 5rem;
+        padding: 4.5rem 1.25rem 4rem;
         text-align: center;
         overflow: hidden;
         isolation: isolate;
-        background: var(--mod-ink); /* fallback while media loads */
     }
-    .mod-hero-video {
-        position: absolute; inset: 0; z-index: -2;
-        width: 100%; height: 100%; object-fit: cover;
-        pointer-events: none;
+    .mod-hero::before {
+        content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+        background:
+            radial-gradient(ellipse 55% 65% at 15% -5%, color-mix(in srgb, var(--mod-brand) 16%, transparent), transparent),
+            radial-gradient(ellipse 50% 60% at 88% 5%, color-mix(in srgb, var(--mod-brand-2) 13%, transparent), transparent);
     }
-    .mod-hero-overlay {
-        position: absolute; inset: 0; z-index: -1; pointer-events: none;
-        /* scrim over photo/video — intentionally not tokenized */
-        background: linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.72) 100%);
-    }
+    .mod-hero-eyebrow { margin-bottom: 1.1rem; }
     .mod-hero-title {
-        /* light text over photo — stays light in both modes */
-        color: #fff;
-        font-size: clamp(2.3rem, 5.5vw, 4rem);
-        line-height: 1.05; margin: 0 0 1rem;
+        color: var(--mod-ink);
+        font-size: clamp(2.2rem, 5vw, 3.6rem);
+        line-height: 1.08; margin: 0 0 1rem;
     }
     .mod-hero-sub {
-        color: rgba(255,255,255,0.85);
+        color: var(--mod-muted);
         font-size: clamp(1rem, 2vw, 1.15rem);
         max-width: 620px; margin: 0 auto 1.75rem; line-height: 1.7;
     }
     .mod-hero-ctas { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
-    .mod-hero-ctas .mod-btn-light {
-        color: #fff; background: rgba(255,255,255,0.12);
-        border-color: rgba(255,255,255,0.35);
-        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    /* Tenant hero photo as a rounded showcase panel */
+    .mod-hero-media {
+        max-width: 1080px; margin: 2.5rem auto 0;
+        border-radius: calc(var(--mod-radius) + 8px);
+        overflow: hidden;
+        border: 1px solid var(--mod-line);
+        box-shadow: var(--mod-shadow-lg);
     }
-    .mod-hero-ctas .mod-btn-light:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.6); }
+    .mod-hero-media img {
+        width: 100%; height: clamp(220px, 36vw, 440px);
+        object-fit: cover; display: block;
+    }
 
     /* ── Hero filter: tabs + Brand/Model/Year accordion card ── */
     .mod-hf { max-width: 660px; margin: 2rem auto 0; text-align: start; }
     .mod-hf-tabs {
         display: inline-flex; gap: 0.25rem; margin-bottom: 1rem;
         padding: 0.3rem; border-radius: 999px;
-        background: rgba(0,0,0,0.35); /* pill rail over hero media */
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,0.18);
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        box-shadow: var(--mod-shadow);
     }
     .mod-hf-tabs-wrap { text-align: center; }
     .mod-hf-tab {
         border: 0; cursor: pointer; font-family: inherit;
         padding: 0.5rem 1.25rem; border-radius: 999px;
-        background: transparent; color: rgba(255,255,255,0.8);
+        background: transparent; color: var(--mod-muted);
         font-size: 0.88rem; font-weight: 700;
         transition: all .2s ease;
     }
-    .mod-hf-tab:hover { color: #fff; }
+    .mod-hf-tab:hover { color: var(--mod-ink); }
     .mod-hf-tab.is-active { background: var(--mod-grad); color: #fff; }
     .mod-hf-card {
         background: var(--mod-surface);
@@ -272,15 +276,12 @@
 <div class="mod-home">
     {% if show_hero %}
     <section class="mod-hero">
-        <video class="mod-hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
-            <source src="{% static 'videos/huna_korea.mp4' %}" type="video/mp4">
-        </video>
-        <div class="mod-hero-overlay" aria-hidden="true"></div>
+        <div class="mod-eyebrow mod-hero-eyebrow"><span>🚢</span> <span class="bilingual" data-lang-ar="تصدير مباشر من كوريا الجنوبية إلى باب بيتك" data-lang-en="Direct export from South Korea to your doorstep" data-lang-es="Exportación directa de Corea del Sur" data-lang-ru="Прямой экспорт из Южной Кореи">تصدير مباشر من كوريا الجنوبية إلى باب بيتك</span></div>
         <h1 class="mod-hero-title">{{ site_name|default:"سيارات" }}</h1>
-        <p class="mod-hero-sub bilingual" data-lang-ar="{{ site_tagline|default:'مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها.' }}" data-lang-en="{{ site_tagline_en|default:'A handpicked selection of exceptional vehicles, sourced and presented with the discernment they deserve.' }}" data-lang-es="Una selección de vehículos excepcionales, presentados con la atención que merecen." data-lang-ru="Тщательно подобранная коллекция исключительных автомобилей.">{{ site_tagline|default:"مجموعة منتقاة من السيارات الاستثنائية، تُعرض بالعناية التي تستحقها." }}</p>
+        <p class="mod-hero-sub bilingual" data-lang-ar="{{ site_tagline|default:'سيارات كورية مفحوصة بعناية — من مزادات ومعارض كوريا، بشحن وتخليص كامل حتى الاستلام.' }}" data-lang-en="{{ site_tagline_en|default:'Carefully inspected Korean cars — from Korea’s auctions and dealers, shipped and cleared all the way to handover.' }}" data-lang-es="Coches coreanos cuidadosamente inspeccionados, enviados y despachados hasta la entrega." data-lang-ru="Тщательно проверенные корейские автомобили — с доставкой и растаможкой до передачи.">{{ site_tagline|default:"سيارات كورية مفحوصة بعناية — من مزادات ومعارض كوريا، بشحن وتخليص كامل حتى الاستلام." }}</p>
         <div class="mod-hero-ctas">
             <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
-            <a href="{% url 'contact' %}" class="mod-btn mod-btn-light bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Us" data-lang-es="Contacto" data-lang-ru="Связаться">تواصل معنا</a>
+            <a href="{% url 'contact' %}" class="mod-btn bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Us" data-lang-es="Contacto" data-lang-ru="Связаться">تواصل معنا</a>
         </div>
         <!-- Hero filter: tabs + Brand/Model/Year accordion -->
         <div class="mod-hf" id="lux-hf">
@@ -338,6 +339,16 @@
             </div>
           </form>
         </div>
+
+        {% if site_hero_images %}
+        <div class="mod-hero-media">
+            <img src="{{ site_hero_images.0.image.url }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+        </div>
+        {% elif site_hero_image %}
+        <div class="mod-hero-media">
+            <img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+        </div>
+        {% endif %}
     </section>
     {% endif %}
 
