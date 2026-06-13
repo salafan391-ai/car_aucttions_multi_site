@@ -60,7 +60,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Only the weights the theme actually uses (inline CSS: 600/700/800; body 400).
+         Trimmed from 10 font files to 7 → faster first paint, less FOUT. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
         /* ════════════════════════════════════════════════════════════
@@ -814,5 +816,45 @@ function toggleWishlist(carId) {
 })();
 </script>
 {% endblock mobile_bottom_nav %}
+
+<!-- ── Hover / touch prefetch ──────────────────────────────────────────
+     Navigation is full-reload (no SPA), and every click hits the origin
+     (~0.45s TTFB, not edge-cached). This warms the destination page on
+     hover (desktop) or touchstart (mobile) so it's already in the browser
+     cache by the time the link is clicked → navigation feels instant.
+     Pure network warming — touches none of the page's init JS, so there is
+     no listener-stacking / timer-leak risk. ~1KB. -->
+<script>
+(function () {
+    var conn = navigator.connection;
+    if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return;
+    var seen = Object.create(null);
+    function target(node) {
+        var a = node && node.closest ? node.closest('a') : null;
+        if (!a || !a.href || a.target === '_blank' || a.hasAttribute('download')) return null;
+        if (a.origin !== location.origin) return null;            // external / tel: / mailto: / wa.me
+        if (a.href.split('#')[0] === location.href.split('#')[0]) return null; // same page / in-page anchor
+        if (/\/(logout|accounts\/logout)\/?$/.test(a.pathname)) return null;   // side-effecting GET
+        if (seen[a.href]) return null;
+        return a.href;
+    }
+    function warm(href) {
+        seen[href] = 1;
+        var l = document.createElement('link');
+        l.rel = 'prefetch'; l.as = 'document'; l.href = href;
+        document.head.appendChild(l);
+    }
+    var hoverTimer;
+    document.addEventListener('mouseover', function (e) {
+        var href = target(e.target); if (!href) return;
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(function () { warm(href); }, 55); // ignore quick mouse sweeps
+    }, { passive: true });
+    document.addEventListener('mouseout', function () { clearTimeout(hoverTimer); }, { passive: true });
+    document.addEventListener('touchstart', function (e) {
+        var href = target(e.target); if (href) warm(href);
+    }, { passive: true });
+})();
+</script>
 </body>
 </html>
