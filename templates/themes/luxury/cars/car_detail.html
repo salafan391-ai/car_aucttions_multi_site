@@ -815,6 +815,9 @@
                 {% if car.price and import_calc_enabled %}
                 <button type="button" onclick="luxCalcOpen()" class="lux-cta bilingual" style="width:100%;cursor:pointer;" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</button>
                 {% endif %}
+                {% if price_comparison or pc_pending %}
+                <button type="button" id="lux-pc-btn" onclick="luxPcOpen()" class="lux-cta bilingual" style="width:100%;cursor:pointer;{% if pc_pending %}display:none;{% endif %}" data-lang-ar="مقارنة بسعر الجديد" data-lang-en="Compare to new price" data-lang-es="Comparar con nuevo" data-lang-ru="Сравнить с новым">مقارنة بسعر الجديد</button>
+                {% endif %}
                 {% if site_phone %}
                 <a href="tel:{{ site_phone }}" class="lux-cta bilingual" data-lang-ar="اتصل {{ site_phone }}" data-lang-en="Call {{ site_phone }}" data-lang-es="Llamar {{ site_phone }}" data-lang-ru="Позвонить {{ site_phone }}">اتصل {{ site_phone }}</a>
                 {% endif %}
@@ -1233,25 +1236,41 @@
         </section>
         {% endif %}
 
-        {% if price_comparison %}
-        {% include 'themes/luxury/cars/_price_comparison.html' %}
-        {% elif pc_pending %}
-        <div id="price-comparison-slot" data-pc-url="{% url 'car_price_comparison' car.slug %}"></div>
+        {% if price_comparison or pc_pending %}
+        <style>
+          #lux-pc-body .lux-section-block { margin:0; padding:0; border:0; background:none; box-shadow:none; }
+          #lux-pc-body .lux-section-block > h2 { display:none; }
+        </style>
+        <div class="lux-calc-modal" id="lux-pc-modal" onclick="if(event.target===this)luxPcClose()">
+            <div class="lux-calc-modal-inner" dir="rtl">
+                <div class="lux-calc-modal-head">
+                    <h3 class="bilingual" data-lang-ar="مقارنة بسعر السيارة الجديدة" data-lang-en="Compared to New" data-lang-es="Comparado con uno nuevo" data-lang-ru="Сравнение с новым">مقارنة بسعر السيارة الجديدة</h3>
+                    <button type="button" class="lux-calc-modal-close" onclick="luxPcClose()">&times;</button>
+                </div>
+                <div id="lux-pc-body"{% if pc_pending %} data-pc-url="{% url 'car_price_comparison' car.slug %}"{% endif %}>
+                    {% if price_comparison %}{% include 'themes/luxury/cars/_price_comparison.html' %}{% endif %}
+                </div>
+            </div>
+        </div>
         <script>
+        window.luxPcOpen = function () { var m = document.getElementById('lux-pc-modal'); if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; } };
+        window.luxPcClose = function () { var m = document.getElementById('lux-pc-modal'); if (m) { m.style.display = 'none'; document.body.style.overflow = ''; } };
         (function () {
-          var slot = document.getElementById('price-comparison-slot');
-          if (!slot) return;
-          fetch(slot.dataset.pcUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+          var body = document.getElementById('lux-pc-body');
+          var btn = document.getElementById('lux-pc-btn');
+          if (!body || !body.dataset.pcUrl) return;
+          fetch(body.dataset.pcUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function (r) { return r.ok ? r.text() : ''; })
             .then(function (html) {
-              if (!html || !html.trim()) { slot.remove(); return; }
-              slot.innerHTML = html;
+              if (!html || !html.trim()) { if (btn) btn.remove(); return; }
+              body.innerHTML = html;
+              if (btn) btn.style.display = '';
               var lang = (window.localStorage && localStorage.getItem('site_lang')) || 'ar';
               var cur = (window.localStorage && localStorage.getItem('site_currency')) || 'SAR';
               if (lang !== 'ar' && typeof applyLang === 'function') applyLang(lang);
               if (typeof applyCurrency === 'function') applyCurrency(cur);
             })
-            .catch(function () { slot.remove(); });
+            .catch(function () { if (btn) btn.remove(); });
         })();
         </script>
         {% endif %}
