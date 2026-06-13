@@ -251,9 +251,33 @@
             </div>
             {% endif %}
 
+            <!-- Floating in-page section quick-nav (same UX as luxury/modern) -->
+            <style>
+                .detail-secnav {
+                    position: sticky; top: 64px; z-index: 40;
+                    display: flex; gap: .5rem; overflow-x: auto;
+                    padding: .6rem .1rem; margin: .25rem 0 .5rem;
+                    background: var(--color-body-bg, #f9fafb);
+                    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+                }
+                .detail-secnav::-webkit-scrollbar { display: none; }
+                .detail-secnav:empty { display: none; }
+                .detail-section { scroll-margin-top: 124px; }
+                .detail-secnav-pill {
+                    flex: 0 0 auto; white-space: nowrap; cursor: pointer; text-decoration: none;
+                    padding: .4rem .95rem; border: 1px solid #e5e7eb; border-radius: 999px;
+                    background: #fff; color: #4b5563; font-size: .82rem; font-weight: 600;
+                    transition: background .2s, color .2s, border-color .2s;
+                }
+                [data-theme="dark"] .detail-secnav-pill { background: #1e293b; border-color: #2d3f55; color: #cbd5e1; }
+                .detail-secnav-pill:hover { border-color: var(--color-primary); color: var(--color-primary); }
+                .detail-secnav-pill.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+            </style>
+            <nav id="detail-secnav" class="detail-secnav" aria-label="Sections"></nav>
+
             <!-- Inspection Image (Auction) -->
             {% if car.inspection_image %}
-            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mt-6">
+            <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mt-6 detail-section">
                 <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-ru="Отчет об инспекции" data-lang-es="Informe de inspección" data-lang-en="Inspection Report">تقرير الفحص</span>
@@ -280,7 +304,7 @@
             {% endif %}
 
             <!-- Details Table -->
-            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 detail-section">
                 <h2 class="text-xl font-bold mb-4 bilingual" data-lang-ar="المواصفات" data-lang-ru="Технические характеристики" data-lang-es="Presupuesto" data-lang-en="Specifications">المواصفات</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="bg-gray-50 rounded-xl p-4">
@@ -402,7 +426,7 @@
 
             <!-- Description -->
             {% if car.description %}
-            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 detail-section">
                 <h2 class="text-xl font-bold mb-4 bilingual" data-lang-ar="الوصف" data-lang-ru="Описание" data-lang-es="Descripción" data-lang-en="Description">الوصف</h2>
                 <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ car.description }}</p>
             </div>
@@ -453,7 +477,8 @@
             <!-- Tabbed: Features / Inspection / History -->
             {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice|only_chosen:car.options %}
             {% if car.options.standard or insp.has_inspection or rec.openData or autohub_opts or opts_choice %}
-            <div class="bg-white rounded-2xl shadow-sm mt-6 overflow-hidden" dir="rtl">
+            <div class="bg-white rounded-2xl shadow-sm mt-6 overflow-hidden detail-section" dir="rtl"
+                 data-secnav-ar="الفحص والمميزات" data-secnav-en="Inspection & Features" data-secnav-es="Inspección y características" data-secnav-ru="Осмотр и опции">
 
               <style>
                 .insp-badge{position:absolute;width:5.5%;aspect-ratio:1/1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:clamp(8px,1.4vw,13px);font-weight:800;color:#fff;transform:translate(-50%,-50%);box-shadow:0 2px 6px #0004;cursor:default;transition:transform .15s}
@@ -725,7 +750,7 @@
 
             <!-- Ratings Section -->
             {% if ratings is not None %}
-            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 detail-section">
                 <div class="flex items-center justify-between mb-6">
                     <div>
                         <h2 class="text-xl font-bold bilingual" data-lang-ar="التقييمات" data-lang-ru="Отзывы" data-lang-es="Reseñas" data-lang-en="Reviews">التقييمات</h2>
@@ -1164,7 +1189,7 @@
 </section>
 
 {% if similar_cars %}
-<section class="max-w-7xl mx-auto px-4 pb-12 mt-4">
+<section class="max-w-7xl mx-auto px-4 pb-12 mt-4 detail-section">
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-gray-900 bilingual" data-lang-ar="سيارات مشابهة" data-lang-ru="Аналогичные автомобили" data-lang-es="Coches similares" data-lang-en="Similar Cars">سيارات مشابهة</h2>
         <a href="{% url 'car_list' %}?manufacturer={{ car.manufacturer.id }}" class="text-sm text-brand hover:underline bilingual" data-lang-ar="عرض الكل" data-lang-ru="Просмотреть все" data-lang-es="Ver todo" data-lang-en="View All">عرض الكل</a>
@@ -1544,5 +1569,69 @@ document.addEventListener('keydown', function(e) {
     </div>
 </div>
 {% endblock mobile_bottom_nav %}
+
+<!-- Build the floating section quick-nav from the sections present on the page -->
+<script>
+(function () {
+    function buildSecNav() {
+        var nav = document.getElementById('detail-secnav');
+        if (!nav) return;
+        var secs = document.querySelectorAll('.detail-section');
+        if (secs.length < 2) { nav.style.display = 'none'; return; }
+        var lang = (function () { try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; } })();
+        var pills = [];
+        secs.forEach(function (sec, i) {
+            if (!sec.id) sec.id = 'detail-sec-' + i;
+            var pill = document.createElement('a');
+            pill.href = '#' + sec.id;
+            pill.className = 'detail-secnav-pill';
+            // Prefer an explicit data-secnav-* label, else the section's <h2> bilingual span.
+            var langs = ['ar', 'en', 'es', 'ru'];
+            var hasExplicit = sec.getAttribute('data-secnav-ar');
+            if (hasExplicit) {
+                langs.forEach(function (l) {
+                    var v = sec.getAttribute('data-secnav-' + l);
+                    if (v) pill.setAttribute('data-lang-' + l, v);
+                });
+                pill.classList.add('bilingual');
+                pill.textContent = (sec.getAttribute('data-secnav-' + lang) || hasExplicit).trim();
+            } else {
+                var h2 = sec.querySelector('h2');
+                var span = h2 ? h2.querySelector('span.bilingual') : null;
+                if (span) {
+                    langs.forEach(function (l) {
+                        var v = span.getAttribute('data-lang-' + l);
+                        if (v) pill.setAttribute('data-lang-' + l, v);
+                    });
+                    pill.classList.add('bilingual');
+                    pill.textContent = (span.getAttribute('data-lang-' + lang) || span.textContent || '').trim();
+                } else {
+                    pill.textContent = (h2 ? h2.textContent : '').trim() || ('#' + (i + 1));
+                }
+            }
+            pill.addEventListener('click', function (e) {
+                e.preventDefault();
+                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            nav.appendChild(pill);
+            pills.push({ pill: pill, sec: sec });
+        });
+        // Pills were added after the language script ran — re-apply so they localize.
+        if (typeof applyLang === 'function') applyLang(lang);
+        // Scroll-spy: highlight the section currently in view.
+        if ('IntersectionObserver' in window) {
+            var obs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (en) {
+                    if (!en.isIntersecting) return;
+                    pills.forEach(function (p) { p.pill.classList.toggle('active', p.sec === en.target); });
+                });
+            }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+            pills.forEach(function (p) { obs.observe(p.sec); });
+        }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildSecNav);
+    else buildSecNav();
+})();
+</script>
 
 {% endblock %}
