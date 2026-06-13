@@ -391,6 +391,12 @@
                         <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.address|ar_address }}" data-lang-ru="{{ car.address|translate_address:'ru' }}" data-lang-es="{{ car.address|translate_address:'es' }}" data-lang-en="{{ car.address|en_address }}">{{ car.address|ar_address }}</div>
                     </div>
                     {% endif %}
+                    {% if car.vin|length == 17 %}
+                    <div class="bg-gray-50 rounded-xl p-4 col-span-2 sm:col-span-1">
+                        <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="رقم الهيكل" data-lang-ru="VIN-код" data-lang-es="VIN" data-lang-en="VIN / Chassis No.">رقم الهيكل</div>
+                        <div class="font-bold text-sm tracking-wide select-all"><bdi dir="ltr">{{ car.vin }}</bdi></div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 

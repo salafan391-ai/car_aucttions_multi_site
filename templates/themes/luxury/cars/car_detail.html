@@ -1202,6 +1202,15 @@
                     <div class="value">{{ car.entry }}</div>
                 </div>
                 {% endif %}
+                {% if car.vin|length == 17 %}
+                <div class="lux-spec-card">
+                    <div class="lux-spec-head">
+                        <span class="lux-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7v10M11 7v10M15 7v10M19 7v10"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="رقم الهيكل" data-lang-en="VIN / Chassis No." data-lang-es="VIN" data-lang-ru="VIN-код">رقم الهيكل</div>
+                    </div>
+                    <div class="value" style="letter-spacing:0.04em;"><bdi dir="ltr">{{ car.vin }}</bdi></div>
+                </div>
+                {% endif %}
                 {% if car.auction_date %}
                 <div class="lux-spec-card">
                     <div class="lux-spec-head">
