@@ -384,7 +384,15 @@ class Command(BaseCommand):
             except (TypeError, ValueError):
                 pass
 
-        vin = norm.get("inner_id") or norm.get("id") or ""
+        # Real chassis VIN lives in the inspection detail (master.detail.vin);
+        # fall back to the Encar listing id so the field is never empty.
+        real_vin = ""
+        try:
+            _md = ((extra or {}).get("master") or {}).get("detail") or {}
+            real_vin = (_md.get("vin") or "").strip()
+        except (AttributeError, TypeError):
+            real_vin = ""
+        vin = real_vin or norm.get("inner_id") or norm.get("id") or ""
 
         return {
             "manufacturer_name": manufacturer_name,

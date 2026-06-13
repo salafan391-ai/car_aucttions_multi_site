@@ -253,8 +253,14 @@ class Command(BaseCommand):
         extra = self._parse_json_safe(norm.get("extra") or "")
         
 
-        # No VIN in CSV; use inner_id as VIN surrogate to satisfy non-null constraint
-        vin = norm.get("inner_id") or norm.get("id") or ""
+        # Real chassis VIN is in the inspection detail (master.detail.vin);
+        # fall back to the Encar listing id if absent.
+        try:
+            _md = ((extra or {}).get("master") or {}).get("detail") or {}
+            _real_vin = (_md.get("vin") or "").strip()
+        except (AttributeError, TypeError):
+            _real_vin = ""
+        vin = _real_vin or norm.get("inner_id") or norm.get("id") or ""
 
         return {
             "manufacturer_name": manufacturer_name,

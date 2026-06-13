@@ -206,7 +206,12 @@ class Command(BaseCommand):
         title = f"{manufacturer_name} {model_name} {badge_name} {year}".strip()
         options = self._parse_json_safe(n.get("options") or "")
         extra = self._parse_json_safe(n.get("extra") or "")
-        vin = n.get("inner_id") or n.get("id") or ""
+        try:
+            _md = ((extra or {}).get("master") or {}).get("detail") or {}
+            _real_vin = (_md.get("vin") or "").strip()
+        except (AttributeError, TypeError):
+            _real_vin = ""
+        vin = _real_vin or n.get("inner_id") or n.get("id") or ""
         return {
             "manufacturer_name": manufacturer_name,
             "model_name": model_name,
