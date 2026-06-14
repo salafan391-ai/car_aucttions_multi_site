@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ tenant.name }} — غير متاح حالياً</title>
+    {% if tenant.favicon %}<link rel="icon" href="{{ tenant.favicon.url }}">{% endif %}
+    <style>
+        :root { --c: {{ tenant.primary_color|default:"#2563eb" }}; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            font-family: 'Tajawal', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: #0f172a;
+            background: radial-gradient(70% 90% at 50% 0%, color-mix(in srgb, var(--c) 28%, #0f172a) 0%, #0f172a 60%);
+            color: #e2e8f0; padding: 1.5rem; text-align: center;
+        }
+        .card {
+            max-width: 30rem; width: 100%; padding: 2.5rem 1.75rem;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1.25rem; box-shadow: 0 30px 60px rgba(0,0,0,0.45); backdrop-filter: blur(6px);
+        }
+        .logo { max-height: 64px; max-width: 200px; object-fit: contain; margin-bottom: 1.5rem; }
+        .name { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 1.75rem; letter-spacing: .01em; }
+        .icon {
+            width: 4.25rem; height: 4.25rem; margin: 0 auto 1.4rem; border-radius: 999px;
+            display: flex; align-items: center; justify-content: center;
+            background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--c);
+        }
+        .icon svg { width: 2.1rem; height: 2.1rem; }
+        h1 { font-size: 1.45rem; font-weight: 800; color: #fff; margin: 0 0 .65rem; }
+        p { font-size: .98rem; line-height: 1.7; color: #94a3b8; margin: 0; }
+        .en { margin-top: 1.4rem; padding-top: 1.4rem; border-top: 1px solid rgba(255,255,255,0.08); direction: ltr; }
+        .en h2 { font-size: 1.05rem; font-weight: 700; color: #cbd5e1; margin: 0 0 .4rem; }
+        .en p { font-size: .9rem; color: #7c8aa0; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        {% if tenant.logo %}<img class="logo" src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">{% endif %}
+        {% if tenant.name %}<div class="name">{{ tenant.name }}</div>{% endif %}
+        <div class="icon" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+            </svg>
+        </div>
+        <h1>الموقع غير متاح حالياً</h1>
+        <p>نعتذر، هذا الموقع متوقف مؤقتاً. يُرجى المحاولة لاحقاً.</p>
+        <div class="en">
+            <h2>Temporarily unavailable</h2>
+            <p>This site is currently offline. Please check back later.</p>
+        </div>
+    </main>
+</body>
+</html>

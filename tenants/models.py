@@ -5,6 +5,11 @@ from site_cars.image_utils import optimize_image
 
 class Tenant(TenantMixin):
     name = models.CharField(max_length=100)
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="الموقع مُفعّل",
+        help_text="عند إلغاء التفعيل يظهر للزوار صفحة 'الموقع غير متاح حالياً' مع الحفاظ على كامل البيانات. موظفو الموقع المسجّلون يمكنهم الدخول لإعادة التفعيل.",
+    )
     logo = models.ImageField(upload_to='tenant_logos/', blank=True, null=True, verbose_name="الشعار")
     favicon = models.ImageField(upload_to='tenant_favicons/', blank=True, null=True, verbose_name="أيقونة الموقع")
     hero_image = models.ImageField(upload_to='tenant_hero/', blank=True, null=True, verbose_name="صورة الخلفية الرئيسية", help_text="صورة خلفية الصفحة الرئيسية")

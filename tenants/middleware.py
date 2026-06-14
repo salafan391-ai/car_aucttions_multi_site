@@ -143,6 +143,40 @@ class TenantPublicSchemaMiddleware:
         return self.get_response(request)
 
 
+class InactiveTenantMiddleware:
+    """Show a clean 'temporarily unavailable' page when a tenant is
+    deactivated (Tenant.is_active=False), keeping all of its data intact.
+
+    Staff/superusers bypass the gate so they can still manage the site and
+    switch it back on, and the auth/static routes stay open so an admin can
+    sign in to reactivate. Runs after AuthenticationMiddleware so that
+    request.user is populated.
+    """
+
+    # Paths that must stay reachable while the site is off (so staff can log
+    # in to flip it back on, and the unavailable page can load its assets).
+    _ALLOW_PREFIXES = ("/static/", "/media/", "/login", "/logout", "/accounts/")
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        tenant = getattr(connection, "tenant", None)
+        if (
+            tenant
+            and tenant.schema_name != "public"
+            and not getattr(tenant, "is_active", True)
+        ):
+            user = getattr(request, "user", None)
+            if not (user and user.is_authenticated and user.is_staff) and \
+               not request.path_info.startswith(self._ALLOW_PREFIXES):
+                from django.shortcuts import render
+                return render(
+                    request, "tenant_inactive.html", {"tenant": tenant}, status=503,
+                )
+        return self.get_response(request)
+
+
 class BlockTenantAdminMiddleware:
     """Block /admin/ on tenant domains. Only the public (SaaS owner) domain
     can reach Django admin. Tenant staff should use /dashboard/ + /settings/.
