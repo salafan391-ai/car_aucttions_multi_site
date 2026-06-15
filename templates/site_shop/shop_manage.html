@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}إدارة {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8 pb-24 md:pb-8">
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <h1 class="text-2xl font-extrabold text-gray-900 bilingual" data-lang-ar="إدارة المتجر" data-lang-en="Shop management" data-lang-es="Gestión de tienda" data-lang-ru="Управление магазином">إدارة المتجر</h1>
+        <a href="{% url 'shop_add' %}?kind={{ kind }}" class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white font-bold px-4 py-2.5 rounded-xl text-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+            <span class="bilingual" data-lang-ar="إضافة جديد" data-lang-en="Add new">إضافة جديد</span>
+        </a>
+    </div>
+
+    <!-- Kind tabs -->
+    <div class="flex gap-2 mb-5">
+        <a href="?kind=part" class="px-4 py-2 rounded-xl text-sm font-bold {% if is_part %}bg-brand text-white{% else %}bg-white text-gray-600 shadow-sm{% endif %} bilingual" data-lang-ar="قطع الغيار" data-lang-en="Parts">قطع الغيار</a>
+        <a href="?kind=accessory" class="px-4 py-2 rounded-xl text-sm font-bold {% if not is_part %}bg-brand text-white{% else %}bg-white text-gray-600 shadow-sm{% endif %} bilingual" data-lang-ar="الإكسسوارات" data-lang-en="Accessories">الإكسسوارات</a>
+    </div>
+
+    <form method="get" class="mb-4 flex gap-2">
+        <input type="hidden" name="kind" value="{{ kind }}">
+        <input type="text" name="q" value="{{ q }}" placeholder="بحث…" class="flex-1 max-w-xs border border-gray-300 rounded-xl px-3 py-2 text-sm">
+        <button class="bg-gray-800 text-white px-4 rounded-xl text-sm bilingual" data-lang-ar="بحث" data-lang-en="Search">بحث</button>
+    </form>
+
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs">
+                <tr>
+                    <th class="text-start p-3 bilingual" data-lang-ar="المنتج" data-lang-en="Item">المنتج</th>
+                    <th class="text-start p-3 hidden md:table-cell bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</th>
+                    <th class="text-start p-3 bilingual" data-lang-ar="السعر" data-lang-en="Price">السعر</th>
+                    <th class="text-center p-3 bilingual" data-lang-ar="الحالة" data-lang-en="Status">الحالة</th>
+                    <th class="text-end p-3"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for item in items %}
+                <tr>
+                    <td class="p-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                {% if item.image %}<img src="{{ item.image.url }}" class="w-full h-full object-cover">{% endif %}
+                            </div>
+                            <a href="{{ item.get_absolute_url }}" class="font-semibold text-gray-900 hover:text-brand line-clamp-1">{{ item.name }}</a>
+                        </div>
+                    </td>
+                    <td class="p-3 hidden md:table-cell text-gray-500">{{ item.brand|default:"—" }}</td>
+                    <td class="p-3 font-semibold">{% if item.price %}<bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi>{% else %}—{% endif %}</td>
+                    <td class="p-3 text-center">
+                        <form method="post" action="{% url 'shop_toggle_stock' item.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-[11px] px-2.5 py-1 rounded-full {% if item.in_stock %}bg-emerald-50 text-emerald-600{% else %}bg-gray-100 text-gray-400{% endif %} bilingual"
+                                    data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}</button>
+                        </form>
+                    </td>
+                    <td class="p-3 text-end whitespace-nowrap">
+                        <a href="{% url 'shop_edit' item.pk %}" class="text-brand font-semibold bilingual" data-lang-ar="تعديل" data-lang-en="Edit">تعديل</a>
+                        <a href="{% url 'shop_delete' item.pk %}" class="text-red-500 font-semibold ms-3 bilingual" data-lang-ar="حذف" data-lang-en="Delete">حذف</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="p-10 text-center text-gray-400 bilingual" data-lang-ar="لا توجد منتجات بعد" data-lang-en="No items yet">لا توجد منتجات بعد</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if items.paginator.num_pages > 1 %}
+    <div class="flex justify-center gap-2 mt-6">
+        {% if items.has_previous %}<a href="?kind={{ kind }}&page={{ items.previous_page_number }}&q={{ q }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">‹</a>{% endif %}
+        <span class="px-4 py-2 bg-brand text-white rounded-lg text-sm">{{ items.number }} / {{ items.paginator.num_pages }}</span>
+        {% if items.has_next %}<a href="?kind={{ kind }}&page={{ items.next_page_number }}&q={{ q }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">›</a>{% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

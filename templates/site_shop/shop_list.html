@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8 pb-24 md:pb-8">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 bilingual"
+                data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}" data-lang-es="{{ kind_labels.es }}" data-lang-ru="{{ kind_labels.ru }}">{{ kind_labels.ar }}</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ items.paginator.count|default:0 }}
+                <span class="bilingual" data-lang-ar="منتج" data-lang-en="items" data-lang-es="artículos" data-lang-ru="товаров">منتج</span>
+            </p>
+        </div>
+        {% if user.is_staff %}
+        <a href="{% url 'shop_add' %}?kind={{ kind }}" class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white font-bold px-4 py-2.5 rounded-xl text-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/></svg>
+            <span class="bilingual" data-lang-ar="إضافة" data-lang-en="Add" data-lang-es="Añadir" data-lang-ru="Добавить">إضافة</span>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="bg-white rounded-2xl shadow-sm p-4 mb-6 grid grid-cols-2 md:grid-cols-5 gap-3">
+        <input type="text" name="q" value="{{ active_filters.q }}" placeholder="بحث…"
+               class="col-span-2 md:col-span-2 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-transparent">
+        <select name="category" class="border border-gray-300 rounded-xl px-3 py-2 text-sm">
+            <option value="" class="bilingual" data-lang-ar="كل الفئات" data-lang-en="All categories">كل الفئات</option>
+            {% for c in categories %}<option value="{{ c }}" {% if active_filters.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+        <select name="brand" class="border border-gray-300 rounded-xl px-3 py-2 text-sm">
+            <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands">كل الماركات</option>
+            {% for b in brands %}<option value="{{ b }}" {% if active_filters.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+        </select>
+        <div class="flex gap-2">
+            <select name="condition" class="flex-1 border border-gray-300 rounded-xl px-2 py-2 text-sm">
+                <option value="" class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition">الحالة</option>
+                <option value="new" {% if active_filters.condition == 'new' %}selected{% endif %} class="bilingual" data-lang-ar="جديد" data-lang-en="New">جديد</option>
+                <option value="used" {% if active_filters.condition == 'used' %}selected{% endif %} class="bilingual" data-lang-ar="مستعمل" data-lang-en="Used">مستعمل</option>
+            </select>
+            <button type="submit" class="bg-brand bg-brand-hover text-white font-bold px-4 rounded-xl text-sm">
+                <span class="bilingual" data-lang-ar="فلترة" data-lang-en="Filter" data-lang-es="Filtrar" data-lang-ru="Фильтр">فلترة</span>
+            </button>
+        </div>
+    </form>
+
+    <!-- Grid -->
+    {% if items %}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for item in items %}
+        <a href="{{ item.get_absolute_url }}" class="group bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition flex flex-col">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+                {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                {% endif %}
+                {% if not item.in_stock %}
+                <span class="absolute top-2 right-2 bg-gray-900/80 text-white text-[10px] font-bold px-2 py-1 rounded-full bilingual" data-lang-ar="غير متوفر" data-lang-en="Out of stock">غير متوفر</span>
+                {% elif item.is_featured %}
+                <span class="absolute top-2 right-2 bg-brand text-white text-[10px] font-bold px-2 py-1 rounded-full bilingual" data-lang-ar="مميّز" data-lang-en="Featured">مميّز</span>
+                {% endif %}
+            </div>
+            <div class="p-3 flex flex-col flex-1">
+                <div class="text-sm font-bold text-gray-900 line-clamp-2">{{ item.name }}</div>
+                {% if item.brand %}<div class="text-xs text-gray-400 mt-0.5">{{ item.brand }}</div>{% endif %}
+                <div class="mt-auto pt-2 flex items-center justify-between">
+                    {% if item.price %}
+                    <div class="font-extrabold text-brand text-sm"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
+                    {% else %}
+                    <div class="text-xs text-gray-500 bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request">السعر عند الطلب</div>
+                    {% endif %}
+                    <span class="text-[10px] px-2 py-0.5 rounded-full {% if item.condition == 'new' %}bg-emerald-50 text-emerald-600{% else %}bg-amber-50 text-amber-600{% endif %} bilingual"
+                          data-lang-ar="{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}" data-lang-en="{% if item.condition == 'new' %}New{% else %}Used{% endif %}">{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if items.paginator.num_pages > 1 %}
+    <div class="flex justify-center gap-2 mt-8">
+        {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">‹</a>{% endif %}
+        <span class="px-4 py-2 bg-brand text-white rounded-lg text-sm">{{ items.number }} / {{ items.paginator.num_pages }}</span>
+        {% if items.has_next %}<a href="?page={{ items.next_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">›</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm p-12 text-center text-gray-400">
+        <svg class="w-16 h-16 mx-auto mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        <p class="bilingual" data-lang-ar="لا توجد منتجات حالياً" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товаров">لا توجد منتجات حالياً</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -39,6 +39,16 @@ class Tenant(TenantMixin):
         verbose_name="عرض ‘سياراتنا‘ والسماح بإضافتها",
         help_text="عند التعطيل تختفي ‘سياراتنا‘ (سيارات الموقع الخاصة بك) من الصفحة الرئيسية، وتُخفى أزرار الإضافة في لوحة التحكم.",
     )
+    show_parts = models.BooleanField(
+        default=True,
+        verbose_name="عرض صفحة قطع الغيار",
+        help_text="إظهار/إخفاء صفحة ‘قطع الغيار‘ ورابطها في القائمة للزوار.",
+    )
+    show_accessories = models.BooleanField(
+        default=True,
+        verbose_name="عرض صفحة الإكسسوارات",
+        help_text="إظهار/إخفاء صفحة ‘الإكسسوارات‘ ورابطها في القائمة للزوار.",
+    )
 
     # ── Import-cost calculator (shown on the car detail page) ──
     import_calc_enabled = models.BooleanField(

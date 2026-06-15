@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ item.name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 py-8 pb-24 md:pb-8">
+
+    <!-- Breadcrumb -->
+    <nav class="text-xs text-gray-400 mb-4 flex items-center gap-2">
+        <a href="{% if is_part %}{% url 'parts_list' %}{% else %}{% url 'accessories_list' %}{% endif %}" class="hover:text-brand bilingual"
+           data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}">{{ kind_labels.ar }}</a>
+        <span>/</span><span class="text-gray-600">{{ item.name }}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Gallery -->
+        <div>
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden aspect-[4/3]">
+                {% if item.image %}
+                <img id="shop-main-img" src="{{ item.image.url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                {% endif %}
+            </div>
+            {% if item.images.all %}
+            <div class="flex gap-2 mt-3 overflow-x-auto pb-1">
+                {% if item.image %}<button onclick="document.getElementById('shop-main-img').src='{{ item.image.url }}'" class="shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-gray-200 hover:border-brand"><img src="{{ item.image.url }}" class="w-full h-full object-cover"></button>{% endif %}
+                {% for g in item.images.all %}
+                <button onclick="document.getElementById('shop-main-img').src='{{ g.image.url }}'" class="shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-gray-200 hover:border-brand"><img src="{{ g.image.url }}" loading="lazy" class="w-full h-full object-cover"></button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div>
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+                <div class="flex items-start justify-between gap-3">
+                    <h1 class="text-2xl font-extrabold text-gray-900">{{ item.name }}</h1>
+                    <span class="shrink-0 text-[11px] px-2.5 py-1 rounded-full {% if item.condition == 'new' %}bg-emerald-50 text-emerald-600{% else %}bg-amber-50 text-amber-600{% endif %} bilingual"
+                          data-lang-ar="{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}" data-lang-en="{% if item.condition == 'new' %}New{% else %}Used{% endif %}">{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}</span>
+                </div>
+
+                <div class="mt-4">
+                    {% if item.price %}
+                    <div class="text-3xl font-extrabold text-brand"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
+                    {% else %}
+                    <div class="text-lg font-bold text-gray-600 bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request">السعر عند الطلب</div>
+                    {% endif %}
+                    <div class="mt-1 text-sm {% if item.in_stock %}text-emerald-600{% else %}text-gray-400{% endif %} bilingual"
+                         data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out of stock{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}</div>
+                </div>
+
+                <!-- Spec rows -->
+                <dl class="mt-5 divide-y divide-gray-100 text-sm">
+                    {% if item.brand %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</dt><dd class="font-semibold">{{ item.brand }}</dd></div>{% endif %}
+                    {% if item.category %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="الفئة" data-lang-en="Category">الفئة</dt><dd class="font-semibold">{{ item.category }}</dd></div>{% endif %}
+                    {% if item.fits_make or item.fits_model %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="يناسب" data-lang-en="Fits">يناسب</dt><dd class="font-semibold">{{ item.fits_make }} {{ item.fits_model }}</dd></div>{% endif %}
+                </dl>
+
+                <!-- WhatsApp inquiry -->
+                {% if site_whatsapp %}
+                <a href="https://wa.me/{{ site_whatsapp }}?text={{ kind_label_ar }}: {{ item.name|urlencode }}" target="_blank" rel="noopener"
+                   class="mt-6 w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe57] text-white font-bold py-3 rounded-xl transition">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                    <span class="bilingual" data-lang-ar="استفسر عبر واتساب" data-lang-en="Inquire on WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить в WhatsApp">استفسر عبر واتساب</span>
+                </a>
+                {% endif %}
+
+                {% if user.is_staff %}
+                <a href="{% url 'shop_edit' item.pk %}" class="mt-3 w-full flex items-center justify-center gap-2 border border-gray-300 hover:border-brand text-gray-700 font-bold py-2.5 rounded-xl transition text-sm">
+                    <span class="bilingual" data-lang-ar="تعديل" data-lang-en="Edit">تعديل</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% if item.description %}
+    <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+        <h2 class="text-lg font-bold mb-3 bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</h2>
+        <p class="text-gray-600 leading-relaxed whitespace-pre-line">{{ item.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Related -->
+    {% if related %}
+    <div class="mt-10">
+        <h2 class="text-xl font-bold mb-4 bilingual" data-lang-ar="منتجات مشابهة" data-lang-en="Related items" data-lang-es="Artículos relacionados" data-lang-ru="Похожие товары">منتجات مشابهة</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {% for r in related %}
+            <a href="{{ r.get_absolute_url }}" class="group bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition">
+                <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
+                    {% if r.image %}<img src="{{ r.image.url }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition">{% endif %}
+                </div>
+                <div class="p-3">
+                    <div class="text-sm font-bold text-gray-900 line-clamp-1">{{ r.name }}</div>
+                    {% if r.price %}<div class="text-brand font-bold text-sm mt-1"><bdi dir="ltr">{{ r.price|intcomma }} {{ r.currency }}</bdi></div>{% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

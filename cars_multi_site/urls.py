@@ -208,6 +208,7 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
+    path("", include("site_shop.urls")),
     path("", include("site_builder.urls")),
 ]
 

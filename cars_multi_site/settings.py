@@ -81,6 +81,7 @@ TENANT_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "site_cars",
+    "site_shop",
     "site_builder",
     # Social login (per-tenant users) — Google + Apple via django-allauth
     "allauth",
