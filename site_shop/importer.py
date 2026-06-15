@@ -172,3 +172,80 @@ def import_csv_url(url, **kwargs):
     r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
     r.raise_for_status()
     return import_csv_text(r.content.decode("utf-8-sig", errors="replace"), **kwargs)
+
+
+# ──────────────────── Autowini parts API (Korean wholesaler) ────────────────────
+# Public JSON feed: 400k+ Korean OEM/used/rebuilt parts. No auth needed.
+AUTOWINI_API = "https://v2api.autowini.com/items/parts"
+_AW_MAKES = ["Hyundai", "Kia", "Genesis", "SsangYong", "Ssang Yong", "Chevrolet", "Daewoo",
+             "Renault", "Samsung", "GM", "Toyota", "Nissan", "Honda", "BMW", "Mercedes", "Audi"]
+
+
+def _autowini_headers():
+    return {
+        "Accept": "application/json, text/plain, */*",
+        "Origin": "https://www.autowini.com",
+        "Referer": "https://www.autowini.com/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+        "wini-code-select-country": "C1450",
+    }
+
+
+def _autowini_map(it):
+    cond = (it.get("condition") or "").strip().lower()
+    if cond in ("genuine", "oem", "original"):
+        origin, condition = "genuine", "new"
+    elif cond == "aftermarket":
+        origin, condition = "aftermarket", "new"
+    elif cond == "rebuilt":
+        origin, condition = "aftermarket", "used"
+    elif cond == "used":
+        origin, condition = "", "used"
+    else:
+        origin, condition = "", "new"
+
+    cat1 = (it.get("category1") or "")
+    kind = "accessory" if "accessor" in cat1.lower() else "part"
+    name = re.sub(r"\s+", " ", (it.get("itemName") or "")).strip()
+    fits_make = next((m for m in _AW_MAKES if m.lower() in name.lower()), "")
+    thumbs = it.get("thumbnails") or []
+    price = it.get("discountPrice") or it.get("price") or None
+
+    pn = (it.get("partNumber") or "").strip()
+    if pn.upper() in ("PARTNUMBER", "N/A", "NA", "-", "NONE"):
+        pn = ""  # feed placeholder = no real number
+
+    return {
+        "kind": kind, "name": name,
+        "part_number": pn,
+        "category": (it.get("category2") or it.get("category1") or "").strip(),
+        "brand": fits_make, "fits_make": fits_make,
+        "origin": origin, "condition": condition, "price": price,
+        "in_stock": "1" if it.get("status") == "FOR_SALE" else "0",
+        "image": thumbs[0] if thumbs else "",
+        "external_id": (it.get("listingId") or it.get("code") or "").strip(),
+    }
+
+
+def fetch_autowini_rows(pages=3, page_size=32, fitting="CAR", sorting="recentDate", start_page=1):
+    rows = []
+    for p in range(start_page, start_page + pages):
+        r = requests.get(AUTOWINI_API, params={
+            "fittingCategory": fitting, "sorting": sorting,
+            "pageOffset": p, "pageSize": min(page_size, 32),
+        }, headers=_autowini_headers(), timeout=30)
+        r.raise_for_status()
+        items = ((r.json() or {}).get("data") or {}).get("items") or []
+        if not items:
+            break
+        rows.extend(_autowini_map(it) for it in items)
+    return rows
+
+
+def import_autowini(pages=3, fitting="CAR", currency="USD", source="autowini",
+                    download_images=True, limit=2000, start_page=1, dry_run=False):
+    rows = fetch_autowini_rows(pages=pages, fitting=fitting, start_page=start_page)
+    if dry_run:
+        return {"fetched": len(rows), "sample": rows[:8], "dry_run": True}
+    return import_rows(rows, kind="part", source=source, default_currency=currency,
+                       download_images=download_images, limit=limit)

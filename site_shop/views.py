@@ -267,6 +267,23 @@ def shop_import(request):
         messages.error(request, "غير متاح من النطاق العام")
         return redirect("home")
     kind = _kind_param(request)
+    if request.method == "POST" and request.POST.get("action") == "autowini":
+        from .importer import import_autowini
+        try:
+            pages = max(1, min(int(request.POST.get("pages") or 2), 5))
+        except ValueError:
+            pages = 2
+        try:
+            res = import_autowini(
+                pages=pages, fitting=(request.POST.get("fitting") or "CAR"),
+                currency=(request.POST.get("currency") or "USD"), source="autowini",
+                download_images="no_images" not in request.POST, limit=400)
+        except Exception as e:
+            messages.error(request, f"تعذّر الجلب من Autowini: {e}")
+            return redirect(f"{reverse('shop_import')}?kind={kind}")
+        messages.success(request, f"Autowini — أُضيف {res['created']}، حُدّث {res['updated']}، صور {res['images']}")
+        return redirect(f"{reverse('shop_manage')}?kind={kind}")
+
     if request.method == "POST":
         from .importer import import_csv_text, import_csv_url
         source = (request.POST.get("source") or "csv").strip()[:40] or "csv"

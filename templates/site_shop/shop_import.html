@@ -47,6 +47,37 @@
         <button type="submit" class="bg-brand bg-brand-hover text-white font-bold px-6 py-3 rounded-xl bilingual" data-lang-ar="استيراد" data-lang-en="Import">استيراد</button>
     </form>
 
+    <!-- Autowini direct import -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+        <h2 class="font-bold mb-1 flex items-center gap-2">
+            <span class="bilingual" data-lang-ar="استيراد مباشر من Autowini" data-lang-en="Import directly from Autowini">استيراد مباشر من Autowini</span>
+            <span class="text-[10px] bg-teal-50 text-teal-600 px-2 py-0.5 rounded-full">Korea</span>
+        </h2>
+        <p class="text-xs text-gray-500 mb-4 bilingual" data-lang-ar="يجلب قطع غيار كورية (أصلية/مستعملة) مباشرة. للدفعات الكبيرة استخدم الأمر." data-lang-en="Pulls Korean parts (genuine/used) directly. Use the command for large batches.">يجلب قطع غيار كورية مباشرة. للدفعات الكبيرة استخدم الأمر.</p>
+        <form method="post" action="{% url 'shop_import' %}?kind={{ kind }}" class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="autowini">
+            <div>
+                <label class="block text-xs text-gray-500 mb-1 bilingual" data-lang-ar="عدد الصفحات (×32)" data-lang-en="Pages (×32)">عدد الصفحات (×32)</label>
+                <input type="number" name="pages" value="2" min="1" max="5" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1 bilingual" data-lang-ar="الفئة" data-lang-en="Fitting">الفئة</label>
+                <select name="fitting" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm">
+                    <option value="CAR">CAR</option><option value="TRUCK">TRUCK</option><option value="BUS">BUS</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1 bilingual" data-lang-ar="العملة" data-lang-en="Currency">العملة</label>
+                <select name="currency" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm">
+                    <option value="USD" selected>USD</option><option value="SAR">SAR</option><option value="AED">AED</option>
+                </select>
+            </div>
+            <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2 rounded-xl text-sm bilingual" data-lang-ar="جلب الآن" data-lang-en="Fetch now">جلب الآن</button>
+        </form>
+        <p class="text-[11px] text-gray-400 mt-2 bilingual" data-lang-ar="ملاحظة: قد يستغرق تحميل الصور وقتاً؛ يمكن إعادة التشغيل بأمان (يُحدّث ولا يُكرّر)." data-lang-en="Note: image download can be slow; re-running is safe (updates, no duplicates).">يمكن إعادة التشغيل بأمان (يُحدّث ولا يُكرّر).</p>
+    </div>
+
     <!-- Format help -->
     <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 text-sm">
         <h2 class="font-bold mb-2 bilingual" data-lang-ar="أعمدة الملف المدعومة" data-lang-en="Supported columns">أعمدة الملف المدعومة</h2>
