@@ -8,11 +8,15 @@ from site_cars.image_utils import optimize_image
 
 def categories_for(kind):
     """Distinct categories actually in use for this kind (dynamic, from the
-    tenant's own items — e.g. populated by imports/staff, not hardcoded)."""
-    return sorted(
-        c for c in ShopItem.objects.filter(kind=kind)
-        .exclude(category="").values_list("category", flat=True).distinct()
-    )
+    tenant's own items — populated by imports/staff, not hardcoded). Deduped
+    case-insensitively so whitespace/casing variants collapse to one."""
+    seen = {}
+    for c in (ShopItem.objects.filter(kind=kind)
+              .exclude(category="").values_list("category", flat=True)):
+        c = re.sub(r"\s+", " ", c or "").strip()
+        if c and c.lower() not in seen:
+            seen[c.lower()] = c
+    return sorted(seen.values(), key=lambda s: s.lower())
 
 
 class ShopItem(models.Model):
@@ -87,6 +91,9 @@ class ShopItem(models.Model):
         return reverse(name, args=[self.pk])
 
     def save(self, *args, **kwargs):
+        # Tidy whitespace so filter values / category lists stay consistent.
+        self.category = re.sub(r"\s+", " ", self.category or "").strip()
+        self.brand = re.sub(r"\s+", " ", self.brand or "").strip()
         # Loose part-number matching: keep only alphanumerics, uppercased, so
         # "GR3Z-10346-Q" / "GR3Z 10346 Q" / "gr3z10346q" all match.
         self.part_number_norm = re.sub(r"[^A-Za-z0-9]", "", self.part_number or "").upper()
