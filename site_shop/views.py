@@ -7,8 +7,10 @@ from django.db.models import Q
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+import re
+
 from site_cars.image_utils import optimize_image
-from .models import ShopItem, ShopItemImage
+from .models import ShopItem, ShopItemImage, categories_for
 
 
 KIND_LABELS = {
@@ -36,20 +38,30 @@ def _shop_list(request, kind):
         category = (request.GET.get("category") or "").strip()
         brand = (request.GET.get("brand") or "").strip()
         condition = (request.GET.get("condition") or "").strip()
+        origin = (request.GET.get("origin") or "").strip()
         in_stock = request.GET.get("in_stock")
 
         if q:
-            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(brand__icontains=q) | Q(fits_make__icontains=q) | Q(fits_model__icontains=q))
+            cond = Q(name__icontains=q) | Q(description__icontains=q) | Q(brand__icontains=q) | Q(fits_make__icontains=q) | Q(fits_model__icontains=q) | Q(part_number__icontains=q)
+            qnorm = re.sub(r"[^A-Za-z0-9]", "", q).upper()
+            if qnorm:
+                cond |= Q(part_number_norm__icontains=qnorm)
+            qs = qs.filter(cond)
         if category:
             qs = qs.filter(category__iexact=category)
         if brand:
             qs = qs.filter(brand__iexact=brand)
         if condition in ("new", "used"):
             qs = qs.filter(condition=condition)
+        if origin in ("genuine", "aftermarket"):
+            qs = qs.filter(origin=origin)
         if in_stock == "1":
             qs = qs.filter(in_stock=True)
 
-        categories = sorted({c for c in ShopItem.objects.filter(kind=kind).exclude(category="").values_list("category", flat=True)})
+        # Curated categories first, plus any custom ones already in use.
+        existing = {c for c in ShopItem.objects.filter(kind=kind).exclude(category="").values_list("category", flat=True)}
+        curated = categories_for(kind)
+        categories = curated + sorted(existing - set(curated))
         brands = sorted({b for b in ShopItem.objects.filter(kind=kind).exclude(brand="").values_list("brand", flat=True)})
 
         paginator = Paginator(qs, 24)
@@ -68,6 +80,7 @@ def _shop_list(request, kind):
             "category": request.GET.get("category", ""),
             "brand": request.GET.get("brand", ""),
             "condition": request.GET.get("condition", ""),
+            "origin": request.GET.get("origin", ""),
             "in_stock": request.GET.get("in_stock", ""),
         },
     }
@@ -122,6 +135,8 @@ def _apply_fields(item, request):
     item.brand = (request.POST.get("brand") or "").strip()
     item.currency = (request.POST.get("currency") or "SAR").strip() or "SAR"
     item.condition = (request.POST.get("condition") or "new").strip()
+    item.origin = (request.POST.get("origin") or "").strip()
+    item.part_number = (request.POST.get("part_number") or "").strip()
     item.fits_make = (request.POST.get("fits_make") or "").strip()
     item.fits_model = (request.POST.get("fits_model") or "").strip()
     item.description = (request.POST.get("description") or "").strip()
@@ -180,6 +195,7 @@ def shop_add(request):
     return render(request, "site_shop/shop_form.html", {
         "kind": kind, "is_part": kind == "part",
         "kind_label_ar": KIND_LABELS[kind]["ar"], "item": None,
+        "category_options": categories_for(kind),
     })
 
 
@@ -201,6 +217,7 @@ def shop_edit(request, pk):
     return render(request, "site_shop/shop_form.html", {
         "kind": item.kind, "is_part": item.kind == "part",
         "kind_label_ar": KIND_LABELS[item.kind]["ar"], "item": item,
+        "category_options": categories_for(item.kind),
     })
 
 

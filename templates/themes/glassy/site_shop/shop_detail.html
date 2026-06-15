@@ -144,9 +144,11 @@
                 </div>
 
                 <!-- Spec rows -->
-                {% if item.brand or item.category or item.fits_make or item.fits_model %}
+                {% if item.brand or item.part_number or item.origin or item.category or item.fits_make or item.fits_model %}
                 <div class="gl-shop-specs">
                     {% if item.brand %}<div class="row"><span class="label bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Бренд">الماركة</span><span class="value">{{ item.brand }}</span></div>{% endif %}
+                    {% if item.part_number %}<div class="row"><span class="label bilingual" data-lang-ar="رقم القطعة" data-lang-en="Part number" data-lang-es="Nº de pieza" data-lang-ru="Номер детали">رقم القطعة</span><span class="value" style="user-select:all; font-family:ui-monospace, SFMono-Regular, Menlo, monospace;"><bdi dir="ltr">{{ item.part_number }}</bdi></span></div>{% endif %}
+                    {% if item.origin %}<div class="row"><span class="label bilingual" data-lang-ar="المصدر" data-lang-en="Origin" data-lang-es="Origen" data-lang-ru="Происхождение">المصدر</span><span class="value bilingual" data-lang-ar="{% if item.origin == 'genuine' %}أصلي / وكالة{% else %}تجاري / بديل{% endif %}" data-lang-en="{% if item.origin == 'genuine' %}Genuine / OEM{% else %}Aftermarket{% endif %}" data-lang-es="{% if item.origin == 'genuine' %}Original / OEM{% else %}Alternativo{% endif %}" data-lang-ru="{% if item.origin == 'genuine' %}Оригинал / OEM{% else %}Неоригинал{% endif %}">{% if item.origin == 'genuine' %}أصلي / وكالة{% else %}تجاري / بديل{% endif %}</span></div>{% endif %}
                     {% if item.category %}<div class="row"><span class="label bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</span><span class="value">{{ item.category }}</span></div>{% endif %}
                     {% if item.fits_make or item.fits_model %}<div class="row"><span class="label bilingual" data-lang-ar="يناسب" data-lang-en="Fits" data-lang-es="Compatible" data-lang-ru="Подходит">يناسب</span><span class="value">{{ item.fits_make }} {{ item.fits_model }}</span></div>{% endif %}
                 </div>

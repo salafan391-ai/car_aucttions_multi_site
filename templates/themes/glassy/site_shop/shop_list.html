@@ -40,6 +40,11 @@
     .gl-shop-card-body { padding: .9rem 1rem 1rem; display: flex; flex-direction: column; flex: 1; }
     .gl-shop-card-name { color: var(--gl-ink); font-size: .92rem; font-weight: 800; line-height: 1.35; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .gl-shop-card-brand { color: var(--gl-muted); font-size: .72rem; margin-top: .2rem; }
+    .gl-shop-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: .3rem; }
+    .gl-shop-origin { font-size: .62rem; font-weight: 800; padding: .14rem .5rem; border-radius: 999px; border: 1px solid var(--gl-border); }
+    .gl-shop-origin.genuine { color: var(--gl-brand); border-color: color-mix(in srgb, var(--gl-brand) 40%, transparent); background: color-mix(in srgb, var(--gl-brand) 12%, transparent); }
+    .gl-shop-origin.after { color: var(--gl-muted); background: var(--gl-glass-2); }
+    .gl-shop-card-pn { color: var(--gl-muted); font-size: .68rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .gl-shop-card-foot { margin-top: auto; padding-top: .75rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
     .gl-shop-price { font-size: .95rem; font-weight: 800; letter-spacing: -.01em; background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
     .gl-shop-price-req { color: var(--gl-muted); font-size: .72rem; font-weight: 700; }
@@ -86,7 +91,7 @@
                     <label class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>
                     <input type="text" name="q" value="{{ active_filters.q }}" class="gl-input"
                            placeholder="—"
-                           data-placeholder-ar="ابحث عن منتج" data-placeholder-en="Search…" data-placeholder-es="Buscar…" data-placeholder-ru="Поиск…">
+                           data-placeholder-ar="ابحث بالاسم أو رقم القطعة" data-placeholder-en="Search by name or part number" data-placeholder-es="Buscar por nombre o nº de pieza" data-placeholder-ru="Поиск по названию или номеру детали">
                 </div>
                 <div>
                     <label class="bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</label>
@@ -100,6 +105,14 @@
                     <select name="brand" class="gl-select">
                         <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands" data-lang-es="Todas" data-lang-ru="Все">كل الماركات</option>
                         {% for b in brands %}<option value="{{ b }}" {% if active_filters.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="المصدر" data-lang-en="Origin" data-lang-es="Origen" data-lang-ru="Происхождение">المصدر</label>
+                    <select name="origin" class="gl-select">
+                        <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="Any" data-lang-es="Todos" data-lang-ru="Все">الكل</option>
+                        <option value="genuine" {% if active_filters.origin == 'genuine' %}selected{% endif %} class="bilingual" data-lang-ar="أصلي / وكالة" data-lang-en="Genuine" data-lang-es="Original" data-lang-ru="Оригинал">أصلي / وكالة</option>
+                        <option value="aftermarket" {% if active_filters.origin == 'aftermarket' %}selected{% endif %} class="bilingual" data-lang-ar="تجاري / بديل" data-lang-en="Aftermarket" data-lang-es="Alternativo" data-lang-ru="Неоригинал">تجاري / بديل</option>
                     </select>
                 </div>
                 <div>
@@ -138,6 +151,12 @@
                 <div class="gl-shop-card-body">
                     <h3 class="gl-shop-card-name">{{ item.name }}</h3>
                     {% if item.brand %}<div class="gl-shop-card-brand">{{ item.brand }}</div>{% endif %}
+                    {% if item.origin %}
+                    <div class="gl-shop-card-meta">
+                        <span class="gl-shop-origin {% if item.origin == 'genuine' %}genuine{% else %}after{% endif %} bilingual" data-lang-ar="{% if item.origin == 'genuine' %}أصلي{% else %}تجاري{% endif %}" data-lang-en="{% if item.origin == 'genuine' %}Genuine{% else %}Aftermarket{% endif %}" data-lang-es="{% if item.origin == 'genuine' %}Original{% else %}Alternativo{% endif %}" data-lang-ru="{% if item.origin == 'genuine' %}Оригинал{% else %}Неоригинал{% endif %}">{% if item.origin == 'genuine' %}أصلي{% else %}تجاري{% endif %}</span>
+                    </div>
+                    {% endif %}
+                    {% if item.part_number %}<div class="gl-shop-card-pn"><bdi dir="ltr">{{ item.part_number }}</bdi></div>{% endif %}
                     <div class="gl-shop-card-foot">
                         {% if item.price %}
                         <div class="gl-shop-price"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
@@ -155,9 +174,9 @@
         <!-- Pagination -->
         {% if items.paginator.num_pages > 1 %}
         <nav class="gl-shop-pager" aria-label="Pagination">
-            {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}">‹</a>{% endif %}
+            {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}&origin={{ active_filters.origin }}">‹</a>{% endif %}
             <span class="current">{{ items.number }} / {{ items.paginator.num_pages }}</span>
-            {% if items.has_next %}<a href="?page={{ items.next_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}">›</a>{% endif %}
+            {% if items.has_next %}<a href="?page={{ items.next_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}&origin={{ active_filters.origin }}">›</a>{% endif %}
         </nav>
         {% endif %}
 

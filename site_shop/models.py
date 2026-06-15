@@ -1,7 +1,26 @@
+import re
+
 from django.db import models
 from django.urls import reverse
 
 from site_cars.image_utils import optimize_image
+
+
+# Curated category lists per kind — used as the form datalist + filter options
+# (free text is still allowed, so staff can add their own when needed).
+PART_CATEGORIES = [
+    "المحرك", "الفرامل", "نظام التعليق", "الكهرباء والبطارية", "ناقل الحركة",
+    "نظام التبريد", "العادم", "الفلاتر", "الإضاءة", "الزجاج والمرايا",
+    "الهيكل والبودي", "الإطارات والجنوط", "الداخلية", "أخرى",
+]
+ACCESSORY_CATEGORIES = [
+    "إكسسوارات داخلية", "إكسسوارات خارجية", "إلكترونيات وصوتيات",
+    "العناية والتنظيف", "حماية وأغطية", "إضاءة وزينة", "حوامل وتخزين", "أخرى",
+]
+
+
+def categories_for(kind):
+    return ACCESSORY_CATEGORIES if kind == "accessory" else PART_CATEGORIES
 
 
 class ShopItem(models.Model):
@@ -20,6 +39,10 @@ class ShopItem(models.Model):
         ("new", "جديد"),
         ("used", "مستعمل"),
     ]
+    ORIGIN_CHOICES = [
+        ("genuine", "أصلي / وكالة"),
+        ("aftermarket", "تجاري / بديل"),
+    ]
     CURRENCY_CHOICES = [
         ("SAR", "ريال سعودي SAR"),
         ("AED", "درهم إماراتي AED"),
@@ -36,6 +59,10 @@ class ShopItem(models.Model):
     price = models.BigIntegerField(null=True, blank=True, verbose_name="السعر", help_text="اتركه فارغاً لعرض «السعر عند الطلب»")
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="SAR", verbose_name="العملة")
     condition = models.CharField(max_length=10, choices=CONDITION_CHOICES, default="new", verbose_name="الحالة")
+
+    origin = models.CharField(max_length=12, choices=ORIGIN_CHOICES, blank=True, default="", verbose_name="المصدر", help_text="أصلي (وكالة) أو تجاري (بديل)")
+    part_number = models.CharField(max_length=80, blank=True, default="", verbose_name="رقم القطعة", help_text="رقم القطعة من المصنّع (MPN) أو رقم الوكالة OEM")
+    part_number_norm = models.CharField(max_length=80, blank=True, default="", db_index=True, editable=False)
 
     in_stock = models.BooleanField(default=True, verbose_name="متوفر")
     is_featured = models.BooleanField(default=False, verbose_name="مميّز")
@@ -64,6 +91,9 @@ class ShopItem(models.Model):
         return reverse(name, args=[self.pk])
 
     def save(self, *args, **kwargs):
+        # Loose part-number matching: keep only alphanumerics, uppercased, so
+        # "GR3Z-10346-Q" / "GR3Z 10346 Q" / "gr3z10346q" all match.
+        self.part_number_norm = re.sub(r"[^A-Za-z0-9]", "", self.part_number or "").upper()
         if self.image and hasattr(self.image, "file"):
             try:
                 self.image = optimize_image(self.image, max_width=1200, max_height=900, quality=85)

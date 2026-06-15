@@ -209,6 +209,8 @@
                 <!-- Spec rows -->
                 <div class="mod-shop-specs">
                     {% if item.brand %}<div class="row"><span class="label bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</span><span class="value">{{ item.brand }}</span></div>{% endif %}
+                    {% if item.part_number %}<div class="row"><span class="label bilingual" data-lang-ar="رقم القطعة" data-lang-en="Part number">رقم القطعة</span><span class="value" style="user-select:all; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"><bdi dir="ltr">{{ item.part_number }}</bdi></span></div>{% endif %}
+                    {% if item.origin %}<div class="row"><span class="label bilingual" data-lang-ar="المصدر" data-lang-en="Origin">المصدر</span><span class="value bilingual" data-lang-ar="{% if item.origin == 'genuine' %}أصلي / وكالة{% else %}تجاري / بديل{% endif %}" data-lang-en="{% if item.origin == 'genuine' %}Genuine / OEM{% else %}Aftermarket{% endif %}">{% if item.origin == 'genuine' %}أصلي / وكالة{% else %}تجاري / بديل{% endif %}</span></div>{% endif %}
                     {% if item.category %}<div class="row"><span class="label bilingual" data-lang-ar="الفئة" data-lang-en="Category">الفئة</span><span class="value">{{ item.category }}</span></div>{% endif %}
                     {% if item.fits_make or item.fits_model %}<div class="row"><span class="label bilingual" data-lang-ar="يناسب" data-lang-en="Fits">يناسب</span><span class="value">{{ item.fits_make }} {{ item.fits_model }}</span></div>{% endif %}
                 </div>

@@ -170,11 +170,28 @@
         <div class="mod-shop-form-grid cols-2">
             <div>
                 <label class="bilingual" data-lang-ar="الفئة" data-lang-en="Category">الفئة</label>
-                <input type="text" name="category" value="{{ item.category|default:'' }}">
+                <input type="text" name="category" list="mod-cat-options" value="{{ item.category|default:'' }}">
+                <datalist id="mod-cat-options">{% for c in category_options %}<option value="{{ c }}">{% endfor %}</datalist>
             </div>
             <div>
                 <label class="bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</label>
                 <input type="text" name="brand" value="{{ item.brand|default:'' }}">
+            </div>
+        </div>
+
+        <div class="mod-shop-form-grid cols-2" style="margin-top:1rem;">
+            <div>
+                <label class="bilingual" data-lang-ar="رقم القطعة" data-lang-en="Part number (MPN/OEM)">رقم القطعة</label>
+                <input type="text" name="part_number" value="{{ item.part_number|default:'' }}" placeholder="MPN / OEM"
+                       data-placeholder-ar="MPN / OEM" data-placeholder-en="MPN / OEM">
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="المصدر" data-lang-en="Origin">المصدر</label>
+                <select name="origin">
+                    <option value="" {% if not item.origin %}selected{% endif %} class="bilingual" data-lang-ar="غير محدد" data-lang-en="Unspecified">غير محدد</option>
+                    <option value="genuine" {% if item.origin == 'genuine' %}selected{% endif %} class="bilingual" data-lang-ar="أصلي / وكالة" data-lang-en="Genuine / OEM">أصلي / وكالة</option>
+                    <option value="aftermarket" {% if item.origin == 'aftermarket' %}selected{% endif %} class="bilingual" data-lang-ar="تجاري / بديل" data-lang-en="Aftermarket">تجاري / بديل</option>
+                </select>
             </div>
         </div>
 

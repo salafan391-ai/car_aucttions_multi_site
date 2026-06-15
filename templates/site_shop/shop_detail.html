@@ -56,6 +56,8 @@
                 <!-- Spec rows -->
                 <dl class="mt-5 divide-y divide-gray-100 text-sm">
                     {% if item.brand %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</dt><dd class="font-semibold">{{ item.brand }}</dd></div>{% endif %}
+                    {% if item.part_number %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="رقم القطعة" data-lang-en="Part number">رقم القطعة</dt><dd class="font-semibold select-all font-mono"><bdi dir="ltr">{{ item.part_number }}</bdi></dd></div>{% endif %}
+                    {% if item.origin %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="المصدر" data-lang-en="Origin">المصدر</dt><dd class="font-semibold bilingual" data-lang-ar="{% if item.origin == 'genuine' %}أصلي / وكالة{% else %}تجاري / بديل{% endif %}" data-lang-en="{% if item.origin == 'genuine' %}Genuine / OEM{% else %}Aftermarket{% endif %}">{% if item.origin == 'genuine' %}أصلي / وكالة{% else %}تجاري / بديل{% endif %}</dd></div>{% endif %}
                     {% if item.category %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="الفئة" data-lang-en="Category">الفئة</dt><dd class="font-semibold">{{ item.category }}</dd></div>{% endif %}
                     {% if item.fits_make or item.fits_model %}<div class="flex justify-between py-2"><dt class="text-gray-500 bilingual" data-lang-ar="يناسب" data-lang-en="Fits">يناسب</dt><dd class="font-semibold">{{ item.fits_make }} {{ item.fits_model }}</dd></div>{% endif %}
                 </dl>

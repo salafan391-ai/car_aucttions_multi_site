@@ -23,8 +23,8 @@
     </div>
 
     <!-- Filters -->
-    <form method="get" class="bg-white rounded-2xl shadow-sm p-4 mb-6 grid grid-cols-2 md:grid-cols-5 gap-3">
-        <input type="text" name="q" value="{{ active_filters.q }}" placeholder="بحث…"
+    <form method="get" class="bg-white rounded-2xl shadow-sm p-4 mb-6 grid grid-cols-2 md:grid-cols-6 gap-3">
+        <input type="text" name="q" value="{{ active_filters.q }}" placeholder="بحث بالاسم أو رقم القطعة…"
                class="col-span-2 md:col-span-2 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-transparent">
         <select name="category" class="border border-gray-300 rounded-xl px-3 py-2 text-sm">
             <option value="" class="bilingual" data-lang-ar="كل الفئات" data-lang-en="All categories">كل الفئات</option>
@@ -33,6 +33,11 @@
         <select name="brand" class="border border-gray-300 rounded-xl px-3 py-2 text-sm">
             <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands">كل الماركات</option>
             {% for b in brands %}<option value="{{ b }}" {% if active_filters.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+        </select>
+        <select name="origin" class="border border-gray-300 rounded-xl px-3 py-2 text-sm">
+            <option value="" class="bilingual" data-lang-ar="المصدر" data-lang-en="Origin">المصدر</option>
+            <option value="genuine" {% if active_filters.origin == 'genuine' %}selected{% endif %} class="bilingual" data-lang-ar="أصلي / وكالة" data-lang-en="Genuine">أصلي / وكالة</option>
+            <option value="aftermarket" {% if active_filters.origin == 'aftermarket' %}selected{% endif %} class="bilingual" data-lang-ar="تجاري / بديل" data-lang-en="Aftermarket">تجاري / بديل</option>
         </select>
         <div class="flex gap-2">
             <select name="condition" class="flex-1 border border-gray-300 rounded-xl px-2 py-2 text-sm">
@@ -67,7 +72,11 @@
             </div>
             <div class="p-3 flex flex-col flex-1">
                 <div class="text-sm font-bold text-gray-900 line-clamp-2">{{ item.name }}</div>
-                {% if item.brand %}<div class="text-xs text-gray-400 mt-0.5">{{ item.brand }}</div>{% endif %}
+                <div class="flex items-center gap-1.5 mt-0.5">
+                    {% if item.brand %}<span class="text-xs text-gray-400">{{ item.brand }}</span>{% endif %}
+                    {% if item.origin %}<span class="text-[10px] px-1.5 py-0.5 rounded {% if item.origin == 'genuine' %}bg-blue-50 text-blue-600{% else %}bg-gray-100 text-gray-500{% endif %} bilingual" data-lang-ar="{% if item.origin == 'genuine' %}أصلي{% else %}تجاري{% endif %}" data-lang-en="{% if item.origin == 'genuine' %}Genuine{% else %}Aftermarket{% endif %}">{% if item.origin == 'genuine' %}أصلي{% else %}تجاري{% endif %}</span>{% endif %}
+                </div>
+                {% if item.part_number %}<div class="text-[10px] text-gray-400 mt-0.5 font-mono"><bdi dir="ltr">{{ item.part_number }}</bdi></div>{% endif %}
                 <div class="mt-auto pt-2 flex items-center justify-between">
                     {% if item.price %}
                     <div class="font-extrabold text-brand text-sm"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
@@ -85,9 +94,9 @@
     <!-- Pagination -->
     {% if items.paginator.num_pages > 1 %}
     <div class="flex justify-center gap-2 mt-8">
-        {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">‹</a>{% endif %}
+        {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}&origin={{ active_filters.origin }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">‹</a>{% endif %}
         <span class="px-4 py-2 bg-brand text-white rounded-lg text-sm">{{ items.number }} / {{ items.paginator.num_pages }}</span>
-        {% if items.has_next %}<a href="?page={{ items.next_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">›</a>{% endif %}
+        {% if items.has_next %}<a href="?page={{ items.next_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}&origin={{ active_filters.origin }}" class="px-4 py-2 bg-white rounded-lg shadow-sm text-sm">›</a>{% endif %}
     </div>
     {% endif %}
 

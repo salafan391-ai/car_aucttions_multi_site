@@ -91,11 +91,27 @@
             <div class="gl-shop-form-grid cols-2" style="margin-top:1.1rem;">
                 <div>
                     <label class="fl bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</label>
-                    <input type="text" name="category" value="{{ item.category|default:'' }}" class="gl-input">
+                    <input type="text" name="category" list="gl-cat-options" value="{{ item.category|default:'' }}" class="gl-input">
+                    <datalist id="gl-cat-options">{% for c in category_options %}<option value="{{ c }}">{% endfor %}</datalist>
                 </div>
                 <div>
                     <label class="fl bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Бренд">الماركة</label>
                     <input type="text" name="brand" value="{{ item.brand|default:'' }}" class="gl-input">
+                </div>
+            </div>
+
+            <div class="gl-shop-form-grid cols-2" style="margin-top:1.1rem;">
+                <div>
+                    <label class="fl bilingual" data-lang-ar="رقم القطعة" data-lang-en="Part number (MPN/OEM)" data-lang-es="Nº de pieza (MPN/OEM)" data-lang-ru="Номер детали (MPN/OEM)">رقم القطعة</label>
+                    <input type="text" name="part_number" value="{{ item.part_number|default:'' }}" class="gl-input" placeholder="MPN / OEM">
+                </div>
+                <div>
+                    <label class="fl bilingual" data-lang-ar="المصدر" data-lang-en="Origin" data-lang-es="Origen" data-lang-ru="Происхождение">المصدر</label>
+                    <select name="origin" class="gl-select">
+                        <option value="" {% if not item.origin %}selected{% endif %} class="bilingual" data-lang-ar="غير محدد" data-lang-en="Unspecified" data-lang-es="Sin especificar" data-lang-ru="Не указано">غير محدد</option>
+                        <option value="genuine" {% if item.origin == 'genuine' %}selected{% endif %} class="bilingual" data-lang-ar="أصلي / وكالة" data-lang-en="Genuine / OEM" data-lang-es="Original / OEM" data-lang-ru="Оригинал / OEM">أصلي / وكالة</option>
+                        <option value="aftermarket" {% if item.origin == 'aftermarket' %}selected{% endif %} class="bilingual" data-lang-ar="تجاري / بديل" data-lang-en="Aftermarket" data-lang-es="Alternativo" data-lang-ru="Неоригинал">تجاري / بديل</option>
+                    </select>
                 </div>
             </div>
 
