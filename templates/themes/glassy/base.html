@@ -307,6 +307,7 @@
 
         {% block extra_head %}{% endblock %}
     </style>
+    {% include "partials/site_font.html" %}
 </head>
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 

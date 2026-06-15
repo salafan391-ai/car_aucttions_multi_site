@@ -3,6 +3,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import connection
 from .models import Tenant, TenantPhoneNumber, TenantHeroImage
+from .fonts import font_choices
 
 
 @staff_member_required
@@ -39,7 +40,8 @@ def site_settings(request):
                 tenant.hero_image.delete(save=False)
             tenant.hero_image = request.FILES['hero_image']
         
-        # Update colors
+        # Update colors + site font
+        tenant.site_font = request.POST.get('site_font', tenant.site_font)
         tenant.primary_color = request.POST.get('primary_color', tenant.primary_color)
         tenant.secondary_color = request.POST.get('secondary_color', tenant.secondary_color)
         tenant.accent_color = request.POST.get('accent_color', tenant.accent_color)
@@ -247,5 +249,6 @@ def site_settings(request):
         'phone_numbers': tenant.phone_numbers.all(),
         'phone_types': TenantPhoneNumber.PHONE_TYPES,
         'hero_images': tenant.hero_images.all(),
+        'site_font_choices': font_choices(),
     }
     return render(request, 'tenants/site_settings.html', context)

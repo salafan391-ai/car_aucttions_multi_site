@@ -1,0 +1,17 @@
+{% comment %}
+Per-tenant site font. When the admin picks a font (Tenant.site_font),
+site_font_url + site_font_stack are provided by the tenant_branding context
+processor. The !important rule beats both the theme's own font CSS and the
+inline body font that the language switcher sets, so the chosen font applies
+across the whole site for every visitor. Blank choice = nothing injected, so
+each theme keeps its built-in font.
+{% endcomment %}
+{% if site_font_url %}
+<link href="{{ site_font_url }}" rel="stylesheet">
+<style id="site-font-override">
+    body, h1, h2, h3, h4, h5, h6, p, a, span, div, li, ul, ol,
+    button, input, select, textarea, label, small, strong, em, blockquote, td, th {
+        font-family: {{ site_font_stack }} !important;
+    }
+</style>
+{% endif %}

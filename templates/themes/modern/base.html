@@ -439,6 +439,7 @@
         .mod-social svg { width: 1rem; height: 1rem; }
     </style>
     {% block extra_head %}{% endblock %}
+    {% include "partials/site_font.html" %}
 </head>
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
 

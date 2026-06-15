@@ -1,6 +1,7 @@
 from django.db import connection
 from django.core.cache import cache
 from .models import TenantHeroImage, GlobalExchangeRates
+from .fonts import font_ctx
 
 
 def _global_rates():
@@ -33,9 +34,9 @@ def tenant_branding(request):
     _cache_key = f"tenant_branding:{schema}"
     cached = cache.get(_cache_key)
     if cached:
-        # Always overlay live global rates so singleton edits apply immediately,
-        # without invalidating every tenant's branding cache.
-        return {**cached, **_global_rates()}
+        # Always overlay live global rates + the chosen site font so those
+        # edits apply immediately, without invalidating the branding cache.
+        return {**cached, **_global_rates(), **font_ctx(tenant)}
 
     # Get all phone numbers for the tenant
     phone_numbers = []
@@ -172,4 +173,5 @@ def tenant_branding(request):
     # Currency rates are NOT in this dict; they are merged in at request time
     # from the global singleton so cross-tenant rate updates apply immediately.
     cache.set(_cache_key, result, 60 * 30)
-    return {**result, **_global_rates()}
+    # Font merged fresh (not cached) so a changed site_font applies immediately.
+    return {**result, **_global_rates(), **font_ctx(tenant)}

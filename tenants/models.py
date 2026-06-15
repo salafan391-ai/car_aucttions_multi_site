@@ -1,6 +1,7 @@
 from django.db import models
 from django_tenants.models import TenantMixin, DomainMixin
 from site_cars.image_utils import optimize_image
+from .fonts import font_choices
 
 
 class Tenant(TenantMixin):
@@ -97,6 +98,15 @@ class Tenant(TenantMixin):
         default='default',
         verbose_name="ثيم القوالب",
         help_text="ثيم كامل يبدّل قوالب الموقع (HTML) كلياً، وليس مجرد ألوان. الافتراضي يستخدم القوالب القياسية.",
+    )
+
+    site_font = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        choices=font_choices(),
+        verbose_name="خط الموقع",
+        help_text="خط عربي/لاتيني يُطبّق على كامل الموقع لكل الزوار. اتركه فارغاً لاستخدام الخط الافتراضي للثيم.",
     )
 
     CAR_DISPLAY_CHOICES = [
