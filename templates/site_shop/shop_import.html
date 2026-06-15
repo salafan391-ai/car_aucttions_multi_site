@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}استيراد {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-2xl mx-auto px-4 py-8 pb-24 md:pb-8">
+    <a href="{% url 'shop_manage' %}?kind={{ kind }}" class="text-sm text-gray-400 hover:text-brand mb-4 inline-flex items-center gap-1">‹ <span class="bilingual" data-lang-ar="رجوع" data-lang-en="Back">رجوع</span></a>
+
+    <h1 class="text-2xl font-extrabold text-gray-900 mb-2">
+        <span class="bilingual" data-lang-ar="استيراد من ملف" data-lang-en="Import from feed">استيراد من ملف</span> — {{ kind_label_ar }}
+    </h1>
+    <p class="text-sm text-gray-500 mb-6 bilingual" data-lang-ar="ارفع ملف CSV من المورّد (كوري أو غيره) لإضافة/تحديث المنتجات دفعة واحدة." data-lang-en="Upload a supplier CSV (Korean or other) to bulk add/update items.">ارفع ملف CSV من المورّد (كوري أو غيره) لإضافة/تحديث المنتجات دفعة واحدة.</p>
+
+    {% if messages %}{% for m in messages %}<div class="mb-4 px-4 py-2 rounded-lg text-sm {% if m.tags == 'error' %}bg-red-50 text-red-600{% elif m.tags == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-emerald-50 text-emerald-700{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+    <form method="post" enctype="multipart/form-data" action="{% url 'shop_import' %}?kind={{ kind }}" class="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="kind" value="{{ kind }}">
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="ملف CSV" data-lang-en="CSV file">ملف CSV</label>
+            <input type="file" name="file" accept=".csv,text/csv" class="w-full text-sm">
+        </div>
+
+        <div class="text-center text-xs text-gray-400 bilingual" data-lang-ar="— أو —" data-lang-en="— or —">— أو —</div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="رابط ملف CSV" data-lang-en="CSV URL">رابط ملف CSV</label>
+            <input type="url" name="url" placeholder="https://supplier.example/feed.csv" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="اسم المصدر" data-lang-en="Source label">اسم المصدر</label>
+                <input type="text" name="source" value="csv" placeholder="autowini" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm">
+                <p class="text-[11px] text-gray-400 mt-1 bilingual" data-lang-ar="لمنع التكرار عند إعادة الاستيراد" data-lang-en="used to de-duplicate on re-import">لمنع التكرار عند إعادة الاستيراد</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1 bilingual" data-lang-ar="العملة الافتراضية" data-lang-en="Default currency">العملة الافتراضية</label>
+                <select name="currency" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm">
+                    <option value="SAR" selected>SAR</option><option value="KRW">KRW</option><option value="USD">USD</option><option value="AED">AED</option><option value="EUR">EUR</option>
+                </select>
+            </div>
+        </div>
+
+        <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="no_images" class="rounded"> <span class="bilingual" data-lang-ar="عدم تنزيل الصور (أسرع)" data-lang-en="Skip downloading images (faster)">عدم تنزيل الصور (أسرع)</span></label>
+
+        <button type="submit" class="bg-brand bg-brand-hover text-white font-bold px-6 py-3 rounded-xl bilingual" data-lang-ar="استيراد" data-lang-en="Import">استيراد</button>
+    </form>
+
+    <!-- Format help -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 text-sm">
+        <h2 class="font-bold mb-2 bilingual" data-lang-ar="أعمدة الملف المدعومة" data-lang-en="Supported columns">أعمدة الملف المدعومة</h2>
+        <p class="text-gray-500 mb-3 bilingual" data-lang-ar="الصف الأول عناوين الأعمدة. الاسم مطلوب فقط، والباقي اختياري. تُقبل الأسماء بالعربية أو الإنجليزية." data-lang-en="First row is headers. Only name is required; the rest optional. Arabic or English headers accepted.">الصف الأول عناوين الأعمدة. الاسم مطلوب فقط، والباقي اختياري.</p>
+        <code class="block bg-gray-50 rounded-lg p-3 text-xs text-gray-600 overflow-x-auto" dir="ltr">name, part_number, brand, category, origin, price, currency, condition, in_stock, fits_make, fits_model, description, image, external_id</code>
+        <ul class="text-xs text-gray-500 mt-3 space-y-1 list-disc ps-5">
+            <li dir="ltr"><b>origin</b>: genuine / aftermarket (or أصلي / تجاري)</li>
+            <li dir="ltr"><b>condition</b>: new / used (or جديد / مستعمل)</li>
+            <li dir="ltr"><b>image</b>: a public image URL (downloaded automatically)</li>
+            <li dir="ltr"><b>external_id</b>: supplier's item id — re-imports update the same item</li>
+        </ul>
+    </div>
+</section>
+{% endblock %}

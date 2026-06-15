@@ -257,3 +257,40 @@ def shop_toggle_stock(request, pk):
     item.in_stock = not item.in_stock
     item.save(update_fields=["in_stock", "updated_at"])
     return redirect(request.META.get("HTTP_REFERER") or "shop_manage")
+
+
+@staff_member_required
+def shop_import(request):
+    """Upload a CSV catalogue feed (e.g. a Korean wholesaler export) and upsert
+    it into the parts/accessories inventory."""
+    if _is_public_schema():
+        messages.error(request, "غير متاح من النطاق العام")
+        return redirect("home")
+    kind = _kind_param(request)
+    if request.method == "POST":
+        from .importer import import_csv_text, import_csv_url
+        source = (request.POST.get("source") or "csv").strip()[:40] or "csv"
+        currency = (request.POST.get("currency") or "SAR").strip() or "SAR"
+        download_images = "no_images" not in request.POST
+        common = dict(kind=kind, source=source, default_currency=currency,
+                      download_images=download_images, limit=1000)
+        try:
+            url = (request.POST.get("url") or "").strip()
+            if request.FILES.get("file"):
+                text = request.FILES["file"].read().decode("utf-8-sig", errors="replace")
+                res = import_csv_text(text, **common)
+            elif url:
+                res = import_csv_url(url, **common)
+            else:
+                messages.error(request, "أرفق ملف CSV أو ضع رابطاً")
+                return redirect(f"{reverse('shop_import')}?kind={kind}")
+        except Exception as e:
+            messages.error(request, f"تعذّر الاستيراد: {e}")
+            return redirect(f"{reverse('shop_import')}?kind={kind}")
+        messages.success(request, f"تم الاستيراد — أُضيف {res['created']}، حُدّث {res['updated']}، صور {res['images']}، تم تخطّي {res['skipped']}")
+        for e in res["errors"][:5]:
+            messages.warning(request, e)
+        return redirect(f"{reverse('shop_manage')}?kind={kind}")
+    return render(request, "site_shop/shop_import.html", {
+        "kind": kind, "is_part": kind == "part", "kind_label_ar": KIND_LABELS[kind]["ar"],
+    })

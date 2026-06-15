@@ -74,6 +74,10 @@ class ShopItem(models.Model):
     fits_make = models.CharField(max_length=120, blank=True, default="", verbose_name="يناسب الماركة")
     fits_model = models.CharField(max_length=120, blank=True, default="", verbose_name="يناسب الموديل")
 
+    # Import bookkeeping — lets an importer upsert instead of duplicating.
+    source = models.CharField(max_length=40, blank=True, default="", db_index=True, verbose_name="المصدر (استيراد)")
+    external_id = models.CharField(max_length=120, blank=True, default="", db_index=True, verbose_name="المعرّف الخارجي")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
