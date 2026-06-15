@@ -58,10 +58,8 @@ def _shop_list(request, kind):
         if in_stock == "1":
             qs = qs.filter(in_stock=True)
 
-        # Curated categories first, plus any custom ones already in use.
-        existing = {c for c in ShopItem.objects.filter(kind=kind).exclude(category="").values_list("category", flat=True)}
-        curated = categories_for(kind)
-        categories = curated + sorted(existing - set(curated))
+        # Categories + brands are dynamic — taken from the items actually present.
+        categories = categories_for(kind)
         brands = sorted({b for b in ShopItem.objects.filter(kind=kind).exclude(brand="").values_list("brand", flat=True)})
 
         paginator = Paginator(qs, 24)

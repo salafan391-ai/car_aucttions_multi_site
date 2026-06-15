@@ -6,21 +6,13 @@ from django.urls import reverse
 from site_cars.image_utils import optimize_image
 
 
-# Curated category lists per kind — used as the form datalist + filter options
-# (free text is still allowed, so staff can add their own when needed).
-PART_CATEGORIES = [
-    "المحرك", "الفرامل", "نظام التعليق", "الكهرباء والبطارية", "ناقل الحركة",
-    "نظام التبريد", "العادم", "الفلاتر", "الإضاءة", "الزجاج والمرايا",
-    "الهيكل والبودي", "الإطارات والجنوط", "الداخلية", "أخرى",
-]
-ACCESSORY_CATEGORIES = [
-    "إكسسوارات داخلية", "إكسسوارات خارجية", "إلكترونيات وصوتيات",
-    "العناية والتنظيف", "حماية وأغطية", "إضاءة وزينة", "حوامل وتخزين", "أخرى",
-]
-
-
 def categories_for(kind):
-    return ACCESSORY_CATEGORIES if kind == "accessory" else PART_CATEGORIES
+    """Distinct categories actually in use for this kind (dynamic, from the
+    tenant's own items — e.g. populated by imports/staff, not hardcoded)."""
+    return sorted(
+        c for c in ShopItem.objects.filter(kind=kind)
+        .exclude(category="").values_list("category", flat=True).distinct()
+    )
 
 
 class ShopItem(models.Model):
