@@ -1,0 +1,754 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters %}
+
+{% block title %}{{ site_name|default:"سيارات" }} — Premium Selection{% endblock %}
+
+{% block content %}
+<style>
+    /* ════════════════════════════════════════════════════════════
+       GLASSY home — bespoke dark neon glassmorphism layout.
+       All surfaces are translucent glass over the global gradient
+       (painted by <body>). Colors flow through global --gl-* tokens.
+       Page-scoped classes are prefixed gl-home-.
+       ════════════════════════════════════════════════════════════ */
+
+    /* ── Hero ── */
+    .gl-home-hero { position: relative; padding: 3.5rem 0 2rem; isolation: isolate; overflow: hidden; }
+    .gl-home-hero::before {
+        content: ""; position: absolute; inset: -20% -10% auto; height: 60%; z-index: -1; pointer-events: none;
+        background:
+            radial-gradient(ellipse 50% 70% at 18% 0%, color-mix(in srgb, var(--gl-brand) 30%, transparent), transparent 70%),
+            radial-gradient(ellipse 45% 65% at 85% 8%, color-mix(in srgb, var(--gl-brand-2) 26%, transparent), transparent 70%);
+        filter: blur(8px);
+    }
+    .gl-home-hero-inner { text-align: center; }
+    .gl-home-eyebrow {
+        display: inline-flex; align-items: center; gap: .5rem; margin-bottom: 1.1rem;
+        padding: .45rem 1rem; border-radius: 999px;
+        background: var(--gl-glass-2); border: 1px solid var(--gl-border);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        color: var(--gl-muted); font-size: .82rem; font-weight: 700;
+    }
+    .gl-home-hero-title {
+        font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.05; margin: 0 0 1rem;
+        background: var(--gl-grad); -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent; color: transparent;
+        text-shadow: 0 0 60px color-mix(in srgb, var(--gl-brand) 30%, transparent);
+    }
+    .gl-home-hero-sub { color: var(--gl-muted); font-size: clamp(1rem, 2vw, 1.18rem); max-width: 640px; margin: 0 auto 1.75rem; line-height: 1.75; }
+    .gl-home-hero-ctas { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Hero filter: tabs + Brand/Model/Year accordion (glass) ── */
+    .gl-home-hf { max-width: 680px; margin: 2.2rem auto 0; text-align: start; }
+    .gl-home-hf-tabs-wrap { text-align: center; }
+    .gl-home-hf-tabs {
+        display: inline-flex; gap: .25rem; margin-bottom: 1rem; padding: .3rem; border-radius: 999px;
+        background: var(--gl-glass-2); border: 1px solid var(--gl-border);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .gl-home-hf-tab {
+        border: 0; cursor: pointer; font-family: inherit; padding: .55rem 1.3rem; border-radius: 999px;
+        background: transparent; color: var(--gl-muted); font-size: .86rem; font-weight: 700; transition: all .2s ease;
+    }
+    .gl-home-hf-tab:hover { color: var(--gl-ink); }
+    .gl-home-hf-tab.is-active { background: var(--gl-grad); color: #06121a; box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--gl-brand) 60%, transparent); }
+    .gl-home-hf-card {
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        border: 1px solid var(--gl-border); border-radius: var(--gl-radius);
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow); overflow: hidden;
+    }
+    .gl-home-hf-row { border-bottom: 1px solid var(--gl-border); }
+    .gl-home-hf-row-head {
+        width: 100%; display: flex; align-items: center; gap: .75rem; padding: 1.05rem 1.35rem;
+        background: none; border: 0; cursor: pointer; color: var(--gl-ink); font-family: inherit;
+        font-size: .98rem; font-weight: 600; transition: background .18s ease;
+    }
+    .gl-home-hf-row-head:hover { background: var(--gl-glass); }
+    .gl-home-hf-chev { width: 1.05rem; height: 1.05rem; flex-shrink: 0; color: var(--gl-muted); transition: transform .25s; }
+    .gl-home-hf-row.is-open .gl-home-hf-chev { transform: rotate(180deg); }
+    .gl-home-hf-row-label { flex: 1; text-align: center; color: var(--gl-muted); transition: color .2s; }
+    .gl-home-hf-row.is-selected .gl-home-hf-row-label { color: var(--gl-brand); font-weight: 700; }
+    .gl-home-hf-row-body { max-height: 0; overflow: hidden; transition: max-height .28s ease; }
+    .gl-home-hf-row.is-open .gl-home-hf-row-body { max-height: 21rem; overflow-y: auto; }
+    .gl-home-hf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: .55rem; padding: .4rem 1.1rem 1.2rem; }
+    .gl-home-hf-years { grid-template-columns: repeat(4, 1fr); }
+    .gl-home-hf-opt {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem;
+        padding: .7rem .4rem; border: 1px solid var(--gl-border); background: var(--gl-glass);
+        border-radius: var(--gl-radius-sm); cursor: pointer; color: var(--gl-ink); font-family: inherit;
+        font-size: .8rem; font-weight: 600; text-align: center; transition: all .15s ease;
+    }
+    .gl-home-hf-opt:hover { border-color: color-mix(in srgb, var(--gl-brand) 60%, var(--gl-border)); }
+    .gl-home-hf-opt.is-selected {
+        border-color: var(--gl-brand);
+        background: color-mix(in srgb, var(--gl-brand) 16%, transparent); color: var(--gl-brand);
+    }
+    .gl-home-hf-opt img {
+        width: 2.5rem; height: 2.5rem; object-fit: contain;
+        background: #fff; border-radius: 50%; padding: .34rem; box-sizing: border-box; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+    .gl-home-hf-opt-count { font-size: .68rem; font-weight: 600; color: var(--gl-faint); }
+    .gl-home-hf-empty { grid-column: 1 / -1; text-align: center; color: var(--gl-muted); padding: 1rem; font-size: .85rem; }
+    .gl-home-hf-search {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: .6rem; padding: 1.05rem;
+        border: 0; cursor: pointer; background: var(--gl-grad); color: #06121a;
+        font-family: inherit; font-weight: 800; font-size: .95rem; transition: filter .2s ease;
+    }
+    .gl-home-hf-search:hover { filter: brightness(1.08); }
+    .gl-home-hf-search svg { width: 1.1rem; height: 1.1rem; }
+
+    /* ── Hero showcase slider (glass-framed) ── */
+    .gl-home-hero-media {
+        position: relative; max-width: 1100px; margin: 2.6rem auto 0;
+        height: clamp(220px, 36vw, 440px); border-radius: var(--gl-radius); overflow: hidden;
+        border: 1px solid var(--gl-border-2); box-shadow: var(--gl-shadow-lg), var(--gl-glow);
+    }
+    .gl-home-hero-slide { position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease; pointer-events: none; }
+    .gl-home-hero-slide.is-active { opacity: 1; pointer-events: auto; }
+    .gl-home-hero-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gl-home-hero-dots {
+        position: absolute; bottom: .9rem; left: 50%; transform: translateX(-50%); display: flex; gap: .45rem; z-index: 2;
+        padding: .35rem .6rem; border-radius: 999px; background: rgba(0,0,0,.32);
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    .gl-home-hero-dot { width: 8px; height: 8px; border-radius: 999px; border: 0; padding: 0; cursor: pointer; background: rgba(255,255,255,.5); transition: all .25s ease; }
+    .gl-home-hero-dot.is-active { width: 22px; background: var(--gl-brand); }
+
+    /* ── Sections ── */
+    .gl-home-section { padding: 3.5rem 0; }
+    .gl-home-head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
+    .gl-home-head { text-align: center; margin-bottom: 2.2rem; }
+    .gl-home-kicker { color: var(--gl-brand); font-size: .72rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; margin-bottom: .45rem; }
+
+    /* ── Car cards (horizontal scroll rows) ── */
+    .gl-home-scroll {
+        display: flex; gap: 1.25rem; overflow-x: auto; overflow-y: hidden;
+        scroll-snap-type: x proximity; padding: .25rem .25rem 1.25rem;
+        scrollbar-width: thin; scrollbar-color: var(--gl-border-2) transparent; scroll-padding-inline-start: .25rem;
+    }
+    .gl-home-scroll::-webkit-scrollbar { height: 6px; }
+    .gl-home-scroll::-webkit-scrollbar-track { background: transparent; }
+    .gl-home-scroll::-webkit-scrollbar-thumb { background: var(--gl-border-2); border-radius: 3px; }
+    .gl-home-scroll::-webkit-scrollbar-thumb:hover { background: var(--gl-brand); }
+    .gl-home-scroll > .gl-home-car { flex: 0 0 290px; scroll-snap-align: start; }
+    @media (max-width: 600px) { .gl-home-scroll > .gl-home-car { flex-basis: 80vw; } }
+
+    .gl-home-car {
+        display: block; overflow: hidden; text-decoration: none; color: inherit;
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        border: 1px solid var(--gl-border); border-radius: var(--gl-radius);
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow); transition: transform .25s ease, box-shadow .3s ease, border-color .25s ease;
+    }
+    .gl-home-car:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border)); box-shadow: var(--gl-shadow-lg), var(--gl-glow); }
+    .gl-home-car-img { aspect-ratio: 4 / 3; background: rgba(255,255,255,.04); overflow: hidden; position: relative; }
+    .gl-home-car-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s cubic-bezier(.22,1,.36,1); }
+    .gl-home-car:hover .gl-home-car-img img { transform: scale(1.06); }
+    .gl-home-car-img-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gl-faint); }
+    .gl-home-car-img-empty svg { width: 3rem; height: 3rem; opacity: .5; }
+    .gl-home-car-body { padding: 1.1rem 1.25rem 1.35rem; }
+    .gl-home-car-make { color: var(--gl-brand); font-size: .74rem; font-weight: 800; margin-bottom: .35rem; text-transform: uppercase; letter-spacing: .05em; }
+    .gl-home-car-name { color: var(--gl-ink); font-size: 1.08rem; font-weight: 800; margin: 0 0 .5rem; }
+    .gl-home-car-trim {
+        display: inline-flex; align-items: center; margin-bottom: .65rem; padding: .2rem .65rem; border-radius: 999px;
+        font-size: .7rem; font-weight: 700; color: var(--gl-brand);
+        background: color-mix(in srgb, var(--gl-brand) 12%, transparent); border: 1px solid color-mix(in srgb, var(--gl-brand) 30%, transparent);
+    }
+    .gl-home-car-price {
+        font-size: 1.25rem; font-weight: 800; margin-top: .25rem; width: fit-content;
+        background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+    }
+    .gl-home-car-cd { margin: .45rem 0 .4rem; }
+    .gl-home-car-chips { display: flex; flex-wrap: wrap; gap: .45rem; padding-top: .85rem; margin-top: .85rem; border-top: 1px solid var(--gl-border); }
+    .gl-home-car-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .28rem .7rem; border-radius: 999px; font-size: .72rem; font-weight: 700; border: 1px solid var(--gl-border); background: var(--gl-glass); color: var(--gl-muted); }
+    .gl-home-car-chip-ico { flex-shrink: 0; width: .85rem; height: .85rem; color: var(--gl-brand); display: inline-flex; }
+    .gl-home-car-chip-ico svg { width: 100%; height: 100%; display: block; }
+
+    /* ── Reviews ── */
+    .gl-home-rev-avg { display: flex; align-items: center; justify-content: center; gap: .6rem; margin-bottom: 2rem; }
+    .gl-home-rev-avg .num { font-size: 2.5rem; font-weight: 800; color: var(--gl-ink); line-height: 1; }
+    .gl-home-rev-avg .cnt { color: var(--gl-muted); font-size: .85rem; }
+    .gl-home-stars { display: inline-flex; gap: .1rem; font-size: 1.15rem; }
+    .gl-home-rate { display: inline-flex; flex-direction: row-reverse; gap: .15rem; }
+    .gl-home-rate input { display: none; }
+    .gl-home-rate label { color: var(--gl-border-2); font-size: 1.9rem; cursor: pointer; transition: color .15s; line-height: 1; }
+    .gl-home-rate label:hover, .gl-home-rate label:hover ~ label, .gl-home-rate input:checked ~ label { color: var(--gl-warn); }
+    .gl-home-rev-form { max-width: 560px; margin: 0 auto 2.5rem; padding: 1.75rem; text-align: center; }
+    .gl-home-rev-form-label { color: var(--gl-muted); font-size: .8rem; font-weight: 700; margin-bottom: .75rem; }
+    .gl-home-rev-form textarea { margin: .85rem 0; resize: vertical; }
+    .gl-home-rev-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .gl-home-rev-card { padding: 1.25rem; }
+    .gl-home-rev-card .who { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; color: var(--gl-ink); font-size: .85rem; font-weight: 700; }
+    .gl-home-rev-card .ini { width: 2rem; height: 2rem; border-radius: 50%; flex-shrink: 0; background: var(--gl-grad); color: #06121a; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: .85rem; }
+    .gl-home-rev-card p { color: var(--gl-muted); font-size: .85rem; line-height: 1.6; margin: .4rem 0 0; }
+    .gl-home-rev-login { text-align: center; margin-bottom: 2.5rem; }
+    .gl-home-rev-login a { color: var(--gl-brand); text-decoration: none; font-weight: 700; }
+    .gl-home-rev-login a:hover { text-decoration: underline; }
+    .gl-home-rev-empty { text-align: center; color: var(--gl-muted); }
+
+    /* ── FAQ ── */
+    .gl-home-faq { max-width: 760px; margin: 0 auto; }
+    .gl-home-faq details {
+        background: var(--gl-glass); border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm);
+        margin-bottom: .75rem; overflow: hidden; transition: border-color .2s ease;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .gl-home-faq details[open] { border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border)); }
+    .gl-home-faq summary { cursor: pointer; padding: 1rem 1.25rem; color: var(--gl-ink); font-weight: 700; font-size: .95rem; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
+    .gl-home-faq summary::-webkit-details-marker { display: none; }
+    .gl-home-faq summary .chev { color: var(--gl-brand); transition: transform .2s; flex-shrink: 0; }
+    .gl-home-faq details[open] summary .chev { transform: rotate(180deg); }
+    .gl-home-faq .ans { padding: 0 1.25rem 1rem; color: var(--gl-muted); line-height: 1.7; white-space: pre-line; }
+    .gl-home-faq-empty { text-align: center; color: var(--gl-muted); }
+    .gl-home-faq-cta { text-align: center; margin-top: 1.75rem; }
+
+    @media (max-width: 600px) {
+        .gl-home-hf { margin-top: 1.6rem; }
+        .gl-home-hf-tab { padding: .45rem .85rem; font-size: .78rem; }
+        .gl-home-hf-grid { grid-template-columns: repeat(2, 1fr); }
+        .gl-home-hf-years { grid-template-columns: repeat(3, 1fr); }
+    }
+</style>
+
+<div class="gl-home">
+    {% if show_hero %}
+    <section class="gl-home-hero">
+        <div class="gl-shell gl-home-hero-inner">
+            <div class="gl-home-eyebrow"><span>🚢</span> <span class="bilingual" data-lang-ar="تصدير مباشر من كوريا الجنوبية إلى باب بيتك" data-lang-en="Direct export from South Korea to your doorstep" data-lang-es="Exportación directa de Corea del Sur" data-lang-ru="Прямой экспорт из Южной Кореи">تصدير مباشر من كوريا الجنوبية إلى باب بيتك</span></div>
+            <h1 class="gl-home-hero-title">{{ site_name|default:"سيارات" }}</h1>
+            <p class="gl-home-hero-sub bilingual" data-lang-ar="{{ site_tagline|default:'سيارات كورية مفحوصة بعناية — من مزادات ومعارض كوريا، بشحن وتخليص كامل حتى الاستلام.' }}" data-lang-en="{{ site_tagline_en|default:'Carefully inspected Korean cars — from Korea’s auctions and dealers, shipped and cleared all the way to handover.' }}" data-lang-es="Coches coreanos cuidadosamente inspeccionados, enviados y despachados hasta la entrega." data-lang-ru="Тщательно проверенные корейские автомобили — с доставкой и растаможкой до передачи.">{{ site_tagline|default:"سيارات كورية مفحوصة بعناية — من مزادات ومعارض كوريا، بشحن وتخليص كامل حتى الاستلام." }}</p>
+            <div class="gl-home-hero-ctas">
+                <a href="{% url 'car_list' %}" class="gl-btn gl-btn-solid bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
+                <a href="{% url 'contact' %}" class="gl-btn bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Us" data-lang-es="Contacto" data-lang-ru="Связаться">تواصل معنا</a>
+            </div>
+
+            <!-- Hero filter: tabs + Brand/Model/Year accordion -->
+            <div class="gl-home-hf" id="lux-hf">
+              <div class="gl-home-hf-tabs-wrap">
+              <div class="gl-home-hf-tabs">
+                {% if show_encar %}
+                <button type="button" class="gl-home-hf-tab is-active" data-type="cars"><span class="bilingual" data-lang-ar="بيع مباشر" data-lang-en="Direct Sale" data-lang-es="Venta directa" data-lang-ru="Прямая продажа">بيع مباشر</span></button>
+                {% endif %}
+                {% if show_auctions %}
+                <button type="button" class="gl-home-hf-tab{% if not show_encar %} is-active{% endif %}" data-type="auction"><span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد</span></button>
+                {% endif %}
+                {% if site_cars_count and show_site_cars %}
+                <button type="button" class="gl-home-hf-tab{% if not show_encar and not show_auctions %} is-active{% endif %}" data-type="ours"><span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</span></button>
+                {% endif %}
+              </div>
+              </div>
+              <form id="lux-hf-form" method="get" action="{% url 'car_list' %}">
+                <input type="hidden" name="car_type" id="lux-hf-cartype" value="">
+                <input type="hidden" name="manufacturer" id="lux-hf-mfg" value="">
+                <input type="hidden" name="model" id="lux-hf-model" value="">
+                <input type="hidden" name="year_from" id="lux-hf-year" value="">
+                <div class="gl-home-hf-card">
+                  <div class="gl-home-hf-row" data-acc="brand">
+                    <button type="button" class="gl-home-hf-row-head"><svg class="gl-home-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                      <span class="gl-home-hf-row-label" id="lux-hf-brand-label"><span class="bilingual" data-lang-ar="جميع الماركات" data-lang-en="All Brands" data-lang-es="Todas las marcas" data-lang-ru="Все бренды">جميع الماركات</span></span>
+                    </button>
+                    <div class="gl-home-hf-row-body">
+                      <div class="gl-home-hf-grid" id="lux-hf-brand-grid">
+                        {% for m in manufacturers %}
+                        <button type="button" class="gl-home-hf-opt gl-home-hf-brand-opt" data-id="{{ m.id }}" data-name-ar="{{ m.name_ar|default:m.name }}" data-name-en="{{ m.name|pretty_en }}" data-cars-count="{{ m.cars_count|default:0 }}" data-auction-count="{{ m.auction_count|default:0 }}">
+                          {% if m.logo %}<img src="{{ m.logo }}" alt="{{ m.name_ar|default:m.name }}" loading="lazy">{% endif %}
+                          <span class="bilingual" data-lang-ar="{{ m.name_ar|default:m.name }}" data-lang-en="{{ m.name|pretty_en }}">{{ m.name_ar|default:m.name }}</span>
+                          <span class="gl-home-hf-opt-count">{{ m.cars_count|default:0 }}</span>
+                        </button>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="gl-home-hf-row" data-acc="model">
+                    <button type="button" class="gl-home-hf-row-head"><svg class="gl-home-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                      <span class="gl-home-hf-row-label" id="lux-hf-model-label"><span class="bilingual" data-lang-ar="جميع الموديلات" data-lang-en="All Models" data-lang-es="Todos los modelos" data-lang-ru="Все модели">جميع الموديلات</span></span>
+                    </button>
+                    <div class="gl-home-hf-row-body"><div class="gl-home-hf-grid" id="lux-hf-model-grid"></div></div>
+                  </div>
+                  <div class="gl-home-hf-row" data-acc="year">
+                    <button type="button" class="gl-home-hf-row-head"><svg class="gl-home-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                      <span class="gl-home-hf-row-label" id="lux-hf-year-label"><span class="bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع</span></span>
+                    </button>
+                    <div class="gl-home-hf-row-body"><div class="gl-home-hf-grid gl-home-hf-years" id="lux-hf-year-grid">{% for y in years %}<button type="button" class="gl-home-hf-opt gl-home-hf-year-opt" data-year="{{ y }}">{{ y }}</button>{% endfor %}</div></div>
+                  </div>
+                  <button type="submit" class="gl-home-hf-search">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <span class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {% if site_hero_images %}
+            <div class="gl-home-hero-media" id="mod-hero-slider">
+                {% for hi in site_hero_images %}
+                <div class="gl-home-hero-slide{% if forloop.first %} is-active{% endif %}">
+                    <img src="{{ hi.image.url }}" alt="{{ site_name|default:'سيارات' }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+                </div>
+                {% endfor %}
+                {% if site_hero_images|length > 1 %}
+                <div class="gl-home-hero-dots">
+                    {% for hi in site_hero_images %}
+                    <button type="button" class="gl-home-hero-dot{% if forloop.first %} is-active{% endif %}" data-idx="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% elif site_hero_image %}
+            <div class="gl-home-hero-media">
+                <div class="gl-home-hero-slide is-active">
+                    <img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high">
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% for section_key in home_sections_order %}
+    {% if section_key == 'site_cars' and site_cars and show_site_cars %}
+    <section class="gl-home-section">
+        <div class="gl-shell">
+            <div class="gl-home-head-row">
+                <div>
+                    <div class="gl-home-kicker bilingual" data-lang-ar="من معرضنا" data-lang-en="From Our Showroom" data-lang-es="De nuestro showroom" data-lang-ru="Из нашего салона">من معرضنا</div>
+                    <h2 class="gl-section-title bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</h2>
+                </div>
+                <a href="{% url 'site_car_list' %}" class="gl-btn bilingual" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
+            </div>
+            <div class="gl-home-scroll">
+                {% for car in site_cars %}{# our cars — prices use the per-car source currency #}
+                <a href="{% url 'site_car_detail' car.id %}" class="gl-home-car">
+                    <div class="gl-home-car-img car-img-wm">
+                        {% if car.image %}
+                        <img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">
+                        {% elif car.gallery.first %}
+                        <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" loading="lazy">
+                        {% elif car.external_image_url %}
+                        <img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">
+                        {% else %}
+                        <div class="gl-home-car-img-empty">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="gl-home-car-body">
+                        <div class="gl-home-car-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                        <h3 class="gl-home-car-name">{{ car.title|pretty_en }}</h3>
+                        {% if car.price %}
+                        <div class="gl-home-car-price"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>
+                        {% endif %}
+                        {% if car.auction_date %}
+                        <div class="gl-home-car-cd"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>
+                        {% endif %}
+                        <div class="gl-home-car-chips">
+                            {% if car.year %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                                <span>{{ car.year }}</span>
+                            </span>
+                            {% endif %}
+                            {% if car.mileage %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                                <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                            </span>
+                            {% endif %}
+                            {% if car.transmission %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                                <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+    {% if section_key == 'latest_cars' and latest_cars and show_encar %}
+    <section class="gl-home-section">
+        <div class="gl-shell">
+            <div class="gl-home-head-row">
+                <div>
+                    <div class="gl-home-kicker bilingual" data-lang-ar="أحدث الوافدات" data-lang-en="Latest Arrivals" data-lang-es="Últimas llegadas" data-lang-ru="Новые поступления">أحدث الوافدات</div>
+                    <h2 class="gl-section-title bilingual" data-lang-ar="جديد في المعرض" data-lang-en="New to the Floor" data-lang-es="Nuevo en el showroom" data-lang-ru="Новые в салоне">جديد في المعرض</h2>
+                </div>
+                <a href="{% url 'car_list' %}" class="gl-btn bilingual" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
+            </div>
+            <div class="gl-home-scroll">
+                {% for car in latest_cars|slice:":8" %}
+                <a href="{% url 'car_detail' car.slug %}" class="gl-home-car">
+                    <div class="gl-home-car-img car-img-wm">
+                        {% if car.image %}
+                        <img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">
+                        {% elif car.images and car.images|length > 0 %}
+                        <img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">
+                        {% endif %}
+                    </div>
+                    <div class="gl-home-car-body">
+                        <div class="gl-home-car-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                        <h3 class="gl-home-car-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
+                        {% if car.badge.name %}<div class="gl-home-car-trim">{{ car.badge.name }}</div>{% endif %}
+                        {% if car.price %}
+                        <div class="gl-home-car-price"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>
+                        {% endif %}
+                        {% if car.auction_date %}
+                        <div class="gl-home-car-cd"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>
+                        {% endif %}
+                        <div class="gl-home-car-chips">
+                            {% if car.year %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                                <span>{{ car.year }}</span>
+                            </span>
+                            {% endif %}
+                            {% if car.mileage %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                                <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                            </span>
+                            {% endif %}
+                            {% if car.transmission %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                                <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+    {% if section_key == 'latest_auctions' and latest_auctions and show_auctions %}
+    <section class="gl-home-section">
+        <div class="gl-shell">
+            <div class="gl-home-head-row">
+                <div>
+                    <div class="gl-home-kicker bilingual" data-lang-ar="بالمزاد" data-lang-en="By Auction" data-lang-es="Por subasta" data-lang-ru="С аукциона">بالمزاد</div>
+                    <h2 class="gl-section-title bilingual" data-lang-ar="دار المزادات" data-lang-en="Auction House" data-lang-es="Casa de subastas" data-lang-ru="Аукционный дом">دار المزادات</h2>
+                </div>
+                <a href="{% url 'car_list' %}?car_type=auction" class="gl-btn bilingual" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
+            </div>
+            <div class="gl-home-scroll">
+                {% for car in latest_auctions|slice:":8" %}
+                <a href="{% url 'car_detail' car.slug %}" class="gl-home-car">
+                    <div class="gl-home-car-img car-img-wm">
+                        {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                    </div>
+                    <div class="gl-home-car-body">
+                        <div class="gl-home-car-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                        <h3 class="gl-home-car-name">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h3>
+                        {% if car.badge.name %}<div class="gl-home-car-trim">{{ car.badge.name }}</div>{% endif %}
+                        {% if car.price %}<div class="gl-home-car-price"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>{% endif %}
+                        {% if car.auction_date %}
+                        <div class="gl-home-car-cd"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>
+                        {% endif %}
+                        <div class="gl-home-car-chips">
+                            {% if car.year %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                                <span>{{ car.year }}</span>
+                            </span>
+                            {% endif %}
+                            {% if car.mileage %}
+                            <span class="gl-home-car-chip">
+                                <span class="gl-home-car-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                                <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Customer reviews / website rating -->
+<section class="gl-home-section">
+    <div class="gl-shell">
+        <div class="gl-home-head">
+            <div class="gl-home-kicker bilingual" data-lang-ar="آراء العملاء" data-lang-en="Testimonials" data-lang-es="Testimonios" data-lang-ru="Отзывы">آراء العملاء</div>
+            <h2 class="gl-section-title bilingual" data-lang-ar="تقييمات العملاء" data-lang-en="Customer Reviews" data-lang-es="Opiniones" data-lang-ru="Отзывы клиентов">تقييمات العملاء</h2>
+        </div>
+
+        {% if site_rating_count %}
+        <div class="gl-home-rev-avg">
+            <span class="gl-home-stars" dir="ltr">{% for i in "12345" %}<span style="color:{% if forloop.counter <= site_rating_avg %}var(--gl-warn){% else %}var(--gl-border-2){% endif %}">★</span>{% endfor %}</span>
+            <span class="num">{{ site_rating_avg }}</span>
+            <span class="cnt">/5 · {{ site_rating_count }} <span class="bilingual" data-lang-ar="تقييم" data-lang-en="reviews" data-lang-es="opiniones" data-lang-ru="отзывов">تقييم</span></span>
+        </div>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'rate_site' %}" class="gl-card gl-home-rev-form">
+            {% csrf_token %}
+            <div class="gl-home-rev-form-label bilingual" data-lang-ar="قم بتقييمنا" data-lang-en="Rate us" data-lang-es="Valóranos" data-lang-ru="Оцените нас">قم بتقييمنا</div>
+            <div class="gl-home-rate" dir="ltr">
+                {% for i in "54321" %}
+                <input type="radio" name="rating" id="lrs{{ i }}" value="{{ i }}" required>
+                <label for="lrs{{ i }}">★</label>
+                {% endfor %}
+            </div>
+            <textarea name="comment" rows="2" class="gl-textarea" placeholder="اكتب تعليقك (اختياري)..." data-placeholder-ar="اكتب تعليقك (اختياري)..." data-placeholder-en="Write your comment (optional)..." data-placeholder-es="Escribe tu comentario (opcional)..." data-placeholder-ru="Напишите свой комментарий (по желанию)..."></textarea>
+            <button type="submit" class="gl-btn gl-btn-solid bilingual" data-lang-ar="إرسال التقييم" data-lang-en="Submit rating" data-lang-es="Enviar" data-lang-ru="Отправить">إرسال التقييم</button>
+        </form>
+        {% else %}
+        <p class="gl-home-rev-login"><a href="{% url 'login' %}?next=/" class="bilingual" data-lang-ar="سجّل الدخول لتقييمنا ←" data-lang-en="Sign in to rate us →" data-lang-es="Inicia sesión para valorar →" data-lang-ru="Войдите, чтобы оценить →">سجّل الدخول لتقييمنا ←</a></p>
+        {% endif %}
+
+        {% if site_reviews %}
+        <div class="gl-home-rev-grid">
+            {% for r in site_reviews %}
+            <div class="gl-card gl-home-rev-card">
+                <div class="who"><span class="ini">{{ r.user.username|first|upper }}</span><span>{{ r.user.get_short_name|default:r.user.username }}</span></div>
+                <span class="gl-home-stars" dir="ltr">{% for i in "12345" %}<span style="color:{% if forloop.counter <= r.rating %}var(--gl-warn){% else %}var(--gl-border-2){% endif %};font-size:.9rem">★</span>{% endfor %}</span>
+                <p>{{ r.comment }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% elif not site_rating_count %}
+        <p class="gl-home-rev-empty bilingual" data-lang-ar="كن أول من يضع تقييما لنا" data-lang-en="Be the first to review us." data-lang-es="Sé el primero." data-lang-ru="Будьте первым.">كن أول من يضع تقييما لنا</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="gl-home-section">
+    <div class="gl-shell">
+        <div class="gl-home-head">
+            <div class="gl-home-kicker bilingual" data-lang-ar="أسئلة متكررة" data-lang-en="Common Questions" data-lang-es="Preguntas" data-lang-ru="Вопросы">أسئلة متكررة</div>
+            <h2 class="gl-section-title bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="FAQ" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</h2>
+        </div>
+        {% if site_faqs %}
+        <div class="gl-home-faq">
+            {% for f in site_faqs %}
+            <details class="group">
+                <summary><span>{{ f.question }}</span><span class="chev">▾</span></summary>
+                <div class="ans">{{ f.answer }}</div>
+            </details>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="gl-home-faq-empty bilingual" data-lang-ar="هل لديك سؤال؟ يسعدنا الإجابة عليه." data-lang-en="Have a question? We'd be happy to answer." data-lang-es="¿Tienes una pregunta?" data-lang-ru="Есть вопрос? Мы рады ответить.">هل لديك سؤال؟ يسعدنا الإجابة عليه.</p>
+        {% endif %}
+        <div class="gl-home-faq-cta">
+            <a href="{% url 'faq' %}" class="gl-btn gl-btn-solid bilingual" data-lang-ar="اطرح سؤالك" data-lang-en="Ask a question" data-lang-es="Haz una pregunta" data-lang-ru="Задать вопрос">اطرح سؤالك</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var root = document.getElementById('lux-hf');
+  if (!root) return;
+  var form       = document.getElementById('lux-hf-form');
+  var carType    = document.getElementById('lux-hf-cartype');
+  var mfgInput   = document.getElementById('lux-hf-mfg');
+  var modelInput = document.getElementById('lux-hf-model');
+  var yearInput  = document.getElementById('lux-hf-year');
+  var brandGrid  = document.getElementById('lux-hf-brand-grid');
+  var modelGrid  = document.getElementById('lux-hf-model-grid');
+  var brandLabel = document.getElementById('lux-hf-brand-label');
+  var modelLabel = document.getElementById('lux-hf-model-label');
+  var yearLabel  = document.getElementById('lux-hf-year-label');
+  var rows = {};
+  root.querySelectorAll('.gl-home-hf-row').forEach(function (r) { rows[r.dataset.acc] = r; });
+  var carListUrl = "{% url 'car_list' %}";
+  var siteUrl    = "{% if site_cars_count %}{% url 'site_car_list' %}{% endif %}";
+  var modelsApi  = "{% url 'api_models_by_manufacturer' %}";
+
+  function lang() { return (window.localStorage && localStorage.getItem('site_lang')) || 'ar'; }
+  function nameOf(d) { return lang() === 'en' ? (d.nameEn || d.nameAr) : (d.nameAr || d.nameEn); }
+
+  function bilingual(ar, en, es, ru) {
+    return '<span class="bilingual" data-lang-ar="' + ar + '" data-lang-en="' + en +
+           '" data-lang-es="' + (es || en) + '" data-lang-ru="' + (ru || en) + '">' + ar + '</span>';
+  }
+  function resetBrandLabel() { brandLabel.innerHTML = bilingual('جميع الماركات','All Brands','Todas las marcas','Все бренды'); rows.brand.classList.remove('is-selected'); }
+  function resetModelLabel() { modelLabel.innerHTML = bilingual('جميع الموديلات','All Models','Todos los modelos','Все модели'); rows.model.classList.remove('is-selected'); }
+  function resetYearLabel()  { yearLabel.innerHTML  = bilingual('سنة الصنع','Year','Año','Год'); rows.year.classList.remove('is-selected'); }
+  function setLabel(el, text) { el.textContent = text; el.closest('.gl-home-hf-row').classList.add('is-selected'); }
+
+  function openRow(key) { Object.keys(rows).forEach(function (k) { rows[k].classList.toggle('is-open', k === key); }); }
+  root.querySelectorAll('.gl-home-hf-row-head').forEach(function (head) {
+    head.addEventListener('click', function () {
+      var row = head.closest('.gl-home-hf-row');
+      openRow(row.classList.contains('is-open') ? null : row.dataset.acc);
+    });
+  });
+
+  // Showroom (Our Cars) make→models+years, and cached Encar grids so we can
+  // swap the accordion contents between catalog mode and showroom mode.
+  var SITE = {{ site_filter_json|default:'{}'|safe }};
+  var yearGrid = document.getElementById('lux-hf-year-grid');
+  var brandGridOrig = brandGrid.innerHTML;
+  var yearGridOrig = yearGrid ? yearGrid.innerHTML : '';
+  var oursMode = false;
+  var sel = { make: '', model: '', year: '' };  // showroom selection (by name)
+
+  // Brand — delegated so it works for both the Encar and showroom grids.
+  brandGrid.addEventListener('click', function (e) {
+    var opt = e.target.closest('.gl-home-hf-brand-opt');
+    if (!opt) return;
+    brandGrid.querySelectorAll('.gl-home-hf-brand-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    opt.classList.add('is-selected');
+    setLabel(brandLabel, nameOf(opt.dataset));
+    modelInput.value = ''; sel.model = ''; resetModelLabel(); modelGrid.innerHTML = '';
+    if (oursMode) { sel.make = opt.dataset.make || nameOf(opt.dataset); loadSiteModels(sel.make); }
+    else { mfgInput.value = opt.dataset.id; loadModels(opt.dataset.id); }
+    openRow('model');
+  });
+
+  function loadModels(id) {
+    modelGrid.innerHTML = '<div class="gl-home-hf-empty">' + (lang() === 'en' ? 'Loading…' : 'جاري التحميل…') + '</div>';
+    var ct = carType.value === 'auction' ? 'auction' : '';
+    fetch(modelsApi + '?manufacturer_id=' + id + (ct ? '&car_type=' + ct : '') + '&lang=' + lang())
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (arr) {
+        modelGrid.innerHTML = '';
+        if (!arr.length) { modelGrid.innerHTML = '<div class="gl-home-hf-empty">' + (lang() === 'en' ? 'No models' : 'لا توجد موديلات') + '</div>'; return; }
+        arr.sort(function (a, b) { return (b.car_count || 0) - (a.car_count || 0); });
+        arr.forEach(function (m) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'gl-home-hf-opt gl-home-hf-model-opt';
+          b.dataset.id = m.id; b.dataset.nameAr = m.name_ar || m.name; b.dataset.nameEn = m.name_en || m.name;
+          b.innerHTML = '<span>' + (lang() === 'en' ? b.dataset.nameEn : b.dataset.nameAr) + '</span>' +
+                        (m.car_count ? '<span class="gl-home-hf-opt-count">' + m.car_count + '</span>' : '');
+          modelGrid.appendChild(b);
+        });
+      })
+      .catch(function () { modelGrid.innerHTML = '<div class="gl-home-hf-empty">—</div>'; });
+  }
+
+  function loadSiteModels(make) {
+    var models = (SITE.models && SITE.models[make]) || [];
+    if (!models.length) { modelGrid.innerHTML = '<div class="gl-home-hf-empty">' + (lang() === 'en' ? 'No models' : 'لا توجد موديلات') + '</div>'; return; }
+    modelGrid.innerHTML = models.map(function (name) {
+      return '<button type="button" class="gl-home-hf-opt gl-home-hf-model-opt" data-name="' + name + '"><span>' + name + '</span></button>';
+    }).join('');
+  }
+
+  // Model — delegated.
+  modelGrid.addEventListener('click', function (e) {
+    var b = e.target.closest('.gl-home-hf-model-opt');
+    if (!b) return;
+    modelGrid.querySelectorAll('.gl-home-hf-model-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    b.classList.add('is-selected');
+    if (oursMode) { sel.model = b.dataset.name; setLabel(modelLabel, b.dataset.name); }
+    else { modelInput.value = b.dataset.id; setLabel(modelLabel, lang() === 'en' ? b.dataset.nameEn : b.dataset.nameAr); }
+    openRow('year');
+  });
+
+  // Year — delegated (grid is rebuilt for showroom mode).
+  if (yearGrid) yearGrid.addEventListener('click', function (e) {
+    var opt = e.target.closest('.gl-home-hf-year-opt');
+    if (!opt) return;
+    yearGrid.querySelectorAll('.gl-home-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
+    opt.classList.add('is-selected');
+    sel.year = opt.dataset.year;
+    yearInput.value = opt.dataset.year;
+    setLabel(yearLabel, opt.dataset.year);
+    openRow(null);
+  });
+
+  // Tabs
+  var tabs = Array.prototype.slice.call(root.querySelectorAll('.gl-home-hf-tab'));
+  function applyType(type) {
+    tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.type === type); });
+    oursMode = (type === 'ours' && siteUrl);
+    if (oursMode) {
+      form.action = siteUrl;
+      // Build the make + year grids from the showroom's own inventory.
+      brandGrid.innerHTML = (SITE.makes || []).map(function (m) {
+        return '<button type="button" class="gl-home-hf-opt gl-home-hf-brand-opt" data-make="' + m + '" data-name-ar="' + m + '" data-name-en="' + m + '"><span>' + m + '</span></button>';
+      }).join('') || '<div class="gl-home-hf-empty">—</div>';
+      if (yearGrid) yearGrid.innerHTML = (SITE.years || []).map(function (y) {
+        return '<button type="button" class="gl-home-hf-opt gl-home-hf-year-opt" data-year="' + y + '">' + y + '</button>';
+      }).join('');
+      [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = true; });
+    } else {
+      form.action = carListUrl;
+      brandGrid.innerHTML = brandGridOrig;       // restore Encar catalog grid
+      if (yearGrid) yearGrid.innerHTML = yearGridOrig;
+      [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = false; });
+      carType.value = (type === 'auction') ? 'auction' : 'cars';
+      var attr = type === 'auction' ? 'auctionCount' : 'carsCount';
+      brandGrid.querySelectorAll('.gl-home-hf-brand-opt').forEach(function (opt) {
+        var n = parseInt(opt.dataset[attr] || '0', 10);
+        opt.style.display = n > 0 ? '' : 'none';
+        var c = opt.querySelector('.gl-home-hf-opt-count');
+        if (c) c.textContent = n;
+      });
+    }
+    sel = { make: '', model: '', year: '' };
+    mfgInput.value = ''; modelInput.value = ''; yearInput.value = '';
+    modelGrid.innerHTML = '';
+    resetBrandLabel(); resetModelLabel(); resetYearLabel();
+    openRow(null);
+  }
+  tabs.forEach(function (t) { t.addEventListener('click', function () { applyType(t.dataset.type); }); });
+  if (tabs.length) applyType(tabs[0].dataset.type);
+
+  form.addEventListener('submit', function (e) {
+    if (oursMode) {
+      // Showroom listing filters by name + year range, not catalog IDs.
+      e.preventDefault();
+      var p = new URLSearchParams();
+      if (sel.make) p.set('make', sel.make);
+      if (sel.model) p.set('model', sel.model);
+      if (sel.year) { p.set('year_min', sel.year); p.set('year_max', sel.year); }
+      var qs = p.toString();
+      window.location.href = siteUrl + (qs ? '?' + qs : '');
+      return;
+    }
+    [carType, mfgInput, modelInput, yearInput].forEach(function (el) {
+      if (el && (!el.value || !el.value.trim())) el.disabled = true;
+    });
+  });
+})();
+</script>
+
+<script>
+/* ── Hero showcase slider: auto-advance + dots ── */
+(function () {
+    var slider = document.getElementById('mod-hero-slider');
+    if (!slider) return;
+    var slides = slider.querySelectorAll('.gl-home-hero-slide');
+    if (slides.length < 2) return;
+    var dots = slider.querySelectorAll('.gl-home-hero-dot');
+    var idx = 0, timer = null, INTERVAL = 5000;
+
+    function show(i) {
+        idx = (i + slides.length) % slides.length;
+        slides.forEach(function (s, n) { s.classList.toggle('is-active', n === idx); });
+        dots.forEach(function (d, n) { d.classList.toggle('is-active', n === idx); });
+    }
+    function next() { show(idx + 1); }
+    function play() { stop(); timer = setInterval(next, INTERVAL); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    dots.forEach(function (d) {
+        d.addEventListener('click', function () { show(parseInt(d.dataset.idx, 10)); play(); });
+    });
+    slider.addEventListener('mouseenter', stop);
+    slider.addEventListener('mouseleave', play);
+    /* don't burn cycles in background tabs */
+    document.addEventListener('visibilitychange', function () { document.hidden ? stop() : play(); });
+    play();
+})();
+</script>
+{% endblock %}

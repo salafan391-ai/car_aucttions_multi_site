@@ -1,0 +1,557 @@
+{% extends "base.html" %}
+{% load whatsapp_tags custom_filters %}
+
+{% block title %}{{ car.title|pretty_en }} — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-sc-page { padding: 2.5rem 0 3rem; }
+
+    /* ── Breadcrumb ── */
+    .gl-sc-crumb { color: var(--gl-muted); font-size: .82rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+    .gl-sc-crumb a { color: var(--gl-muted); transition: color .2s ease; }
+    .gl-sc-crumb a:hover { color: var(--gl-brand); }
+    .gl-sc-crumb .sep { color: var(--gl-border-2); }
+    .gl-sc-crumb .now { color: var(--gl-ink); font-weight: 800; }
+
+    .gl-sc-grid { display: grid; gap: 1.75rem; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+    @media (max-width: 960px) { .gl-sc-grid { grid-template-columns: 1fr; } }
+
+    /* ── Gallery ── */
+    .gl-sc-gallery { aspect-ratio: 16/10; position: relative; overflow: hidden; border-radius: var(--gl-radius); }
+    .gl-sc-gallery img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; display: block; }
+    .gl-sc-gallery .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gl-faint); }
+    .gl-sc-gallery .placeholder svg { width: 5rem; height: 5rem; }
+    .gl-sc-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 2.75rem; height: 2.75rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: rgba(5,8,14,.55); border: 1px solid rgba(255,255,255,.22); color: #fff; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: all .2s ease; opacity: 0; font-family: inherit; z-index: 3; }
+    .gl-sc-gallery:hover .gl-sc-arrow { opacity: 1; }
+    .gl-sc-arrow:hover { background: rgba(5,8,14,.8); transform: translateY(-50%) scale(1.05); }
+    .gl-sc-arrow.prev { inset-inline-start: 1rem; }
+    .gl-sc-arrow.next { inset-inline-end: 1rem; }
+    .gl-sc-arrow svg { width: 1.1rem; height: 1.1rem; }
+    .gl-sc-dots { position: absolute; bottom: 1rem; inset-inline: 0; margin: 0 auto; display: flex; justify-content: center; gap: .4rem; z-index: 2; }
+    .gl-sc-dot { width: .5rem; height: .5rem; border-radius: 999px; background: rgba(255,255,255,.5); border: 0; padding: 0; cursor: pointer; transition: all .2s ease; }
+    .gl-sc-dot.active { background: #fff; width: 1.3rem; }
+    .slider-image { display: none; width: 100%; height: 100%; }
+    .slider-image.active { display: block; }
+
+    .gl-sc-thumbs { display: flex; gap: .6rem; padding-top: .85rem; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--gl-border-2) transparent; }
+    .gl-sc-thumbs::-webkit-scrollbar { height: 5px; }
+    .gl-sc-thumbs::-webkit-scrollbar-thumb { background: var(--gl-border-2); border-radius: 999px; }
+    .gl-sc-thumb { flex: 0 0 4.5rem; aspect-ratio: 1; background: rgba(255,255,255,.04); border: 2px solid var(--gl-border); border-radius: var(--gl-radius-sm); overflow: hidden; cursor: pointer; padding: 0; transition: border-color .2s ease, transform .2s ease; }
+    .gl-sc-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gl-sc-thumb:hover { transform: translateY(-2px); }
+    .gl-sc-thumb:hover, .gl-sc-thumb.active { border-color: var(--gl-brand); }
+
+    /* ── Content sections ── */
+    .gl-sc-section { margin-top: 1.75rem; padding: 1.75rem 2rem; }
+    .gl-sc-section h2 { font-size: 1.2rem; margin: 0 0 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid var(--gl-border); display: flex; align-items: baseline; gap: .6rem; font-weight: 800; }
+    .gl-sc-section h2 small { display: inline-flex; align-items: center; color: var(--gl-brand); font-size: .7rem; font-weight: 800; background: color-mix(in srgb, var(--gl-brand) 12%, transparent); border: 1px solid color-mix(in srgb, var(--gl-brand) 28%, transparent); padding: .22rem .7rem; border-radius: 999px; }
+
+    .gl-sc-specs-grid { display: grid; gap: .85rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .gl-sc-spec { padding: .85rem 1rem; background: rgba(255,255,255,.04); border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); }
+    .gl-sc-spec-label { color: var(--gl-muted); font-size: .7rem; font-weight: 700; margin-bottom: .3rem; }
+    .gl-sc-spec-value { color: var(--gl-ink); font-size: .9rem; font-weight: 700; }
+
+    .gl-sc-desc { color: var(--gl-ink); font-size: .93rem; line-height: 1.85; white-space: pre-line; }
+
+    .gl-sc-inspection a { display: block; }
+    .gl-sc-inspection img { width: 100%; max-height: 500px; object-fit: contain; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); display: block; background: rgba(255,255,255,.04); transition: opacity .2s ease; }
+    .gl-sc-inspection a:hover img { opacity: .85; }
+    .gl-sc-inspection-hint { color: var(--gl-muted); font-size: .78rem; font-weight: 700; text-align: center; margin-top: .75rem; }
+    .gl-sc-inspection-video { width: 100%; max-height: 520px; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); background: #000; }
+    .gl-sc-inspection-embed { position: relative; width: 100%; aspect-ratio: 16/9; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); overflow: hidden; }
+    .gl-sc-inspection-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    /* ── Sticky aside ── */
+    .gl-sc-aside { padding: 1.75rem; align-self: start; position: sticky; top: calc(var(--gl-nav-h) + 1rem); }
+    @media (max-width: 960px) { .gl-sc-aside { position: static; } }
+    .gl-sc-aside h1 { font-size: 1.45rem; margin: 0 0 1rem; line-height: 1.3; font-weight: 800; }
+
+    .gl-sc-pill { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .8rem; margin: 0 0 .5rem; margin-inline-end: .35rem; font-size: .72rem; font-weight: 800; border-radius: 999px; color: var(--gl-muted); border: 1px solid var(--gl-border); background: var(--gl-glass-2); }
+    .gl-sc-pill-featured { color: var(--gl-brand); border-color: color-mix(in srgb, var(--gl-brand) 40%, transparent); background: color-mix(in srgb, var(--gl-brand) 12%, transparent); }
+    .gl-sc-pill-sold { color: var(--gl-danger); border-color: color-mix(in srgb, var(--gl-danger) 40%, transparent); background: color-mix(in srgb, var(--gl-danger) 12%, transparent); }
+    .gl-sc-pill-pending { color: var(--gl-warn); border-color: color-mix(in srgb, var(--gl-warn) 45%, transparent); background: color-mix(in srgb, var(--gl-warn) 12%, transparent); }
+    .gl-sc-pill-available { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 40%, transparent); background: color-mix(in srgb, var(--gl-ok) 12%, transparent); }
+    .gl-sc-pill-damaged { color: var(--gl-warn); border-color: color-mix(in srgb, var(--gl-warn) 50%, transparent); background: color-mix(in srgb, var(--gl-warn) 12%, transparent); }
+    .gl-sc-pill-accident { color: var(--gl-danger); border-color: color-mix(in srgb, var(--gl-danger) 45%, transparent); background: color-mix(in srgb, var(--gl-danger) 10%, transparent); }
+
+    .gl-sc-reg { color: var(--gl-muted); font-size: .8rem; font-weight: 700; margin-bottom: 1rem; }
+
+    .gl-sc-price-block { padding: 1.1rem 1.25rem; margin-bottom: 1.25rem; background: color-mix(in srgb, var(--gl-brand) 8%, transparent); border: 1px solid color-mix(in srgb, var(--gl-brand) 22%, transparent); border-radius: var(--gl-radius-sm); }
+    .gl-sc-price-label { color: var(--gl-muted); font-size: .72rem; font-weight: 800; margin-bottom: .35rem; }
+    .gl-sc-price { font-size: 1.85rem; font-weight: 800; letter-spacing: -.02em; background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; width: fit-content; }
+
+    /* ── CTA pills ── */
+    .gl-sc-cta { display: flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; box-sizing: border-box; padding: .9rem 1rem; margin-bottom: .75rem; border-radius: 999px; border: 1px solid var(--gl-border); color: var(--gl-ink); background: var(--gl-glass-2); font-family: inherit; font-size: .88rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: all .2s ease; }
+    .gl-sc-cta:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); transform: translateY(-1px); box-shadow: var(--gl-glow); }
+    .gl-sc-cta-solid { color: #06121a; background: var(--gl-grad); border: none; box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--gl-brand) 60%, transparent); }
+    .gl-sc-cta-solid:hover { filter: brightness(1.08); box-shadow: 0 14px 30px -10px color-mix(in srgb, var(--gl-brand) 70%, transparent); }
+    .gl-sc-cta-whatsapp { color: #fff; border: none; background: linear-gradient(135deg, #34d265, #1f9b46); box-shadow: 0 10px 24px -10px rgba(31,155,70,.55); }
+    .gl-sc-cta-whatsapp:hover { filter: brightness(1.08); box-shadow: 0 14px 30px -10px rgba(31,155,70,.65); }
+    .gl-sc-cta-success { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 45%, transparent); background: color-mix(in srgb, var(--gl-ok) 10%, transparent); }
+    .gl-sc-cta-success:hover { border-color: var(--gl-ok); background: color-mix(in srgb, var(--gl-ok) 16%, transparent); }
+    .gl-sc-cta svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+    .gl-sc-cta-info { color: var(--gl-muted); font-size: .74rem; font-weight: 700; text-align: center; margin: -.25rem 0 .85rem; }
+
+    /* ── Aside definition rows ── */
+    .gl-sc-specs-list { padding: 1.1rem 0; margin-bottom: 1.25rem; border-top: 1px solid var(--gl-border); }
+    .gl-sc-specs-list .row { display: flex; justify-content: space-between; align-items: center; gap: .85rem; padding: .5rem 0; font-size: .86rem; }
+    .gl-sc-specs-list .row + .row { border-top: 1px dashed var(--gl-border); }
+    .gl-sc-specs-list .label { color: var(--gl-muted); font-size: .76rem; font-weight: 700; }
+    .gl-sc-specs-list .value { color: var(--gl-ink); font-weight: 700; text-align: end; }
+    .gl-sc-specs-list .source-link { color: var(--gl-brand); font-size: .8rem; font-weight: 800; }
+    .gl-sc-specs-list .source-link:hover { text-decoration: underline; }
+
+    /* ── Sales rep ── */
+    .gl-sc-rep { display: flex; align-items: center; gap: .85rem; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--gl-border); }
+    .gl-sc-rep-img { width: 2.85rem; height: 2.85rem; border-radius: 999px; border: 2px solid color-mix(in srgb, var(--gl-brand) 45%, transparent); background: color-mix(in srgb, var(--gl-brand) 12%, transparent); overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--gl-brand); font-weight: 800; }
+    .gl-sc-rep-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gl-sc-rep-name { font-size: .95rem; font-weight: 800; color: var(--gl-ink); }
+    .gl-sc-rep-role { color: var(--gl-muted); font-size: .72rem; font-weight: 700; margin-top: .15rem; }
+
+    /* ── Lightbox (photo overlay — scrim colors intentional) ── */
+    .gl-sc-lightbox { position: fixed; inset: 0; background: rgba(3,5,12,.96); z-index: 100; display: none; flex-direction: column; padding: 1.25rem; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .gl-sc-lightbox.is-open { display: flex; }
+    .gl-sc-lightbox-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; }
+    .gl-sc-lightbox-counter { color: #fff; font-size: .8rem; font-weight: 800; padding: .35rem .95rem; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; }
+    .gl-sc-lightbox-close { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.25); color: #fff; width: 2.5rem; height: 2.5rem; border-radius: 999px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; font-size: 1.25rem; transition: background .2s ease; }
+    .gl-sc-lightbox-close:hover { background: rgba(255,255,255,.2); }
+    .gl-sc-lightbox-body { flex: 1; display: flex; align-items: center; justify-content: center; gap: 1rem; min-height: 0; }
+    .gl-sc-lightbox-body img { max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: var(--gl-radius-sm); }
+    .gl-sc-lightbox-nav { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.25); color: #fff; width: 3rem; height: 3rem; border-radius: 999px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: inherit; flex-shrink: 0; transition: background .2s ease; }
+    .gl-sc-lightbox-nav:hover { background: rgba(255,255,255,.2); }
+    .gl-sc-lightbox-nav svg { width: 1.25rem; height: 1.25rem; }
+    .gl-sc-lightbox-hint { text-align: center; color: rgba(255,255,255,.6); font-size: .74rem; font-weight: 700; margin-top: .75rem; }
+    @media (max-width: 600px) {
+        .gl-sc-lightbox { padding: .5rem; }
+        .gl-sc-lightbox-body { gap: 0; position: relative; }
+        .gl-sc-lightbox-body img { max-width: 100%; max-height: 84vh; flex: 1; }
+        .gl-sc-lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 2.5rem; height: 2.5rem; background: rgba(5,8,14,.55); backdrop-filter: blur(4px); z-index: 2; }
+        #lightbox-prev { inset-inline-start: .25rem; }
+        #lightbox-next { inset-inline-end: .25rem; }
+    }
+
+    @media (max-width: 600px) {
+        .gl-sc-page { padding: 1.5rem 0 2.5rem; }
+        .gl-sc-section { padding: 1.4rem 1.15rem; }
+        .gl-sc-aside { padding: 1.4rem 1.15rem; }
+    }
+</style>
+
+<section class="gl-sc-page">
+    <div class="gl-shell">
+        <nav class="gl-sc-crumb" aria-label="Breadcrumb">
+            <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <span class="sep">/</span>
+            <a href="{% url 'site_car_list' %}" class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</a>
+            <span class="sep">/</span>
+            <span class="now">{{ car.title|pretty_en }}</span>
+        </nav>
+
+        <div class="gl-sc-grid">
+            <div>
+                <div class="gl-sc-gallery gl-card car-img-wm" id="image-slider">
+                    {% if car.image or car.gallery.all or car.external_image_url %}
+                    {% with all_images=car.gallery.all %}
+                    {% if car.image %}
+                    <div class="slider-image active"><img src="{{ car.image.url }}" alt="{{ car.title }}" onclick="glOpenLightbox(this)"></div>
+                    {% elif car.external_image_url and not all_images %}
+                    <div class="slider-image active"><img src="{{ car.external_image_url }}" alt="{{ car.title }}" onclick="glOpenLightbox(this)"></div>
+                    {% endif %}
+                    {% for img in all_images %}
+                    <div class="slider-image {% if not car.image and forloop.first %}active{% endif %}"><img src="{{ img.image.url }}" alt="{{ img.caption|default:car.title }}" onclick="glOpenLightbox(this)"></div>
+                    {% endfor %}
+                    {% endwith %}
+
+                    {% if car.gallery.all %}
+                    <button type="button" class="gl-sc-arrow prev" onclick="glChangeSlide(-1)" aria-label="Previous">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button type="button" class="gl-sc-arrow next" onclick="glChangeSlide(1)" aria-label="Next">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+
+                    <div class="gl-sc-dots">
+                        {% if car.image %}<button type="button" onclick="glGoToSlide(0)" class="gl-sc-dot" aria-label="1"></button>{% endif %}
+                        {% for img in car.gallery.all %}
+                        {% if car.image %}<button type="button" onclick="glGoToSlide({{ forloop.counter }})" class="gl-sc-dot" aria-label="{{ forloop.counter|add:1 }}"></button>{% else %}<button type="button" onclick="glGoToSlide({{ forloop.counter0 }})" class="gl-sc-dot" aria-label="{{ forloop.counter }}"></button>{% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="placeholder">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if car.gallery.all %}
+                <div class="gl-sc-thumbs">
+                    {% if car.image %}
+                    <button type="button" class="gl-sc-thumb" onclick="glGoToSlide(0)"><img src="{{ car.image.url }}" alt="" loading="lazy"></button>
+                    {% endif %}
+                    {% for img in car.gallery.all %}
+                    {% if car.image %}
+                    <button type="button" class="gl-sc-thumb" onclick="glGoToSlide({{ forloop.counter }})"><img src="{{ img.image.url }}" alt="" loading="lazy"></button>
+                    {% else %}
+                    <button type="button" class="gl-sc-thumb" onclick="glGoToSlide({{ forloop.counter0 }})"><img src="{{ img.image.url }}" alt="" loading="lazy"></button>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="gl-sc-section gl-card">
+                    <h2>
+                        <small class="bilingual" data-lang-ar="التقنيات" data-lang-en="Technical" data-lang-es="Técnico" data-lang-ru="Технический">التقنيات</small>
+                        <span class="bilingual" data-lang-ar="المواصفات" data-lang-en="Specifications" data-lang-es="Especificaciones" data-lang-ru="Характеристики">المواصفات</span>
+                    </h2>
+                    <div class="gl-sc-specs-grid">
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">الشركة المصنعة</div>
+                            <div class="gl-sc-spec-value bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
+                        </div>
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="الموديل" data-lang-en="Model" data-lang-es="Modelo" data-lang-ru="Модель">الموديل</div>
+                            <div class="gl-sc-spec-value bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model|pretty_en }}">{{ car.model|translate_model }}</div>
+                        </div>
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع</div>
+                            <div class="gl-sc-spec-value">{{ car.year }}{% if car.month %} / {{ car.month }}{% endif %}</div>
+                        </div>
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="المسافة" data-lang-en="Mileage" data-lang-es="Kilometraje" data-lang-ru="Пробег">المسافة</div>
+                            <div class="gl-sc-spec-value bilingual" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</div>
+                        </div>
+                        {% if car.transmission %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Коробка">ناقل الحركة</div>
+                            <div class="gl-sc-spec-value bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</div>
+                        </div>
+                        {% endif %}
+                        {% if car.fuel %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</div>
+                            <div class="gl-sc-spec-value bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</div>
+                        </div>
+                        {% endif %}
+                        {% if car.engine_cc %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="حجم المحرك" data-lang-en="Engine Size" data-lang-es="Motor" data-lang-ru="Объём">حجم المحرك</div>
+                            <div class="gl-sc-spec-value">{{ car.engine_cc|floatformat:"0g" }} cc</div>
+                        </div>
+                        {% endif %}
+                        {% if car.trim %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="الطراز" data-lang-en="Trim" data-lang-es="Versión" data-lang-ru="Комплектация">الطراز</div>
+                            <div class="gl-sc-spec-value">{{ car.trim }}</div>
+                        </div>
+                        {% endif %}
+                        {% if car.color %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</div>
+                            <div class="gl-sc-spec-value bilingual" data-lang-ar="{{ car.color|translate_color }}" data-lang-ru="{{ car.color|translate_color:'ru' }}" data-lang-es="{{ car.color|translate_color:'es' }}" data-lang-en="{{ car.color|pretty_en }}">{{ car.color|translate_color }}</div>
+                        </div>
+                        {% endif %}
+                        {% if car.body_type %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Тип кузова">نوع الهيكل</div>
+                            <div class="gl-sc-spec-value bilingual" data-lang-ar="{{ car.body_type|translate_body }}" data-lang-ru="{{ car.body_type|translate_body:'ru' }}" data-lang-es="{{ car.body_type|translate_body:'es' }}" data-lang-en="{{ car.body_type|pretty_en }}">{{ car.body_type|translate_body }}</div>
+                        </div>
+                        {% endif %}
+                        {% if car.engine %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</div>
+                            <div class="gl-sc-spec-value">{{ car.engine }}</div>
+                        </div>
+                        {% endif %}
+                        {% if car.drive_wheel %}
+                        <div class="gl-sc-spec">
+                            <div class="gl-sc-spec-label bilingual" data-lang-ar="نظام الدفع" data-lang-en="Drivetrain" data-lang-es="Tracción" data-lang-ru="Привод">نظام الدفع</div>
+                            <div class="gl-sc-spec-value">{{ car.drive_wheel }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if car.description %}
+                <div class="gl-sc-section gl-card">
+                    <h2>
+                        <small class="bilingual" data-lang-ar="عن السيارة" data-lang-en="About" data-lang-es="Sobre" data-lang-ru="О авто">عن السيارة</small>
+                        <span class="bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</span>
+                    </h2>
+                    <div class="gl-sc-desc">{{ car.description }}</div>
+                </div>
+                {% endif %}
+
+                {% if car.inspection_video or car.inspection_video_url %}
+                <div class="gl-sc-section gl-card gl-sc-inspection">
+                    <h2>
+                        <small class="bilingual" data-lang-ar="فيديو" data-lang-en="Video" data-lang-es="Vídeo" data-lang-ru="Видео">فيديو</small>
+                        <span class="bilingual" data-lang-ar="فيديو الفحص" data-lang-en="Inspection Video" data-lang-es="Vídeo de inspección" data-lang-ru="Видео осмотра">فيديو الفحص</span>
+                    </h2>
+                    {% if car.inspection_video %}
+                    <video controls preload="metadata" class="gl-sc-inspection-video" src="{{ car.inspection_video.url }}"></video>
+                    {% else %}{% with emb=car.inspection_video_url|video_embed %}{% if emb %}
+                    <div class="gl-sc-inspection-embed"><iframe src="{{ emb }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+                    {% else %}
+                    <video controls preload="metadata" class="gl-sc-inspection-video" src="{{ car.inspection_video_url }}"></video>
+                    {% endif %}{% endwith %}{% endif %}
+                </div>
+                {% endif %}
+
+                {% if car.inspection_image %}
+                <div class="gl-sc-section gl-card gl-sc-inspection">
+                    <h2>
+                        <small class="bilingual" data-lang-ar="موثق" data-lang-en="Certified" data-lang-es="Certificado" data-lang-ru="Сертифицировано">موثق</small>
+                        <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-en="Inspection Report" data-lang-es="Informe de inspección" data-lang-ru="Отчёт о проверке">تقرير الفحص</span>
+                    </h2>
+                    <a href="{{ car.inspection_image.url }}" target="_blank" rel="noopener">
+                        <img src="{{ car.inspection_image.url }}" alt="Inspection report">
+                    </a>
+                    <p class="gl-sc-inspection-hint bilingual" data-lang-ar="اضغط للعرض الكامل" data-lang-en="Click to view full image" data-lang-es="Clic para ver completo" data-lang-ru="Нажмите для полного">اضغط للعرض الكامل</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <aside class="gl-sc-aside gl-card">
+                <h1>{{ car.title|pretty_en }}</h1>
+
+                <div>
+                    {% if car.is_featured %}
+                    <span class="gl-sc-pill gl-sc-pill-featured bilingual" data-lang-ar="مميزة" data-lang-en="Featured" data-lang-es="Destacada" data-lang-ru="Избранное">مميزة</span>
+                    {% endif %}
+                    {% if car.status == 'sold' %}
+                    <span class="gl-sc-pill gl-sc-pill-sold bilingual" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продано">تم البيع</span>
+                    {% elif car.source_status == '폐차' %}
+                    <span class="gl-sc-pill gl-sc-pill-damaged bilingual" data-lang-ar="تشليح" data-lang-en="Scrap" data-lang-es="Desguace" data-lang-ru="Утиль">تشليح</span>
+                    {% elif car.source_status == '구제' %}
+                    <span class="gl-sc-pill gl-sc-pill-damaged bilingual" data-lang-ar="مصدوم" data-lang-en="Damaged" data-lang-es="Dañado" data-lang-ru="Повреждён">مصدوم</span>
+                    {% elif car.source_status == '부품' %}
+                    <span class="gl-sc-pill gl-sc-pill-damaged bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Piezas" data-lang-ru="Запчасти">قطع غيار</span>
+                    {% elif car.status == 'pending' %}
+                    <span class="gl-sc-pill gl-sc-pill-pending bilingual" data-lang-ar="قيد الانتظار" data-lang-en="Pending" data-lang-es="Pendiente" data-lang-ru="В ожидании">قيد الانتظار</span>
+                    {% else %}
+                    <span class="gl-sc-pill gl-sc-pill-available bilingual" data-lang-ar="متاح" data-lang-en="Available" data-lang-es="Disponible" data-lang-ru="В наличии">متاح</span>
+                    {% endif %}
+                    {% if car.claims_count > 0 %}
+                    <span class="gl-sc-pill gl-sc-pill-accident">⚠ <span class="bilingual" data-lang-ar="{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}" data-lang-en="{% if car.claims_count == 1 %}1 accident{% else %}{{ car.claims_count }} accidents{% endif %}" data-lang-es="{% if car.claims_count == 1 %}1 accidente{% else %}{{ car.claims_count }} accidentes{% endif %}" data-lang-ru="{% if car.claims_count == 1 %}1 авария{% else %}{{ car.claims_count }} аварий{% endif %}">{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}</span></span>
+                    {% endif %}
+                </div>
+
+                {% if car.registration_no %}<div class="gl-sc-reg">#{{ car.registration_no }}</div>{% endif %}
+
+                <div class="gl-sc-price-block">
+                    <div class="gl-sc-price-label bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</div>
+                    <div class="gl-sc-price" data-price-src="{{ car.price }}" data-cur-src="{{ car.currency|default:'KRW' }}">{{ car.price|floatformat:0 }} {{ car.currency|default:'KRW' }}</div>
+                </div>
+
+                {% if user.is_staff %}
+                {% with existing_bill=car.bills.first %}
+                {% if existing_bill %}
+                <a href="{% url 'invoice_view' car.pk existing_bill.pk %}" class="gl-sc-cta gl-sc-cta-success">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="bilingual" data-lang-ar="عرض فاتورة البيع" data-lang-en="View Sales Invoice" data-lang-es="Ver factura" data-lang-ru="Счёт продажи">عرض فاتورة البيع</span>
+                </a>
+                <div class="gl-sc-cta-info">{{ existing_bill.receipt_number }} · {{ existing_bill.date|date:"Y-m-d" }}</div>
+                {% else %}
+                <a href="{% url 'invoice_new' car.pk %}" class="gl-sc-cta">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="bilingual" data-lang-ar="إصدار فاتورة بيع" data-lang-en="Issue Sales Invoice" data-lang-es="Emitir factura" data-lang-ru="Выпустить счёт">إصدار فاتورة بيع</span>
+                </a>
+                {% endif %}
+                {% endwith %}
+                {% endif %}
+
+                <div class="gl-sc-specs-list">
+                    <div class="row">
+                        <span class="label bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع</span>
+                        <span class="value">{{ car.year }}{% if car.month %} / {{ car.month }}{% endif %}</span>
+                    </div>
+                    <div class="row">
+                        <span class="label bilingual" data-lang-ar="المسافة" data-lang-en="Distance" data-lang-es="Distancia" data-lang-ru="Пробег">المسافة</span>
+                        <span class="value bilingual" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span>
+                    </div>
+                    {% if car.transmission %}
+                    <div class="row">
+                        <span class="label bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Коробка">ناقل الحركة</span>
+                        <span class="value bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
+                    </div>
+                    {% endif %}
+                    {% if car.fuel %}
+                    <div class="row">
+                        <span class="label bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</span>
+                        <span class="value bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-en="{{ car.fuel|pretty_en }}">{{ car.fuel|translate_fuel }}</span>
+                    </div>
+                    {% endif %}
+                    {% if car.engine_cc %}
+                    <div class="row">
+                        <span class="label bilingual" data-lang-ar="حجم المحرك" data-lang-en="Engine Size" data-lang-es="Motor" data-lang-ru="Объём">حجم المحرك</span>
+                        <span class="value">{{ car.engine_cc|floatformat:"0g" }} cc</span>
+                    </div>
+                    {% endif %}
+                    {% if car.location %}
+                    <div class="row">
+                        <span class="label bilingual" data-lang-ar="الموقع" data-lang-en="Location" data-lang-es="Ubicación" data-lang-ru="Расположение">الموقع</span>
+                        <span class="value bilingual" data-lang-ar="{{ car.location|translate_location }}" data-lang-ru="{{ car.location|translate_location:'ru' }}" data-lang-es="{{ car.location|translate_location:'es' }}" data-lang-en="{{ car.location|translate_location:'en' }}">{{ car.location|translate_location }}</span>
+                    </div>
+                    {% endif %}
+                    {% if car.auction_end %}
+                    <div class="row">
+                        <span class="label bilingual" data-lang-ar="نهاية المزاد" data-lang-en="Auction End" data-lang-es="Fin de subasta" data-lang-ru="Конец аукциона">نهاية المزاد</span>
+                        <span class="value">{{ car.auction_end|date:"H:i Y.m.d" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if car.source_url %}
+                    <div class="row">
+                        <a href="{{ car.source_url }}" target="_blank" rel="noopener" class="source-link bilingual" data-lang-ar="↗ الإعلان الأصلي" data-lang-en="↗ Original listing" data-lang-es="↗ Anuncio original" data-lang-ru="↗ Оригинал">↗ الإعلان الأصلي</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if contact_person_name or contact_person_photo %}
+                <div class="gl-sc-rep">
+                    <div class="gl-sc-rep-img">
+                        {% if contact_person_photo %}<img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" onerror="this.replaceWith(this.alt.charAt(0));">{% else %}{{ contact_person_name|first }}{% endif %}
+                    </div>
+                    <div>
+                        <div class="gl-sc-rep-name">{{ contact_person_name }}</div>
+                        <div class="gl-sc-rep-role bilingual" data-lang-ar="مسؤول المبيعات" data-lang-en="Sales Rep" data-lang-es="Vendedor" data-lang-ru="Менеджер">مسؤول المبيعات</div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if site_whatsapp %}
+                {% whatsapp_site_car_message car site_name as wa_msg %}
+                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ wa_msg }}" target="_blank" rel="noopener" class="gl-sc-cta gl-sc-cta-whatsapp">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    <span class="bilingual" data-lang-ar="تواصل عبر واتساب" data-lang-en="Contact on WhatsApp" data-lang-es="Contactar por WhatsApp" data-lang-ru="Связаться в WhatsApp">تواصل عبر واتساب</span>
+                </a>
+                {% elif whatsapp_phones %}
+                {% whatsapp_site_car_message car site_name as wa_msg %}
+                <a href="https://wa.me/{{ whatsapp_phones.0.phone_number|format_whatsapp_number }}?text={{ wa_msg }}" target="_blank" rel="noopener" class="gl-sc-cta gl-sc-cta-whatsapp">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    <span class="bilingual" data-lang-ar="تواصل عبر واتساب" data-lang-en="Contact on WhatsApp" data-lang-es="Contactar por WhatsApp" data-lang-ru="Связаться в WhatsApp">تواصل عبر واتساب</span>
+                </a>
+                {% else %}
+                <a href="{% url 'contact' %}" class="gl-sc-cta gl-sc-cta-solid bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Us" data-lang-es="Contáctenos" data-lang-ru="Связаться с нами">تواصل معنا</a>
+                {% endif %}
+            </aside>
+        </div>
+    </div>
+</section>
+
+<div id="lightbox-modal" class="gl-sc-lightbox">
+    <div class="gl-sc-lightbox-top">
+        <span id="lightbox-counter" class="gl-sc-lightbox-counter"></span>
+        <button type="button" class="gl-sc-lightbox-close" onclick="glCloseLightbox()" aria-label="Close">×</button>
+    </div>
+    <div class="gl-sc-lightbox-body">
+        <button id="lightbox-prev" type="button" class="gl-sc-lightbox-nav" onclick="glPrevLightbox()" aria-label="Previous">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <img id="lightbox-image" src="" alt="">
+        <button id="lightbox-next" type="button" class="gl-sc-lightbox-nav" onclick="glNextLightbox()" aria-label="Next">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+    </div>
+    <div class="gl-sc-lightbox-hint bilingual" data-lang-ar="ESC للإغلاق · ← → للتنقل" data-lang-en="ESC to close · ← → to navigate" data-lang-es="ESC cerrar · ← → navegar" data-lang-ru="ESC закрыть · ← → навигация">ESC للإغلاق · ← → للتنقل</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let glCurrent = 0;
+const glSlides = document.querySelectorAll('.slider-image');
+const glDots = document.querySelectorAll('.gl-sc-dot');
+const glThumbs = document.querySelectorAll('.gl-sc-thumb');
+
+function glUpdate() {
+    glSlides.forEach(function(s, i){ s.classList.toggle('active', i === glCurrent); });
+    glDots.forEach(function(d, i){ d.classList.toggle('active', i === glCurrent); });
+    glThumbs.forEach(function(t, i){ t.classList.toggle('active', i === glCurrent); });
+}
+
+function glChangeSlide(dir) {
+    if (!glSlides.length) return;
+    glCurrent += dir;
+    if (glCurrent < 0) glCurrent = glSlides.length - 1;
+    if (glCurrent >= glSlides.length) glCurrent = 0;
+    glUpdate();
+}
+
+function glGoToSlide(i) { glCurrent = i; glUpdate(); }
+
+document.addEventListener('keydown', function(e) {
+    var modal = document.getElementById('lightbox-modal');
+    var lbOpen = modal && modal.classList.contains('is-open');
+    if (lbOpen) return;
+    if (e.key === 'ArrowLeft') glChangeSlide(1);
+    if (e.key === 'ArrowRight') glChangeSlide(-1);
+});
+
+let glStartX = 0, glEndX = 0;
+const glSlider = document.getElementById('image-slider');
+if (glSlider) {
+    glSlider.addEventListener('touchstart', function(e){ glStartX = e.changedTouches[0].screenX; });
+    glSlider.addEventListener('touchend', function(e){
+        glEndX = e.changedTouches[0].screenX;
+        if (glEndX < glStartX - 50) glChangeSlide(1);
+        if (glEndX > glStartX + 50) glChangeSlide(-1);
+    });
+}
+
+glUpdate();
+
+let glLbIndex = 0;
+let glLbImages = [];
+
+function glOpenLightbox(imgEl) {
+    glLbImages = Array.from(document.querySelectorAll('#image-slider .slider-image img')).map(function(img){ return img.src; });
+    glLbIndex = glLbImages.indexOf(imgEl.src);
+    if (glLbIndex < 0) glLbIndex = 0;
+    document.getElementById('lightbox-image').src = glLbImages[glLbIndex];
+    document.getElementById('lightbox-counter').textContent = (glLbIndex + 1) + ' / ' + glLbImages.length;
+    document.getElementById('lightbox-modal').classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    glUpdateLbNav();
+}
+function glUpdateLb() {
+    document.getElementById('lightbox-image').src = glLbImages[glLbIndex];
+    document.getElementById('lightbox-counter').textContent = (glLbIndex + 1) + ' / ' + glLbImages.length;
+}
+function glNextLightbox() { if (glLbIndex < glLbImages.length - 1) { glLbIndex++; glUpdateLb(); glUpdateLbNav(); } }
+function glPrevLightbox() { if (glLbIndex > 0) { glLbIndex--; glUpdateLb(); glUpdateLbNav(); } }
+function glUpdateLbNav() {
+    var prev = document.getElementById('lightbox-prev');
+    var next = document.getElementById('lightbox-next');
+    var counter = document.getElementById('lightbox-counter');
+    if (glLbImages.length <= 1) {
+        prev.style.display = 'none'; next.style.display = 'none'; counter.style.display = 'none';
+    } else {
+        prev.style.display = 'flex'; next.style.display = 'flex'; counter.style.display = 'inline-flex';
+        prev.style.opacity = glLbIndex > 0 ? '1' : '0.4';
+        next.style.opacity = glLbIndex < glLbImages.length - 1 ? '1' : '0.4';
+    }
+}
+function glCloseLightbox() {
+    document.getElementById('lightbox-modal').classList.remove('is-open');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('lightbox-modal');
+    if (modal) {
+        modal.addEventListener('click', function(e){ if (e.target === this) glCloseLightbox(); });
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    var modal = document.getElementById('lightbox-modal');
+    var isOpen = modal && modal.classList.contains('is-open');
+    if (!isOpen) return;
+    if (e.key === 'Escape') { glCloseLightbox(); e.stopPropagation(); }
+    else if (e.key === 'ArrowLeft') { glPrevLightbox(); e.stopPropagation(); }
+    else if (e.key === 'ArrowRight') { glNextLightbox(); e.stopPropagation(); }
+});
+</script>
+{% endblock %}

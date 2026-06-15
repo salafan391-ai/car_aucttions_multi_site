@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-auth-page {
+        min-height: calc(100vh - var(--gl-nav-h) - 4rem);
+        display: flex; align-items: center; justify-content: center;
+        padding: 3rem 1.1rem 4rem;
+    }
+    .gl-auth-card {
+        width: 100%; max-width: 460px; padding: 2.4rem 2rem;
+        position: relative; overflow: hidden;
+    }
+    .gl-auth-card::before {
+        content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+        background:
+            radial-gradient(60% 50% at 0% 0%, color-mix(in srgb, var(--gl-brand) 16%, transparent), transparent 70%),
+            radial-gradient(60% 50% at 100% 100%, color-mix(in srgb, var(--gl-brand-2) 14%, transparent), transparent 70%);
+    }
+    .gl-auth-head { text-align: center; margin-bottom: 1.8rem; }
+    .gl-auth-eyebrow {
+        display: inline-block; padding: .3rem .85rem; border-radius: 999px;
+        font-size: .68rem; font-weight: 800; letter-spacing: .2em; text-transform: uppercase;
+        color: var(--gl-brand); border: 1px solid color-mix(in srgb, var(--gl-brand) 40%, transparent);
+        background: color-mix(in srgb, var(--gl-brand) 10%, transparent);
+        margin-bottom: 1rem;
+    }
+    .gl-auth-title { font-size: clamp(1.7rem, 4vw, 2.2rem); font-weight: 800; margin: 0 0 .6rem; }
+    .gl-auth-sub { color: var(--gl-muted); font-size: .92rem; line-height: 1.7; margin: 0; }
+
+    .gl-auth-field { margin-bottom: 1rem; }
+    .gl-auth-field label {
+        display: inline-block; font-size: .82rem; font-weight: 700;
+        color: var(--gl-ink); margin-bottom: .45rem;
+    }
+    .gl-auth-field .req { color: var(--gl-brand); font-weight: 800; }
+
+    .gl-auth-forgot { text-align: end; margin-top: -.3rem; margin-bottom: .9rem; }
+    .gl-auth-forgot a { color: var(--gl-brand); font-size: .8rem; font-weight: 700; }
+    .gl-auth-forgot a:hover { text-decoration: underline; }
+
+    .gl-auth-submit { margin-top: .4rem; }
+
+    .gl-auth-alert {
+        margin-bottom: 1.2rem; padding: .85rem 1rem; border-radius: var(--gl-radius-sm);
+        background: color-mix(in srgb, var(--gl-danger) 16%, transparent);
+        border: 1px solid color-mix(in srgb, var(--gl-danger) 45%, transparent);
+        color: #ffd9de; font-size: .85rem;
+    }
+    .gl-auth-alert p { margin: 0; }
+    .gl-auth-alert p + p { margin-top: .35rem; }
+
+    .gl-auth-foot {
+        text-align: center; margin: 1.4rem 0 0; color: var(--gl-muted); font-size: .88rem;
+    }
+    .gl-auth-foot a { color: var(--gl-brand); font-weight: 700; }
+    .gl-auth-foot a:hover { text-decoration: underline; }
+
+    /* ── Social OAuth (glass pills) ── */
+    .gl-auth-oauth { margin-top: 1.6rem; }
+    .gl-auth-oauth-divider {
+        display: flex; align-items: center; gap: .75rem;
+        color: var(--gl-faint); font-size: .76rem; font-weight: 700;
+        margin-bottom: 1.1rem;
+    }
+    .gl-auth-oauth-divider::before,
+    .gl-auth-oauth-divider::after { content: ""; flex: 1; height: 1px; background: var(--gl-border); }
+    .gl-auth-oauth-btn {
+        display: flex; align-items: center; justify-content: center; gap: .65rem;
+        width: 100%; box-sizing: border-box;
+        padding: .8rem 1rem; margin-bottom: .6rem;
+        border: 1px solid var(--gl-border); border-radius: 999px;
+        color: var(--gl-ink); background: var(--gl-glass-2);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        font-family: inherit; font-size: .88rem; font-weight: 700; text-decoration: none;
+        transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+    }
+    .gl-auth-oauth-btn:hover {
+        border-color: color-mix(in srgb, var(--gl-brand) 55%, var(--gl-border));
+        box-shadow: var(--gl-glow); transform: translateY(-1px);
+    }
+    .gl-auth-oauth-btn svg { flex-shrink: 0; }
+    /* Apple brand black (provider brand color exception) */
+    .gl-auth-oauth-apple { background: #000; color: #fff; border-color: rgba(255,255,255,.22); }
+    .gl-auth-oauth-apple:hover { background: #141414; }
+</style>
+
+<section class="gl-auth-page">
+    <div class="gl-auth-card gl-card">
+        <header class="gl-auth-head">
+            <div class="gl-auth-eyebrow bilingual" data-lang-ar="للأعضاء" data-lang-en="Members Only" data-lang-es="Solo miembros" data-lang-ru="Для участников">للأعضاء</div>
+            <h1 class="gl-auth-title bilingual" data-lang-ar="تسجيل الدخول" data-lang-en="Sign In" data-lang-es="Iniciar sesión" data-lang-ru="Вход">تسجيل الدخول</h1>
+            <p class="gl-auth-sub bilingual" data-lang-ar="أدخل بياناتك للوصول إلى حسابك" data-lang-en="Enter your credentials to access your account" data-lang-es="Introduce tus credenciales para acceder a tu cuenta" data-lang-ru="Введите данные для входа в аккаунт">أدخل بياناتك للوصول إلى حسابك</p>
+        </header>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="gl-auth-alert">
+                <p class="bilingual" data-lang-ar="اسم المستخدم أو كلمة المرور غير صحيحة." data-lang-en="Invalid username or password." data-lang-es="Usuario o contraseña no válidos." data-lang-ru="Неверное имя пользователя или пароль.">اسم المستخدم أو كلمة المرور غير صحيحة.</p>
+            </div>
+            {% endif %}
+
+            <div class="gl-auth-field">
+                <label class="bilingual" data-lang-ar="اسم المستخدم" data-lang-en="Username" data-lang-es="Usuario" data-lang-ru="Имя пользователя">اسم المستخدم</label> <span class="req">*</span>
+                <input type="text" name="username" class="gl-input" required autofocus data-placeholder-ar="اسم المستخدم" data-placeholder-en="Username" data-placeholder-es="Usuario" data-placeholder-ru="Имя пользователя" placeholder="اسم المستخدم">
+            </div>
+
+            <div class="gl-auth-field">
+                <label class="bilingual" data-lang-ar="كلمة المرور" data-lang-en="Password" data-lang-es="Contraseña" data-lang-ru="Пароль">كلمة المرور</label> <span class="req">*</span>
+                <input type="password" name="password" class="gl-input" required placeholder="••••••••">
+            </div>
+
+            <div class="gl-auth-forgot">
+                <a href="{% url 'password_reset' %}" class="bilingual" data-lang-ar="نسيت كلمة المرور؟" data-lang-en="Forgot password?" data-lang-es="¿Olvidaste tu contraseña?" data-lang-ru="Забыли пароль?">نسيت كلمة المرور؟</a>
+            </div>
+
+            <button type="submit" class="gl-btn gl-btn-solid gl-btn-block gl-auth-submit bilingual" data-lang-ar="تسجيل الدخول" data-lang-en="Sign In" data-lang-es="Iniciar sesión" data-lang-ru="Войти">تسجيل الدخول</button>
+
+            <p class="gl-auth-foot">
+                <span class="bilingual" data-lang-ar="ليس لديك حساب؟" data-lang-en="Don't have an account?" data-lang-es="¿No tienes una cuenta?" data-lang-ru="Нет аккаунта?">ليس لديك حساب؟</span>
+                <a href="{% url 'register' %}" class="bilingual" data-lang-ar="إنشاء حساب" data-lang-en="Create one" data-lang-es="Crear una" data-lang-ru="Создать">إنشاء حساب</a>
+            </p>
+        </form>
+
+        {% load socialaccount %}
+        {% get_providers as socialaccount_providers %}
+        {% if socialaccount_providers %}
+        <div class="gl-auth-oauth">
+            <div class="gl-auth-oauth-divider"><span class="bilingual" data-lang-ar="أو" data-lang-en="or" data-lang-es="o" data-lang-ru="или">أو</span></div>
+            {% for provider in socialaccount_providers %}
+            {% if provider.id == 'google' %}
+            <a href="{% provider_login_url provider.id process='login' %}" class="gl-auth-oauth-btn gl-auth-oauth-google">
+                <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.79 2.72v2.26h2.9c1.7-1.57 2.69-3.88 2.69-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.96 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/></svg>
+                <span class="bilingual" data-lang-ar="المتابعة عبر Google" data-lang-en="Continue with Google" data-lang-es="Continuar con Google" data-lang-ru="Войти через Google">المتابعة عبر Google</span>
+            </a>
+            {% elif provider.id == 'apple' %}
+            <a href="{% provider_login_url provider.id process='login' %}" class="gl-auth-oauth-btn gl-auth-oauth-apple">
+                <svg width="15" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.89-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.79 1.3 10.34.86 1.25 1.89 2.65 3.23 2.6 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.38.81 1.4-.02 2.28-1.27 3.13-2.53.99-1.45 1.4-2.85 1.42-2.92-.03-.01-2.72-1.04-2.75-4.14M14.53 4.32c.71-.86 1.19-2.06 1.06-3.25-1.02.04-2.26.68-2.99 1.54-.66.76-1.23 1.98-1.08 3.15 1.14.09 2.3-.58 3.01-1.44"/></svg>
+                <span class="bilingual" data-lang-ar="المتابعة عبر Apple" data-lang-en="Continue with Apple" data-lang-es="Continuar con Apple" data-lang-ru="Войти через Apple">المتابعة عبر Apple</span>
+            </a>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

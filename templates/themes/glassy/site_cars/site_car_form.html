@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}{% if action == 'add' %}إضافة سيارة{% else %}تعديل سيارة{% endif %} — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-sc-form-page { padding: 2.5rem 0 4rem; max-width: 1100px; margin: 0 auto; }
+
+    .gl-sc-back { color: var(--gl-muted); display: inline-flex; align-items: center; gap: .45rem; font-size: .82rem; font-weight: 800; padding: .5rem 1.1rem; border-radius: 999px; background: var(--gl-glass); border: 1px solid var(--gl-border); margin-bottom: 1.5rem; transition: color .18s ease, border-color .18s ease, box-shadow .25s ease; }
+    .gl-sc-back:hover { color: var(--gl-brand); border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); box-shadow: var(--gl-glow); }
+    .gl-sc-back svg { width: 1rem; height: 1rem; }
+
+    .gl-sc-form-head { margin-bottom: 2rem; }
+    .gl-sc-form-head .eyebrow { color: var(--gl-brand); font-size: .72rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; }
+    .gl-sc-form-head h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: .75rem 0 0; font-weight: 800; letter-spacing: -.01em; }
+
+    .gl-sc-form-card { overflow: hidden; }
+    .gl-sc-form-section { padding: 2rem 2.25rem; border-block-end: 1px solid var(--gl-border); }
+    .gl-sc-form-section:last-of-type { border-block-end: 0; }
+    .gl-sc-form-section-title { color: var(--gl-brand); font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; gap: .6rem; margin-bottom: 1.5rem; }
+    .gl-sc-form-section-title::after { content: ""; flex: 1; height: 1px; background: var(--gl-border); }
+
+    .gl-sc-form-grid { display: grid; gap: 1.1rem; }
+    .gl-sc-form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .gl-sc-form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .gl-sc-form-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 768px) {
+        .gl-sc-form-grid.cols-2, .gl-sc-form-grid.cols-3 { grid-template-columns: 1fr; }
+        .gl-sc-form-grid .span-2 { grid-column: span 1; }
+        .gl-sc-form-page { padding: 2rem 0 3rem; }
+        .gl-sc-form-section { padding: 1.5rem 1.25rem; }
+    }
+
+    .gl-sc-form-page label { display: block; color: var(--gl-ink); font-size: .82rem; font-weight: 700; margin-bottom: .4rem; }
+    .gl-sc-form-page label .req { color: var(--gl-danger); margin-inline-start: .2rem; }
+
+    .gl-sc-form-page textarea.gl-textarea { min-height: 140px; resize: vertical; }
+
+    .gl-sc-checkbox { display: inline-flex; align-items: center; gap: .6rem; cursor: pointer; color: var(--gl-ink); font-size: .88rem; font-weight: 700; margin-top: .5rem; }
+    .gl-sc-checkbox input { appearance: none; -webkit-appearance: none; width: 1.2rem; height: 1.2rem; border-radius: 6px; border: 1px solid var(--gl-border); background: rgba(255,255,255,.05); cursor: pointer; position: relative; flex-shrink: 0; margin: 0; transition: background .18s ease, border-color .18s ease; }
+    .gl-sc-checkbox input:checked { border-color: transparent; background: var(--gl-grad); }
+    .gl-sc-checkbox input:checked::after { content: ''; position: absolute; left: 6px; top: 2px; width: 4px; height: 9px; border: solid #06121a; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+    /* Dropzone-style file inputs */
+    .gl-sc-file { display: block; width: 100%; box-sizing: border-box; padding: .9rem 1rem; background: rgba(255,255,255,.04); border: 1.5px dashed var(--gl-border-2); border-radius: var(--gl-radius-sm); color: var(--gl-muted); font-size: .85rem; font-family: inherit; cursor: pointer; transition: border-color .18s ease, background .18s ease, color .18s ease; }
+    .gl-sc-file:hover { border-color: var(--gl-brand); color: var(--gl-brand); background: color-mix(in srgb, var(--gl-brand) 8%, transparent); }
+    .gl-sc-file::-webkit-file-upload-button, .gl-sc-file::file-selector-button { background: var(--gl-glass-2); border: 1px solid var(--gl-border); border-radius: 999px; color: var(--gl-brand); padding: .4rem .95rem; font-size: .78rem; font-weight: 800; cursor: pointer; margin-inline-end: .85rem; font-family: inherit; transition: border-color .18s ease, background .18s ease; }
+    .gl-sc-file::-webkit-file-upload-button:hover, .gl-sc-file::file-selector-button:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); background: color-mix(in srgb, var(--gl-brand) 12%, transparent); }
+    .gl-sc-file-hint { color: var(--gl-muted); font-size: .78rem; margin-top: .5rem; }
+    .gl-sc-file-hint a { color: var(--gl-brand); font-weight: 800; }
+    .gl-sc-file-hint a:hover { text-decoration: underline; }
+
+    .gl-sc-current-img { margin-bottom: .75rem; display: inline-block; border: 1px solid var(--gl-border); padding: 4px; border-radius: var(--gl-radius-sm); background: rgba(255,255,255,.04); }
+    .gl-sc-current-img img { display: block; width: 9rem; height: 6.5rem; object-fit: cover; border-radius: calc(var(--gl-radius-sm) - 4px); }
+
+    .gl-sc-gallery-current { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: .75rem; }
+    .gl-sc-gallery-current-item { position: relative; border: 1px solid var(--gl-border); padding: 4px; border-radius: var(--gl-radius-sm); background: rgba(255,255,255,.04); transition: border-color .18s ease, box-shadow .25s ease; }
+    .gl-sc-gallery-current-item:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); box-shadow: var(--gl-glow); }
+    .gl-sc-gallery-current-item img { display: block; width: 6rem; height: 5rem; object-fit: cover; border-radius: calc(var(--gl-radius-sm) - 4px); }
+    .gl-sc-gallery-remove { position: absolute; top: -.5rem; inset-inline-end: -.5rem; width: 1.5rem; height: 1.5rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--gl-bg-2) 92%, transparent); border: 1px solid var(--gl-border); color: var(--gl-danger); font-size: .9rem; line-height: 1; box-shadow: var(--gl-shadow); opacity: 0; transition: opacity .18s ease, border-color .18s ease; }
+    .gl-sc-gallery-current-item:hover .gl-sc-gallery-remove { opacity: 1; }
+    .gl-sc-gallery-remove:hover { border-color: var(--gl-danger); }
+    @media (hover: none) { .gl-sc-gallery-remove { opacity: 1; } }
+
+    .gl-sc-image-preview { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .85rem; }
+    .gl-sc-image-preview.hidden { display: none; }
+    .gl-sc-image-preview-item { position: relative; border: 1px solid var(--gl-border); padding: 4px; border-radius: var(--gl-radius-sm); background: rgba(255,255,255,.04); }
+    .gl-sc-image-preview-item img { display: block; width: 6rem; height: 5rem; object-fit: cover; border-radius: calc(var(--gl-radius-sm) - 4px); }
+    .gl-sc-image-preview-item .idx { position: absolute; top: -.5rem; inset-inline-start: -.5rem; width: 1.5rem; height: 1.5rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: var(--gl-grad); color: #06121a; font-size: .7rem; font-weight: 800; box-shadow: var(--gl-shadow); }
+
+    .gl-sc-progress-wrap { margin-top: .85rem; }
+    .gl-sc-progress-wrap.hidden { display: none; }
+    .gl-sc-progress-bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--gl-border); overflow: hidden; }
+    .gl-sc-progress-bar > span { display: block; height: 100%; width: 0%; border-radius: 999px; background: var(--gl-grad); transition: width .3s ease; }
+    .gl-sc-progress-text { color: var(--gl-muted); font-size: .78rem; font-weight: 700; margin-top: .5rem; text-align: center; }
+
+    .gl-sc-form-actions { display: flex; gap: .85rem; align-items: stretch; padding: 1.75rem 2.25rem; background: rgba(255,255,255,.03); border-block-start: 1px solid var(--gl-border); }
+    .gl-sc-form-actions .gl-sc-submit { flex: 1; }
+    .gl-sc-submit { padding: 1rem 1.5rem; border-radius: 999px; border: 0; color: #06121a; background: var(--gl-grad); font-family: inherit; font-size: .9rem; font-weight: 800; cursor: pointer; box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--gl-brand) 60%, transparent); transition: filter .2s ease, box-shadow .25s ease, transform .18s ease; }
+    .gl-sc-submit:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .gl-sc-submit:disabled { opacity: .55; cursor: not-allowed; transform: none; filter: none; }
+    .gl-sc-cancel { display: inline-flex; align-items: center; justify-content: center; padding: 1rem 2rem; border-radius: 999px; background: var(--gl-glass); border: 1px solid var(--gl-border); color: var(--gl-muted); font-size: .9rem; font-weight: 800; transition: color .18s ease, border-color .18s ease, box-shadow .25s ease; }
+    .gl-sc-cancel:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); color: var(--gl-brand); box-shadow: var(--gl-glow); }
+    @media (max-width: 600px) {
+        .gl-sc-form-actions { flex-direction: column; padding: 1.25rem; }
+        .gl-sc-cancel { padding: .9rem; }
+    }
+</style>
+
+<section class="gl-sc-form-page">
+    <a href="{% url 'site_car_list' %}" class="gl-sc-back">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <span class="bilingual" data-lang-ar="العودة إلى القائمة" data-lang-en="Back to Inventory" data-lang-es="Volver al inventario" data-lang-ru="Назад к списку">العودة إلى القائمة</span>
+    </a>
+
+    <div class="gl-sc-form-head">
+        <div class="eyebrow bilingual"
+             data-lang-ar="{% if action == 'add' %}سيارة جديدة{% else %}تحرير{% endif %}"
+             data-lang-en="{% if action == 'add' %}New Vehicle{% else %}Edit Vehicle{% endif %}"
+             data-lang-es="{% if action == 'add' %}Vehículo nuevo{% else %}Editar vehículo{% endif %}"
+             data-lang-ru="{% if action == 'add' %}Новый автомобиль{% else %}Редактирование{% endif %}">
+            {% if action == 'add' %}سيارة جديدة{% else %}تحرير{% endif %}
+        </div>
+        <h1 class="bilingual"
+            data-lang-ar="{% if action == 'add' %}إضافة سيارة جديدة{% else %}تعديل السيارة{% endif %}"
+            data-lang-en="{% if action == 'add' %}Add a New Vehicle{% else %}Edit Vehicle{% endif %}"
+            data-lang-es="{% if action == 'add' %}Añadir un vehículo nuevo{% else %}Editar vehículo{% endif %}"
+            data-lang-ru="{% if action == 'add' %}Добавить новый автомобиль{% else %}Редактировать автомобиль{% endif %}">
+            {% if action == 'add' %}إضافة سيارة جديدة{% else %}تعديل السيارة{% endif %}
+        </h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="gl-sc-form-card gl-card">
+        {% csrf_token %}
+
+        <div class="gl-sc-form-section">
+            <div class="gl-sc-form-section-title bilingual" data-lang-ar="المعلومات الأساسية" data-lang-en="Basic Information" data-lang-es="Información básica" data-lang-ru="Основная информация">المعلومات الأساسية</div>
+            <div class="gl-sc-form-grid cols-2">
+                <div class="span-2">
+                    <label class="bilingual" data-lang-ar="العنوان" data-lang-en="Title" data-lang-es="Título" data-lang-ru="Название">العنوان<span class="req">*</span></label>
+                    <input type="text" name="title" value="{{ car.title|default:'' }}" required class="gl-input">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">الشركة المصنعة<span class="req">*</span></label>
+                    <input type="text" name="manufacturer" id="manufacturer-input" value="{{ car.manufacturer|default:'' }}" required list="manufacturers-list" class="gl-input">
+                    <datalist id="manufacturers-list">
+                        {% for m in manufacturers %}
+                        <option value="{{ m.name }}">{{ m.name_ar|default:m.name }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الموديل" data-lang-en="Model" data-lang-es="Modelo" data-lang-ru="Модель">الموديل<span class="req">*</span></label>
+                    <input type="text" name="model" id="model-input" value="{{ car.model|default:'' }}" required list="models-list" class="gl-input">
+                    <datalist id="models-list">
+                        {% for m in car_models %}
+                        <option value="{{ m.name }}" data-manufacturer="{{ m.manufacturer.name }}">{{ m.name }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع<span class="req">*</span></label>
+                    <input type="number" name="year" value="{{ car.year|default:2024 }}" min="1900" max="2030" required class="gl-input">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</label>
+                    <input type="text" name="color" value="{{ car.color|default:'' }}" class="gl-input">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="رقم الشاسيه (VIN)" data-lang-en="VIN" data-lang-es="VIN" data-lang-ru="VIN">رقم الشاسيه (VIN)</label>
+                    <input type="text" name="vin" value="{{ car.vin|default:'' }}" maxlength="64" placeholder="—" class="gl-input">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="رقم اللوحة" data-lang-en="Plate Number" data-lang-es="Matrícula" data-lang-ru="Номер">رقم اللوحة</label>
+                    <input type="text" name="plate_number" value="{{ car.plate_number|default:'' }}" maxlength="32" placeholder="—" class="gl-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="gl-sc-form-section">
+            <div class="gl-sc-form-section-title bilingual" data-lang-ar="المواصفات" data-lang-en="Specifications" data-lang-es="Especificaciones" data-lang-ru="Характеристики">المواصفات</div>
+            <div class="gl-sc-form-grid cols-3">
+                <div>
+                    <label class="bilingual" data-lang-ar="المسافة المقطوعة (كم)" data-lang-en="Mileage (km)" data-lang-es="Kilometraje (km)" data-lang-ru="Пробег (км)">المسافة المقطوعة (كم)</label>
+                    <input type="number" name="mileage" value="{{ car.mileage|default:0 }}" min="0" class="gl-input">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">ناقل الحركة</label>
+                    <select name="transmission" class="gl-select">
+                        <option value="">—</option>
+                        <option value="أوتوماتيك" {% if car.transmission == 'أوتوماتيك' %}selected{% endif %}>أوتوماتيك</option>
+                        <option value="مانيوال" {% if car.transmission == 'مانيوال' %}selected{% endif %}>مانيوال</option>
+                        <option value="CVT" {% if car.transmission == 'CVT' %}selected{% endif %}>CVT</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</label>
+                    <select name="fuel" class="gl-select">
+                        <option value="">—</option>
+                        <option value="بنزين" {% if car.fuel == 'بنزين' %}selected{% endif %}>بنزين</option>
+                        <option value="ديزل" {% if car.fuel == 'ديزل' %}selected{% endif %}>ديزل</option>
+                        <option value="هايبرد" {% if car.fuel == 'هايبرد' %}selected{% endif %}>هايبرد</option>
+                        <option value="كهربائي" {% if car.fuel == 'كهربائي' %}selected{% endif %}>كهربائي</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Тип кузова">نوع الهيكل</label>
+                    <select name="body_type" class="gl-select">
+                        <option value="">—</option>
+                        <option value="سيدان" {% if car.body_type == 'سيدان' %}selected{% endif %}>سيدان</option>
+                        <option value="SUV" {% if car.body_type == 'SUV' %}selected{% endif %}>SUV</option>
+                        <option value="هاتشباك" {% if car.body_type == 'هاتشباك' %}selected{% endif %}>هاتشباك</option>
+                        <option value="كوبيه" {% if car.body_type == 'كوبيه' %}selected{% endif %}>كوبيه</option>
+                        <option value="فان" {% if car.body_type == 'فان' %}selected{% endif %}>فان</option>
+                        <option value="بيك أب" {% if car.body_type == 'بيك أب' %}selected{% endif %}>بيك أب</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</label>
+                    <input type="text" name="engine" value="{{ car.engine|default:'' }}" placeholder="2.0L" class="gl-input">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="نظام الدفع" data-lang-en="Drivetrain" data-lang-es="Tracción" data-lang-ru="Привод">نظام الدفع</label>
+                    <select name="drive_wheel" class="gl-select">
+                        <option value="">—</option>
+                        <option value="أمامي" {% if car.drive_wheel == 'أمامي' %}selected{% endif %}>دفع أمامي</option>
+                        <option value="خلفي" {% if car.drive_wheel == 'خلفي' %}selected{% endif %}>دفع خلفي</option>
+                        <option value="رباعي" {% if car.drive_wheel == 'رباعي' %}selected{% endif %}>دفع رباعي</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="gl-sc-form-section">
+            <div class="gl-sc-form-section-title bilingual" data-lang-ar="السعر والحالة" data-lang-en="Price & Status" data-lang-es="Precio y estado" data-lang-ru="Цена и статус">السعر والحالة</div>
+            <div class="gl-sc-form-grid cols-3">
+                <div>
+                    <label class="bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر<span class="req">*</span></label>
+                    <input type="number" name="price" value="{{ car.price|default:0 }}" min="0" required class="gl-input">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="العملة" data-lang-en="Currency" data-lang-es="Moneda" data-lang-ru="Валюта">العملة</label>
+                    <select name="currency" class="gl-select">
+                        <option value="KRW" {% if car.currency == 'KRW' or not car.currency %}selected{% endif %}>₩ KRW</option>
+                        <option value="SAR" {% if car.currency == 'SAR' %}selected{% endif %}>﷼ SAR</option>
+                        <option value="USD" {% if car.currency == 'USD' %}selected{% endif %}>$ USD</option>
+                        <option value="AED" {% if car.currency == 'AED' %}selected{% endif %}>د.إ AED</option>
+                        <option value="EUR" {% if car.currency == 'EUR' %}selected{% endif %}>€ EUR</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الحالة" data-lang-en="Status" data-lang-es="Estado" data-lang-ru="Статус">الحالة</label>
+                    <select name="status" class="gl-select">
+                        <option value="available" {% if car.status == 'available' %}selected{% endif %}>متاح</option>
+                        <option value="pending" {% if car.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                        <option value="sold" {% if car.status == 'sold' %}selected{% endif %}>تم البيع</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="مميزة" data-lang-en="Featured" data-lang-es="Destacado" data-lang-ru="Избранное">مميزة</label>
+                    <label class="gl-sc-checkbox">
+                        <input type="checkbox" name="is_featured" {% if car.is_featured %}checked{% endif %}>
+                        <span class="bilingual" data-lang-ar="عرض كسيارة مميزة" data-lang-en="Show as featured" data-lang-es="Mostrar como destacado" data-lang-ru="Показать как избранное">عرض كسيارة مميزة</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="gl-sc-form-section">
+            <div class="gl-sc-form-section-title bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</div>
+            <textarea name="description" placeholder="—" rows="4" class="gl-textarea">{{ car.description|default:'' }}</textarea>
+        </div>
+
+        <div class="gl-sc-form-section">
+            <div class="gl-sc-form-section-title bilingual" data-lang-ar="الصور" data-lang-en="Imagery" data-lang-es="Imágenes" data-lang-ru="Изображения">الصور</div>
+
+            <div class="gl-sc-form-grid">
+                <div>
+                    <label class="bilingual" data-lang-ar="الصورة الرئيسية" data-lang-en="Main Image" data-lang-es="Imagen principal" data-lang-ru="Основное фото">الصورة الرئيسية</label>
+                    {% if car.image %}
+                    <div class="gl-sc-current-img"><img src="{{ car.image.url }}" alt="Current image"></div>
+                    {% endif %}
+                    <input type="file" name="image" accept="image/*" class="gl-sc-file">
+                </div>
+
+                <div>
+                    <label class="bilingual" data-lang-ar="معرض الصور" data-lang-en="Gallery" data-lang-es="Galería" data-lang-ru="Галерея">معرض الصور</label>
+                    {% if car.gallery.all %}
+                    <div class="gl-sc-gallery-current">
+                        {% for img in car.gallery.all %}
+                        <div class="gl-sc-gallery-current-item">
+                            <img src="{{ img.image.url }}" alt="Gallery image">
+                            <a href="{% url 'site_car_delete_image' car.pk img.pk %}"
+                               onclick="return confirm('هل أنت متأكد من حذف هذه الصورة؟')"
+                               class="gl-sc-gallery-remove" aria-label="Remove">×</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="gallery" accept="image/*" multiple id="gallery-input" class="gl-sc-file">
+                    <p class="gl-sc-file-hint bilingual" data-lang-ar="حد أقصى 20 صورة. حجم كل صورة حتى 10 ميجابايت." data-lang-en="Up to 20 images, 10MB each." data-lang-es="Hasta 20 imágenes, máx. 10 MB cada una." data-lang-ru="До 20 изображений, по 10 МБ.">حد أقصى 20 صورة. حجم كل صورة حتى 10 ميجابايت.</p>
+                    <div id="image-preview" class="gl-sc-image-preview hidden"></div>
+                    <div id="upload-progress" class="gl-sc-progress-wrap hidden">
+                        <div class="gl-sc-progress-bar"><span id="progress-bar"></span></div>
+                        <div class="gl-sc-progress-text" id="progress-text">جاري الرفع...</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="bilingual" data-lang-ar="صورة الفحص" data-lang-en="Inspection Image" data-lang-es="Inspección" data-lang-ru="Инспекция">صورة الفحص</label>
+                    {% if car.inspection_image %}
+                    <div class="gl-sc-current-img"><a href="{{ car.inspection_image.url }}" target="_blank"><img src="{{ car.inspection_image.url }}" alt="Inspection"></a></div>
+                    {% endif %}
+                    <input type="file" name="inspection_image" accept="image/*" class="gl-sc-file">
+                    <p class="gl-sc-file-hint bilingual" data-lang-ar="تقرير الفحص الفني (اختياري)" data-lang-en="Mechanical inspection report (optional)" data-lang-es="Informe de inspección (opcional)" data-lang-ru="Отчёт об осмотре (необязательно)">تقرير الفحص الفني (اختياري)</p>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="فيديو الفحص" data-lang-en="Inspection Video" data-lang-es="Vídeo de inspección" data-lang-ru="Видео осмотра">فيديو الفحص</label>
+                    {% if car.inspection_video %}
+                    <div class="gl-sc-file-hint"><a href="{{ car.inspection_video.url }}" target="_blank">▶ {{ car.inspection_video.name|cut:"site_cars/videos/" }}</a></div>
+                    {% endif %}
+                    <input type="file" name="inspection_video" accept="video/*" class="gl-sc-file">
+                    <p class="gl-sc-file-hint bilingual" data-lang-ar="ارفع ملف فيديو (يُحفظ خارج خادم الموقع)" data-lang-en="Upload a video file (stored off the web server)" data-lang-es="Sube un vídeo (almacenado fuera del servidor)" data-lang-ru="Загрузите видео (хранится вне сервера)">ارفع ملف فيديو (يُحفظ خارج خادم الموقع)</p>
+                    <input type="url" name="inspection_video_url" value="{{ car.inspection_video_url|default:'' }}" placeholder="https://youtu.be/…" class="gl-input" style="margin-top:.5rem;">
+                    <p class="gl-sc-file-hint bilingual" data-lang-ar="أو الصق رابط فيديو (يوتيوب / رابط مباشر) — أفضل للملفات الكبيرة" data-lang-en="…or paste a video link (YouTube / direct) — best for large files" data-lang-es="…o pega un enlace de vídeo" data-lang-ru="…или вставьте ссылку на видео">أو الصق رابط فيديو (يوتيوب / رابط مباشر) — أفضل للملفات الكبيرة</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="gl-sc-form-actions">
+            <button type="submit" id="submit-btn" class="gl-sc-submit bilingual"
+                    data-lang-ar="{% if action == 'add' %}إضافة السيارة{% else %}حفظ التغييرات{% endif %}"
+                    data-lang-en="{% if action == 'add' %}Add Vehicle{% else %}Save Changes{% endif %}"
+                    data-lang-es="{% if action == 'add' %}Añadir vehículo{% else %}Guardar cambios{% endif %}"
+                    data-lang-ru="{% if action == 'add' %}Добавить{% else %}Сохранить{% endif %}">
+                {% if action == 'add' %}إضافة السيارة{% else %}حفظ التغييرات{% endif %}
+            </button>
+            <a href="{% url 'site_car_list' %}" class="gl-sc-cancel bilingual" data-lang-ar="إلغاء" data-lang-en="Cancel" data-lang-es="Cancelar" data-lang-ru="Отмена">إلغاء</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var galleryInput = document.getElementById('gallery-input');
+    var imagePreview = document.getElementById('image-preview');
+    var form = document.querySelector('form.gl-sc-form-card');
+    var submitBtn = document.getElementById('submit-btn');
+    var uploadProgress = document.getElementById('upload-progress');
+    var progressBar = document.getElementById('progress-bar');
+    var progressText = document.getElementById('progress-text');
+
+    var MAX_IMAGES = 20;
+    var MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+    if (galleryInput) {
+        galleryInput.addEventListener('change', function(e) {
+            var files = Array.from(e.target.files);
+
+            if (files.length > MAX_IMAGES) {
+                alert('يمكنك رفع ' + MAX_IMAGES + ' صورة كحد أقصى في المرة الواحدة');
+                e.target.value = '';
+                return;
+            }
+
+            var oversized = files.filter(function(f){ return f.size > MAX_FILE_SIZE; });
+            if (oversized.length > 0) {
+                alert('بعض الصور تتجاوز الحد الأقصى للحجم (10 ميجابايت). سيتم تجاهلها.');
+            }
+
+            imagePreview.innerHTML = '';
+
+            if (files.length > 0) {
+                imagePreview.classList.remove('hidden');
+                files.forEach(function(file, index) {
+                    if (file.size <= MAX_FILE_SIZE) {
+                        var reader = new FileReader();
+                        reader.onload = function(ev) {
+                            var div = document.createElement('div');
+                            div.className = 'gl-sc-image-preview-item';
+                            div.innerHTML =
+                                '<img src="' + ev.target.result + '" alt="">' +
+                                '<span class="idx">' + (index + 1) + '</span>';
+                            imagePreview.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                progressText.textContent = 'تم اختيار ' + files.filter(function(f){ return f.size <= MAX_FILE_SIZE; }).length + ' صورة';
+            } else {
+                imagePreview.classList.add('hidden');
+            }
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function() {
+            var files = galleryInput ? galleryInput.files : [];
+            if (files.length > 0) {
+                uploadProgress.classList.remove('hidden');
+                submitBtn.disabled = true;
+                var progress = 0;
+                var interval = setInterval(function() {
+                    progress += 5;
+                    if (progress >= 90) clearInterval(interval);
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = 'جاري الرفع... ' + progress + '%';
+                }, 100);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

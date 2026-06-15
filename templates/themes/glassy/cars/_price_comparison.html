@@ -1,0 +1,125 @@
+{% load custom_filters humanize %}
+<style>
+    .gl-pc {
+        color: var(--gl-ink, #eef0ff);
+        font-family: inherit;
+    }
+    .gl-pc-head { margin: 0 0 1.25rem; }
+    .gl-pc-head small {
+        display: block; color: var(--gl-brand, #22d3ee);
+        font-size: .68rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase;
+        margin-bottom: .35rem;
+    }
+    .gl-pc-head span { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; }
+
+    .gl-pc-hero {
+        text-align: center; padding: 1.4rem 1rem; margin-bottom: 1.4rem;
+        border-radius: var(--gl-radius, 20px);
+        background:
+            radial-gradient(80% 100% at 50% 0%, color-mix(in srgb, var(--gl-brand, #22d3ee) 22%, transparent), transparent 75%),
+            rgba(255,255,255,0.05);
+        border: 1px solid color-mix(in srgb, var(--gl-brand, #22d3ee) 35%, rgba(255,255,255,0.12));
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .gl-pc-hero-lbl { color: var(--gl-muted, #a7abd4); font-size: .82rem; font-weight: 600; margin-bottom: .35rem; }
+    .gl-pc-hero-val {
+        font-size: clamp(1.6rem, 5vw, 2.2rem); font-weight: 800; line-height: 1;
+        color: var(--gl-brand, #22d3ee); font-variant-numeric: tabular-nums;
+    }
+    .gl-pc-hero-val .cur { font-size: .6em; opacity: .85; }
+
+    .gl-pc-bar-wrap { margin-bottom: 1.4rem; }
+    .gl-pc-bar {
+        position: relative; height: 2.4rem; border-radius: 999px; overflow: hidden;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+    }
+    .gl-pc-bar-fill {
+        height: 100%; min-width: 2.4rem; border-radius: 999px;
+        display: flex; align-items: center; justify-content: flex-end;
+        padding-inline-end: .8rem;
+        background: linear-gradient(120deg, var(--gl-brand, #22d3ee), var(--gl-brand-2, #d946ef));
+        color: #06121a; font-size: .82rem; font-weight: 800;
+        box-shadow: 0 0 24px -4px color-mix(in srgb, var(--gl-brand, #22d3ee) 60%, transparent);
+        transition: width .6s cubic-bezier(.22,1,.36,1);
+    }
+    .gl-pc-bar-legend {
+        display: flex; justify-content: space-between;
+        margin-top: .5rem; font-size: .74rem; font-weight: 600; color: var(--gl-muted, #a7abd4);
+    }
+    .gl-pc-bar-legend .now { color: var(--gl-brand, #22d3ee); }
+
+    .gl-pc-cols { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: 1.4rem; }
+    .gl-pc-col {
+        padding: .9rem 1rem; border-radius: var(--gl-radius-sm, 14px);
+        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    }
+    .gl-pc-col.current { border-color: color-mix(in srgb, var(--gl-brand, #22d3ee) 40%, transparent); background: color-mix(in srgb, var(--gl-brand, #22d3ee) 9%, rgba(255,255,255,0.05)); }
+    .gl-pc-col-lbl { color: var(--gl-muted, #a7abd4); font-size: .74rem; font-weight: 700; margin-bottom: .35rem; }
+    .gl-pc-col-val { font-size: 1.02rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .gl-pc-col.current .gl-pc-col-val { color: var(--gl-brand, #22d3ee); }
+
+    .gl-pc-rows {
+        border-radius: var(--gl-radius-sm, 14px); overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1); margin-bottom: 1.2rem;
+    }
+    .gl-pc-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .75rem 1rem; font-size: .86rem; font-weight: 600;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        font-variant-numeric: tabular-nums;
+    }
+    .gl-pc-row:last-child { border-bottom: 0; }
+    .gl-pc-row .k { color: var(--gl-muted, #a7abd4); font-weight: 700; }
+    .gl-pc-row.sub {
+        padding-inline-start: 2rem; font-size: .8rem; color: var(--gl-faint, #6f73a0);
+        background: rgba(255,255,255,0.025); font-weight: 500;
+    }
+
+    .gl-pc-notes { color: var(--gl-faint, #6f73a0); font-size: .76rem; line-height: 1.7; }
+    .gl-pc-notes div + div { margin-top: .2rem; }
+</style>
+<section class="gl-pc">
+    <h2 class="gl-pc-head">
+        <small class="bilingual" data-lang-ar="القيمة" data-lang-en="Value" data-lang-es="Valor" data-lang-ru="Ценность">القيمة</small>
+        <span class="bilingual" data-lang-ar="مقارنة بسعر السيارة الجديدة" data-lang-en="Compared to New" data-lang-es="Comparado con uno nuevo" data-lang-ru="Сравнение с новым">مقارنة بسعر السيارة الجديدة</span>
+    </h2>
+    <div class="gl-pc-hero">
+        <div class="gl-pc-hero-lbl bilingual" data-lang-ar="أوفر من سعر الجديد بـ" data-lang-en="Cheaper than new by" data-lang-es="Más barato que nuevo en" data-lang-ru="Дешевле нового на">أوفر من سعر الجديد بـ</div>
+        <div class="gl-pc-hero-val" data-price-krw="{{ price_comparison.savings_krw }}">{{ price_comparison.savings_krw|floatformat:0 }} <span class="cur">₩</span></div>
+    </div>
+    <div class="gl-pc-bar-wrap">
+        <div class="gl-pc-bar">
+            <div class="gl-pc-bar-fill" style="width:{{ price_comparison.percent }}%;">
+                <span>{{ price_comparison.percent }}%</span>
+            </div>
+        </div>
+        <div class="gl-pc-bar-legend">
+            <span class="now bilingual" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Actual" data-lang-ru="Текущая">السعر الحالي</span>
+            <span class="new bilingual" data-lang-ar="سعر الجديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">سعر الجديد</span>
+        </div>
+    </div>
+    <div class="gl-pc-cols">
+        <div class="gl-pc-col">
+            <div class="gl-pc-col-lbl bilingual" data-lang-ar="سعر الجديد" data-lang-en="New price" data-lang-es="Precio nuevo" data-lang-ru="Цена нового">سعر الجديد</div>
+            <div class="gl-pc-col-val" data-price-krw="{{ price_comparison.newcar_krw }}">{{ price_comparison.newcar_krw|floatformat:0 }} ₩</div>
+        </div>
+        <div class="gl-pc-col current">
+            <div class="gl-pc-col-lbl bilingual" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Precio actual" data-lang-ru="Текущая цена">السعر الحالي</div>
+            <div class="gl-pc-col-val"><span data-price-krw="{{ price_comparison.current_krw }}">{{ price_comparison.current_krw|floatformat:0 }}</span> ₩ ({{ price_comparison.percent }}%)</div>
+        </div>
+    </div>
+    <div class="gl-pc-rows">
+        <div class="gl-pc-row"><span class="k bilingual" data-lang-ar="السعر الأساسي للفئة" data-lang-en="Grade base price" data-lang-es="Precio base" data-lang-ru="Базовая цена">السعر الأساسي للفئة</span><span data-price-krw="{{ price_comparison.grade_base_krw }}">{{ price_comparison.grade_base_krw|floatformat:0 }} ₩</span></div>
+        {% if price_comparison.options %}
+        <div class="gl-pc-row"><span class="k"><span class="bilingual" data-lang-ar="الخيارات المختارة" data-lang-en="Selected options" data-lang-es="Opciones" data-lang-ru="Опции">الخيارات المختارة</span> ({{ price_comparison.options|length }})</span><span data-price-krw="{{ price_comparison.options_total_krw }}">{{ price_comparison.options_total_krw|floatformat:0 }} ₩</span></div>
+        {% for o in price_comparison.options %}
+        <div class="gl-pc-row sub"><span class="bilingual" data-lang-ar="{{ o.name|oc:'ar' }}" data-lang-en="{{ o.name|oc:'en' }}" data-lang-es="{{ o.name|oc:'es' }}" data-lang-ru="{{ o.name|oc:'ru' }}">{{ o.name|oc:'ar' }}</span><span data-price-krw="{{ o.price_krw }}">{{ o.price_krw|floatformat:0 }} ₩</span></div>
+        {% endfor %}
+        {% endif %}
+    </div>
+    <div class="gl-pc-notes">
+        <div class="bilingual" data-lang-ar="• قد يختلف سعر الجديد عن سعر التسليم الفعلي." data-lang-en="• The new-car price may differ from the actual delivery price." data-lang-es="• El precio nuevo puede diferir del precio real." data-lang-ru="• Цена нового может отличаться от фактической.">• قد يختلف سعر الجديد عن سعر التسليم الفعلي.</div>
+        <div class="bilingual" data-lang-ar="• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة." data-lang-en="• Based on the grade plus selected options." data-lang-es="• Basado en la versión y las opciones." data-lang-ru="• Рассчитано по комплектации и опциям.">• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة.</div>
+    </div>
+</section>
