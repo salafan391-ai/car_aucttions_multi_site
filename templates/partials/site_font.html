@@ -11,7 +11,7 @@ each theme keeps its built-in font.
 <style id="site-font-override">
     body, h1, h2, h3, h4, h5, h6, p, a, span, div, li, ul, ol,
     button, input, select, textarea, label, small, strong, em, blockquote, td, th {
-        font-family: {{ site_font_stack }} !important;
+        font-family: {{ site_font_stack|safe }} !important;
     }
 </style>
 {% endif %}
