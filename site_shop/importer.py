@@ -73,9 +73,25 @@ def _truthy_stock(v):
     return True
 
 
-def _download_image(item, url, name_hint):
+# Some image CDNs (e.g. Autowini's imagebox) sit behind a WAF that 403s plain
+# requests — a full browser header set gets through.
+_BROWSER_IMG_HEADERS = {
+    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "sec-ch-ua": '"Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
+    "Sec-Fetch-Dest": "image",
+    "Sec-Fetch-Mode": "no-cors",
+    "Sec-Fetch-Site": "cross-site",
+}
+_AUTOWINI_IMG_HEADERS = {**_BROWSER_IMG_HEADERS, "Referer": "https://www.autowini.com/", "Sec-Fetch-Site": "same-site"}
+
+
+def _download_image(item, url, name_hint, headers=None):
     try:
-        r = requests.get(url, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
+        r = requests.get(url, timeout=25, headers=headers or _BROWSER_IMG_HEADERS)
         if not r.ok or not r.content:
             return False
         ext = os.path.splitext(url.split("?")[0])[1].lower() or ".jpg"
@@ -88,7 +104,7 @@ def _download_image(item, url, name_hint):
 
 
 def import_rows(rows, *, kind="part", source="csv", default_currency="SAR",
-                download_images=True, limit=2000):
+                download_images=True, limit=2000, image_headers=None):
     """Upsert an iterable of dict rows. Returns a result summary dict."""
     from .models import ShopItem
 
@@ -155,7 +171,7 @@ def import_rows(rows, *, kind="part", source="csv", default_currency="SAR",
         if download_images and not obj.image:
             img_url = _pick(row, "image")
             if img_url and img_url.startswith(("http://", "https://")):
-                if _download_image(obj, img_url, f"{row_kind}_{obj.pk}"):
+                if _download_image(obj, img_url, f"{row_kind}_{obj.pk}", headers=image_headers):
                     images += 1
 
     return {"created": created, "updated": updated, "skipped": skipped,
@@ -248,4 +264,5 @@ def import_autowini(pages=3, fitting="CAR", currency="USD", source="autowini",
     if dry_run:
         return {"fetched": len(rows), "sample": rows[:8], "dry_run": True}
     return import_rows(rows, kind="part", source=source, default_currency=currency,
-                       download_images=download_images, limit=limit)
+                       download_images=download_images, limit=limit,
+                       image_headers=_AUTOWINI_IMG_HEADERS)
