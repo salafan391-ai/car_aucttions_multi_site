@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}حذف — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-shop-del-page { padding: 4rem 0; max-width: 30rem; margin: 0 auto; }
+    .gl-shop-del-card { padding: 2.5rem 2rem; text-align: center; }
+    .gl-shop-del-icon { width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: var(--gl-danger); border: 1px solid color-mix(in srgb, var(--gl-danger) 40%, transparent); background: color-mix(in srgb, var(--gl-danger) 12%, transparent); }
+    .gl-shop-del-icon svg { width: 1.75rem; height: 1.75rem; }
+    .gl-shop-del-title { font-size: 1.15rem; font-weight: 800; color: var(--gl-ink); margin: 0 0 .5rem; }
+    .gl-shop-del-name { color: var(--gl-muted); font-size: .9rem; margin: 0 0 1.75rem; }
+    .gl-shop-del-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+    .gl-shop-del-cancel { display: inline-flex; align-items: center; justify-content: center; padding: .75rem 1.5rem; border-radius: 999px; background: var(--gl-glass); border: 1px solid var(--gl-border); color: var(--gl-muted); font-size: .88rem; font-weight: 800; transition: color .18s ease, border-color .18s ease; }
+    .gl-shop-del-cancel:hover { color: var(--gl-brand); border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); }
+    .gl-shop-del-confirm { padding: .75rem 1.5rem; border-radius: 999px; border: 0; color: #fff; background: linear-gradient(135deg, var(--gl-danger), #d8324a); font-family: inherit; font-size: .88rem; font-weight: 800; cursor: pointer; box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--gl-danger) 60%, transparent); transition: filter .18s ease, transform .18s ease; }
+    .gl-shop-del-confirm:hover { filter: brightness(1.08); transform: translateY(-1px); }
+</style>
+
+<section class="gl-shop-del-page">
+    <div class="gl-shop-del-card gl-card">
+        <div class="gl-shop-del-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <h1 class="gl-shop-del-title bilingual" data-lang-ar="تأكيد الحذف" data-lang-en="Confirm delete" data-lang-es="Confirmar eliminación" data-lang-ru="Подтвердить удаление">تأكيد الحذف</h1>
+        <p class="gl-shop-del-name">{{ item.name }}</p>
+        <div class="gl-shop-del-actions">
+            <a href="{% url 'shop_manage' %}?kind={{ kind }}" class="gl-shop-del-cancel bilingual" data-lang-ar="إلغاء" data-lang-en="Cancel" data-lang-es="Cancelar" data-lang-ru="Отмена">إلغاء</a>
+            <form method="post" action="{% url 'shop_delete' item.pk %}">{% csrf_token %}
+                <button type="submit" class="gl-shop-del-confirm bilingual" data-lang-ar="حذف" data-lang-en="Delete" data-lang-es="Eliminar" data-lang-ru="Удалить">حذف</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

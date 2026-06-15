@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}{% if item %}تعديل{% else %}إضافة{% endif %} {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-shop-form-page { padding: 2.5rem 0 4rem; max-width: 880px; margin: 0 auto; }
+
+    .gl-shop-back { color: var(--gl-muted); display: inline-flex; align-items: center; gap: .45rem; font-size: .82rem; font-weight: 800; padding: .5rem 1.1rem; border-radius: 999px; background: var(--gl-glass); border: 1px solid var(--gl-border); margin-bottom: 1.5rem; transition: color .18s ease, border-color .18s ease, box-shadow .25s ease; }
+    .gl-shop-back:hover { color: var(--gl-brand); border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); box-shadow: var(--gl-glow); }
+    .gl-shop-back svg { width: 1rem; height: 1rem; }
+
+    .gl-shop-form-head { margin-bottom: 2rem; }
+    .gl-shop-form-head .eyebrow { color: var(--gl-brand); font-size: .72rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; }
+    .gl-shop-form-head h1 { font-size: clamp(1.5rem, 4vw, 2rem); margin: .6rem 0 0; font-weight: 800; letter-spacing: -.01em; }
+
+    .gl-shop-msg { margin-bottom: 1rem; padding: .75rem 1.1rem; border-radius: var(--gl-radius-sm); font-size: .85rem; font-weight: 700; border: 1px solid var(--gl-border); }
+    .gl-shop-msg.ok { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 40%, transparent); background: color-mix(in srgb, var(--gl-ok) 10%, transparent); }
+    .gl-shop-msg.err { color: var(--gl-danger); border-color: color-mix(in srgb, var(--gl-danger) 40%, transparent); background: color-mix(in srgb, var(--gl-danger) 10%, transparent); }
+
+    .gl-shop-form-card { overflow: hidden; }
+    .gl-shop-form-section { padding: 1.75rem 2rem; border-block-end: 1px solid var(--gl-border); }
+    .gl-shop-form-grid { display: grid; gap: 1.1rem; }
+    .gl-shop-form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .gl-shop-form-grid.cols-3 { grid-template-columns: 2fr 1fr; }
+    .gl-shop-form-grid .span-full { grid-column: 1 / -1; }
+    @media (max-width: 680px) {
+        .gl-shop-form-grid.cols-2, .gl-shop-form-grid.cols-3 { grid-template-columns: 1fr; }
+        .gl-shop-form-page { padding: 2rem 0 3rem; }
+        .gl-shop-form-section { padding: 1.4rem 1.2rem; }
+    }
+
+    .gl-shop-form-page label.fl { display: block; color: var(--gl-ink); font-size: .8rem; font-weight: 700; margin-bottom: .4rem; }
+    .gl-shop-form-page textarea.gl-textarea { min-height: 120px; resize: vertical; }
+
+    .gl-shop-checks { display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center; }
+    .gl-shop-check { display: inline-flex; align-items: center; gap: .6rem; cursor: pointer; color: var(--gl-ink); font-size: .86rem; font-weight: 700; }
+    .gl-shop-check input { appearance: none; -webkit-appearance: none; width: 1.2rem; height: 1.2rem; border-radius: 6px; border: 1px solid var(--gl-border); background: rgba(255,255,255,.05); cursor: pointer; position: relative; flex-shrink: 0; margin: 0; transition: background .18s ease, border-color .18s ease; }
+    .gl-shop-check input:checked { border-color: transparent; background: var(--gl-grad); }
+    .gl-shop-check input:checked::after { content: ''; position: absolute; left: 6px; top: 2px; width: 4px; height: 9px; border: solid #06121a; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+    /* Dropzone-style file inputs */
+    .gl-shop-file { display: block; width: 100%; box-sizing: border-box; padding: .9rem 1rem; background: rgba(255,255,255,.04); border: 1.5px dashed var(--gl-border-2); border-radius: var(--gl-radius-sm); color: var(--gl-muted); font-size: .85rem; font-family: inherit; cursor: pointer; transition: border-color .18s ease, background .18s ease, color .18s ease; }
+    .gl-shop-file:hover { border-color: var(--gl-brand); color: var(--gl-brand); background: color-mix(in srgb, var(--gl-brand) 8%, transparent); }
+    .gl-shop-file::-webkit-file-upload-button, .gl-shop-file::file-selector-button { background: var(--gl-glass-2); border: 1px solid var(--gl-border); border-radius: 999px; color: var(--gl-brand); padding: .4rem .95rem; font-size: .78rem; font-weight: 800; cursor: pointer; margin-inline-end: .85rem; font-family: inherit; }
+    .gl-shop-current-img { margin-bottom: .75rem; display: inline-block; border: 1px solid var(--gl-border); padding: 4px; border-radius: var(--gl-radius-sm); background: rgba(255,255,255,.04); }
+    .gl-shop-current-img img { display: block; width: 6rem; height: 6rem; object-fit: cover; border-radius: calc(var(--gl-radius-sm) - 4px); }
+
+    .gl-shop-gallery-current { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: .75rem; }
+    .gl-shop-gallery-item { position: relative; border: 1px solid var(--gl-border); padding: 4px; border-radius: var(--gl-radius-sm); background: rgba(255,255,255,.04); transition: border-color .18s ease, box-shadow .25s ease; }
+    .gl-shop-gallery-item:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); box-shadow: var(--gl-glow); }
+    .gl-shop-gallery-item img { display: block; width: 5rem; height: 5rem; object-fit: cover; border-radius: calc(var(--gl-radius-sm) - 4px); }
+    .gl-shop-gallery-remove { position: absolute; top: -.5rem; inset-inline-end: -.5rem; width: 1.5rem; height: 1.5rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--gl-bg-2) 92%, transparent); border: 1px solid var(--gl-border); color: var(--gl-danger); font-size: .9rem; line-height: 1; cursor: pointer; box-shadow: var(--gl-shadow); }
+    .gl-shop-gallery-remove:hover { border-color: var(--gl-danger); }
+
+    .gl-shop-form-actions { display: flex; gap: .85rem; padding: 1.6rem 2rem; background: rgba(255,255,255,.03); }
+    .gl-shop-submit { flex: 1; padding: 1rem 1.5rem; border-radius: 999px; border: 0; color: #06121a; background: var(--gl-grad); font-family: inherit; font-size: .9rem; font-weight: 800; cursor: pointer; box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--gl-brand) 60%, transparent); transition: filter .2s ease, transform .18s ease; }
+    .gl-shop-submit:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    @media (max-width: 600px) { .gl-shop-form-actions { flex-direction: column; padding: 1.25rem; } }
+</style>
+
+<section class="gl-shop-form-page">
+    <a href="{% url 'shop_manage' %}?kind={{ kind }}" class="gl-shop-back">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <span class="bilingual" data-lang-ar="رجوع" data-lang-en="Back" data-lang-es="Volver" data-lang-ru="Назад">رجوع</span>
+    </a>
+
+    <div class="gl-shop-form-head">
+        <div class="eyebrow bilingual"
+             data-lang-ar="{% if item %}تحرير{% else %}جديد{% endif %}" data-lang-en="{% if item %}Edit{% else %}New{% endif %}"
+             data-lang-es="{% if item %}Editar{% else %}Nuevo{% endif %}" data-lang-ru="{% if item %}Редактирование{% else %}Новый{% endif %}">{% if item %}تحرير{% else %}جديد{% endif %}</div>
+        <h1>
+            <span class="bilingual" data-lang-ar="{% if item %}تعديل{% else %}إضافة{% endif %}" data-lang-en="{% if item %}Edit{% else %}Add{% endif %}" data-lang-es="{% if item %}Editar{% else %}Añadir{% endif %}" data-lang-ru="{% if item %}Изменить{% else %}Добавить{% endif %}">{% if item %}تعديل{% else %}إضافة{% endif %}</span>
+            — {{ kind_label_ar }}
+        </h1>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="gl-shop-msg {% if m.tags == 'error' %}err{% else %}ok{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+    <form method="post" enctype="multipart/form-data" action="{% if item %}{% url 'shop_edit' item.pk %}{% else %}{% url 'shop_add' %}?kind={{ kind }}{% endif %}" class="gl-shop-form-card gl-card">
+        {% csrf_token %}
+        <input type="hidden" name="kind" value="{{ kind }}">
+
+        <div class="gl-shop-form-section">
+            <div class="gl-shop-form-grid">
+                <div class="span-full">
+                    <label class="fl bilingual" data-lang-ar="الاسم *" data-lang-en="Name *" data-lang-es="Nombre *" data-lang-ru="Название *">الاسم *</label>
+                    <input type="text" name="name" required value="{{ item.name|default:'' }}" class="gl-input">
+                </div>
+            </div>
+
+            <div class="gl-shop-form-grid cols-2" style="margin-top:1.1rem;">
+                <div>
+                    <label class="fl bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</label>
+                    <input type="text" name="category" value="{{ item.category|default:'' }}" class="gl-input">
+                </div>
+                <div>
+                    <label class="fl bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Бренд">الماركة</label>
+                    <input type="text" name="brand" value="{{ item.brand|default:'' }}" class="gl-input">
+                </div>
+            </div>
+
+            <div class="gl-shop-form-grid cols-3" style="margin-top:1.1rem;">
+                <div>
+                    <label class="fl bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</label>
+                    <input type="number" name="price" value="{{ item.price|default:'' }}" class="gl-input"
+                           placeholder="—" data-placeholder-ar="اتركه فارغاً = عند الطلب" data-placeholder-en="Empty = on request" data-placeholder-es="Vacío = a consultar" data-placeholder-ru="Пусто = по запросу">
+                </div>
+                <div>
+                    <label class="fl bilingual" data-lang-ar="العملة" data-lang-en="Currency" data-lang-es="Moneda" data-lang-ru="Валюта">العملة</label>
+                    <select name="currency" class="gl-select">
+                        <option value="SAR" {% if item.currency == 'SAR' or not item %}selected{% endif %}>SAR</option>
+                        <option value="AED" {% if item.currency == 'AED' %}selected{% endif %}>AED</option>
+                        <option value="USD" {% if item.currency == 'USD' %}selected{% endif %}>USD</option>
+                        <option value="EUR" {% if item.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                        <option value="KRW" {% if item.currency == 'KRW' %}selected{% endif %}>KRW</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="gl-shop-form-grid cols-2" style="margin-top:1.1rem;">
+                <div>
+                    <label class="fl bilingual" data-lang-ar="الحالة" data-lang-en="Condition" data-lang-es="Estado" data-lang-ru="Состояние">الحالة</label>
+                    <select name="condition" class="gl-select">
+                        <option value="new" {% if item.condition == 'new' or not item %}selected{% endif %} class="bilingual" data-lang-ar="جديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">جديد</option>
+                        <option value="used" {% if item.condition == 'used' %}selected{% endif %} class="bilingual" data-lang-ar="مستعمل" data-lang-en="Used" data-lang-es="Usado" data-lang-ru="Б/у">مستعمل</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="fl bilingual" data-lang-ar="خيارات" data-lang-en="Options" data-lang-es="Opciones" data-lang-ru="Опции">خيارات</label>
+                    <div class="gl-shop-checks" style="min-height:2.7rem;">
+                        <label class="gl-shop-check"><input type="checkbox" name="in_stock" {% if item.in_stock or not item %}checked{% endif %}> <span class="bilingual" data-lang-ar="متوفر" data-lang-en="In stock" data-lang-es="En stock" data-lang-ru="В наличии">متوفر</span></label>
+                        <label class="gl-shop-check"><input type="checkbox" name="is_featured" {% if item.is_featured %}checked{% endif %}> <span class="bilingual" data-lang-ar="مميّز" data-lang-en="Featured" data-lang-es="Destacado" data-lang-ru="Избранное">مميّز</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gl-shop-form-grid cols-2" style="margin-top:1.1rem;">
+                <div>
+                    <label class="fl bilingual" data-lang-ar="يناسب الماركة" data-lang-en="Fits make" data-lang-es="Marca compatible" data-lang-ru="Подходит марке">يناسب الماركة</label>
+                    <input type="text" name="fits_make" value="{{ item.fits_make|default:'' }}" class="gl-input">
+                </div>
+                <div>
+                    <label class="fl bilingual" data-lang-ar="يناسب الموديل" data-lang-en="Fits model" data-lang-es="Modelo compatible" data-lang-ru="Подходит модели">يناسب الموديل</label>
+                    <input type="text" name="fits_model" value="{{ item.fits_model|default:'' }}" class="gl-input">
+                </div>
+            </div>
+
+            <div class="gl-shop-form-grid" style="margin-top:1.1rem;">
+                <div>
+                    <label class="fl bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</label>
+                    <textarea name="description" rows="4" class="gl-textarea">{{ item.description|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="gl-shop-form-section">
+            <div class="gl-shop-form-grid cols-2">
+                <div>
+                    <label class="fl bilingual" data-lang-ar="الصورة الرئيسية" data-lang-en="Main image" data-lang-es="Imagen principal" data-lang-ru="Основное фото">الصورة الرئيسية</label>
+                    {% if item.image %}<div class="gl-shop-current-img"><img src="{{ item.image.url }}" alt=""></div>{% endif %}
+                    <input type="file" name="image" accept="image/*" class="gl-shop-file">
+                </div>
+                <div>
+                    <label class="fl bilingual" data-lang-ar="صور إضافية (معرض)" data-lang-en="Gallery images" data-lang-es="Galería" data-lang-ru="Галерея">صور إضافية (معرض)</label>
+                    {% if item.images.all %}
+                    <div class="gl-shop-gallery-current">
+                        {% for g in item.images.all %}
+                        <div class="gl-shop-gallery-item">
+                            <img src="{{ g.image.url }}" alt="">
+                            <button type="button" onclick="document.getElementById('del-img-{{ g.pk }}').submit()" class="gl-shop-gallery-remove" aria-label="Remove">×</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <input type="file" name="gallery" accept="image/*" multiple class="gl-shop-file">
+                </div>
+            </div>
+        </div>
+
+        <div class="gl-shop-form-actions">
+            <button type="submit" class="gl-shop-submit bilingual" data-lang-ar="حفظ" data-lang-en="Save" data-lang-es="Guardar" data-lang-ru="Сохранить">حفظ</button>
+        </div>
+    </form>
+
+    {% if item %}
+    {% for g in item.images.all %}
+    <form id="del-img-{{ g.pk }}" method="post" action="{% url 'shop_delete_image' item.pk g.pk %}" class="hidden">{% csrf_token %}</form>
+    {% endfor %}
+    {% endif %}
+</section>
+{% endblock %}

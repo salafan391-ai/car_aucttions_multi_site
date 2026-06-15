@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ item.name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-shop-page { padding: 2.5rem 0 3rem; }
+
+    /* ── Breadcrumb ── */
+    .gl-shop-crumb { color: var(--gl-muted); font-size: .82rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+    .gl-shop-crumb a { color: var(--gl-muted); transition: color .2s ease; }
+    .gl-shop-crumb a:hover { color: var(--gl-brand); }
+    .gl-shop-crumb .sep { color: var(--gl-border-2); }
+    .gl-shop-crumb .now { color: var(--gl-ink); font-weight: 800; }
+
+    .gl-shop-grid { display: grid; gap: 1.75rem; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; }
+    @media (max-width: 960px) { .gl-shop-grid { grid-template-columns: 1fr; } }
+
+    /* ── Gallery ── */
+    .gl-shop-gallery { aspect-ratio: 4/3; position: relative; overflow: hidden; border-radius: var(--gl-radius); }
+    .gl-shop-gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gl-shop-gallery .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gl-faint); }
+    .gl-shop-gallery .placeholder svg { width: 5rem; height: 5rem; }
+    .gl-shop-thumbs { display: flex; gap: .6rem; padding-top: .85rem; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--gl-border-2) transparent; }
+    .gl-shop-thumbs::-webkit-scrollbar { height: 5px; }
+    .gl-shop-thumbs::-webkit-scrollbar-thumb { background: var(--gl-border-2); border-radius: 999px; }
+    .gl-shop-thumb { flex: 0 0 4.5rem; aspect-ratio: 1; background: rgba(255,255,255,.04); border: 2px solid var(--gl-border); border-radius: var(--gl-radius-sm); overflow: hidden; cursor: pointer; padding: 0; transition: border-color .2s ease, transform .2s ease; }
+    .gl-shop-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gl-shop-thumb:hover { transform: translateY(-2px); border-color: var(--gl-brand); }
+
+    /* ── Info aside ── */
+    .gl-shop-aside { padding: 1.75rem; align-self: start; }
+    .gl-shop-aside-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .85rem; }
+    .gl-shop-aside h1 { font-size: 1.45rem; margin: 0; line-height: 1.3; font-weight: 800; }
+    .gl-shop-cond { flex-shrink: 0; font-size: .68rem; font-weight: 800; padding: .26rem .72rem; border-radius: 999px; border: 1px solid var(--gl-border); }
+    .gl-shop-cond.new { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 40%, transparent); background: color-mix(in srgb, var(--gl-ok) 12%, transparent); }
+    .gl-shop-cond.used { color: var(--gl-warn); border-color: color-mix(in srgb, var(--gl-warn) 45%, transparent); background: color-mix(in srgb, var(--gl-warn) 12%, transparent); }
+
+    .gl-shop-price-block { padding: 1.1rem 1.25rem; margin: 1.25rem 0; background: color-mix(in srgb, var(--gl-brand) 8%, transparent); border: 1px solid color-mix(in srgb, var(--gl-brand) 22%, transparent); border-radius: var(--gl-radius-sm); }
+    .gl-shop-price { font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; width: fit-content; }
+    .gl-shop-price-req { font-size: 1.1rem; font-weight: 800; color: var(--gl-ink); }
+    .gl-shop-stock { margin-top: .5rem; font-size: .8rem; font-weight: 800; }
+    .gl-shop-stock.in { color: var(--gl-ok); }
+    .gl-shop-stock.out { color: var(--gl-faint); }
+
+    /* ── Spec rows ── */
+    .gl-shop-specs { padding: 1.1rem 0; margin-bottom: 1.25rem; border-top: 1px solid var(--gl-border); }
+    .gl-shop-specs .row { display: flex; justify-content: space-between; align-items: center; gap: .85rem; padding: .5rem 0; font-size: .86rem; }
+    .gl-shop-specs .row + .row { border-top: 1px dashed var(--gl-border); }
+    .gl-shop-specs .label { color: var(--gl-muted); font-size: .76rem; font-weight: 700; }
+    .gl-shop-specs .value { color: var(--gl-ink); font-weight: 700; text-align: end; }
+
+    /* ── CTA pills ── */
+    .gl-shop-cta { display: flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; box-sizing: border-box; padding: .9rem 1rem; margin-bottom: .75rem; border-radius: 999px; border: 1px solid var(--gl-border); color: var(--gl-ink); background: var(--gl-glass-2); font-family: inherit; font-size: .88rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: all .2s ease; }
+    .gl-shop-cta:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); transform: translateY(-1px); box-shadow: var(--gl-glow); }
+    .gl-shop-cta svg { width: 1.05rem; height: 1.05rem; flex-shrink: 0; }
+    .gl-shop-cta-whatsapp { color: #fff; border: none; background: linear-gradient(135deg, #34d265, #1f9b46); box-shadow: 0 10px 24px -10px rgba(31,155,70,.55); }
+    .gl-shop-cta-whatsapp:hover { filter: brightness(1.08); box-shadow: 0 14px 30px -10px rgba(31,155,70,.65); }
+
+    /* ── Sections ── */
+    .gl-shop-section { margin-top: 1.75rem; padding: 1.75rem 2rem; }
+    .gl-shop-section h2 { font-size: 1.2rem; margin: 0 0 1.25rem; padding-bottom: .85rem; border-bottom: 1px solid var(--gl-border); font-weight: 800; }
+    .gl-shop-desc { color: var(--gl-ink); font-size: .93rem; line-height: 1.85; white-space: pre-line; }
+
+    /* ── Related ── */
+    .gl-shop-related { margin-top: 2.5rem; }
+    .gl-shop-related h2 { font-size: 1.3rem; font-weight: 800; margin: 0 0 1.25rem; }
+    .gl-shop-related-grid { display: grid; gap: 1.4rem; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+    .gl-shop-rcard { overflow: hidden; border-radius: var(--gl-radius); color: inherit; transition: transform .25s ease, box-shadow .3s ease, border-color .3s ease; }
+    .gl-shop-rcard:hover { transform: translateY(-4px); box-shadow: var(--gl-shadow-lg); border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border)); }
+    .gl-shop-rcard-img { aspect-ratio: 4/3; background: rgba(255,255,255,.04); overflow: hidden; }
+    .gl-shop-rcard-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s cubic-bezier(.22,1,.36,1); }
+    .gl-shop-rcard:hover .gl-shop-rcard-img img { transform: scale(1.06); }
+    .gl-shop-rcard-body { padding: .85rem 1rem 1rem; }
+    .gl-shop-rcard-name { color: var(--gl-ink); font-size: .88rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gl-shop-rcard-price { font-size: .85rem; font-weight: 800; margin-top: .3rem; background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; width: fit-content; }
+
+    @media (max-width: 600px) {
+        .gl-shop-page { padding: 1.5rem 0 2.5rem; }
+        .gl-shop-section { padding: 1.4rem 1.15rem; }
+        .gl-shop-aside { padding: 1.4rem 1.15rem; }
+    }
+</style>
+
+<section class="gl-shop-page">
+    <div class="gl-shell">
+
+        <!-- Breadcrumb -->
+        <nav class="gl-shop-crumb" aria-label="Breadcrumb">
+            <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <span class="sep">/</span>
+            <a href="{% if is_part %}{% url 'parts_list' %}{% else %}{% url 'accessories_list' %}{% endif %}" class="bilingual"
+               data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}" data-lang-es="{{ kind_labels.es }}" data-lang-ru="{{ kind_labels.ru }}">{{ kind_labels.ar }}</a>
+            <span class="sep">/</span>
+            <span class="now">{{ item.name }}</span>
+        </nav>
+
+        <div class="gl-shop-grid">
+            <!-- Gallery -->
+            <div>
+                <div class="gl-shop-gallery gl-card">
+                    {% if item.image %}
+                    <img id="shop-main-img" src="{{ item.image.url }}" alt="{{ item.name }}">
+                    {% else %}
+                    <div class="placeholder">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if item.images.all %}
+                <div class="gl-shop-thumbs">
+                    {% if item.image %}<button type="button" onclick="document.getElementById('shop-main-img').src='{{ item.image.url }}'" class="gl-shop-thumb"><img src="{{ item.image.url }}" alt=""></button>{% endif %}
+                    {% for g in item.images.all %}
+                    <button type="button" onclick="document.getElementById('shop-main-img').src='{{ g.image.url }}'" class="gl-shop-thumb"><img src="{{ g.image.url }}" loading="lazy" alt=""></button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Description -->
+                {% if item.description %}
+                <div class="gl-shop-section gl-card">
+                    <h2 class="bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</h2>
+                    <div class="gl-shop-desc">{{ item.description }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Info -->
+            <aside class="gl-shop-aside gl-card">
+                <div class="gl-shop-aside-head">
+                    <h1>{{ item.name }}</h1>
+                    <span class="gl-shop-cond {% if item.condition == 'new' %}new{% else %}used{% endif %} bilingual"
+                          data-lang-ar="{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}" data-lang-en="{% if item.condition == 'new' %}New{% else %}Used{% endif %}" data-lang-es="{% if item.condition == 'new' %}Nuevo{% else %}Usado{% endif %}" data-lang-ru="{% if item.condition == 'new' %}Новый{% else %}Б/у{% endif %}">{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}</span>
+                </div>
+
+                <div class="gl-shop-price-block">
+                    {% if item.price %}
+                    <div class="gl-shop-price"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
+                    {% else %}
+                    <div class="gl-shop-price-req bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request" data-lang-es="Precio a consultar" data-lang-ru="Цена по запросу">السعر عند الطلب</div>
+                    {% endif %}
+                    <div class="gl-shop-stock {% if item.in_stock %}in{% else %}out{% endif %} bilingual"
+                         data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out of stock{% endif %}" data-lang-es="{% if item.in_stock %}En stock{% else %}Agotado{% endif %}" data-lang-ru="{% if item.in_stock %}В наличии{% else %}Нет в наличии{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}</div>
+                </div>
+
+                <!-- Spec rows -->
+                {% if item.brand or item.category or item.fits_make or item.fits_model %}
+                <div class="gl-shop-specs">
+                    {% if item.brand %}<div class="row"><span class="label bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Бренд">الماركة</span><span class="value">{{ item.brand }}</span></div>{% endif %}
+                    {% if item.category %}<div class="row"><span class="label bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</span><span class="value">{{ item.category }}</span></div>{% endif %}
+                    {% if item.fits_make or item.fits_model %}<div class="row"><span class="label bilingual" data-lang-ar="يناسب" data-lang-en="Fits" data-lang-es="Compatible" data-lang-ru="Подходит">يناسب</span><span class="value">{{ item.fits_make }} {{ item.fits_model }}</span></div>{% endif %}
+                </div>
+                {% endif %}
+
+                <!-- WhatsApp inquiry -->
+                {% if site_whatsapp %}
+                <a href="https://wa.me/{{ site_whatsapp }}?text={{ kind_label_ar }}: {{ item.name|urlencode }}" target="_blank" rel="noopener" class="gl-shop-cta gl-shop-cta-whatsapp">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                    <span class="bilingual" data-lang-ar="استفسر عبر واتساب" data-lang-en="Inquire on WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить в WhatsApp">استفسر عبر واتساب</span>
+                </a>
+                {% endif %}
+
+                {% if user.is_staff %}
+                <a href="{% url 'shop_edit' item.pk %}" class="gl-shop-cta">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span class="bilingual" data-lang-ar="تعديل" data-lang-en="Edit" data-lang-es="Editar" data-lang-ru="Изменить">تعديل</span>
+                </a>
+                {% endif %}
+            </aside>
+        </div>
+
+        <!-- Related -->
+        {% if related %}
+        <div class="gl-shop-related">
+            <h2 class="bilingual" data-lang-ar="منتجات مشابهة" data-lang-en="Related items" data-lang-es="Artículos relacionados" data-lang-ru="Похожие товары">منتجات مشابهة</h2>
+            <div class="gl-shop-related-grid">
+                {% for r in related %}
+                <a href="{{ r.get_absolute_url }}" class="gl-shop-rcard gl-card">
+                    <div class="gl-shop-rcard-img">
+                        {% if r.image %}<img src="{{ r.image.url }}" loading="lazy" alt="{{ r.name }}">{% endif %}
+                    </div>
+                    <div class="gl-shop-rcard-body">
+                        <div class="gl-shop-rcard-name">{{ r.name }}</div>
+                        {% if r.price %}<div class="gl-shop-rcard-price"><bdi dir="ltr">{{ r.price|intcomma }} {{ r.currency }}</bdi></div>{% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

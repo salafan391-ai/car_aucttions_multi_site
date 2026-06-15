@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mod-shop-page { padding-block: 3rem 4rem; }
+
+    /* ── Hero ── */
+    .mod-shop-hero {
+        display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-end;
+        margin-bottom: 1.75rem;
+    }
+    .mod-shop-hero-text { flex: 1; min-width: 260px; }
+    .mod-shop-hero h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); margin: 0.65rem 0 0.4rem; }
+    .mod-shop-hero-count { color: var(--mod-muted); font-size: 0.92rem; margin: 0; font-weight: 600; }
+
+    /* ── Filter form ── */
+    .mod-shop-filter {
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .mod-shop-filter-grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .mod-shop-filter-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 700px) { .mod-shop-filter-grid .span-2 { grid-column: span 1; } }
+    .mod-shop-filter input,
+    .mod-shop-filter select {
+        width: 100%; box-sizing: border-box;
+        background: var(--mod-surface-2); border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius-sm);
+        color: var(--mod-ink); padding: 0.62rem 0.85rem;
+        font-size: 0.88rem; font-family: inherit;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .mod-shop-filter input:focus,
+    .mod-shop-filter select:focus {
+        outline: none; background: var(--mod-surface);
+        border-color: var(--mod-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 16%, transparent);
+    }
+    .mod-shop-filter select option { background: var(--mod-surface); color: var(--mod-ink); }
+    .mod-shop-cond-row { display: flex; gap: 0.5rem; }
+    .mod-shop-cond-row select { flex: 1; }
+
+    /* ── Grid ── */
+    .mod-shop-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .mod-shop-card-link { display: flex; flex-direction: column; text-decoration: none; color: inherit; height: 100%; overflow: hidden; }
+    .mod-shop-card-img { aspect-ratio: 4/3; background: var(--mod-surface-2); overflow: hidden; position: relative; }
+    .mod-shop-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.45s cubic-bezier(.22,1,.36,1); }
+    .mod-card:hover .mod-shop-card-img img { transform: scale(1.05); }
+    .mod-shop-card-ph {
+        width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        color: color-mix(in srgb, var(--mod-brand) 30%, transparent);
+    }
+    .mod-shop-card-ph svg { width: 3rem; height: 3rem; }
+    .mod-shop-card-badge {
+        position: absolute; top: 0.6rem; inset-inline-end: 0.6rem;
+        padding: 0.26rem 0.65rem; border-radius: 999px;
+        font-size: 0.66rem; font-weight: 700;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.35);
+        color: var(--mod-brand);
+    }
+    .mod-shop-card-badge.out { color: var(--mod-muted); }
+
+    .mod-shop-card-body { padding: 0.85rem 1rem 1rem; display: flex; flex-direction: column; flex: 1; }
+    .mod-shop-card-name {
+        color: var(--mod-ink); font-size: 0.92rem; font-weight: 800; letter-spacing: -0.01em;
+        margin: 0 0 0.2rem; line-height: 1.35;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .mod-shop-card-brand { color: var(--mod-muted); font-size: 0.72rem; font-weight: 600; }
+    .mod-shop-card-foot { margin-top: auto; padding-top: 0.65rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .mod-shop-card-price { color: var(--mod-brand); font-size: 0.92rem; font-weight: 800; letter-spacing: -0.01em; }
+    .mod-shop-card-por { color: var(--mod-muted); font-size: 0.72rem; font-weight: 600; }
+    .mod-shop-cond {
+        font-size: 0.66rem; font-weight: 700; padding: 0.18rem 0.6rem; border-radius: 999px; white-space: nowrap;
+    }
+    .mod-shop-cond.new {
+        color: var(--mod-ok);
+        background: color-mix(in srgb, var(--mod-ok) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--mod-ok) 28%, transparent);
+    }
+    .mod-shop-cond.used {
+        color: var(--mod-warn);
+        background: color-mix(in srgb, var(--mod-warn) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--mod-warn) 30%, transparent);
+    }
+
+    /* ── Empty ── */
+    .mod-shop-empty {
+        text-align: center; color: var(--mod-muted);
+        padding: 5rem 2rem;
+        border: 1px dashed var(--mod-line);
+        border-radius: var(--mod-radius);
+        background: var(--mod-surface);
+        font-size: 0.95rem;
+    }
+    .mod-shop-empty svg { width: 3rem; height: 3rem; margin: 0 auto 1rem; color: color-mix(in srgb, var(--mod-brand) 35%, transparent); }
+
+    /* ── Pagination ── */
+    .mod-shop-pager { display: flex; justify-content: center; gap: 0.4rem; margin-top: 2.5rem; flex-wrap: wrap; }
+    .mod-shop-pager a, .mod-shop-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 0.85rem;
+        border: 1px solid var(--mod-line); border-radius: 999px;
+        background: var(--mod-surface); color: var(--mod-muted);
+        text-decoration: none; font-size: 0.84rem; font-weight: 600;
+        transition: all 0.18s ease;
+    }
+    .mod-shop-pager a:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+    .mod-shop-pager .current { background: var(--mod-grad); color: #fff; border-color: transparent; }
+
+    @media (max-width: 600px) { .mod-shop-page { padding-block: 2rem 3rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="mod-shop-page">
+    <div class="mod-wrap">
+
+        <!-- Header -->
+        <div class="mod-shop-hero">
+            <div class="mod-shop-hero-text">
+                <div class="mod-eyebrow bilingual" data-lang-ar="المتجر" data-lang-en="Shop" data-lang-es="Tienda" data-lang-ru="Магазин">المتجر</div>
+                <h1 class="bilingual"
+                    data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}" data-lang-es="{{ kind_labels.es }}" data-lang-ru="{{ kind_labels.ru }}">{{ kind_labels.ar }}</h1>
+                <p class="mod-shop-hero-count">{{ items.paginator.count|default:0 }}
+                    <span class="bilingual" data-lang-ar="منتج" data-lang-en="items" data-lang-es="artículos" data-lang-ru="товаров">منتج</span>
+                </p>
+            </div>
+            {% if user.is_staff %}
+            <a href="{% url 'shop_add' %}?kind={{ kind }}" class="mod-btn mod-btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="إضافة" data-lang-en="Add" data-lang-es="Añadir" data-lang-ru="Добавить">إضافة</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Filters -->
+        <form method="get" class="mod-shop-filter">
+            <div class="mod-shop-filter-grid">
+                <input class="span-2" type="text" name="q" value="{{ active_filters.q }}" placeholder="بحث…"
+                       data-placeholder-ar="بحث…" data-placeholder-en="Search…" data-placeholder-es="Buscar…" data-placeholder-ru="Поиск…">
+                <select name="category">
+                    <option value="" class="bilingual" data-lang-ar="كل الفئات" data-lang-en="All categories">كل الفئات</option>
+                    {% for c in categories %}<option value="{{ c }}" {% if active_filters.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                </select>
+                <select name="brand">
+                    <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands">كل الماركات</option>
+                    {% for b in brands %}<option value="{{ b }}" {% if active_filters.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+                </select>
+                <div class="mod-shop-cond-row">
+                    <select name="condition">
+                        <option value="" class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition">الحالة</option>
+                        <option value="new" {% if active_filters.condition == 'new' %}selected{% endif %} class="bilingual" data-lang-ar="جديد" data-lang-en="New">جديد</option>
+                        <option value="used" {% if active_filters.condition == 'used' %}selected{% endif %} class="bilingual" data-lang-ar="مستعمل" data-lang-en="Used">مستعمل</option>
+                    </select>
+                    <button type="submit" class="mod-btn mod-btn-primary bilingual" data-lang-ar="فلترة" data-lang-en="Filter" data-lang-es="Filtrar" data-lang-ru="Фильтр">فلترة</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Grid -->
+        {% if items %}
+        <div class="mod-shop-grid">
+            {% for item in items %}
+            <div class="mod-card">
+                <a href="{{ item.get_absolute_url }}" class="mod-shop-card-link">
+                    <div class="mod-shop-card-img">
+                        {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy">
+                        {% else %}
+                        <div class="mod-shop-card-ph">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        {% endif %}
+                        {% if not item.in_stock %}
+                        <span class="mod-shop-card-badge out bilingual" data-lang-ar="غير متوفر" data-lang-en="Out of stock">غير متوفر</span>
+                        {% elif item.is_featured %}
+                        <span class="mod-shop-card-badge bilingual" data-lang-ar="مميّز" data-lang-en="Featured">مميّز</span>
+                        {% endif %}
+                    </div>
+                    <div class="mod-shop-card-body">
+                        <div class="mod-shop-card-name">{{ item.name }}</div>
+                        {% if item.brand %}<div class="mod-shop-card-brand">{{ item.brand }}</div>{% endif %}
+                        <div class="mod-shop-card-foot">
+                            {% if item.price %}
+                            <div class="mod-shop-card-price"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
+                            {% else %}
+                            <div class="mod-shop-card-por bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request">السعر عند الطلب</div>
+                            {% endif %}
+                            <span class="mod-shop-cond {% if item.condition == 'new' %}new{% else %}used{% endif %} bilingual"
+                                  data-lang-ar="{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}" data-lang-en="{% if item.condition == 'new' %}New{% else %}Used{% endif %}">{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if items.paginator.num_pages > 1 %}
+        <nav class="mod-shop-pager" aria-label="Pagination">
+            {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}">‹</a>{% endif %}
+            <span class="current">{{ items.number }} / {{ items.paginator.num_pages }}</span>
+            {% if items.has_next %}<a href="?page={{ items.next_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}">›</a>{% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="mod-shop-empty">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <p class="bilingual" data-lang-ar="لا توجد منتجات حالياً" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товаров">لا توجد منتجات حالياً</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

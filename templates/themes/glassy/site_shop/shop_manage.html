@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}إدارة {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-shop-page { padding: 2.5rem 0 4rem; }
+
+    .gl-shop-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+    .gl-shop-head h1 { font-size: clamp(1.5rem, 4vw, 2rem); margin: 0; font-weight: 800; letter-spacing: -.01em; }
+
+    /* Kind tabs (segmented glass pill) */
+    .gl-shop-tabs { display: inline-flex; gap: .3rem; flex-wrap: wrap; padding: .35rem; border-radius: 999px; margin-bottom: 1.25rem; }
+    .gl-shop-tab { display: inline-flex; align-items: center; padding: .55rem 1.2rem; border-radius: 999px; color: var(--gl-muted); font-size: .86rem; font-weight: 700; transition: all .2s ease; }
+    .gl-shop-tab:hover { color: var(--gl-ink); background: var(--gl-glass); }
+    .gl-shop-tab.active { background: var(--gl-grad); color: #06121a; box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--gl-brand) 60%, transparent); }
+
+    .gl-shop-search { display: flex; gap: .6rem; margin-bottom: 1.25rem; }
+    .gl-shop-search .gl-input { max-width: 22rem; }
+
+    /* Table card */
+    .gl-shop-table-card { padding: 0; overflow: hidden; }
+    .gl-shop-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .gl-shop-table thead th { text-align: start; padding: .9rem 1rem; color: var(--gl-faint); font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--gl-border); background: rgba(255,255,255,.03); }
+    .gl-shop-table tbody td { padding: .85rem 1rem; border-bottom: 1px solid var(--gl-border); color: var(--gl-ink); }
+    .gl-shop-table tbody tr:last-child td { border-bottom: 0; }
+    .gl-shop-table tbody tr:hover { background: var(--gl-glass); }
+    .gl-shop-row-item { display: flex; align-items: center; gap: .85rem; }
+    .gl-shop-row-thumb { width: 3rem; height: 3rem; border-radius: var(--gl-radius-sm); background: rgba(255,255,255,.04); overflow: hidden; flex-shrink: 0; }
+    .gl-shop-row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .gl-shop-row-name { color: var(--gl-ink); font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 18rem; transition: color .18s ease; }
+    .gl-shop-row-name:hover { color: var(--gl-brand); }
+    .gl-shop-col-brand { color: var(--gl-muted); }
+    .gl-shop-col-center { text-align: center; }
+    .gl-shop-col-end { text-align: end; white-space: nowrap; }
+    @media (max-width: 760px) { .gl-shop-hide-sm { display: none; } }
+
+    .gl-shop-stock-btn { font-size: .7rem; font-weight: 800; padding: .28rem .8rem; border-radius: 999px; border: 1px solid var(--gl-border); cursor: pointer; font-family: inherit; transition: all .18s ease; }
+    .gl-shop-stock-btn.in { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 40%, transparent); background: color-mix(in srgb, var(--gl-ok) 12%, transparent); }
+    .gl-shop-stock-btn.out { color: var(--gl-faint); background: var(--gl-glass-2); }
+    .gl-shop-stock-btn:hover { filter: brightness(1.1); }
+
+    .gl-shop-act { font-weight: 800; font-size: .82rem; transition: color .18s ease; }
+    .gl-shop-act.edit { color: var(--gl-brand); }
+    .gl-shop-act.del { color: var(--gl-danger); margin-inline-start: 1rem; }
+    .gl-shop-act:hover { text-decoration: underline; }
+
+    .gl-shop-empty-row { padding: 4rem 2rem; text-align: center; color: var(--gl-muted); font-weight: 700; }
+
+    .gl-shop-pager { display: flex; justify-content: center; gap: .4rem; margin-top: 2rem; flex-wrap: wrap; }
+    .gl-shop-pager a, .gl-shop-pager span { display: inline-flex; align-items: center; justify-content: center; min-width: 2.5rem; height: 2.5rem; padding: 0 .85rem; border: 1px solid var(--gl-border); border-radius: 999px; background: var(--gl-glass); color: var(--gl-muted); font-size: .84rem; font-weight: 700; transition: all .18s ease; }
+    .gl-shop-pager a:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); color: var(--gl-brand); }
+    .gl-shop-pager .current { background: var(--gl-grad); color: #06121a; border-color: transparent; }
+</style>
+
+<section class="gl-shop-page">
+    <div class="gl-shell">
+
+        <div class="gl-shop-head">
+            <h1 class="bilingual" data-lang-ar="إدارة المتجر" data-lang-en="Shop management" data-lang-es="Gestión de tienda" data-lang-ru="Управление магазином">إدارة المتجر</h1>
+            <a href="{% url 'shop_add' %}?kind={{ kind }}" class="gl-btn gl-btn-solid">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="إضافة جديد" data-lang-en="Add new" data-lang-es="Añadir" data-lang-ru="Добавить">إضافة جديد</span>
+            </a>
+        </div>
+
+        <!-- Kind tabs -->
+        <div class="gl-shop-tabs gl-glass">
+            <a href="?kind=part" class="gl-shop-tab {% if is_part %}active{% endif %} bilingual" data-lang-ar="قطع الغيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع الغيار</a>
+            <a href="?kind=accessory" class="gl-shop-tab {% if not is_part %}active{% endif %} bilingual" data-lang-ar="الإكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">الإكسسوارات</a>
+        </div>
+
+        <form method="get" class="gl-shop-search">
+            <input type="hidden" name="kind" value="{{ kind }}">
+            <input type="text" name="q" value="{{ q }}" class="gl-input"
+                   placeholder="—" data-placeholder-ar="بحث…" data-placeholder-en="Search…" data-placeholder-es="Buscar…" data-placeholder-ru="Поиск…">
+            <button class="gl-btn gl-btn-solid bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</button>
+        </form>
+
+        <div class="gl-shop-table-card gl-card">
+            <table class="gl-shop-table">
+                <thead>
+                    <tr>
+                        <th class="bilingual" data-lang-ar="المنتج" data-lang-en="Item" data-lang-es="Artículo" data-lang-ru="Товар">المنتج</th>
+                        <th class="gl-shop-hide-sm bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Бренд">الماركة</th>
+                        <th class="bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</th>
+                        <th class="gl-shop-col-center bilingual" data-lang-ar="الحالة" data-lang-en="Status" data-lang-es="Estado" data-lang-ru="Статус">الحالة</th>
+                        <th class="gl-shop-col-end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <div class="gl-shop-row-item">
+                                <div class="gl-shop-row-thumb">
+                                    {% if item.image %}<img src="{{ item.image.url }}" alt="">{% endif %}
+                                </div>
+                                <a href="{{ item.get_absolute_url }}" class="gl-shop-row-name">{{ item.name }}</a>
+                            </div>
+                        </td>
+                        <td class="gl-shop-hide-sm gl-shop-col-brand">{{ item.brand|default:"—" }}</td>
+                        <td style="font-weight:800;">{% if item.price %}<bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi>{% else %}—{% endif %}</td>
+                        <td class="gl-shop-col-center">
+                            <form method="post" action="{% url 'shop_toggle_stock' item.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="gl-shop-stock-btn {% if item.in_stock %}in{% else %}out{% endif %} bilingual"
+                                        data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out{% endif %}" data-lang-es="{% if item.in_stock %}En stock{% else %}Agotado{% endif %}" data-lang-ru="{% if item.in_stock %}В наличии{% else %}Нет{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}</button>
+                            </form>
+                        </td>
+                        <td class="gl-shop-col-end">
+                            <a href="{% url 'shop_edit' item.pk %}" class="gl-shop-act edit bilingual" data-lang-ar="تعديل" data-lang-en="Edit" data-lang-es="Editar" data-lang-ru="Изменить">تعديل</a>
+                            <a href="{% url 'shop_delete' item.pk %}" class="gl-shop-act del bilingual" data-lang-ar="حذف" data-lang-en="Delete" data-lang-es="Eliminar" data-lang-ru="Удалить">حذف</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="gl-shop-empty-row bilingual" data-lang-ar="لا توجد منتجات بعد" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товаров">لا توجد منتجات بعد</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if items.paginator.num_pages > 1 %}
+        <nav class="gl-shop-pager" aria-label="Pagination">
+            {% if items.has_previous %}<a href="?kind={{ kind }}&page={{ items.previous_page_number }}&q={{ q }}">‹</a>{% endif %}
+            <span class="current">{{ items.number }} / {{ items.paginator.num_pages }}</span>
+            {% if items.has_next %}<a href="?kind={{ kind }}&page={{ items.next_page_number }}&q={{ q }}">›</a>{% endif %}
+        </nav>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

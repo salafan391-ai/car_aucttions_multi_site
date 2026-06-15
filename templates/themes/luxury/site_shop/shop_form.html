@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}{% if item %}تعديل{% else %}إضافة{% endif %} {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .lux-form-page { padding: 3rem 1.5rem; max-width: 900px; margin: 0 auto; }
+    .lux-form-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+
+    .lux-form-back {
+        color: var(--lux-text-dim); text-decoration: none;
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase;
+        margin-bottom: 1.5rem; transition: color 0.2s ease;
+    }
+    .lux-form-back:hover { color: var(--lux-gold); }
+
+    .lux-form-head { margin-bottom: 2.5rem; }
+    .lux-form-head .eyebrow { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .lux-form-head h1 { font-size: 2.1rem; font-weight: 400; margin: 0; letter-spacing: 0.05em; }
+
+    .lux-form-card {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line);
+        padding: 2rem 2.25rem;
+    }
+    @media (max-width: 768px) { .lux-form-card { padding: 1.5rem 1.25rem; } .lux-form-page { padding: 2rem 1rem; } .lux-form-head h1 { font-size: 1.7rem; } }
+
+    .lux-form-grid { display: grid; gap: 1.25rem; margin-bottom: 1.25rem; }
+    .lux-form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .lux-form-grid.cols-3 { grid-template-columns: 2fr 1fr; }
+    .lux-form-grid .span-full { grid-column: 1 / -1; }
+    @media (max-width: 640px) {
+        .lux-form-grid.cols-2, .lux-form-grid.cols-3 { grid-template-columns: 1fr; }
+    }
+
+    .lux-form-page label {
+        display: block; color: var(--lux-text-dim);
+        font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .lux-form-page input[type="text"],
+    .lux-form-page input[type="number"],
+    .lux-form-page select,
+    .lux-form-page textarea {
+        width: 100%; box-sizing: border-box;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--lux-line);
+        color: var(--lux-text);
+        padding: 0.85rem 1rem;
+        font-size: 0.95rem; font-family: 'Tajawal', 'Playfair Display', serif;
+        transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .lux-form-page input:focus,
+    .lux-form-page select:focus,
+    .lux-form-page textarea:focus { outline: none; border-color: var(--lux-gold); background: rgba(201,164,90,0.04); }
+    .lux-form-page textarea { min-height: 130px; resize: vertical; }
+    .lux-form-page select option { background: #0f0d0a; color: var(--lux-text); }
+
+    .lux-form-checks { display: flex; gap: 1.75rem; align-items: center; flex-wrap: wrap; }
+    .lux-checkbox {
+        display: inline-flex; align-items: center; gap: 0.6rem; cursor: pointer;
+        color: var(--lux-text); font-size: 0.85rem; letter-spacing: 0.05em;
+    }
+    .lux-checkbox input { appearance: none; -webkit-appearance: none; width: 1.1rem; height: 1.1rem; border: 1px solid var(--lux-line); background: transparent; cursor: pointer; position: relative; flex-shrink: 0; }
+    .lux-checkbox input:checked { border-color: var(--lux-gold); background: var(--lux-gold); }
+    .lux-checkbox input:checked::after {
+        content: ''; position: absolute; left: 3px; top: 0px;
+        width: 4px; height: 8px; border: solid var(--lux-bg);
+        border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+
+    .lux-file {
+        display: block; width: 100%; box-sizing: border-box;
+        padding: 0.85rem 1rem;
+        background: rgba(255,255,255,0.02);
+        border: 1px dashed var(--lux-line);
+        color: var(--lux-text-dim); font-size: 0.85rem; cursor: pointer;
+    }
+    .lux-file:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-file::-webkit-file-upload-button,
+    .lux-file::file-selector-button {
+        background: transparent; border: 1px solid var(--lux-line); color: var(--lux-gold);
+        padding: 0.4rem 0.85rem; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+        cursor: pointer; margin-inline-end: 0.85rem; font-family: inherit;
+    }
+
+    .lux-form-current-img { display: inline-block; border: 1px solid var(--lux-line); padding: 4px; background: rgba(0,0,0,0.4); margin-bottom: 0.75rem; }
+    .lux-form-current-img img { display: block; width: 6rem; height: 6rem; object-fit: cover; }
+
+    .lux-form-gallery { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .lux-form-gallery-item { position: relative; border: 1px solid var(--lux-line); padding: 4px; background: rgba(0,0,0,0.4); }
+    .lux-form-gallery-item img { display: block; width: 5rem; height: 5rem; object-fit: cover; }
+    .lux-form-gallery-del {
+        position: absolute; top: -0.55rem; inset-inline-end: -0.55rem;
+        width: 1.4rem; height: 1.4rem; border-radius: 50%;
+        background: #c97a5a; color: #fff; border: 0; cursor: pointer;
+        font-size: 0.9rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+    }
+    .lux-form-gallery-del:hover { background: #d97777; }
+
+    .lux-submit {
+        padding: 1rem 2.5rem; margin-top: 0.5rem;
+        background: var(--lux-gold); color: var(--lux-bg);
+        border: 1px solid var(--lux-gold); cursor: pointer;
+        letter-spacing: 0.3em; text-transform: uppercase; font-size: 0.8rem; font-weight: 600;
+        font-family: inherit; transition: all 0.3s ease;
+    }
+    .lux-submit:hover { background: var(--lux-gold-bright); border-color: var(--lux-gold-bright); }
+    .lux-light .lux-submit { color: #fbf6e8; }
+
+    .lux-alert { border-left: 2px solid var(--lux-gold); background: rgba(201,164,90,0.08); color: var(--lux-text); padding: 0.85rem 1.25rem; margin-bottom: 1rem; font-size: 0.85rem; }
+    .lux-alert.error { border-left-color: #c97a5a; background: rgba(201,122,90,0.08); }
+
+    :root.lux-light .lux-form-card { background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%); border: 1px solid rgba(120, 92, 30, 0.30); }
+    :root.lux-light .lux-form-page input,
+    :root.lux-light .lux-form-page select,
+    :root.lux-light .lux-form-page textarea,
+    :root.lux-light .lux-file { background: #fffdf7; }
+    :root.lux-light .lux-form-page select option { background: #fffdf7; color: var(--lux-text); }
+</style>
+
+<section class="lux-form-page">
+    <a href="{% url 'shop_manage' %}?kind={{ kind }}" class="lux-form-back">
+        ‹ <span class="bilingual" data-lang-ar="رجوع" data-lang-en="Back" data-lang-es="Volver" data-lang-ru="Назад">رجوع</span>
+    </a>
+
+    <div class="lux-form-head">
+        <div class="eyebrow bilingual" data-lang-ar="المتجر" data-lang-en="Boutique" data-lang-es="Boutique" data-lang-ru="Бутик">المتجر</div>
+        <h1>
+            <span class="bilingual" data-lang-ar="{% if item %}تعديل{% else %}إضافة{% endif %}" data-lang-en="{% if item %}Edit{% else %}Add{% endif %}" data-lang-es="{% if item %}Editar{% else %}Añadir{% endif %}" data-lang-ru="{% if item %}Изменить{% else %}Добавить{% endif %}">{% if item %}تعديل{% else %}إضافة{% endif %}</span>
+            — {{ kind_label_ar }}
+        </h1>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="lux-alert {% if m.tags == 'error' %}error{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+    <form method="post" enctype="multipart/form-data" action="{% if item %}{% url 'shop_edit' item.pk %}{% else %}{% url 'shop_add' %}?kind={{ kind }}{% endif %}" class="lux-form-card">
+        {% csrf_token %}
+        <input type="hidden" name="kind" value="{{ kind }}">
+
+        <div class="lux-form-grid">
+            <div>
+                <label class="bilingual" data-lang-ar="الاسم *" data-lang-en="Name *" data-lang-es="Nombre *" data-lang-ru="Название *">الاسم *</label>
+                <input type="text" name="name" required value="{{ item.name|default:'' }}">
+            </div>
+        </div>
+
+        <div class="lux-form-grid cols-2">
+            <div>
+                <label class="bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</label>
+                <input type="text" name="category" value="{{ item.category|default:'' }}">
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Марка">الماركة</label>
+                <input type="text" name="brand" value="{{ item.brand|default:'' }}">
+            </div>
+        </div>
+
+        <div class="lux-form-grid cols-3">
+            <div>
+                <label class="bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</label>
+                <input type="number" name="price" value="{{ item.price|default:'' }}" placeholder="اتركه فارغاً = عند الطلب"
+                       data-placeholder-ar="اتركه فارغاً = عند الطلب" data-placeholder-en="Leave empty = on request" data-placeholder-es="Vacío = a consultar" data-placeholder-ru="Пусто = по запросу">
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="العملة" data-lang-en="Currency" data-lang-es="Moneda" data-lang-ru="Валюта">العملة</label>
+                <select name="currency">
+                    <option value="SAR" {% if item.currency == 'SAR' or not item %}selected{% endif %}>SAR</option>
+                    <option value="AED" {% if item.currency == 'AED' %}selected{% endif %}>AED</option>
+                    <option value="USD" {% if item.currency == 'USD' %}selected{% endif %}>USD</option>
+                    <option value="EUR" {% if item.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                    <option value="KRW" {% if item.currency == 'KRW' %}selected{% endif %}>KRW</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="lux-form-grid cols-2">
+            <div>
+                <label class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition" data-lang-es="Estado" data-lang-ru="Состояние">الحالة</label>
+                <select name="condition">
+                    <option value="new" {% if item.condition == 'new' or not item %}selected{% endif %} class="bilingual" data-lang-ar="جديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">جديد</option>
+                    <option value="used" {% if item.condition == 'used' %}selected{% endif %} class="bilingual" data-lang-ar="مستعمل" data-lang-en="Used" data-lang-es="Usado" data-lang-ru="Б/у">مستعمل</option>
+                </select>
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="الخيارات" data-lang-en="Options" data-lang-es="Opciones" data-lang-ru="Опции">الخيارات</label>
+                <div class="lux-form-checks">
+                    <label class="lux-checkbox"><input type="checkbox" name="in_stock" {% if item.in_stock or not item %}checked{% endif %}> <span class="bilingual" data-lang-ar="متوفر" data-lang-en="In stock" data-lang-es="En stock" data-lang-ru="В наличии">متوفر</span></label>
+                    <label class="lux-checkbox"><input type="checkbox" name="is_featured" {% if item.is_featured %}checked{% endif %}> <span class="bilingual" data-lang-ar="مميّز" data-lang-en="Featured" data-lang-es="Destacado" data-lang-ru="Избранное">مميّز</span></label>
+                </div>
+            </div>
+        </div>
+
+        <div class="lux-form-grid cols-2">
+            <div>
+                <label class="bilingual" data-lang-ar="يناسب الماركة" data-lang-en="Fits make" data-lang-es="Compatible marca" data-lang-ru="Подходит марка">يناسب الماركة</label>
+                <input type="text" name="fits_make" value="{{ item.fits_make|default:'' }}">
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="يناسب الموديل" data-lang-en="Fits model" data-lang-es="Compatible modelo" data-lang-ru="Подходит модель">يناسب الموديل</label>
+                <input type="text" name="fits_model" value="{{ item.fits_model|default:'' }}">
+            </div>
+        </div>
+
+        <div class="lux-form-grid">
+            <div>
+                <label class="bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</label>
+                <textarea name="description" rows="4">{{ item.description|default:'' }}</textarea>
+            </div>
+        </div>
+
+        <div class="lux-form-grid">
+            <div>
+                <label class="bilingual" data-lang-ar="الصورة الرئيسية" data-lang-en="Main image" data-lang-es="Imagen principal" data-lang-ru="Главное фото">الصورة الرئيسية</label>
+                {% if item.image %}<div class="lux-form-current-img"><img src="{{ item.image.url }}"></div>{% endif %}
+                <input type="file" name="image" accept="image/*" class="lux-file">
+            </div>
+        </div>
+
+        <div class="lux-form-grid">
+            <div>
+                <label class="bilingual" data-lang-ar="صور إضافية (معرض)" data-lang-en="Gallery images" data-lang-es="Imágenes (galería)" data-lang-ru="Фото (галерея)">صور إضافية (معرض)</label>
+                {% if item.images.all %}
+                <div class="lux-form-gallery">
+                    {% for g in item.images.all %}
+                    <div class="lux-form-gallery-item">
+                        <img src="{{ g.image.url }}">
+                        <button type="button" onclick="document.getElementById('del-img-{{ g.pk }}').submit()" class="lux-form-gallery-del">×</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <input type="file" name="gallery" accept="image/*" multiple class="lux-file">
+            </div>
+        </div>
+
+        <button type="submit" class="lux-submit bilingual" data-lang-ar="حفظ" data-lang-en="Save" data-lang-es="Guardar" data-lang-ru="Сохранить">حفظ</button>
+    </form>
+
+    {% if item %}
+    {% for g in item.images.all %}
+    <form id="del-img-{{ g.pk }}" method="post" action="{% url 'shop_delete_image' item.pk g.pk %}" class="hidden">{% csrf_token %}</form>
+    {% endfor %}
+    {% endif %}
+</section>
+{% endblock %}

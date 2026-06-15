@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ item.name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .lux-shop-page { background: var(--lux-bg); color: var(--lux-text); min-height: 100vh; padding: 3rem 1.5rem; }
+    .lux-shop-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+    .lux-shop-wrap { max-width: 1200px; margin: 0 auto; }
+
+    .lux-shop-crumb { color: var(--lux-text-dim); font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 2rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+    .lux-shop-crumb a { color: var(--lux-text-dim); text-decoration: none; transition: color 0.2s ease; }
+    .lux-shop-crumb a:hover { color: var(--lux-gold); }
+    .lux-shop-crumb .sep { color: rgba(201,164,90,0.4); }
+    .lux-shop-crumb .now { color: var(--lux-gold); }
+
+    .lux-shop-detail-grid { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+    @media (max-width: 960px) { .lux-shop-detail-grid { grid-template-columns: 1fr; } }
+
+    .lux-shop-main-img {
+        aspect-ratio: 4/3; background: #000;
+        border: 1px solid var(--lux-line); position: relative; overflow: hidden;
+    }
+    .lux-shop-main-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .lux-shop-main-img .ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: rgba(201,164,90,0.25); }
+    .lux-shop-main-img .ph svg { width: 5rem; height: 5rem; }
+    .lux-light .lux-shop-main-img { background: #c8b787; }
+
+    .lux-shop-thumbs { display: flex; gap: 0.5rem; padding-top: 0.85rem; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--lux-line) transparent; }
+    .lux-shop-thumbs::-webkit-scrollbar { height: 5px; }
+    .lux-shop-thumbs::-webkit-scrollbar-thumb { background: var(--lux-line); }
+    .lux-shop-thumb {
+        flex: 0 0 4.5rem; aspect-ratio: 1;
+        background: #000; border: 1px solid var(--lux-line);
+        cursor: pointer; padding: 0; overflow: hidden; transition: border-color 0.2s ease;
+    }
+    .lux-shop-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .lux-shop-thumb:hover { border-color: var(--lux-gold); }
+    .lux-light .lux-shop-thumb { background: #c8b787; }
+
+    .lux-shop-aside {
+        padding: 2rem; border: 1px solid var(--lux-line);
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        align-self: start;
+    }
+    .lux-shop-aside h1 { font-size: 1.55rem; font-weight: 400; margin: 0; line-height: 1.35; }
+
+    .lux-shop-pill {
+        display: inline-block; padding: 0.28rem 0.7rem; margin-top: 0.9rem;
+        font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+    }
+    .lux-shop-pill.new { color: #8fc28f; border-color: rgba(125,193,125,0.4); }
+    .lux-shop-pill.used { color: #d9bb77; border-color: rgba(201,164,90,0.4); }
+
+    .lux-shop-price-block { padding: 1.25rem 0; border-top: 1px solid var(--lux-line); border-bottom: 1px solid var(--lux-line); margin: 1.25rem 0 1.5rem; }
+    .lux-shop-price { color: var(--lux-gold-bright); font-size: 1.85rem; font-weight: 600; letter-spacing: 0.05em; }
+    .lux-shop-price-req { color: var(--lux-text); font-size: 1.1rem; font-weight: 500; }
+    .lux-shop-stock { margin-top: 0.5rem; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--lux-text-dim); }
+    .lux-shop-stock.in { color: #8fc28f; }
+
+    .lux-shop-specs { padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--lux-line); }
+    .lux-shop-specs .row { display: flex; justify-content: space-between; align-items: center; gap: 0.85rem; padding: 0.55rem 0; font-size: 0.85rem; }
+    .lux-shop-specs .label { color: var(--lux-text-dim); font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; }
+    .lux-shop-specs .value { color: var(--lux-text); text-align: end; }
+
+    .lux-shop-cta {
+        display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+        width: 100%; box-sizing: border-box;
+        padding: 0.95rem 1rem; margin-bottom: 0.75rem;
+        text-decoration: none; border: 1px solid var(--lux-gold);
+        color: var(--lux-gold); background: transparent;
+        font-family: inherit; font-size: 0.78rem; letter-spacing: 0.25em; text-transform: uppercase;
+        cursor: pointer; transition: all 0.25s ease;
+    }
+    .lux-shop-cta:hover { background: var(--lux-gold); color: var(--lux-bg); }
+    .lux-shop-cta.whatsapp { border-color: rgba(125,193,125,0.55); color: #b8d9b8; }
+    .lux-shop-cta.whatsapp:hover { background: rgba(125,193,125,0.18); color: #d8efd8; border-color: #8fc28f; }
+    .lux-shop-cta svg { width: 1.05rem; height: 1.05rem; }
+
+    .lux-shop-section {
+        margin-top: 2rem; padding: 2rem 2.25rem;
+        border: 1px solid var(--lux-line);
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+    }
+    .lux-shop-section h2 {
+        font-size: 1.2rem; font-weight: 400; margin: 0 0 1.1rem;
+        padding-bottom: 0.85rem; border-bottom: 1px solid var(--lux-line);
+    }
+    .lux-shop-desc { color: var(--lux-text); font-size: 0.92rem; line-height: 1.85; white-space: pre-line; }
+
+    .lux-shop-related-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); margin-top: 1.25rem; }
+    @media (max-width: 600px) { .lux-shop-related-grid { grid-template-columns: 1fr 1fr; gap: 1rem; } }
+    .lux-shop-related-card {
+        background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        border: 1px solid var(--lux-line); overflow: hidden;
+        text-decoration: none; color: inherit; display: block; transition: all 0.4s ease;
+    }
+    .lux-shop-related-card:hover { border-color: var(--lux-gold); transform: translateY(-4px); box-shadow: 0 20px 40px rgba(201,164,90,0.15); }
+    .lux-shop-related-img { aspect-ratio: 4/3; background: #000; overflow: hidden; }
+    .lux-shop-related-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; filter: brightness(0.92); }
+    .lux-shop-related-card:hover .lux-shop-related-img img { transform: scale(1.05); filter: brightness(1); }
+    .lux-shop-related-body { padding: 1rem 1.1rem 1.15rem; }
+    .lux-shop-related-name { color: var(--lux-text); font-size: 0.92rem; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lux-shop-related-price { color: var(--lux-gold-bright); font-size: 0.9rem; font-weight: 600; margin-top: 0.4rem; }
+    .lux-light .lux-shop-related-img { background: #c8b787; }
+
+    @media (max-width: 600px) {
+        .lux-shop-page { padding: 2rem 1rem; }
+        .lux-shop-aside { padding: 1.5rem 1.25rem; }
+        .lux-shop-section { padding: 1.5rem 1.25rem; }
+    }
+
+    :root.lux-light .lux-shop-aside,
+    :root.lux-light .lux-shop-section,
+    :root.lux-light .lux-shop-related-card {
+        background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%);
+        border: 1px solid rgba(120, 92, 30, 0.30);
+    }
+    :root.lux-light .lux-shop-related-card:hover { border-color: var(--lux-gold); box-shadow: 0 18px 38px rgba(120, 92, 30, 0.22); }
+</style>
+
+<section class="lux-shop-page">
+    <div class="lux-shop-wrap">
+
+        <nav class="lux-shop-crumb">
+            <a href="{% if is_part %}{% url 'parts_list' %}{% else %}{% url 'accessories_list' %}{% endif %}" class="bilingual"
+               data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}" data-lang-es="{{ kind_labels.es }}" data-lang-ru="{{ kind_labels.ru }}">{{ kind_labels.ar }}</a>
+            <span class="sep">/</span><span class="now">{{ item.name }}</span>
+        </nav>
+
+        <div class="lux-shop-detail-grid">
+            <!-- Gallery -->
+            <div>
+                <div class="lux-shop-main-img">
+                    {% if item.image %}
+                    <img id="shop-main-img" src="{{ item.image.url }}" alt="{{ item.name }}">
+                    {% else %}
+                    <div class="ph">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if item.images.all %}
+                <div class="lux-shop-thumbs">
+                    {% if item.image %}<button onclick="document.getElementById('shop-main-img').src='{{ item.image.url }}'" class="lux-shop-thumb"><img src="{{ item.image.url }}"></button>{% endif %}
+                    {% for g in item.images.all %}
+                    <button onclick="document.getElementById('shop-main-img').src='{{ g.image.url }}'" class="lux-shop-thumb"><img src="{{ g.image.url }}" loading="lazy"></button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Info -->
+            <div class="lux-shop-aside">
+                <h1>{{ item.name }}</h1>
+                <span class="lux-shop-pill {% if item.condition == 'new' %}new{% else %}used{% endif %} bilingual"
+                      data-lang-ar="{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}" data-lang-en="{% if item.condition == 'new' %}New{% else %}Used{% endif %}" data-lang-es="{% if item.condition == 'new' %}Nuevo{% else %}Usado{% endif %}" data-lang-ru="{% if item.condition == 'new' %}Новый{% else %}Б/у{% endif %}">{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}</span>
+
+                <div class="lux-shop-price-block">
+                    {% if item.price %}
+                    <div class="lux-shop-price"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
+                    {% else %}
+                    <div class="lux-shop-price-req bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request" data-lang-es="Precio a consultar" data-lang-ru="Цена по запросу">السعر عند الطلب</div>
+                    {% endif %}
+                    <div class="lux-shop-stock {% if item.in_stock %}in{% endif %} bilingual"
+                         data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out of stock{% endif %}" data-lang-es="{% if item.in_stock %}En stock{% else %}Agotado{% endif %}" data-lang-ru="{% if item.in_stock %}В наличии{% else %}Нет в наличии{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}</div>
+                </div>
+
+                <div class="lux-shop-specs">
+                    {% if item.brand %}<div class="row"><span class="label bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Марка">الماركة</span><span class="value">{{ item.brand }}</span></div>{% endif %}
+                    {% if item.category %}<div class="row"><span class="label bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</span><span class="value">{{ item.category }}</span></div>{% endif %}
+                    {% if item.fits_make or item.fits_model %}<div class="row"><span class="label bilingual" data-lang-ar="يناسب" data-lang-en="Fits" data-lang-es="Compatible" data-lang-ru="Подходит">يناسب</span><span class="value">{{ item.fits_make }} {{ item.fits_model }}</span></div>{% endif %}
+                </div>
+
+                {% if site_whatsapp %}
+                <a href="https://wa.me/{{ site_whatsapp }}?text={{ kind_label_ar }}: {{ item.name|urlencode }}" target="_blank" rel="noopener" class="lux-shop-cta whatsapp">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                    <span class="bilingual" data-lang-ar="استفسر عبر واتساب" data-lang-en="Inquire on WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить в WhatsApp">استفسر عبر واتساب</span>
+                </a>
+                {% endif %}
+
+                {% if user.is_staff %}
+                <a href="{% url 'shop_edit' item.pk %}" class="lux-shop-cta">
+                    <span class="bilingual" data-lang-ar="تعديل" data-lang-en="Edit" data-lang-es="Editar" data-lang-ru="Изменить">تعديل</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if item.description %}
+        <div class="lux-shop-section">
+            <h2 class="bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</h2>
+            <p class="lux-shop-desc">{{ item.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if related %}
+        <div class="lux-shop-section">
+            <h2 class="bilingual" data-lang-ar="منتجات مشابهة" data-lang-en="Related items" data-lang-es="Artículos relacionados" data-lang-ru="Похожие товары">منتجات مشابهة</h2>
+            <div class="lux-shop-related-grid">
+                {% for r in related %}
+                <a href="{{ r.get_absolute_url }}" class="lux-shop-related-card">
+                    <div class="lux-shop-related-img">
+                        {% if r.image %}<img src="{{ r.image.url }}" loading="lazy">{% endif %}
+                    </div>
+                    <div class="lux-shop-related-body">
+                        <div class="lux-shop-related-name">{{ r.name }}</div>
+                        {% if r.price %}<div class="lux-shop-related-price"><bdi dir="ltr">{{ r.price|intcomma }} {{ r.currency }}</bdi></div>{% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

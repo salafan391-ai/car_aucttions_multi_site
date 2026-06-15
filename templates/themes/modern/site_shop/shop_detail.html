@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ item.name }} — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mod-shop-page { padding: 2.5rem 1.25rem 3rem; }
+    .mod-shop-wrap { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Breadcrumb ── */
+    .mod-shop-crumb {
+        color: var(--mod-muted); font-size: 0.82rem; font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+    }
+    .mod-shop-crumb a { color: var(--mod-muted); text-decoration: none; transition: color 0.2s ease; }
+    .mod-shop-crumb a:hover { color: var(--mod-brand); }
+    .mod-shop-crumb .sep { color: var(--mod-line); }
+    .mod-shop-crumb .now { color: var(--mod-ink); font-weight: 700; }
+
+    .mod-shop-grid { display: grid; gap: 1.75rem; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+    @media (max-width: 880px) { .mod-shop-grid { grid-template-columns: 1fr; } }
+
+    /* ── Gallery ── */
+    .mod-shop-gallery-main {
+        aspect-ratio: 4/3; background: var(--mod-surface-2);
+        border: 1px solid var(--mod-line); border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow); overflow: hidden;
+    }
+    .mod-shop-gallery-main img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mod-shop-gallery-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--mod-muted); opacity: 0.45; }
+    .mod-shop-gallery-ph svg { width: 5rem; height: 5rem; }
+    .mod-shop-thumbs { display: flex; gap: 0.6rem; padding-top: 0.85rem; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--mod-line) transparent; }
+    .mod-shop-thumbs::-webkit-scrollbar { height: 5px; }
+    .mod-shop-thumbs::-webkit-scrollbar-thumb { background: var(--mod-line); border-radius: 999px; }
+    .mod-shop-thumb {
+        flex: 0 0 4.5rem; aspect-ratio: 1;
+        background: var(--mod-surface-2); border: 2px solid var(--mod-line);
+        border-radius: var(--mod-radius-sm); overflow: hidden;
+        cursor: pointer; padding: 0; transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .mod-shop-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mod-shop-thumb:hover { transform: translateY(-2px); border-color: var(--mod-brand); }
+
+    /* ── Aside ── */
+    .mod-shop-aside {
+        padding: 1.75rem;
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow);
+        align-self: start; position: sticky; top: 5rem;
+    }
+    @media (max-width: 880px) { .mod-shop-aside { position: static; } }
+    .mod-shop-aside-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.85rem; }
+    .mod-shop-aside h1 { font-size: 1.4rem; margin: 0; line-height: 1.35; }
+    .mod-shop-cond {
+        flex-shrink: 0; font-size: 0.68rem; font-weight: 700; padding: 0.24rem 0.7rem; border-radius: 999px; white-space: nowrap;
+    }
+    .mod-shop-cond.new {
+        color: var(--mod-ok);
+        background: color-mix(in srgb, var(--mod-ok) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--mod-ok) 28%, transparent);
+    }
+    .mod-shop-cond.used {
+        color: var(--mod-warn);
+        background: color-mix(in srgb, var(--mod-warn) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--mod-warn) 30%, transparent);
+    }
+
+    .mod-shop-price-block {
+        padding: 1.1rem 1.25rem; margin: 1.25rem 0;
+        background: color-mix(in srgb, var(--mod-brand) 6%, var(--mod-surface));
+        border: 1px solid color-mix(in srgb, var(--mod-brand) 20%, var(--mod-line));
+        border-radius: var(--mod-radius-sm);
+    }
+    .mod-shop-price {
+        font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em;
+        background: var(--mod-grad);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent; color: transparent;
+        width: fit-content;
+    }
+    .mod-shop-price-por { font-size: 1.1rem; font-weight: 700; color: var(--mod-muted); }
+    .mod-shop-stock { margin-top: 0.4rem; font-size: 0.8rem; font-weight: 700; }
+    .mod-shop-stock.ok { color: var(--mod-ok); }
+    .mod-shop-stock.out { color: var(--mod-muted); }
+
+    /* ── Spec rows ── */
+    .mod-shop-specs {
+        padding: 0.5rem 0 0.25rem; margin-bottom: 1.25rem;
+        border-top: 1px solid var(--mod-line);
+    }
+    .mod-shop-specs .row {
+        display: flex; justify-content: space-between; align-items: center; gap: 0.85rem;
+        padding: 0.6rem 0; font-size: 0.86rem;
+    }
+    .mod-shop-specs .row + .row { border-top: 1px dashed var(--mod-line); }
+    .mod-shop-specs .label { color: var(--mod-muted); font-size: 0.76rem; font-weight: 700; }
+    .mod-shop-specs .value { color: var(--mod-ink); font-weight: 600; text-align: end; }
+
+    /* ── CTAs ── */
+    .mod-shop-cta {
+        display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+        width: 100%; box-sizing: border-box;
+        padding: 0.9rem 1rem; margin-bottom: 0.75rem;
+        text-decoration: none; border-radius: 999px;
+        border: 1px solid var(--mod-line);
+        color: var(--mod-ink); background: var(--mod-surface);
+        font-family: inherit; font-size: 0.88rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .mod-shop-cta:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); transform: translateY(-1px); box-shadow: var(--mod-shadow); }
+    .mod-shop-cta-whatsapp {
+        color: #fff; border: none;
+        background: linear-gradient(135deg, #34d265, #1f9b46);
+        box-shadow: 0 10px 24px -10px rgba(31, 155, 70, 0.55);
+    }
+    .mod-shop-cta-whatsapp:hover { filter: brightness(1.06); box-shadow: 0 14px 30px -10px rgba(31, 155, 70, 0.65); }
+    .mod-shop-cta svg { width: 1.05rem; height: 1.05rem; flex-shrink: 0; }
+
+    /* ── Sections ── */
+    .mod-shop-section {
+        margin-top: 1.75rem; padding: 1.75rem 2rem;
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow);
+    }
+    .mod-shop-section h2 {
+        font-size: 1.15rem; margin: 0 0 1rem;
+        padding-bottom: 0.85rem; border-bottom: 1px solid var(--mod-line);
+    }
+    .mod-shop-desc { color: var(--mod-ink); font-size: 0.93rem; line-height: 1.85; white-space: pre-line; }
+
+    /* ── Related ── */
+    .mod-shop-related-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .mod-shop-related-link { display: flex; flex-direction: column; text-decoration: none; color: inherit; overflow: hidden; }
+    .mod-shop-related-img { aspect-ratio: 4/3; background: var(--mod-surface-2); overflow: hidden; }
+    .mod-shop-related-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.45s cubic-bezier(.22,1,.36,1); }
+    .mod-card:hover .mod-shop-related-img img { transform: scale(1.05); }
+    .mod-shop-related-body { padding: 0.75rem 0.9rem 0.9rem; }
+    .mod-shop-related-name {
+        color: var(--mod-ink); font-size: 0.85rem; font-weight: 800;
+        margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .mod-shop-related-price { color: var(--mod-brand); font-size: 0.84rem; font-weight: 800; margin-top: 0.3rem; }
+
+    @media (max-width: 600px) {
+        .mod-shop-page { padding: 1.5rem 1rem 2.5rem; }
+        .mod-shop-section { padding: 1.4rem 1.15rem; }
+        .mod-shop-aside { padding: 1.4rem 1.15rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="mod-shop-page">
+    <div class="mod-shop-wrap">
+
+        <!-- Breadcrumb -->
+        <nav class="mod-shop-crumb" aria-label="Breadcrumb">
+            <a href="{% if is_part %}{% url 'parts_list' %}{% else %}{% url 'accessories_list' %}{% endif %}" class="bilingual"
+               data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}">{{ kind_labels.ar }}</a>
+            <span class="sep">/</span>
+            <span class="now">{{ item.name }}</span>
+        </nav>
+
+        <div class="mod-shop-grid">
+            <!-- Gallery -->
+            <div>
+                <div class="mod-shop-gallery-main">
+                    {% if item.image %}
+                    <img id="shop-main-img" src="{{ item.image.url }}" alt="{{ item.name }}">
+                    {% else %}
+                    <div class="mod-shop-gallery-ph">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if item.images.all %}
+                <div class="mod-shop-thumbs">
+                    {% if item.image %}<button type="button" onclick="document.getElementById('shop-main-img').src='{{ item.image.url }}'" class="mod-shop-thumb"><img src="{{ item.image.url }}" alt=""></button>{% endif %}
+                    {% for g in item.images.all %}
+                    <button type="button" onclick="document.getElementById('shop-main-img').src='{{ g.image.url }}'" class="mod-shop-thumb"><img src="{{ g.image.url }}" loading="lazy" alt=""></button>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Info aside -->
+            <aside class="mod-shop-aside">
+                <div class="mod-shop-aside-head">
+                    <h1>{{ item.name }}</h1>
+                    <span class="mod-shop-cond {% if item.condition == 'new' %}new{% else %}used{% endif %} bilingual"
+                          data-lang-ar="{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}" data-lang-en="{% if item.condition == 'new' %}New{% else %}Used{% endif %}">{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}</span>
+                </div>
+
+                <div class="mod-shop-price-block">
+                    {% if item.price %}
+                    <div class="mod-shop-price"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
+                    {% else %}
+                    <div class="mod-shop-price-por bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request">السعر عند الطلب</div>
+                    {% endif %}
+                    <div class="mod-shop-stock {% if item.in_stock %}ok{% else %}out{% endif %} bilingual"
+                         data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out of stock{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر حالياً{% endif %}</div>
+                </div>
+
+                <!-- Spec rows -->
+                <div class="mod-shop-specs">
+                    {% if item.brand %}<div class="row"><span class="label bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</span><span class="value">{{ item.brand }}</span></div>{% endif %}
+                    {% if item.category %}<div class="row"><span class="label bilingual" data-lang-ar="الفئة" data-lang-en="Category">الفئة</span><span class="value">{{ item.category }}</span></div>{% endif %}
+                    {% if item.fits_make or item.fits_model %}<div class="row"><span class="label bilingual" data-lang-ar="يناسب" data-lang-en="Fits">يناسب</span><span class="value">{{ item.fits_make }} {{ item.fits_model }}</span></div>{% endif %}
+                </div>
+
+                <!-- WhatsApp inquiry -->
+                {% if site_whatsapp %}
+                <a href="https://wa.me/{{ site_whatsapp }}?text={{ kind_label_ar }}: {{ item.name|urlencode }}" target="_blank" rel="noopener" class="mod-shop-cta mod-shop-cta-whatsapp">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                    <span class="bilingual" data-lang-ar="استفسر عبر واتساب" data-lang-en="Inquire on WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить в WhatsApp">استفسر عبر واتساب</span>
+                </a>
+                {% endif %}
+
+                {% if user.is_staff %}
+                <a href="{% url 'shop_edit' item.pk %}" class="mod-shop-cta">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span class="bilingual" data-lang-ar="تعديل" data-lang-en="Edit">تعديل</span>
+                </a>
+                {% endif %}
+            </aside>
+        </div>
+
+        <!-- Description -->
+        {% if item.description %}
+        <div class="mod-shop-section">
+            <h2 class="bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</h2>
+            <div class="mod-shop-desc">{{ item.description }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Related -->
+        {% if related %}
+        <div class="mod-shop-section">
+            <h2 class="bilingual" data-lang-ar="منتجات مشابهة" data-lang-en="Related items" data-lang-es="Artículos relacionados" data-lang-ru="Похожие товары">منتجات مشابهة</h2>
+            <div class="mod-shop-related-grid">
+                {% for r in related %}
+                <div class="mod-card">
+                    <a href="{{ r.get_absolute_url }}" class="mod-shop-related-link">
+                        <div class="mod-shop-related-img">
+                            {% if r.image %}<img src="{{ r.image.url }}" loading="lazy" alt="{{ r.name }}">{% endif %}
+                        </div>
+                        <div class="mod-shop-related-body">
+                            <div class="mod-shop-related-name">{{ r.name }}</div>
+                            {% if r.price %}<div class="mod-shop-related-price"><bdi dir="ltr">{{ r.price|intcomma }} {{ r.currency }}</bdi></div>{% endif %}
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

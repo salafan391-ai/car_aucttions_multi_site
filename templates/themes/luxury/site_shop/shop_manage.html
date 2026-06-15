@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}إدارة {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .lux-shop-page { background: var(--lux-bg); color: var(--lux-text); min-height: 100vh; padding: 3.5rem 1.5rem; }
+    .lux-shop-page * { font-family: 'Playfair Display', 'Tajawal', serif; }
+    .lux-shop-wrap { max-width: 1280px; margin: 0 auto; }
+
+    .lux-shop-mhead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; padding-bottom: 2rem; border-bottom: 1px solid var(--lux-line); margin-bottom: 1.75rem; }
+    .lux-shop-eyebrow { color: var(--lux-gold); font-size: 0.7rem; letter-spacing: 0.4em; text-transform: uppercase; margin-bottom: 0.45rem; }
+    .lux-shop-mhead h1 { font-size: 2rem; font-weight: 400; margin: 0; letter-spacing: 0.04em; }
+
+    .lux-shop-add {
+        display: inline-flex; align-items: center; gap: 0.55rem;
+        padding: 0.85rem 1.5rem;
+        background: var(--lux-gold); color: var(--lux-bg);
+        text-decoration: none; border: 1px solid var(--lux-gold);
+        font-size: 0.75rem; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .lux-shop-add:hover { background: var(--lux-gold-bright); border-color: var(--lux-gold-bright); }
+    .lux-light .lux-shop-add { color: #fbf6e8; }
+    .lux-shop-add svg { width: 0.9rem; height: 0.9rem; }
+
+    .lux-shop-tabs { display: flex; gap: 0; border: 1px solid var(--lux-line); margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .lux-shop-tab {
+        padding: 0.7rem 1.4rem; color: var(--lux-text-dim); text-decoration: none;
+        font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase;
+        border-inline-end: 1px solid var(--lux-line); transition: all 0.2s ease;
+    }
+    .lux-shop-tab:last-child { border-inline-end: none; }
+    .lux-shop-tab:hover { color: var(--lux-gold); }
+    .lux-shop-tab.active { background: var(--lux-gold); color: var(--lux-bg); }
+    .lux-light .lux-shop-tab.active { color: #fbf6e8; }
+
+    .lux-shop-search { display: flex; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .lux-shop-search input {
+        flex: 1; max-width: 22rem; box-sizing: border-box;
+        background: transparent; border: 1px solid var(--lux-line); color: var(--lux-text);
+        padding: 0.7rem 0.9rem; font-size: 0.85rem; font-family: inherit;
+    }
+    .lux-shop-search input:focus { outline: none; border-color: var(--lux-gold); }
+    .lux-shop-search button {
+        padding: 0.7rem 1.4rem; background: transparent; color: var(--lux-text-dim);
+        border: 1px solid var(--lux-line); cursor: pointer; font-family: inherit;
+        font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; transition: all 0.2s ease;
+    }
+    .lux-shop-search button:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+
+    .lux-shop-table-wrap { border: 1px solid var(--lux-line); background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%); overflow-x: auto; }
+    .lux-shop-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .lux-shop-table thead th {
+        text-align: start; padding: 0.9rem 1rem;
+        color: var(--lux-gold); font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 500;
+        border-bottom: 1px solid var(--lux-line);
+    }
+    .lux-shop-table tbody tr { border-bottom: 1px solid var(--lux-line); }
+    .lux-shop-table tbody tr:last-child { border-bottom: 0; }
+    .lux-shop-table td { padding: 0.85rem 1rem; vertical-align: middle; }
+    .lux-shop-table-item { display: flex; align-items: center; gap: 0.85rem; }
+    .lux-shop-table-thumb { width: 3rem; height: 3rem; flex-shrink: 0; border: 1px solid var(--lux-line); background: #000; overflow: hidden; }
+    .lux-shop-table-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .lux-light .lux-shop-table-thumb { background: #c8b787; }
+    .lux-shop-table-name { color: var(--lux-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lux-shop-table-name:hover { color: var(--lux-gold); }
+    .lux-shop-table-dim { color: var(--lux-text-dim); }
+    .lux-shop-table-price { color: var(--lux-gold-bright); font-weight: 600; }
+
+    .lux-shop-status-btn {
+        font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+        padding: 0.3rem 0.7rem; border: 1px solid var(--lux-line);
+        background: transparent; color: var(--lux-text-dim); cursor: pointer; font-family: inherit;
+    }
+    .lux-shop-status-btn.in { color: #8fc28f; border-color: rgba(125,193,125,0.4); }
+    .lux-shop-status-btn:hover { border-color: var(--lux-gold); }
+
+    .lux-shop-action { text-decoration: none; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; }
+    .lux-shop-action.edit { color: var(--lux-gold); }
+    .lux-shop-action.edit:hover { color: var(--lux-gold-bright); }
+    .lux-shop-action.del { color: #d97777; margin-inline-start: 1rem; }
+    .lux-shop-action.del:hover { color: #e09595; }
+
+    .lux-shop-empty-row { text-align: center; color: var(--lux-text-dim); padding: 3.5rem 1rem; font-style: italic; letter-spacing: 0.1em; }
+
+    .lux-shop-pager { display: flex; justify-content: center; gap: 0.4rem; margin-top: 2.5rem; flex-wrap: wrap; }
+    .lux-shop-pager a, .lux-shop-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 0.85rem;
+        border: 1px solid var(--lux-line); color: var(--lux-text-dim);
+        text-decoration: none; font-size: 0.8rem; letter-spacing: 0.1em;
+    }
+    .lux-shop-pager a:hover { border-color: var(--lux-gold); color: var(--lux-gold); }
+    .lux-shop-pager .current { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
+    .lux-light .lux-shop-pager .current { color: #fbf6e8; }
+
+    @media (max-width: 600px) {
+        .lux-shop-page { padding: 2rem 1rem; }
+        .lux-shop-mhead h1 { font-size: 1.5rem; }
+    }
+
+    :root.lux-light .lux-shop-table-wrap { background: linear-gradient(180deg, #fbf6e8 0%, #efe4ca 100%); border: 1px solid rgba(120, 92, 30, 0.30); }
+</style>
+
+<section class="lux-shop-page">
+    <div class="lux-shop-wrap">
+
+        <div class="lux-shop-mhead">
+            <div>
+                <div class="lux-shop-eyebrow bilingual" data-lang-ar="المتجر" data-lang-en="Boutique" data-lang-es="Boutique" data-lang-ru="Бутик">المتجر</div>
+                <h1 class="bilingual" data-lang-ar="إدارة المتجر" data-lang-en="Shop management" data-lang-es="Gestión de tienda" data-lang-ru="Управление магазином">إدارة المتجر</h1>
+            </div>
+            <a href="{% url 'shop_add' %}?kind={{ kind }}" class="lux-shop-add">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="إضافة جديد" data-lang-en="Add new" data-lang-es="Añadir" data-lang-ru="Добавить">إضافة جديد</span>
+            </a>
+        </div>
+
+        <div class="lux-shop-tabs">
+            <a href="?kind=part" class="lux-shop-tab {% if is_part %}active{% endif %} bilingual" data-lang-ar="قطع الغيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع الغيار</a>
+            <a href="?kind=accessory" class="lux-shop-tab {% if not is_part %}active{% endif %} bilingual" data-lang-ar="الإكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">الإكسسوارات</a>
+        </div>
+
+        <form method="get" class="lux-shop-search">
+            <input type="hidden" name="kind" value="{{ kind }}">
+            <input type="text" name="q" value="{{ q }}" placeholder="بحث…"
+                   data-placeholder-ar="بحث…" data-placeholder-en="Search…" data-placeholder-es="Buscar…" data-placeholder-ru="Поиск…">
+            <button class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</button>
+        </form>
+
+        <div class="lux-shop-table-wrap">
+            <table class="lux-shop-table">
+                <thead>
+                    <tr>
+                        <th class="bilingual" data-lang-ar="المنتج" data-lang-en="Item" data-lang-es="Artículo" data-lang-ru="Товар">المنتج</th>
+                        <th class="bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Марка">الماركة</th>
+                        <th class="bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</th>
+                        <th class="bilingual" data-lang-ar="الحالة" data-lang-en="Status" data-lang-es="Estado" data-lang-ru="Статус">الحالة</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <div class="lux-shop-table-item">
+                                <div class="lux-shop-table-thumb">
+                                    {% if item.image %}<img src="{{ item.image.url }}">{% endif %}
+                                </div>
+                                <a href="{{ item.get_absolute_url }}" class="lux-shop-table-name">{{ item.name }}</a>
+                            </div>
+                        </td>
+                        <td class="lux-shop-table-dim">{{ item.brand|default:"—" }}</td>
+                        <td class="lux-shop-table-price">{% if item.price %}<bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi>{% else %}<span class="lux-shop-table-dim">—</span>{% endif %}</td>
+                        <td>
+                            <form method="post" action="{% url 'shop_toggle_stock' item.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="lux-shop-status-btn {% if item.in_stock %}in{% endif %} bilingual"
+                                        data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out{% endif %}" data-lang-es="{% if item.in_stock %}En stock{% else %}Agotado{% endif %}" data-lang-ru="{% if item.in_stock %}В наличии{% else %}Нет{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}</button>
+                            </form>
+                        </td>
+                        <td style="text-align:end; white-space:nowrap;">
+                            <a href="{% url 'shop_edit' item.pk %}" class="lux-shop-action edit bilingual" data-lang-ar="تعديل" data-lang-en="Edit" data-lang-es="Editar" data-lang-ru="Изменить">تعديل</a>
+                            <a href="{% url 'shop_delete' item.pk %}" class="lux-shop-action del bilingual" data-lang-ar="حذف" data-lang-en="Delete" data-lang-es="Eliminar" data-lang-ru="Удалить">حذف</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="lux-shop-empty-row bilingual" data-lang-ar="لا توجد منتجات بعد" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товаров">لا توجد منتجات بعد</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if items.paginator.num_pages > 1 %}
+        <nav class="lux-shop-pager" aria-label="Pagination">
+            {% if items.has_previous %}<a href="?kind={{ kind }}&page={{ items.previous_page_number }}&q={{ q }}">‹</a>{% endif %}
+            <span class="current">{{ items.number }} / {{ items.paginator.num_pages }}</span>
+            {% if items.has_next %}<a href="?kind={{ kind }}&page={{ items.next_page_number }}&q={{ q }}">›</a>{% endif %}
+        </nav>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .gl-shop-page { padding: 2.5rem 0 4rem; }
+
+    /* ── Hero ── */
+    .gl-shop-hero { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.75rem; }
+    .gl-shop-hero-text { flex: 1; min-width: 240px; }
+    .gl-shop-eyebrow { color: var(--gl-brand); font-size: .72rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; }
+    .gl-shop-hero h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: .5rem 0 .4rem; font-weight: 800; letter-spacing: -.01em; }
+    .gl-shop-hero p { color: var(--gl-muted); font-size: .92rem; margin: 0; }
+
+    /* ── Filter form ── */
+    .gl-shop-filter { padding: 1.4rem 1.6rem; margin-bottom: 2rem; }
+    .gl-shop-filter-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; }
+    .gl-shop-filter-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 640px) { .gl-shop-filter-grid .span-2 { grid-column: span 1; } }
+    .gl-shop-filter label { display: block; color: var(--gl-ink); font-size: .74rem; font-weight: 700; margin-bottom: .4rem; }
+    .gl-shop-cond-row { display: flex; gap: .6rem; }
+    .gl-shop-cond-row .gl-select { flex: 1; }
+
+    /* ── Grid ── */
+    .gl-shop-grid { display: grid; gap: 1.4rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .gl-shop-card { position: relative; overflow: hidden; border-radius: var(--gl-radius); display: flex; flex-direction: column; color: inherit; transition: transform .25s ease, box-shadow .3s ease, border-color .3s ease; }
+    .gl-shop-card:hover { transform: translateY(-4px); box-shadow: var(--gl-shadow-lg); border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border)); }
+    .gl-shop-card-img { aspect-ratio: 4/3; background: rgba(255,255,255,.04); overflow: hidden; position: relative; }
+    .gl-shop-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s cubic-bezier(.22,1,.36,1); }
+    .gl-shop-card:hover .gl-shop-card-img img { transform: scale(1.06); }
+    .gl-shop-card-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: color-mix(in srgb, var(--gl-brand) 35%, transparent); }
+    .gl-shop-card-ph svg { width: 3.2rem; height: 3.2rem; }
+
+    /* Photo overlay badges — frosted dark scrims (constant photo backdrop) */
+    .gl-shop-badge { position: absolute; top: .65rem; inset-inline-end: .65rem; padding: .26rem .68rem; border-radius: 999px; font-size: .66rem; font-weight: 800; background: rgba(10,12,26,.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.14); }
+    .gl-shop-badge.featured { color: var(--gl-brand); }
+    .gl-shop-badge.out { color: var(--gl-muted); }
+
+    .gl-shop-card-body { padding: .9rem 1rem 1rem; display: flex; flex-direction: column; flex: 1; }
+    .gl-shop-card-name { color: var(--gl-ink); font-size: .92rem; font-weight: 800; line-height: 1.35; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .gl-shop-card-brand { color: var(--gl-muted); font-size: .72rem; margin-top: .2rem; }
+    .gl-shop-card-foot { margin-top: auto; padding-top: .75rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .gl-shop-price { font-size: .95rem; font-weight: 800; letter-spacing: -.01em; background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+    .gl-shop-price-req { color: var(--gl-muted); font-size: .72rem; font-weight: 700; }
+    .gl-shop-cond { flex-shrink: 0; font-size: .64rem; font-weight: 800; padding: .18rem .6rem; border-radius: 999px; border: 1px solid var(--gl-border); }
+    .gl-shop-cond.new { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 40%, transparent); background: color-mix(in srgb, var(--gl-ok) 12%, transparent); }
+    .gl-shop-cond.used { color: var(--gl-warn); border-color: color-mix(in srgb, var(--gl-warn) 45%, transparent); background: color-mix(in srgb, var(--gl-warn) 12%, transparent); }
+
+    /* ── Empty state ── */
+    .gl-shop-empty { text-align: center; color: var(--gl-muted); padding: 5rem 2rem; border: 1px dashed var(--gl-border); border-radius: var(--gl-radius); background: var(--gl-glass); font-size: .95rem; }
+    .gl-shop-empty svg { width: 3rem; height: 3rem; margin: 0 auto 1rem; color: color-mix(in srgb, var(--gl-brand) 40%, transparent); }
+
+    /* ── Pagination ── */
+    .gl-shop-pager { display: flex; justify-content: center; gap: .4rem; margin-top: 2.5rem; flex-wrap: wrap; }
+    .gl-shop-pager a, .gl-shop-pager span { display: inline-flex; align-items: center; justify-content: center; min-width: 2.5rem; height: 2.5rem; padding: 0 .85rem; border: 1px solid var(--gl-border); border-radius: 999px; background: var(--gl-glass); color: var(--gl-muted); font-size: .84rem; font-weight: 700; transition: all .18s ease; }
+    .gl-shop-pager a:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); color: var(--gl-brand); }
+    .gl-shop-pager .current { background: var(--gl-grad); color: #06121a; border-color: transparent; }
+</style>
+
+<section class="gl-shop-page">
+    <div class="gl-shell">
+
+        <!-- Header -->
+        <div class="gl-shop-hero">
+            <div class="gl-shop-hero-text">
+                <div class="gl-shop-eyebrow bilingual" data-lang-ar="المتجر" data-lang-en="Shop" data-lang-es="Tienda" data-lang-ru="Магазин">المتجر</div>
+                <h1 class="bilingual"
+                    data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}" data-lang-es="{{ kind_labels.es }}" data-lang-ru="{{ kind_labels.ru }}">{{ kind_labels.ar }}</h1>
+                <p>{{ items.paginator.count|default:0 }}
+                    <span class="bilingual" data-lang-ar="منتج" data-lang-en="items" data-lang-es="artículos" data-lang-ru="товаров">منتج</span>
+                </p>
+            </div>
+            {% if user.is_staff %}
+            <a href="{% url 'shop_add' %}?kind={{ kind }}" class="gl-btn gl-btn-solid">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="إضافة" data-lang-en="Add" data-lang-es="Añadir" data-lang-ru="Добавить">إضافة</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Filters -->
+        <form method="get" class="gl-shop-filter gl-card">
+            <div class="gl-shop-filter-grid">
+                <div class="span-2">
+                    <label class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>
+                    <input type="text" name="q" value="{{ active_filters.q }}" class="gl-input"
+                           placeholder="—"
+                           data-placeholder-ar="ابحث عن منتج" data-placeholder-en="Search…" data-placeholder-es="Buscar…" data-placeholder-ru="Поиск…">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الفئة" data-lang-en="Category" data-lang-es="Categoría" data-lang-ru="Категория">الفئة</label>
+                    <select name="category" class="gl-select">
+                        <option value="" class="bilingual" data-lang-ar="كل الفئات" data-lang-en="All categories" data-lang-es="Todas" data-lang-ru="Все">كل الفئات</option>
+                        {% for c in categories %}<option value="{{ c }}" {% if active_filters.category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الماركة" data-lang-en="Brand" data-lang-es="Marca" data-lang-ru="Бренд">الماركة</label>
+                    <select name="brand" class="gl-select">
+                        <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands" data-lang-es="Todas" data-lang-ru="Все">كل الماركات</option>
+                        {% for b in brands %}<option value="{{ b }}" {% if active_filters.brand == b %}selected{% endif %}>{{ b }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition" data-lang-es="Estado" data-lang-ru="Состояние">الحالة</label>
+                    <div class="gl-shop-cond-row">
+                        <select name="condition" class="gl-select">
+                            <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="Any" data-lang-es="Todos" data-lang-ru="Все">الكل</option>
+                            <option value="new" {% if active_filters.condition == 'new' %}selected{% endif %} class="bilingual" data-lang-ar="جديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">جديد</option>
+                            <option value="used" {% if active_filters.condition == 'used' %}selected{% endif %} class="bilingual" data-lang-ar="مستعمل" data-lang-en="Used" data-lang-es="Usado" data-lang-ru="Б/у">مستعمل</option>
+                        </select>
+                        <button type="submit" class="gl-btn gl-btn-solid bilingual" data-lang-ar="فلترة" data-lang-en="Filter" data-lang-es="Filtrar" data-lang-ru="Фильтр">فلترة</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Grid -->
+        {% if items %}
+        <div class="gl-shop-grid">
+            {% for item in items %}
+            <a href="{{ item.get_absolute_url }}" class="gl-shop-card gl-card">
+                <div class="gl-shop-card-img">
+                    {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}" loading="lazy">
+                    {% else %}
+                    <div class="gl-shop-card-ph">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    {% endif %}
+                    {% if not item.in_stock %}
+                    <span class="gl-shop-badge out bilingual" data-lang-ar="غير متوفر" data-lang-en="Out of stock" data-lang-es="Agotado" data-lang-ru="Нет">غير متوفر</span>
+                    {% elif item.is_featured %}
+                    <span class="gl-shop-badge featured bilingual" data-lang-ar="مميّز" data-lang-en="Featured" data-lang-es="Destacado" data-lang-ru="Избранное">مميّز</span>
+                    {% endif %}
+                </div>
+                <div class="gl-shop-card-body">
+                    <h3 class="gl-shop-card-name">{{ item.name }}</h3>
+                    {% if item.brand %}<div class="gl-shop-card-brand">{{ item.brand }}</div>{% endif %}
+                    <div class="gl-shop-card-foot">
+                        {% if item.price %}
+                        <div class="gl-shop-price"><bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi></div>
+                        {% else %}
+                        <div class="gl-shop-price-req bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request" data-lang-es="Precio a consultar" data-lang-ru="Цена по запросу">السعر عند الطلب</div>
+                        {% endif %}
+                        <span class="gl-shop-cond {% if item.condition == 'new' %}new{% else %}used{% endif %} bilingual"
+                              data-lang-ar="{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}" data-lang-en="{% if item.condition == 'new' %}New{% else %}Used{% endif %}" data-lang-es="{% if item.condition == 'new' %}Nuevo{% else %}Usado{% endif %}" data-lang-ru="{% if item.condition == 'new' %}Новый{% else %}Б/у{% endif %}">{% if item.condition == 'new' %}جديد{% else %}مستعمل{% endif %}</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if items.paginator.num_pages > 1 %}
+        <nav class="gl-shop-pager" aria-label="Pagination">
+            {% if items.has_previous %}<a href="?page={{ items.previous_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}">‹</a>{% endif %}
+            <span class="current">{{ items.number }} / {{ items.paginator.num_pages }}</span>
+            {% if items.has_next %}<a href="?page={{ items.next_page_number }}&q={{ active_filters.q }}&category={{ active_filters.category }}&brand={{ active_filters.brand }}&condition={{ active_filters.condition }}">›</a>{% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="gl-shop-empty">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <p class="bilingual" data-lang-ar="لا توجد منتجات حالياً" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товаров">لا توجد منتجات حالياً</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
