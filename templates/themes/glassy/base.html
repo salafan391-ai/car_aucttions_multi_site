@@ -96,6 +96,9 @@
             --gl-shadow-lg:    0 30px 70px -20px rgba(0,0,0,0.8);
             --gl-glow:         0 0 0 1px rgba(255,255,255,0.06), 0 0 40px -6px color-mix(in srgb, var(--gl-accent) 55%, transparent);
             --gl-grad:         linear-gradient(120deg, var(--gl-accent), color-mix(in srgb, var(--gl-brand) 38%, #ffffff 62%));
+            /* Saturated gradient for SOLID buttons — deep enough that white text
+               always reads, regardless of how light/dark the brand color is. */
+            --gl-grad-solid:   linear-gradient(135deg, var(--gl-brand), color-mix(in srgb, var(--gl-brand) 62%, #000 38%));
             --gl-nav-h:        66px;
         }
 
@@ -156,7 +159,7 @@
         .gl-btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--gl-brand) 60%, var(--gl-border-2)); box-shadow: var(--gl-glow); }
         .gl-btn svg { width: 1.1rem; height: 1.1rem; }
         .gl-btn-solid {
-            border: 0; color: #06121a; background: var(--gl-grad);
+            border: 0; color: #fff; background: var(--gl-grad-solid);
             box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--gl-brand) 60%, transparent);
         }
         .gl-btn-solid:hover { filter: brightness(1.08); box-shadow: 0 14px 38px -8px color-mix(in srgb, var(--gl-brand) 70%, transparent); }
@@ -213,7 +216,7 @@
         }
         .gl-nav-action:hover { color: var(--gl-ink); border-color: var(--gl-border); }
         .gl-nav-action svg { width: 1rem; height: 1rem; }
-        .gl-nav-action.primary { color: #06121a; background: var(--gl-grad); }
+        .gl-nav-action.primary { color: #fff; background: var(--gl-grad-solid); }
         .gl-nav-action.primary:hover { filter: brightness(1.08); }
 
         /* Switchers (lang / currency) */
@@ -312,7 +315,7 @@
         .gl-bn-link.active, .gl-bn-link:hover { color: var(--gl-brand); }
         .gl-bn-link.active::after { content: ""; position: absolute; top: -.15rem; left: 50%; transform: translateX(-50%); width: 1.3rem; height: 3px; border-radius: 3px; background: var(--gl-grad); }
         .gl-bn-fab-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: .2rem; margin-top: -1.7rem; }
-        .gl-bn-fab { width: 3.4rem; height: 3.4rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: var(--gl-grad); color: #06121a; border: 3px solid color-mix(in srgb, var(--gl-bg-1) 80%, transparent); box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--gl-brand) 65%, transparent); }
+        .gl-bn-fab { width: 3.4rem; height: 3.4rem; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: var(--gl-grad-solid); color: #fff; border: 3px solid color-mix(in srgb, var(--gl-bg-1) 80%, transparent); box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--gl-brand) 65%, transparent); }
         .gl-bn-fab svg { width: 1.4rem; height: 1.4rem; }
         .gl-bn-fab-label { color: var(--gl-brand); font-size: .6rem; font-weight: 800; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
         .gl-bn-badge { position: absolute; top: .05rem; right: calc(50% - 1.2rem); min-width: 1rem; height: 1rem; padding: 0 .25rem; background: var(--gl-danger); color: #fff; font-size: .6rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }

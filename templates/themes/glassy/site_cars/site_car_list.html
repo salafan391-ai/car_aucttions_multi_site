@@ -18,9 +18,9 @@
     .gl-sc-tabs { display: inline-flex; gap: .3rem; flex-wrap: wrap; padding: .35rem; border-radius: 999px; margin-bottom: 1rem; }
     .gl-sc-tab { display: inline-flex; align-items: center; gap: .5rem; padding: .55rem 1.2rem; border-radius: 999px; color: var(--gl-muted); font-size: .86rem; font-weight: 700; transition: all .2s ease; }
     .gl-sc-tab:hover { color: var(--gl-ink); background: var(--gl-glass); }
-    .gl-sc-tab.active { background: var(--gl-grad); color: #06121a; box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--gl-brand) 60%, transparent); }
+    .gl-sc-tab.active { background: var(--gl-grad-solid); color: #fff; box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--gl-brand) 60%, transparent); }
     .gl-sc-tab-count { background: var(--gl-glass-2); color: var(--gl-brand); padding: .08rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 800; }
-    .gl-sc-tab.active .gl-sc-tab-count { background: rgba(0,0,0,.18); color: #06121a; }
+    .gl-sc-tab.active .gl-sc-tab-count { background: rgba(255,255,255,.22); color: #fff; }
 
     /* ── Status pills ── */
     .gl-sc-status-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
@@ -99,7 +99,7 @@
     .gl-sc-pager { display: flex; justify-content: center; gap: .4rem; margin-top: 3rem; flex-wrap: wrap; }
     .gl-sc-pager a, .gl-sc-pager span { display: inline-flex; align-items: center; justify-content: center; min-width: 2.5rem; height: 2.5rem; padding: 0 .85rem; border: 1px solid var(--gl-border); border-radius: 999px; background: var(--gl-glass); color: var(--gl-muted); font-size: .84rem; font-weight: 700; transition: all .18s ease; }
     .gl-sc-pager a:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); color: var(--gl-brand); }
-    .gl-sc-pager .current { background: var(--gl-grad); color: #06121a; border-color: transparent; }
+    .gl-sc-pager .current { background: var(--gl-grad-solid); color: #fff; border-color: transparent; }
     .gl-sc-pager .disabled { opacity: .45; }
     .gl-sc-pager-info { width: 100%; text-align: center; color: var(--gl-muted); font-size: .76rem; font-weight: 700; margin-top: .5rem; border: none; background: transparent; height: auto; }
 
