@@ -18,6 +18,8 @@ SITE_FONTS = {
     "ibm-plex-ar": {"label": "IBM Plex Arabic",          "family": "IBM+Plex+Sans+Arabic:wght@400;500;600;700", "stack": "'IBM Plex Sans Arabic', sans-serif"},
     "rubik":       {"label": "Rubik — روبيك",            "family": "Rubik:wght@400;500;600;700;800",            "stack": "'Rubik', sans-serif"},
     "markazi":     {"label": "Markazi — مركزي",          "family": "Markazi+Text:wght@400;500;600;700",         "stack": "'Markazi Text', serif"},
+    # System font (no Google Fonts download) — Tahoma has solid Arabic glyphs.
+    "tahoma":      {"label": "Tahoma — تاهوما",          "family": None,                                        "stack": "Tahoma, 'Segoe UI', Geneva, Verdana, sans-serif"},
 }
 
 
@@ -36,4 +38,6 @@ def font_ctx(tenant):
     f = SITE_FONTS.get(key)
     if not f:
         return {"site_font_url": "", "site_font_stack": ""}
-    return {"site_font_url": font_url(f["family"]), "site_font_stack": f["stack"]}
+    # System fonts have no `family` → no Google Fonts <link>, just the stack.
+    url = font_url(f["family"]) if f.get("family") else ""
+    return {"site_font_url": url, "site_font_stack": f["stack"]}

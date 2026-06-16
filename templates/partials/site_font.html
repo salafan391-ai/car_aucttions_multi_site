@@ -6,8 +6,8 @@ inline body font that the language switcher sets, so the chosen font applies
 across the whole site for every visitor. Blank choice = nothing injected, so
 each theme keeps its built-in font.
 {% endcomment %}
-{% if site_font_url %}
-<link href="{{ site_font_url }}" rel="stylesheet">
+{% if site_font_url %}<link href="{{ site_font_url }}" rel="stylesheet">{% endif %}
+{% if site_font_stack %}
 <style id="site-font-override">
     body, h1, h2, h3, h4, h5, h6, p, a, span, div, li, ul, ol,
     button, input, select, textarea, label, small, strong, em, blockquote, td, th {
