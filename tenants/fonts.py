@@ -20,6 +20,11 @@ SITE_FONTS = {
     "markazi":     {"label": "Markazi — مركزي",          "family": "Markazi+Text:wght@400;500;600;700",         "stack": "'Markazi Text', serif"},
     # System font (no Google Fonts download) — Tahoma has solid Arabic glyphs.
     "tahoma":      {"label": "Tahoma — تاهوما",          "family": None,                                        "stack": "Tahoma, 'Segoe UI', Geneva, Verdana, sans-serif"},
+    # Latin fonts — paired with Tajawal as the Arabic fallback (both loaded), so
+    # Latin text uses the chosen face and Arabic still renders cleanly.
+    "roboto":      {"label": "Roboto — روبوتو",          "family": "Roboto:wght@300;400;500;700;900&family=Tajawal:wght@400;500;700",       "stack": "'Roboto', 'Tajawal', sans-serif"},
+    "raleway":     {"label": "Raleway — رالواي",         "family": "Raleway:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700",  "stack": "'Raleway', 'Tajawal', sans-serif"},
+    "ubuntu":      {"label": "Ubuntu — أوبونتو",         "family": "Ubuntu:wght@300;400;500;700&family=Tajawal:wght@400;500;700",            "stack": "'Ubuntu', 'Tajawal', sans-serif"},
 }
 
 
