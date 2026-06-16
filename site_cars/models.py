@@ -273,7 +273,10 @@ class SiteShipment(models.Model):
 
 
 class SiteRating(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='site_ratings')
+    # Optional: a website rating can be left by an anonymous visitor (no login).
+    # When the visitor IS logged in, the rating is linked to their account.
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='site_ratings', null=True, blank=True)
+    name = models.CharField(max_length=120, blank=True, default="", verbose_name="الاسم")
     # Website rating: car is optional. Legacy per-car ratings keep their car FK
     # and still count toward the site score; new ratings rate the site (car=None).
     car = models.ForeignKey(ApiCar, on_delete=models.CASCADE, null=True, blank=True, verbose_name="السيارة")

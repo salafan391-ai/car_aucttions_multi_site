@@ -309,8 +309,10 @@
                 <div class="px-6 py-4 hover:bg-gray-50 transition">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold text-xs">{{ r.user.username|first|upper }}</div>
-                            <span class="text-sm font-medium">{{ r.user.username }}</span>
+                            {% with rn=r.name|default:r.user.username|default:"زائر" %}
+                            <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold text-xs">{{ rn|first|upper }}</div>
+                            <span class="text-sm font-medium">{{ rn }}</span>
+                            {% endwith %}
                         </div>
                         <div class="flex items-center gap-0.5">
                             {% for i in "12345" %}

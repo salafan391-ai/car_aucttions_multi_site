@@ -569,10 +569,10 @@
         </div>
         {% endif %}
 
-        {% if user.is_authenticated %}
         <form method="post" action="{% url 'rate_site' %}" class="gl-card gl-home-rev-form">
             {% csrf_token %}
             <div class="gl-home-rev-form-label bilingual" data-lang-ar="قم بتقييمنا" data-lang-en="Rate us" data-lang-es="Valóranos" data-lang-ru="Оцените нас">قم بتقييمنا</div>
+            <input type="text" name="name" class="gl-input" required maxlength="120" value="{{ user.get_full_name|default:user.get_username|default:'' }}" placeholder="الاسم" data-placeholder-ar="الاسم" data-placeholder-en="Your name" data-placeholder-es="Tu nombre" data-placeholder-ru="Ваше имя" style="margin-bottom:.6rem;">
             <div class="gl-home-rate" dir="ltr">
                 {% for i in "54321" %}
                 <input type="radio" name="rating" id="lrs{{ i }}" value="{{ i }}" required>
@@ -582,15 +582,14 @@
             <textarea name="comment" rows="2" class="gl-textarea" placeholder="اكتب تعليقك (اختياري)..." data-placeholder-ar="اكتب تعليقك (اختياري)..." data-placeholder-en="Write your comment (optional)..." data-placeholder-es="Escribe tu comentario (opcional)..." data-placeholder-ru="Напишите свой комментарий (по желанию)..."></textarea>
             <button type="submit" class="gl-btn gl-btn-solid bilingual" data-lang-ar="إرسال التقييم" data-lang-en="Submit rating" data-lang-es="Enviar" data-lang-ru="Отправить">إرسال التقييم</button>
         </form>
-        {% else %}
-        <p class="gl-home-rev-login"><a href="{% url 'login' %}?next=/" class="bilingual" data-lang-ar="سجّل الدخول لتقييمنا ←" data-lang-en="Sign in to rate us →" data-lang-es="Inicia sesión para valorar →" data-lang-ru="Войдите, чтобы оценить →">سجّل الدخول لتقييمنا ←</a></p>
-        {% endif %}
 
         {% if site_reviews %}
         <div class="gl-home-rev-grid">
             {% for r in site_reviews %}
             <div class="gl-card gl-home-rev-card">
-                <div class="who"><span class="ini">{{ r.user.username|first|upper }}</span><span>{{ r.user.get_short_name|default:r.user.username }}</span></div>
+                {% with rn=r.name|default:r.user.get_short_name|default:r.user.username|default:"زائر" %}
+                <div class="who"><span class="ini">{{ rn|first|upper }}</span><span>{{ rn }}</span></div>
+                {% endwith %}
                 <span class="gl-home-stars" dir="ltr">{% for i in "12345" %}<span style="color:{% if forloop.counter <= r.rating %}var(--gl-warn){% else %}var(--gl-border-2){% endif %};font-size:.9rem">★</span>{% endfor %}</span>
                 <p>{{ r.comment }}</p>
             </div>

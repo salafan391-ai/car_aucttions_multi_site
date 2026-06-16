@@ -1100,10 +1100,10 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             {% endif %}
         </div>
 
-        {% if user.is_authenticated %}
         <form method="post" action="{% url 'rate_site' %}" class="bg-gray-50 rounded-xl p-4 mb-6">
             {% csrf_token %}
             <div class="font-semibold mb-2 bilingual" data-lang-ar="قم بتقييمنا" data-lang-en="Rate us" data-lang-es="Valóranos" data-lang-ru="Оцените нас">قم بتقييمنا</div>
+            <input type="text" name="name" required maxlength="120" value="{{ user.get_full_name|default:user.get_username|default:'' }}" placeholder="الاسم" data-placeholder-ar="الاسم" data-placeholder-en="Your name" data-placeholder-es="Tu nombre" data-placeholder-ru="Ваше имя" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition mb-3">
             <div class="flex items-center gap-1 mb-3" dir="ltr">
                 {% for i in "12345" %}
                 <label class="cursor-pointer">
@@ -1112,21 +1112,20 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                 </label>
                 {% endfor %}
             </div>
-            <textarea name="comment" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none mb-3" placeholder="اكتب تعليقك (اختياري)..." data-placeholder-ar="اكتب تعليقك (اختياري)..." data-placeholder-en="Write your comment (optional)..." data-placeholder-es="Escribe tu comentario (opcional)..." data-placeholder-ru="Напишите свой комментарий (по желанию)..."></textarea>
+            <textarea name="comment" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none mb-3" placeholder="اكتب مراجعتك (اختياري)..." data-placeholder-ar="اكتب مراجعتك (اختياري)..." data-placeholder-en="Write your review (optional)..." data-placeholder-es="Escribe tu reseña (opcional)..." data-placeholder-ru="Напишите свой отзыв (по желанию)..."></textarea>
             <button type="submit" class="bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2 rounded-lg transition bilingual" data-lang-ar="إرسال التقييم" data-lang-en="Submit rating" data-lang-es="Enviar valoración" data-lang-ru="Отправить оценку">إرسال التقييم</button>
         </form>
-        {% else %}
-        <a href="{% url 'login' %}?next=/" class="inline-block text-brand font-semibold text-sm hover:underline mb-6 bilingual" data-lang-ar="سجّل الدخول لتقييم موقعنا ←" data-lang-en="Sign in to rate our website →" data-lang-es="Inicia sesión para valorar →" data-lang-ru="Войдите, чтобы оценить →">سجّل الدخول لتقييم موقعنا ←</a>
-        {% endif %}
 
         {% if site_reviews %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for r in site_reviews %}
             <div class="border border-gray-100 rounded-xl p-4">
+                {% with rn=r.name|default:r.user.get_short_name|default:r.user.username|default:"زائر" %}
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-sm">{{ r.user.username|first|upper }}</div>
-                    <span class="font-medium text-sm text-gray-800">{{ r.user.get_short_name|default:r.user.username }}</span>
+                    <div class="w-8 h-8 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-sm">{{ rn|first|upper }}</div>
+                    <span class="font-medium text-sm text-gray-800">{{ rn }}</span>
                 </div>
+                {% endwith %}
                 <div class="flex mb-1" dir="ltr">
                     {% for i in "12345" %}<span class="{% if forloop.counter <= r.rating %}text-yellow-400{% else %}text-gray-300{% endif %} text-sm">★</span>{% endfor %}
                 </div>

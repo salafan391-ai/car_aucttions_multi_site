@@ -86,9 +86,10 @@ class SiteShipmentAdmin(admin.ModelAdmin):
 
 @admin.register(SiteRating)
 class SiteRatingAdmin(admin.ModelAdmin):
-    list_display = ("user", "car", "rating", "created_at")
-    list_filter = ("rating",)
-    search_fields = ("car__title", "user__username", "comment")
+    list_display = ("name", "user", "car", "rating", "is_approved", "created_at")
+    list_filter = ("rating", "is_approved")
+    list_editable = ("is_approved",)
+    search_fields = ("name", "car__title", "user__username", "comment")
     autocomplete_fields = ("car",)
 
 

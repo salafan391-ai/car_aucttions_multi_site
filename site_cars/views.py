@@ -491,9 +491,10 @@ def rate_car(request, pk):
     return redirect('car_detail', slug=car.slug)
 
 
-@login_required
 def rate_site(request):
-    """Rate the website itself (not a specific car). One rating per user."""
+    """Rate the website itself (not a specific car). No login required; if the
+    visitor is logged in the rating is linked to their account (one per user),
+    otherwise it's stored anonymously with the name they enter."""
     if _is_public_schema():
         return redirect('home')
 
@@ -501,18 +502,27 @@ def rate_site(request):
     if request.method == 'POST':
         rating_val = request.POST.get('rating', '').strip()
         comment = request.POST.get('comment', '').strip()
+        name = request.POST.get('name', '').strip()[:120]
         if not rating_val or not rating_val.isdigit() or int(rating_val) not in range(1, 6):
             messages.error(request, 'يرجى اختيار تقييم من 1 إلى 5.')
             return redirect(back)
-        SiteRating.objects.update_or_create(
-            user=request.user,
-            car=None,
-            defaults={
-                'rating': int(rating_val),
-                'comment': comment,
-                'is_approved': False,  # needs admin approval
-            },
-        )
+
+        if request.user.is_authenticated:
+            # Linked to the account — keep one website rating per user.
+            display_name = name or request.user.get_full_name() or request.user.get_username()
+            SiteRating.objects.update_or_create(
+                user=request.user, car=None,
+                defaults={'rating': int(rating_val), 'comment': comment,
+                          'name': display_name, 'is_approved': False},
+            )
+        else:
+            if not name:
+                messages.error(request, 'يرجى إدخال الاسم.')
+                return redirect(back)
+            SiteRating.objects.create(
+                user=None, car=None, name=name,
+                rating=int(rating_val), comment=comment, is_approved=False,
+            )
         messages.success(request, 'شكراً لتقييمك! سيظهر بعد مراجعة المشرف.')
     return redirect(back)
 
