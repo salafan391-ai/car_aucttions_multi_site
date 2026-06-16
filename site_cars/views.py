@@ -27,6 +27,14 @@ def _is_public_schema():
     return connection.schema_name == 'public'
 
 
+def _bust_home_cache():
+    """Drop the cached home context + HTML so a just-approved rating (or other
+    homepage change) appears immediately for this tenant."""
+    schema = getattr(connection, 'schema_name', 'public')
+    cache.delete(f"home_html_v9:{schema}")
+    cache.delete(f"home_ctx_v9:{schema}")
+
+
 @staff_member_required
 def dashboard(request):
     if _is_public_schema():
@@ -603,6 +611,7 @@ def approve_rating(request, pk):
     rating = get_object_or_404(SiteRating, pk=pk)
     rating.is_approved = True
     rating.save()
+    _bust_home_cache()  # show it on the homepage right away
     messages.success(request, f'تم الموافقة على تقييم {rating.display_name}')
 
     # Redirect back to the referrer, else the car page (per-car rating) or the
@@ -621,6 +630,7 @@ def reject_rating(request, pk):
     car_slug = rating.car.slug if rating.car else None
     name = rating.display_name
     rating.delete()
+    _bust_home_cache()  # remove it from the homepage right away
     messages.success(request, f'تم رفض وحذف تقييم {name}')
 
     # Redirect back to the referrer, else the car page or the staff ratings list.

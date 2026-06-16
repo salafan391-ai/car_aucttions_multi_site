@@ -451,8 +451,10 @@ def home(request):
             _site_ratings = SiteRating.objects.filter(is_approved=True)
             site_rating_avg = round(_site_ratings.aggregate(a=_Avg('rating'))['a'] or 0, 1)
             site_rating_count = _site_ratings.count()
+            # Show every approved rating (newest first) — including star-only
+            # ones without a written review — so ratings appear on the homepage.
             site_reviews = list(
-                _site_ratings.exclude(comment='').select_related('user').order_by('-created_at')[:8]
+                _site_ratings.select_related('user').order_by('-created_at')[:8]
             )
             site_faqs = list(SiteFaq.objects.filter(is_published=True)[:6])
         except (ProgrammingError, OperationalError):
