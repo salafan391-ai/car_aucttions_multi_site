@@ -117,6 +117,43 @@
 
     /* ── Sections ── */
     .gl-home-section { padding: 3.5rem 0; }
+
+    /* ── Main sections cards (أقسامنا الرئيسية) — same layout as the website ── */
+    .gl-home-links { padding: 3rem 0 1.5rem; }
+    .gl-home-links-title { text-align: center; font-size: clamp(1.7rem, 4vw, 2.5rem); font-weight: 800; margin: 0 0 2rem; letter-spacing: -.01em; }
+    .gl-home-links-title span { background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .gl-home-links-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.4rem; }
+    .gl-home-link-card {
+        position: relative; display: flex; flex-direction: column; color: inherit; text-decoration: none;
+        border-radius: var(--gl-radius); padding: .9rem .9rem 1.1rem;
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        border: 1px solid var(--gl-border);
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow);
+        transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease, border-color .3s ease;
+    }
+    .gl-home-link-card::before { content: ""; position: absolute; top: 0; inset-inline: 22px; height: 4px; border-radius: 999px; background: var(--gl-grad); }
+    .gl-home-link-card:hover { transform: translateY(-8px); border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border)); box-shadow: var(--gl-shadow-lg), var(--gl-glow); }
+    .gl-home-link-media {
+        height: 168px; border-radius: var(--gl-radius-sm); margin-bottom: 1.1rem;
+        display: flex; align-items: center; justify-content: center;
+        background: color-mix(in srgb, var(--gl-brand) 9%, rgba(255,255,255,.03));
+        border: 1px solid var(--gl-border);
+    }
+    .gl-home-link-media svg { width: 4.6rem; height: 4.6rem; color: var(--gl-accent); }
+    .gl-home-link-card:hover .gl-home-link-media svg { transform: scale(1.06); transition: transform .3s ease; }
+    .gl-home-link-body h3 { margin: 0; display: flex; align-items: center; justify-content: space-between; gap: .6rem; font-size: 1.15rem; font-weight: 800; color: var(--gl-ink); }
+    .gl-home-link-arrow {
+        flex-shrink: 0; width: 30px; height: 30px; border-radius: 999px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: var(--gl-grad); color: #06121a; font-weight: 900; font-size: .95rem; line-height: 1;
+        box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--gl-brand) 55%, transparent);
+        transition: transform .3s ease;
+    }
+    .gl-home-link-card:hover .gl-home-link-arrow { transform: translateX(-4px); }
+    @media (max-width: 900px) { .gl-home-links-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 540px) { .gl-home-links-grid { grid-template-columns: 1fr; } }
+
     .gl-home-head-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
     .gl-home-head { text-align: center; margin-bottom: 2.2rem; }
     .gl-home-kicker { color: var(--gl-brand); font-size: .72rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; margin-bottom: .45rem; }
@@ -305,6 +342,48 @@
         </div>
     </section>
     {% endif %}
+
+    <!-- ── Main sections cards (أقسامنا الرئيسية) ── -->
+    <section class="gl-home-links">
+        <div class="gl-shell">
+            <h2 class="gl-home-links-title bilingual" data-lang-ar="أقسامنا الرئيسية" data-lang-en="Our Main Sections" data-lang-es="Nuestras secciones" data-lang-ru="Наши разделы"><span>أقسامنا الرئيسية</span></h2>
+            <div class="gl-home-links-grid">
+
+                <a href="{% url 'car_list' %}" class="gl-home-link-card">
+                    <div class="gl-home-link-media">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-5 9 5v12"/><path d="M2 21h20"/><path d="M7 21v-6a2 2 0 012-2h6a2 2 0 012 2v6"/><circle cx="12" cy="9.5" r="1.2"/></svg>
+                    </div>
+                    <div class="gl-home-link-body"><h3><span class="bilingual" data-lang-ar="المعارض الكورية" data-lang-en="Korean Showrooms" data-lang-es="Showrooms coreanos" data-lang-ru="Корейские салоны">المعارض الكورية</span><span class="gl-home-link-arrow">←</span></h3></div>
+                </a>
+
+                <a href="{% url 'car_list' %}?car_type=auction" class="gl-home-link-card">
+                    <div class="gl-home-link-media">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h9"/><path d="M9.5 13.5L3.8 19.2"/><path d="M11.2 7.6l5.2 5.2"/><path d="M13.7 5.1l4.2 4.2a1 1 0 010 1.4l-1.4 1.4a1 1 0 01-1.4 0l-4.2-4.2a1 1 0 010-1.4l1.4-1.4a1 1 0 011.4 0z"/><path d="M16.5 2.3l4.2 4.2"/></svg>
+                    </div>
+                    <div class="gl-home-link-body"><h3><span class="bilingual" data-lang-ar="المزادات الكورية" data-lang-en="Korean Auctions" data-lang-es="Subastas coreanas" data-lang-ru="Корейские аукционы">المزادات الكورية</span><span class="gl-home-link-arrow">←</span></h3></div>
+                </a>
+
+                {% if show_parts %}
+                <a href="{% url 'parts_list' %}" class="gl-home-link-card">
+                    <div class="gl-home-link-media">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.3c.4-1.7 2.9-1.7 3.4 0a1.7 1.7 0 002.5 1.1c1.6-.9 3.3.8 2.4 2.4a1.7 1.7 0 001 2.5c1.8.5 1.8 2.9 0 3.4a1.7 1.7 0 00-1 2.5c.9 1.6-.8 3.3-2.4 2.4a1.7 1.7 0 00-2.5 1c-.5 1.8-2.9 1.8-3.4 0a1.7 1.7 0 00-2.5-1c-1.6.9-3.3-.8-2.4-2.4a1.7 1.7 0 00-1-2.5c-1.8-.5-1.8-2.9 0-3.4a1.7 1.7 0 001-2.5c-.9-1.6.8-3.3 2.4-2.4 1 .6 2.3.1 2.5-1z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <div class="gl-home-link-body"><h3><span class="bilingual" data-lang-ar="قطع الغيار" data-lang-en="Spare Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع الغيار</span><span class="gl-home-link-arrow">←</span></h3></div>
+                </a>
+                {% endif %}
+
+                {% if show_accessories %}
+                <a href="{% url 'accessories_list' %}" class="gl-home-link-card">
+                    <div class="gl-home-link-media">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.6"/><path d="M12 14.6V21M14.2 13.3l5.3 3M9.8 13.3l-5.3 3"/></svg>
+                    </div>
+                    <div class="gl-home-link-body"><h3><span class="bilingual" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</span><span class="gl-home-link-arrow">←</span></h3></div>
+                </a>
+                {% endif %}
+
+            </div>
+        </div>
+    </section>
 
     {% for section_key in home_sections_order %}
     {% if section_key == 'site_cars' and site_cars and show_site_cars %}
