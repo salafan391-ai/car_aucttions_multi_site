@@ -603,10 +603,12 @@ def approve_rating(request, pk):
     rating = get_object_or_404(SiteRating, pk=pk)
     rating.is_approved = True
     rating.save()
-    messages.success(request, f'تم الموافقة على تقييم {rating.user.username}')
+    messages.success(request, f'تم الموافقة على تقييم {rating.display_name}')
 
-    # Redirect back to the referrer, else the car detail page (by slug).
-    return redirect(request.META.get('HTTP_REFERER') or reverse('car_detail', kwargs={'slug': rating.car.slug}))
+    # Redirect back to the referrer, else the car page (per-car rating) or the
+    # staff ratings list (website rating has no car).
+    fallback = reverse('car_detail', kwargs={'slug': rating.car.slug}) if rating.car else reverse('staff_ratings')
+    return redirect(request.META.get('HTTP_REFERER') or fallback)
 
 
 @staff_member_required
@@ -616,13 +618,14 @@ def reject_rating(request, pk):
         return redirect('home')
     
     rating = get_object_or_404(SiteRating, pk=pk)
-    car_slug = rating.car.slug
-    username = rating.user.username
+    car_slug = rating.car.slug if rating.car else None
+    name = rating.display_name
     rating.delete()
-    messages.success(request, f'تم رفض وحذف تقييم {username}')
+    messages.success(request, f'تم رفض وحذف تقييم {name}')
 
-    # Redirect back to the referrer, else the car detail page (by slug).
-    return redirect(request.META.get('HTTP_REFERER') or reverse('car_detail', kwargs={'slug': car_slug}))
+    # Redirect back to the referrer, else the car page or the staff ratings list.
+    fallback = reverse('car_detail', kwargs={'slug': car_slug}) if car_slug else reverse('staff_ratings')
+    return redirect(request.META.get('HTTP_REFERER') or fallback)
 
 
 # ── Inbox / Messaging ──
