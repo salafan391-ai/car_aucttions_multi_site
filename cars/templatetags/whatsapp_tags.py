@@ -74,22 +74,10 @@ def whatsapp_order_message(context, car, site_name=""):
     message_parts.append(car_name)
 
     if hasattr(car, 'price') and car.price:
-        # Convert stored price (KRW) to SAR using the global rate (rate_sar is per 1 KRW)
-        rate_sar = None
-        try:
-            rate_sar = float(context.get('rate_sar'))
-        except Exception:
-            rate_sar = None
-        if rate_sar is None:
-            # fallback: read from the global singleton (shared across all tenants)
-            try:
-                from tenants.models import GlobalExchangeRates
-                rate_sar = float(GlobalExchangeRates.get_solo().rate_sar)
-            except Exception:
-                rate_sar = 0.00250
-
-        sar_price = (car.price or 0) * rate_sar * PRICE_MARKUP
-        message_parts.append(f"السعر: {sar_price:,.0f} ريال")
+        # The price is filled in CLIENT-SIDE to the visitor's currently selected
+        # currency (see updateWhatsappPrices in lang_currency_script.html). The
+        # __PRICE__ token is replaced using the link's data-wa-krw attribute.
+        message_parts.append("السعر: __PRICE__")
 
     if hasattr(car, 'entry') and car.entry:
         message_parts.append(f"رقم الإعلان: {car.entry}")
@@ -133,23 +121,9 @@ def whatsapp_car_message(context, car, site_name=""):
     car_name = f"{getattr(car.manufacturer, 'name_ar', None) or car.manufacturer.name} {car.model.name} {car.year}"
     message_parts.append(car_name)
 
-    # Price if available
+    # Price if available — filled client-side to the selected currency (__PRICE__).
     if hasattr(car, 'price') and car.price:
-        # Convert stored price (KRW) to SAR using the global rate (rate_sar is per 1 KRW)
-        rate_sar = None
-        try:
-            rate_sar = float(context.get('rate_sar'))
-        except Exception:
-            rate_sar = None
-        if rate_sar is None:
-            try:
-                from tenants.models import GlobalExchangeRates
-                rate_sar = float(GlobalExchangeRates.get_solo().rate_sar)
-            except Exception:
-                rate_sar = 0.00250
-
-        sar_price = (car.price or 0) * rate_sar * PRICE_MARKUP
-        message_parts.append(f"السعر: {sar_price:,.0f} ريال")
+        message_parts.append("السعر: __PRICE__")
 
     if hasattr(car, 'entry') and car.entry:
         message_parts.append(f"رقم الإعلان: {car.entry}")

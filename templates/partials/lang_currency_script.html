@@ -203,8 +203,28 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
             else { out = Math.round(krw * cfg.rate); }
             el.innerHTML = out.toLocaleString() + ' <span class="lux-cur-sym">' + cfg.symbol + '</span>';
         });
+        updateWhatsappPrices(code);
         document.dispatchEvent(new CustomEvent('currencychange', { detail: { code: code } }));
     }
+
+    /* Fill WhatsApp links' price (__PRICE__ placeholder) with the visitor's
+       SELECTED currency, so a request matches what they see on the page. */
+    function updateWhatsappPrices(code) {
+        code = code || (localStorage.getItem('site_currency') || 'SAR');
+        var cfg = CURRENCIES[code] || CURRENCIES.SAR;
+        document.querySelectorAll('a[data-wa-krw]').forEach(function(el) {
+            if (!el._waBase) el._waBase = el.getAttribute('href') || '';
+            if (el._waBase.indexOf('__PRICE__') === -1) return;
+            var krw = parseFloat(el.getAttribute('data-wa-krw'));
+            var priceStr = '';
+            if (!isNaN(krw) && krw) {
+                var amount = code === 'KRW' ? Math.round(krw) : Math.round(krw * cfg.rate * PRICE_MARKUP);
+                priceStr = amount.toLocaleString('en-US') + ' ' + code;
+            }
+            el.setAttribute('href', el._waBase.replace('__PRICE__', encodeURIComponent(priceStr)));
+        });
+    }
+    window.updateWhatsappPrices = updateWhatsappPrices;
     // Expose currency config + markup so other widgets (e.g. the import
     // calculator) can convert into the visitor's selected currency.
     window.SITE_CURRENCIES = CURRENCIES;
