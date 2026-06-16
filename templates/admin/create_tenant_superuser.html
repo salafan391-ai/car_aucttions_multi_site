@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:tenants_tenant_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <p style="margin-bottom:1rem;">
+    إنشاء مستخدم <b>مشرف (superuser)</b> داخل سكيمة الموقع:
+    <b>{{ tenant.name }}</b> <code>({{ tenant.schema_name }})</code>.
+    سيُنشأ داخل جدول مستخدمي هذا الموقع فقط، ويمكنه الدخول إلى لوحة تحكم الموقع.
+  </p>
+
+  <form method="post" action="{% url 'admin:tenants_tenant_changelist' %}">
+    {% csrf_token %}
+    {% for obj in queryset %}<input type="hidden" name="_selected_action" value="{{ obj.pk }}">{% endfor %}
+    <input type="hidden" name="action" value="{{ action_name }}">
+    <input type="hidden" name="apply" value="1">
+
+    <fieldset class="module aligned">
+      <div class="form-row field-username">
+        <div><label class="required" for="id_username">اسم المستخدم:</label>
+          <input type="text" name="username" id="id_username" value="{{ username }}" autofocus required style="width:320px;"></div>
+      </div>
+      <div class="form-row field-email">
+        <div><label for="id_email">البريد الإلكتروني:</label>
+          <input type="email" name="email" id="id_email" value="{{ email }}" style="width:320px;"></div>
+      </div>
+      <div class="form-row field-password1">
+        <div><label class="required" for="id_password1">كلمة المرور:</label>
+          <input type="password" name="password1" id="id_password1" required style="width:320px;"></div>
+      </div>
+      <div class="form-row field-password2">
+        <div><label class="required" for="id_password2">تأكيد كلمة المرور:</label>
+          <input type="password" name="password2" id="id_password2" required style="width:320px;"></div>
+      </div>
+    </fieldset>
+
+    <div class="submit-row">
+      <input type="submit" value="إنشاء المشرف" class="default">
+      <a href="{% url 'admin:tenants_tenant_changelist' %}" class="button cancel-link">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
