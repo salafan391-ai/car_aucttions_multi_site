@@ -305,6 +305,15 @@ class SiteRating(models.Model):
     def __str__(self):
         return f"{self.user} - {self.car or 'website'} ({self.rating}/5)"
 
+    @property
+    def display_name(self):
+        """Rater name, null-safe for anonymous ratings (no linked user)."""
+        if self.name:
+            return self.name
+        if self.user_id and self.user:
+            return self.user.get_short_name() or self.user.get_username()
+        return "زائر"
+
 
 class SiteQuestion(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='site_questions')

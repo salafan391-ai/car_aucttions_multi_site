@@ -587,7 +587,7 @@
         <div class="gl-home-rev-grid">
             {% for r in site_reviews %}
             <div class="gl-card gl-home-rev-card">
-                {% with rn=r.name|default:r.user.get_short_name|default:r.user.username|default:"زائر" %}
+                {% with rn=r.display_name %}
                 <div class="who"><span class="ini">{{ rn|first|upper }}</span><span>{{ rn }}</span></div>
                 {% endwith %}
                 <span class="gl-home-stars" dir="ltr">{% for i in "12345" %}<span style="color:{% if forloop.counter <= r.rating %}var(--gl-warn){% else %}var(--gl-border-2){% endif %};font-size:.9rem">★</span>{% endfor %}</span>

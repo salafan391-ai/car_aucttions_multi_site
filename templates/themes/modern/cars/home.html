@@ -583,7 +583,7 @@
     <div class="mod-rev-grid">
         {% for r in site_reviews %}
         <div class="mod-rev-card">
-            {% with rn=r.name|default:r.user.get_short_name|default:r.user.username|default:"زائر" %}
+            {% with rn=r.display_name %}
             <div class="who"><span class="ini">{{ rn|first|upper }}</span><span>{{ rn }}</span></div>
             {% endwith %}
             <span class="mod-stars-static" dir="ltr">{% for i in "12345" %}<span style="color:{% if forloop.counter <= r.rating %}var(--mod-warn){% else %}var(--mod-line){% endif %};font-size:.9rem">★</span>{% endfor %}</span>

@@ -1120,7 +1120,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for r in site_reviews %}
             <div class="border border-gray-100 rounded-xl p-4">
-                {% with rn=r.name|default:r.user.get_short_name|default:r.user.username|default:"زائر" %}
+                {% with rn=r.display_name %}
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 rounded-full bg-brand-light text-brand flex items-center justify-center font-bold text-sm">{{ rn|first|upper }}</div>
                     <span class="font-medium text-sm text-gray-800">{{ rn }}</span>

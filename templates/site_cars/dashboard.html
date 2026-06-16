@@ -309,7 +309,7 @@
                 <div class="px-6 py-4 hover:bg-gray-50 transition">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            {% with rn=r.name|default:r.user.username|default:"زائر" %}
+                            {% with rn=r.display_name %}
                             <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600 font-bold text-xs">{{ rn|first|upper }}</div>
                             <span class="text-sm font-medium">{{ rn }}</span>
                             {% endwith %}

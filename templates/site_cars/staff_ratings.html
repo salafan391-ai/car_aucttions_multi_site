@@ -20,7 +20,7 @@
             <div class="flex items-start justify-between gap-4">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="font-bold">{{ rating.name|default:rating.user.username|default:"زائر" }}{% if not rating.user %} <span class="text-[10px] font-normal text-gray-400">(زائر)</span>{% endif %}</span>
+                        <span class="font-bold">{{ rating.display_name }}{% if not rating.user %} <span class="text-[10px] font-normal text-gray-400">(زائر)</span>{% endif %}</span>
                         <span class="text-yellow-500">{% for _ in "12345"|slice:":5" %}{% if forloop.counter <= rating.rating %}★{% else %}☆{% endif %}{% endfor %}</span>
                         <span class="text-xs text-gray-500">{{ rating.created_at|date:"Y-m-d" }}</span>
                     </div>
