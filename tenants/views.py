@@ -1,9 +1,30 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse, NoReverseMatch
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import connection
 from .models import Tenant, TenantPhoneNumber, TenantHeroImage, TenantWorkStep
 from .fonts import font_choices
+
+
+def friendly_page_links():
+    """Friendly site pages → their URLs, for link-picker dropdowns."""
+    pages = [
+        ("الرئيسية", "home", ""),
+        ("السيارات", "car_list", ""),
+        ("المزادات", "car_list", "?car_type=auction"),
+        ("قطع الغيار", "parts_list", ""),
+        ("الإكسسوارات", "accessories_list", ""),
+        ("المفضلة", "wishlist", ""),
+        ("تواصل معنا", "contact", ""),
+    ]
+    links = []
+    for label, name, suffix in pages:
+        try:
+            links.append({"label": label, "url": reverse(name) + suffix})
+        except NoReverseMatch:
+            continue
+    return links
 
 
 @staff_member_required
@@ -288,5 +309,6 @@ def site_settings(request):
         'hero_images': tenant.hero_images.all(),
         'work_steps_admin': tenant.work_steps.all().order_by('order', 'id'),
         'site_font_choices': font_choices(),
+        'page_links': friendly_page_links(),
     }
     return render(request, 'tenants/site_settings.html', context)
