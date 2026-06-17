@@ -1,14 +1,15 @@
 {% comment %}
 Per-tenant announcement ticker (scrolling top bar). Enabled + content come from
 the Tenant (ticker_enabled / ticker_items / ticker_color), exposed by the
-tenant_branding context processor. Self-contained + theme-agnostic: a subtle
-tint of the chosen color so it sits well on any theme (light or dark). Items are
-duplicated once so the scroll loops seamlessly; hover pauses it.
+tenant_branding context processor. Theme-agnostic (a subtle tint of the chosen
+color). The items are rendered ONCE; a small script duplicates them for a
+seamless scroll ONLY when they overflow the bar (and motion is allowed),
+otherwise they're shown a single time — so short text isn't displayed twice.
 {% endcomment %}
 {% if ticker_enabled and ticker_items %}
 <div class="site-ticker" style="--tk: {{ ticker_color|default:'#dc2626' }};" dir="rtl" role="marquee" aria-label="إعلانات">
-    <div class="site-ticker-track">
-        {% for _pass in "12" %}{% for it in ticker_items %}<span class="site-ticker-item">{{ it }}</span><span class="site-ticker-sep">|</span>{% endfor %}{% endfor %}
+    <div class="site-ticker-track" data-site-ticker>
+        <div class="site-ticker-set">{% for it in ticker_items %}<span class="site-ticker-item">{{ it }}</span><span class="site-ticker-sep">|</span>{% endfor %}</div>
     </div>
 </div>
 <style>
@@ -17,15 +18,38 @@ duplicated once so the scroll loops seamlessly; hover pauses it.
         background: color-mix(in srgb, var(--tk) 9%, transparent);
         border-bottom: 1px solid color-mix(in srgb, var(--tk) 22%, transparent);
     }
-    .site-ticker-track {
-        display: inline-flex; align-items: center; white-space: nowrap;
-        padding: .45rem 0; will-change: transform;
-        animation: site-ticker-scroll 40s linear infinite;
-    }
-    .site-ticker:hover .site-ticker-track { animation-play-state: paused; }
+    .site-ticker-track { display: flex; white-space: nowrap; padding: .45rem 0; }
+    .site-ticker-set { display: inline-flex; align-items: center; flex-shrink: 0; }
     .site-ticker-item { padding: 0 1.4rem; color: var(--tk); font-weight: 700; font-size: .85rem; letter-spacing: .01em; }
     .site-ticker-sep { color: var(--tk); opacity: .35; font-weight: 700; }
+    /* Scrolling mode (added by JS only when the content overflows) */
+    .site-ticker-track.is-scrolling { width: max-content; will-change: transform; animation: site-ticker-scroll var(--dur, 40s) linear infinite; }
+    .site-ticker:hover .site-ticker-track.is-scrolling { animation-play-state: paused; }
     @keyframes site-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    @media (prefers-reduced-motion: reduce) { .site-ticker-track { animation: none; } }
 </style>
+<script>
+(function () {
+    var track = document.querySelector('[data-site-ticker]');
+    if (!track) return;
+    var wrap = track.parentElement;
+    var set = track.querySelector('.site-ticker-set');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function setup() {
+        // overflowing the bar? duplicate once for a seamless loop + scroll.
+        if (!reduce && set.scrollWidth > wrap.clientWidth + 4) {
+            if (track.children.length < 2) {
+                var clone = set.cloneNode(true);
+                clone.setAttribute('aria-hidden', 'true');
+                track.appendChild(clone);
+            }
+            // ~60px/sec, min 18s — keeps a steady speed regardless of length.
+            var dur = Math.max(18, Math.round(set.scrollWidth / 60));
+            track.style.setProperty('--dur', dur + 's');
+            track.classList.add('is-scrolling');
+        }
+        // else: fits — leave a single, static copy (no duplication, no scroll).
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup();
+})();
+</script>
 {% endif %}
