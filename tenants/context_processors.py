@@ -4,6 +4,17 @@ from .models import TenantHeroImage, GlobalExchangeRates
 from .fonts import font_ctx
 
 
+def _work_steps(tenant):
+    """Active "How we work" steps as plain dicts (cache-safe)."""
+    try:
+        return [
+            {"icon": s.icon, "title": s.title, "description": s.description}
+            for s in tenant.work_steps.filter(is_active=True).order_by('order', 'id')
+        ]
+    except Exception:
+        return []
+
+
 def _global_rates():
     try:
         rates = GlobalExchangeRates.get_solo()
@@ -110,6 +121,10 @@ def tenant_branding(request):
         "ticker_enabled": bool(getattr(tenant, 'ticker_enabled', False)),
         "ticker_items": [ln.strip() for ln in (getattr(tenant, 'ticker_text', '') or '').splitlines() if ln.strip()],
         "ticker_color": (getattr(tenant, 'ticker_color', '') or '#dc2626'),
+        # "How we work" steps — stored as plain dicts so the dict stays cache-safe.
+        "show_how_we_work": bool(getattr(tenant, 'show_how_we_work', True)),
+        "how_we_work_title": (getattr(tenant, 'how_we_work_title', '') or '').strip(),
+        "work_steps": _work_steps(tenant),
         "primary_color": eid_colors["primary_color"] if theme == "eid" else tenant.primary_color or "#2563eb",
         "secondary_color": eid_colors["secondary_color"] if theme == "eid" else tenant.secondary_color or "#1e3a8a",
         "accent_color": eid_colors["accent_color"] if theme == "eid" else tenant.accent_color or "#3b82f6",

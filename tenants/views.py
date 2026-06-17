@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.db import connection
-from .models import Tenant, TenantPhoneNumber, TenantHeroImage
+from .models import Tenant, TenantPhoneNumber, TenantHeroImage, TenantWorkStep
 from .fonts import font_choices
 
 
@@ -44,6 +44,10 @@ def site_settings(request):
         tenant.ticker_enabled = 'ticker_enabled' in request.POST
         tenant.ticker_text = request.POST.get('ticker_text', tenant.ticker_text)
         tenant.ticker_color = request.POST.get('ticker_color', tenant.ticker_color) or '#dc2626'
+
+        # "How we work" section
+        tenant.show_how_we_work = 'show_how_we_work' in request.POST
+        tenant.how_we_work_title = request.POST.get('how_we_work_title', tenant.how_we_work_title)
 
         # Update colors + site font
         tenant.site_font = request.POST.get('site_font', tenant.site_font)
@@ -242,11 +246,36 @@ def site_settings(request):
                 order=existing_count + i
             )
 
+        # "How we work" steps — rebuild from the repeatable rows (in row order).
+        ws_titles = request.POST.getlist('ws_title[]')
+        if ws_titles is not None:
+            ws_icons = request.POST.getlist('ws_icon[]')
+            ws_descs = request.POST.getlist('ws_desc[]')
+            tenant.work_steps.all().delete()
+            order = 0
+            for i, title in enumerate(ws_titles):
+                title = (title or '').strip()
+                if not title:
+                    continue
+                TenantWorkStep.objects.create(
+                    tenant=tenant,
+                    icon=(ws_icons[i].strip() if i < len(ws_icons) else ''),
+                    title=title,
+                    description=(ws_descs[i].strip() if i < len(ws_descs) else ''),
+                    order=order,
+                    is_active=True,
+                )
+                order += 1
+
         messages.success(request, 'تم حفظ الإعدادات بنجاح!')
         # Bust tenant branding cache so new rates take effect immediately
         from django.core.cache import cache as _cache
         _schema = getattr(connection, 'schema_name', 'public')
         _cache.delete(f"tenant_branding:{_schema}")
+        # Homepage chrome/sections (ticker, "how we work", etc.) are baked into
+        # the cached home HTML/context — bust those too so edits show at once.
+        _cache.delete(f"home_html_v9:{_schema}")
+        _cache.delete(f"home_ctx_v9:{_schema}")
         return redirect('site_settings')
     
     context = {
@@ -254,6 +283,7 @@ def site_settings(request):
         'phone_numbers': tenant.phone_numbers.all(),
         'phone_types': TenantPhoneNumber.PHONE_TYPES,
         'hero_images': tenant.hero_images.all(),
+        'work_steps_admin': tenant.work_steps.all().order_by('order', 'id'),
         'site_font_choices': font_choices(),
     }
     return render(request, 'tenants/site_settings.html', context)

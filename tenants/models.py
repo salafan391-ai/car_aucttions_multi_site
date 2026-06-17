@@ -66,6 +66,18 @@ class Tenant(TenantMixin):
         verbose_name="لون نص الشريط",
     )
 
+    # ── "How we work" steps section (shown on the homepage) ──
+    show_how_we_work = models.BooleanField(
+        default=True,
+        verbose_name="عرض قسم «كيف نعمل»",
+        help_text="إظهار/إخفاء قسم خطوات العمل في الصفحة الرئيسية.",
+    )
+    how_we_work_title = models.CharField(
+        max_length=120, blank=True, default="",
+        verbose_name="عنوان قسم «كيف نعمل»",
+        help_text="اتركه فارغاً لاستخدام العنوان الافتراضي «كيف نعمل؟».",
+    )
+
     # ── Import-cost calculator (shown on the car detail page) ──
     import_calc_enabled = models.BooleanField(
         default=True,
@@ -332,6 +344,28 @@ class TenantHeroImage(models.Model):
         if self.image and hasattr(self.image, 'file'):
             self.image = optimize_image(self.image, max_width=1920, max_height=1080, quality=82)
         super().save(*args, **kwargs)
+
+
+class TenantWorkStep(models.Model):
+    """A single "How we work" step card shown on the homepage."""
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='work_steps', verbose_name="الموقع")
+    icon = models.CharField(
+        max_length=40, blank=True, default="",
+        verbose_name="الأيقونة",
+        help_text="إيموجي أو رمز قصير يظهر أعلى البطاقة، مثل 🚗 أو 📋 أو 1.",
+    )
+    title = models.CharField(max_length=120, verbose_name="العنوان")
+    description = models.TextField(blank=True, default="", verbose_name="الوصف")
+    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
+    is_active = models.BooleanField(default=True, verbose_name="مُفعّل")
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "خطوة عمل"
+        verbose_name_plural = "خطوات «كيف نعمل»"
+
+    def __str__(self):
+        return f"{self.tenant.name} - {self.order}. {self.title}"
 
 
 class TenantPhoneNumber(models.Model):

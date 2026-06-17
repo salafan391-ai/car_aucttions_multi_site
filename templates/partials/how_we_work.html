@@ -1,0 +1,50 @@
+{% comment %}
+"How we work" steps section for the homepage. Driven by the tenant's work_steps
+(list of {icon,title,description} dicts), show_how_we_work flag and optional
+how_we_work_title — all from the tenant_branding context processor. Theme-
+adaptive: text inherits the theme's colour, cards tint from currentColor, and
+icon/number badges use the tenant brand colour, so it sits well on every theme.
+{% endcomment %}
+{% if show_how_we_work and work_steps %}
+<section class="how-we-work" style="--hww-brand: {{ primary_color|default:'#2563eb' }};" aria-label="{{ how_we_work_title|default:'كيف نعمل؟' }}">
+    <div class="hww-inner">
+        <h2 class="hww-title">{{ how_we_work_title|default:"كيف نعمل؟" }}</h2>
+        <div class="hww-grid">
+            {% for s in work_steps %}
+            <div class="hww-card">
+                <span class="hww-num">{{ forloop.counter }}</span>
+                {% if s.icon %}<div class="hww-icon">{{ s.icon }}</div>{% endif %}
+                <h3 class="hww-card-title">{{ s.title }}</h3>
+                {% if s.description %}<p class="hww-card-desc">{{ s.description }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+<style>
+    .how-we-work { padding: 3.5rem 1rem; }
+    .hww-inner { max-width: 1120px; margin: 0 auto; }
+    .hww-title { text-align: center; font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; margin: 0 0 2.2rem; color: inherit; }
+    .hww-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem; }
+    .hww-card {
+        position: relative; padding: 1.8rem 1.3rem 1.4rem; border-radius: 16px; text-align: center;
+        background: color-mix(in srgb, currentColor 5%, transparent);
+        border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .hww-card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(0,0,0,.14); border-color: color-mix(in srgb, var(--hww-brand) 45%, transparent); }
+    .hww-num {
+        position: absolute; top: 12px; inset-inline-start: 14px;
+        width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%;
+        font-size: .78rem; font-weight: 800; background: var(--hww-brand); color: #fff;
+    }
+    .hww-icon {
+        width: 64px; height: 64px; margin: 0 auto .95rem; display: grid; place-items: center;
+        font-size: 1.85rem; line-height: 1; border-radius: 50%;
+        background: color-mix(in srgb, var(--hww-brand) 16%, transparent); color: var(--hww-brand);
+    }
+    .hww-card-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 .45rem; color: inherit; }
+    .hww-card-desc { font-size: .9rem; line-height: 1.65; margin: 0; opacity: .75; color: inherit; }
+    @media (max-width: 640px) { .hww-grid { grid-template-columns: 1fr 1fr; } .how-we-work { padding: 2.5rem .75rem; } }
+</style>
+{% endif %}

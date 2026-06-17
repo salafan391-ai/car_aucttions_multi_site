@@ -168,6 +168,50 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- "How we work" steps -->
+                <div class="mt-6 border-t border-gray-100 pt-5">
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                        <input type="checkbox" name="show_how_we_work" {% if tenant.show_how_we_work %}checked{% endif %} class="rounded">
+                        قسم «كيف نعمل» في الصفحة الرئيسية
+                    </label>
+                    <div class="mb-3">
+                        <input type="text" name="how_we_work_title" value="{{ tenant.how_we_work_title }}" placeholder="عنوان القسم (افتراضي: كيف نعمل؟)" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div id="work-steps-list" class="space-y-3">
+                        {% for step in work_steps_admin %}
+                        <div class="work-step-row grid grid-cols-12 gap-2 items-start bg-gray-50 rounded-lg p-3">
+                            <input type="text" name="ws_icon[]" value="{{ step.icon }}" placeholder="🚗" class="col-span-2 px-2 py-2 border border-gray-300 rounded-lg text-center text-lg">
+                            <div class="col-span-9 space-y-2">
+                                <input type="text" name="ws_title[]" value="{{ step.title }}" placeholder="عنوان الخطوة" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <textarea name="ws_desc[]" rows="2" placeholder="وصف مختصر للخطوة" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">{{ step.description }}</textarea>
+                            </div>
+                            <button type="button" onclick="this.closest('.work-step-row').remove()" class="col-span-1 text-red-500 hover:text-red-700 text-xl leading-none pt-2" title="حذف">×</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" id="add-work-step" class="mt-3 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        <span class="text-lg leading-none">+</span> إضافة خطوة
+                    </button>
+                    <p class="text-xs text-gray-500 mt-1">بطاقات تشرح طريقة عملكم (مثال: اختر السيارة ← نستوردها ← التسليم). تظهر بالترتيب في الصفحة الرئيسية.</p>
+                </div>
+
+                <template id="work-step-template">
+                    <div class="work-step-row grid grid-cols-12 gap-2 items-start bg-gray-50 rounded-lg p-3">
+                        <input type="text" name="ws_icon[]" value="" placeholder="🚗" class="col-span-2 px-2 py-2 border border-gray-300 rounded-lg text-center text-lg">
+                        <div class="col-span-9 space-y-2">
+                            <input type="text" name="ws_title[]" value="" placeholder="عنوان الخطوة" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <textarea name="ws_desc[]" rows="2" placeholder="وصف مختصر للخطوة" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                        </div>
+                        <button type="button" onclick="this.closest('.work-step-row').remove()" class="col-span-1 text-red-500 hover:text-red-700 text-xl leading-none pt-2" title="حذف">×</button>
+                    </div>
+                </template>
+                <script>
+                    document.getElementById('add-work-step')?.addEventListener('click', function () {
+                        var tpl = document.getElementById('work-step-template');
+                        document.getElementById('work-steps-list').appendChild(tpl.content.cloneNode(true));
+                    });
+                </script>
             </div>
 
             <!-- Contact Info Section -->

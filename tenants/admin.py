@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from django_tenants.admin import TenantAdminMixin
 from django_tenants.utils import schema_context
 
-from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage, GlobalExchangeRates
+from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage, TenantWorkStep, GlobalExchangeRates
 
 from cars.models import CarImage, Manufacturer, BodyType
 
@@ -32,12 +32,19 @@ class TenantHeroImageInline(admin.TabularInline):
     ordering = ['order']
 
 
+class TenantWorkStepInline(admin.TabularInline):
+    model = TenantWorkStep
+    extra = 1
+    fields = ('order', 'icon', 'title', 'description', 'is_active')
+    ordering = ['order']
+
+
 @admin.register(Tenant)
 class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     list_display = ("name", "schema_name", "is_active", "create_superuser_button", "primary_color", "created_at")
     list_editable = ("is_active",)
     list_filter = ("is_active",)
-    inlines = [TenantPhoneNumberInline, TenantHeroImageInline]
+    inlines = [TenantPhoneNumberInline, TenantHeroImageInline, TenantWorkStepInline]
 
     # ── Create a superuser inside a tenant's own schema ──
     def get_urls(self):
@@ -105,6 +112,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
         (None, {"fields": ("schema_name", "name", "is_active", "eid_is_active")}),
         ("Branding", {"fields": ("logo", "favicon", "hero_image", "show_hero", "show_watermark", "show_encar", "show_auctions", "show_site_cars", "show_parts", "show_accessories", "landing_is_active", "landing_design", "template_theme", "site_font", "theme", "primary_color", "secondary_color", "accent_color", "body_bg_color", "car_display")}),
         ("Announcement ticker", {"fields": ("ticker_enabled", "ticker_text", "ticker_color")}),
+        ("How we work", {"fields": ("show_how_we_work", "how_we_work_title")}),
         ("Footer", {"fields": ("footer_text", "footer_text_en")}),
         ("Business Info (عربي)", {"fields": ("tagline", "about", "address", "city", "working_hours")}),
         ("Business Info (English)", {"fields": ("tagline_en", "about_en", "address_en", "city_en", "working_hours_en")}),
