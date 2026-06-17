@@ -1661,9 +1661,9 @@
     }
     .auction-countdown .cd-sep { opacity: 0.6; font-weight: 400; }
 
-    /* colour states */
-    .countdown-ok     { background: #f0fdf4; color: #15803d; }
-    .countdown-soon   { background: #fffbeb; color: #b45309; }
+    /* colour states — brand-coloured by default; only the final hour turns red */
+    .countdown-ok     { background: color-mix(in srgb, var(--color-primary) 12%, #fff); color: var(--color-primary); }
+    .countdown-soon   { background: color-mix(in srgb, var(--color-primary) 12%, #fff); color: var(--color-primary); }
     .countdown-urgent { background: #fef2f2; color: #dc2626; animation: pulse-red 1s ease-in-out infinite; }
     .auction-ended    { background: #f3f4f6; color: #6b7280; }
     .auction-ended-badge { font-size: 0.7rem; font-weight: 600; }
