@@ -248,15 +248,19 @@ def site_settings(request):
                 except TenantHeroImage.DoesNotExist:
                     pass
 
-        # Update order + link of existing hero images
+        # Update order + title + description + link of existing hero images
         hero_orders = request.POST.getlist('hero_image_order[]')
         hero_ids = request.POST.getlist('hero_image_id[]')
         hero_links = request.POST.getlist('hero_image_link[]')
+        hero_titles = request.POST.getlist('hero_image_title[]')
+        hero_descs = request.POST.getlist('hero_image_desc[]')
         for i, (hero_id, order_val) in enumerate(zip(hero_ids, hero_orders)):
             link = (hero_links[i].strip() if i < len(hero_links) else '')
+            title = (hero_titles[i].strip() if i < len(hero_titles) else '')
+            desc = (hero_descs[i].strip() if i < len(hero_descs) else '')
             try:
                 TenantHeroImage.objects.filter(id=hero_id, tenant=tenant).update(
-                    order=int(order_val), link_url=link)
+                    order=int(order_val), link_url=link, title=title, description=desc)
             except (ValueError, TenantHeroImage.DoesNotExist):
                 pass
 

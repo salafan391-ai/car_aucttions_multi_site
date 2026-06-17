@@ -28,7 +28,7 @@ class TenantPhoneNumberInline(admin.TabularInline):
 class TenantHeroImageInline(admin.TabularInline):
     model = TenantHeroImage
     extra = 1
-    fields = ('image', 'order')
+    fields = ('image', 'title', 'description', 'link_url', 'order')
     ordering = ['order']
 
 

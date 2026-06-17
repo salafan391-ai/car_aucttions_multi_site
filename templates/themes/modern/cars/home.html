@@ -40,10 +40,21 @@
         max-width: 620px; margin: 0 auto 1.75rem; line-height: 1.7;
     }
     .mod-hero-ctas { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
-    /* CTA overlaid inside the hero slideshow image, pinned bottom-left */
-    .mod-hero-cta-overlay { position: absolute; left: 1.1rem; bottom: 1.1rem; z-index: 3; pointer-events: none; }
-    .mod-hero-cta-overlay .mod-btn { pointer-events: auto; box-shadow: 0 8px 22px rgba(0,0,0,.4); }
-    @media (max-width: 640px) { .mod-hero-cta-overlay { left: 0.7rem; bottom: 0.7rem; } .mod-hero-cta-overlay .mod-btn { padding: 0.5rem 1rem; font-size: 0.85rem; } }
+    /* Per-slide content (title / description / CTA) overlaid bottom-left with a scrim */
+    .mod-hero-slide-overlay {
+        position: absolute; inset: 0; z-index: 3; pointer-events: none;
+        background: linear-gradient(to top, rgba(0,0,0,.80), rgba(0,0,0,.30) 40%, transparent 64%);
+    }
+    .mod-hero-slide-content {
+        position: absolute; left: 1.6rem; bottom: 1.4rem; right: auto;
+        max-width: min(86%, 600px); text-align: left;
+        display: flex; flex-direction: column; align-items: flex-start; gap: .55rem;
+    }
+    .mod-hero-slide-content > * { pointer-events: auto; }
+    .mod-hero-slide-title { color: #fff; font-size: clamp(1.35rem, 3vw, 2.1rem); font-weight: 800; line-height: 1.15; margin: 0; text-shadow: 0 2px 14px rgba(0,0,0,.55); }
+    .mod-hero-slide-desc { color: rgba(255,255,255,.92); font-size: clamp(.9rem, 1.6vw, 1.05rem); line-height: 1.55; margin: 0; text-shadow: 0 1px 10px rgba(0,0,0,.5); }
+    .mod-hero-slide-content .mod-btn { margin-top: .35rem; box-shadow: 0 8px 22px rgba(0,0,0,.4); }
+    @media (max-width: 640px) { .mod-hero-slide-content { left: .9rem; bottom: .9rem; max-width: 92%; gap: .4rem; } .mod-hero-slide-content .mod-btn { padding: .5rem 1rem; font-size: .85rem; } }
     /* Tenant hero photos as a rounded showcase panel — auto-advancing fade
        slider when the tenant uploaded more than one image. When hero photos
        exist they sit at the top of the hero in place of the text block. */
@@ -309,12 +320,16 @@
             <style>#mod-hero-slider .mod-hero-slide{pointer-events:none}#mod-hero-slider .mod-hero-slide.is-active{pointer-events:auto}</style>
             {% for hi in site_hero_images %}
             <div class="mod-hero-slide{% if forloop.first %} is-active{% endif %}">
-                <img src="{{ hi.image.url }}" alt="{{ site_name|default:'سيارات' }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
-                {% if hi.link_url %}{% with lbl=hi.link_url|page_cta_label %}
-                <div class="mod-hero-cta-overlay">
-                    <a href="{{ hi.link_url }}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="{{ lbl.ar }}" data-lang-en="{{ lbl.en }}" data-lang-es="{{ lbl.es }}" data-lang-ru="{{ lbl.ru }}">{{ lbl.ar }}</a>
+                <img src="{{ hi.image.url }}" alt="{{ hi.title|default:site_name|default:'سيارات' }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+                {% if hi.title or hi.description or hi.link_url %}
+                <div class="mod-hero-slide-overlay">
+                    <div class="mod-hero-slide-content">
+                        {% if hi.title %}<h2 class="mod-hero-slide-title">{{ hi.title }}</h2>{% endif %}
+                        {% if hi.description %}<p class="mod-hero-slide-desc">{{ hi.description }}</p>{% endif %}
+                        {% if hi.link_url %}{% with lbl=hi.link_url|page_cta_label %}<a href="{{ hi.link_url }}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="{{ lbl.ar }}" data-lang-en="{{ lbl.en }}" data-lang-es="{{ lbl.es }}" data-lang-ru="{{ lbl.ru }}">{{ lbl.ar }}</a>{% endwith %}{% endif %}
+                    </div>
                 </div>
-                {% endwith %}{% endif %}
+                {% endif %}
             </div>
             {% endfor %}
             {% if site_hero_images|length > 1 %}
