@@ -1,31 +1,35 @@
 {% comment %}
-Per-tenant announcement ticker — a FIXED black bar pinned to the very top of
-the page that continuously scrolls the tenant's announcements. Content comes
-from the Tenant (ticker_enabled / ticker_items / ticker_color). The items are
-rendered once and a small script clones them just enough to fill the bar, then
-scrolls by exactly one set width so the loop is seamless (no visible gap and no
-static duplication). The page + sticky navs are offset down by the bar height.
+Per-tenant announcement ticker — a FIXED black bar pinned to the top that shows
+ONE announcement at a time: each item fades in, holds, fades out, and only then
+does the next appear (sequential, never all at once). Content comes from the
+Tenant (ticker_enabled / ticker_items / ticker_color). The page + sticky navs
+are offset down by the bar height.
 {% endcomment %}
 {% if ticker_enabled and ticker_items %}
 <div class="site-ticker" style="--tk: {{ ticker_color|default:'#dc2626' }};" dir="rtl" role="marquee" aria-label="إعلانات">
-    <div class="site-ticker-track" data-site-ticker>
-        <div class="site-ticker-set">{% for it in ticker_items %}<span class="site-ticker-item">{{ it }}</span><span class="site-ticker-sep">|</span>{% endfor %}</div>
+    <div class="site-ticker-rotator" data-site-ticker>
+        {% for it in ticker_items %}<span class="site-ticker-item{% if forloop.first %} is-active{% endif %}">{{ it }}</span>{% endfor %}
     </div>
 </div>
 <style>
     :root { --ticker-h: 38px; }
     .site-ticker {
         position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-        height: var(--ticker-h); display: flex; align-items: center; overflow: hidden;
+        height: var(--ticker-h); overflow: hidden;
         background: #000; border-bottom: 1px solid rgba(255,255,255,.12);
     }
-    .site-ticker-track { display: flex; white-space: nowrap; }
-    .site-ticker-set { display: inline-flex; align-items: center; flex-shrink: 0; }
-    .site-ticker-item { padding: 0 1.4rem; color: var(--tk); font-weight: 700; font-size: .86rem; letter-spacing: .01em; }
-    .site-ticker-sep { color: var(--tk); opacity: .4; font-weight: 700; }
-    .site-ticker-track.is-scrolling { animation: site-ticker-scroll var(--dur, 20s) linear infinite; }
-    .site-ticker:hover .site-ticker-track.is-scrolling { animation-play-state: paused; }
-    @keyframes site-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--unit, 100%))); } }
+    .site-ticker-rotator { position: relative; width: 100%; height: 100%; }
+    .site-ticker-item {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        padding: 0 1rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        color: var(--tk); font-weight: 700; font-size: .86rem; letter-spacing: .01em;
+        opacity: 0; transform: translateY(8px); transition: opacity .45s ease, transform .45s ease;
+        pointer-events: none;
+    }
+    .site-ticker-item.is-active { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+        .site-ticker-item { transition: opacity .2s ease; transform: none; }
+    }
 
     /* Make room for the fixed bar and push the sticky navs below it. */
     body { padding-top: var(--ticker-h); }
@@ -33,25 +37,25 @@ static duplication). The page + sticky navs are offset down by the bar height.
 </style>
 <script>
 (function () {
-    var track = document.querySelector('[data-site-ticker]');
-    if (!track) return;
-    var wrap = track.parentElement;
-    var set = track.querySelector('.site-ticker-set');
-    function setup() {
-        var unit = set.scrollWidth;
-        if (!unit) return;
-        // Clone the set until the track is wider than the bar + one set, so a
-        // fresh copy is always entering as one scrolls off.
-        var guard = 0;
-        while (track.scrollWidth < wrap.clientWidth + unit && guard < 60) {
-            track.appendChild(set.cloneNode(true));
-            guard++;
-        }
-        track.style.setProperty('--unit', unit + 'px');
-        track.style.setProperty('--dur', Math.max(12, Math.round(unit / 70)) + 's'); // steady speed
-        track.classList.add('is-scrolling');
+    var rotator = document.querySelector('[data-site-ticker]');
+    if (!rotator) return;
+    var items = Array.prototype.slice.call(rotator.querySelectorAll('.site-ticker-item'));
+    if (items.length <= 1) return;  // single item just stays shown
+    var i = 0;
+    var HOLD = 4000;   // visible time per item
+    var GAP = 550;     // wait after one fades out before the next fades in
+    var timer;
+    function next() {
+        items[i].classList.remove('is-active');   // fade current out
+        var prev = i;
+        i = (i + 1) % items.length;
+        setTimeout(function () { items[i].classList.add('is-active'); }, GAP);  // then fade next in
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup();
+    function start() { timer = setInterval(next, HOLD + GAP); }
+    function stop() { clearInterval(timer); }
+    // Pause when the tab is hidden so it doesn't race through items.
+    document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
+    start();
 })();
 </script>
 {% endif %}
