@@ -40,10 +40,10 @@
         max-width: 620px; margin: 0 auto 1.75rem; line-height: 1.7;
     }
     .mod-hero-ctas { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
-    /* CTA overlaid inside the hero slideshow image, pinned bottom-right */
-    .mod-hero-cta-overlay { position: absolute; right: 1.1rem; bottom: 1.1rem; z-index: 3; pointer-events: none; }
+    /* CTA overlaid inside the hero slideshow image, pinned bottom-left */
+    .mod-hero-cta-overlay { position: absolute; left: 1.1rem; bottom: 1.1rem; z-index: 3; pointer-events: none; }
     .mod-hero-cta-overlay .mod-btn { pointer-events: auto; box-shadow: 0 8px 22px rgba(0,0,0,.4); }
-    @media (max-width: 640px) { .mod-hero-cta-overlay { right: 0.7rem; bottom: 0.7rem; } .mod-hero-cta-overlay .mod-btn { padding: 0.5rem 1rem; font-size: 0.85rem; } }
+    @media (max-width: 640px) { .mod-hero-cta-overlay { left: 0.7rem; bottom: 0.7rem; } .mod-hero-cta-overlay .mod-btn { padding: 0.5rem 1rem; font-size: 0.85rem; } }
     /* Tenant hero photos as a rounded showcase panel — auto-advancing fade
        slider when the tenant uploaded more than one image. When hero photos
        exist they sit at the top of the hero in place of the text block. */
