@@ -106,6 +106,10 @@ def tenant_branding(request):
         "show_site_cars": bool(getattr(tenant, 'show_site_cars', True)),
         "show_parts": bool(getattr(tenant, 'show_parts', True)),
         "show_accessories": bool(getattr(tenant, 'show_accessories', True)),
+        # Announcement ticker — split the text into one item per line.
+        "ticker_enabled": bool(getattr(tenant, 'ticker_enabled', False)),
+        "ticker_items": [ln.strip() for ln in (getattr(tenant, 'ticker_text', '') or '').splitlines() if ln.strip()],
+        "ticker_color": (getattr(tenant, 'ticker_color', '') or '#dc2626'),
         "primary_color": eid_colors["primary_color"] if theme == "eid" else tenant.primary_color or "#2563eb",
         "secondary_color": eid_colors["secondary_color"] if theme == "eid" else tenant.secondary_color or "#1e3a8a",
         "accent_color": eid_colors["accent_color"] if theme == "eid" else tenant.accent_color or "#3b82f6",

@@ -835,6 +835,7 @@
     {% include "partials/site_font.html" %}
 </head>
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}' class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
+{% include "partials/ticker.html" %}
 <div id="nprogress-bar"></div>
         {% if eid_is_active %}
         <!-- Eid Balloons Overlay -->

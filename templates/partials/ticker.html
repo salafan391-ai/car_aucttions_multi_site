@@ -1,0 +1,31 @@
+{% comment %}
+Per-tenant announcement ticker (scrolling top bar). Enabled + content come from
+the Tenant (ticker_enabled / ticker_items / ticker_color), exposed by the
+tenant_branding context processor. Self-contained + theme-agnostic: a subtle
+tint of the chosen color so it sits well on any theme (light or dark). Items are
+duplicated once so the scroll loops seamlessly; hover pauses it.
+{% endcomment %}
+{% if ticker_enabled and ticker_items %}
+<div class="site-ticker" style="--tk: {{ ticker_color|default:'#dc2626' }};" dir="rtl" role="marquee" aria-label="إعلانات">
+    <div class="site-ticker-track">
+        {% for _pass in "12" %}{% for it in ticker_items %}<span class="site-ticker-item">{{ it }}</span><span class="site-ticker-sep">|</span>{% endfor %}{% endfor %}
+    </div>
+</div>
+<style>
+    .site-ticker {
+        width: 100%; overflow: hidden; position: relative;
+        background: color-mix(in srgb, var(--tk) 9%, transparent);
+        border-bottom: 1px solid color-mix(in srgb, var(--tk) 22%, transparent);
+    }
+    .site-ticker-track {
+        display: inline-flex; align-items: center; white-space: nowrap;
+        padding: .45rem 0; will-change: transform;
+        animation: site-ticker-scroll 40s linear infinite;
+    }
+    .site-ticker:hover .site-ticker-track { animation-play-state: paused; }
+    .site-ticker-item { padding: 0 1.4rem; color: var(--tk); font-weight: 700; font-size: .85rem; letter-spacing: .01em; }
+    .site-ticker-sep { color: var(--tk); opacity: .35; font-weight: 700; }
+    @keyframes site-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .site-ticker-track { animation: none; } }
+</style>
+{% endif %}

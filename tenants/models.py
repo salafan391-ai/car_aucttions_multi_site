@@ -50,6 +50,22 @@ class Tenant(TenantMixin):
         help_text="إظهار/إخفاء صفحة ‘الإكسسوارات‘ ورابطها في القائمة للزوار.",
     )
 
+    # ── Announcement ticker (scrolling top bar) ──
+    ticker_enabled = models.BooleanField(
+        default=False,
+        verbose_name="شريط الإعلانات المتحرك",
+        help_text="إظهار شريط إعلانات متحرك أعلى الموقع (مزادات، مبيعات، عروض…).",
+    )
+    ticker_text = models.TextField(
+        blank=True, default="",
+        verbose_name="نص الشريط المتحرك",
+        help_text="اكتب كل إعلان في سطر مستقل؛ تظهر الأسطر متتابعة في الشريط مفصولة بخط فاصل.",
+    )
+    ticker_color = models.CharField(
+        max_length=20, blank=True, default="#dc2626",
+        verbose_name="لون نص الشريط",
+    )
+
     # ── Import-cost calculator (shown on the car detail page) ──
     import_calc_enabled = models.BooleanField(
         default=True,

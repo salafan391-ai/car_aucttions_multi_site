@@ -103,6 +103,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("schema_name", "name", "is_active", "eid_is_active")}),
         ("Branding", {"fields": ("logo", "favicon", "hero_image", "show_hero", "show_watermark", "show_encar", "show_auctions", "show_site_cars", "show_parts", "show_accessories", "landing_is_active", "landing_design", "template_theme", "site_font", "theme", "primary_color", "secondary_color", "accent_color", "body_bg_color", "car_display")}),
+        ("Announcement ticker", {"fields": ("ticker_enabled", "ticker_text", "ticker_color")}),
         ("Footer", {"fields": ("footer_text", "footer_text_en")}),
         ("Business Info (عربي)", {"fields": ("tagline", "about", "address", "city", "working_hours")}),
         ("Business Info (English)", {"fields": ("tagline_en", "about_en", "address_en", "city_en", "working_hours_en")}),

@@ -442,6 +442,7 @@
     {% include "partials/site_font.html" %}
 </head>
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+{% include "partials/ticker.html" %}
 
 <nav class="lux-nav" id="lux-nav">
     <div class="lux-nav-inner">

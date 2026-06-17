@@ -40,6 +40,11 @@ def site_settings(request):
                 tenant.hero_image.delete(save=False)
             tenant.hero_image = request.FILES['hero_image']
         
+        # Announcement ticker
+        tenant.ticker_enabled = 'ticker_enabled' in request.POST
+        tenant.ticker_text = request.POST.get('ticker_text', tenant.ticker_text)
+        tenant.ticker_color = request.POST.get('ticker_color', tenant.ticker_color) or '#dc2626'
+
         # Update colors + site font
         tenant.site_font = request.POST.get('site_font', tenant.site_font)
         tenant.primary_color = request.POST.get('primary_color', tenant.primary_color)
