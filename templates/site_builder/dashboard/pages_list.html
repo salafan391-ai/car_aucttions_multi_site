@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}منشئ الصفحات{% endblock %}
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">منشئ الصفحات</h1>
+            <p class="text-gray-500 mt-1">أنشئ صفحات مخصّصة (من نحن، خدماتنا…) من أقسام جاهزة بدون كود.</p>
+        </div>
+        <a href="{% url 'site_builder:page_create' %}" class="bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl">+ صفحة جديدة</a>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="mb-3 px-4 py-2.5 rounded-lg text-sm {% if m.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+    <div class="bg-white rounded-xl shadow divide-y divide-gray-100">
+        {% for p in pages %}
+        <div class="flex items-center gap-3 p-4">
+            <div class="flex-1 min-w-0">
+                <div class="font-bold text-gray-900">{{ p.title }} {% if not p.is_published %}<span class="text-xs bg-gray-100 text-gray-500 rounded px-2 py-0.5">مسودة</span>{% endif %}</div>
+                <div class="text-xs text-gray-400" dir="ltr">/p/{{ p.slug }}/ · {{ p.sections.count }} قسم</div>
+            </div>
+            <a href="{% url 'site_builder:page_edit' p.pk %}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">تحرير الأقسام</a>
+            <a href="{% url 'site_builder:page_settings' p.pk %}" class="text-sm text-gray-500 hover:text-gray-700">الإعدادات</a>
+            <a href="/p/{{ p.slug }}/" target="_blank" class="text-sm text-gray-500 hover:text-gray-700">معاينة ↗</a>
+            <form method="post" action="{% url 'site_builder:page_delete' p.pk %}" onsubmit="return confirm('حذف هذه الصفحة وكل أقسامها؟');" class="inline">{% csrf_token %}<button class="text-sm text-red-500 hover:text-red-700">حذف</button></form>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-gray-400">لا توجد صفحات بعد. أنشئ صفحتك الأولى.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

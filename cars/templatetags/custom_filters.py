@@ -56,6 +56,15 @@ def _resize_encar_url(url, width, height):
 
 
 @register.filter
+def get_item(d, key):
+    """Dict lookup by variable key in templates: {{ mydict|get_item:somekey }}."""
+    try:
+        return d.get(key)
+    except (AttributeError, TypeError):
+        return None
+
+
+@register.filter
 def img_thumb(url):
     """Resize to card thumbnail — 600×450 (4:3, 2× for retina mobile)."""
     return _resize_encar_url(url, 600, 450)

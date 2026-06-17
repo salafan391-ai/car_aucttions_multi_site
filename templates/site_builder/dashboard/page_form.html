@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{% if is_new %}صفحة جديدة{% else %}إعدادات الصفحة{% endif %}{% endblock %}
+{% block content %}
+<section class="max-w-2xl mx-auto px-4 py-8">
+    <div class="mb-5"><a href="{% url 'site_builder:pages_list' %}" class="text-sm text-gray-500">← كل الصفحات</a></div>
+    <h1 class="text-2xl font-bold mb-5">{% if is_new %}صفحة جديدة{% else %}إعدادات: {{ page.title }}{% endif %}</h1>
+
+    {% if messages %}{% for m in messages %}<div class="mb-3 px-4 py-2.5 rounded-lg text-sm bg-green-50 text-green-700">{{ m }}</div>{% endfor %}{% endif %}
+
+    <form method="post" class="bg-white rounded-xl shadow p-6 space-y-4">
+        {% csrf_token %}
+        {% for f in form %}
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ f.label }}</label>
+            {{ f }}
+            {% if f.help_text %}<p class="text-xs text-gray-400 mt-1">{{ f.help_text }}</p>{% endif %}
+            {% if f.errors %}<p class="text-xs text-red-600 mt-1">{{ f.errors|striptags }}</p>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="flex gap-3 pt-2">
+            <button class="bg-brand bg-brand-hover text-white font-bold px-5 py-2.5 rounded-xl">حفظ</button>
+            <a href="{% url 'site_builder:pages_list' %}" class="border border-gray-200 text-gray-600 font-bold px-5 py-2.5 rounded-xl">إلغاء</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
