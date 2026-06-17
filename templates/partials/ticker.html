@@ -1,10 +1,10 @@
 {% comment %}
-Per-tenant announcement ticker (scrolling top bar). Enabled + content come from
-the Tenant (ticker_enabled / ticker_items / ticker_color), exposed by the
-tenant_branding context processor. Theme-agnostic (a subtle tint of the chosen
-color). The items are rendered ONCE; a small script duplicates them for a
-seamless scroll ONLY when they overflow the bar (and motion is allowed),
-otherwise they're shown a single time — so short text isn't displayed twice.
+Per-tenant announcement ticker — a FIXED black bar pinned to the very top of
+the page that continuously scrolls the tenant's announcements. Content comes
+from the Tenant (ticker_enabled / ticker_items / ticker_color). The items are
+rendered once and a small script clones them just enough to fill the bar, then
+scrolls by exactly one set width so the loop is seamless (no visible gap and no
+static duplication). The page + sticky navs are offset down by the bar height.
 {% endcomment %}
 {% if ticker_enabled and ticker_items %}
 <div class="site-ticker" style="--tk: {{ ticker_color|default:'#dc2626' }};" dir="rtl" role="marquee" aria-label="إعلانات">
@@ -13,19 +13,23 @@ otherwise they're shown a single time — so short text isn't displayed twice.
     </div>
 </div>
 <style>
+    :root { --ticker-h: 38px; }
     .site-ticker {
-        width: 100%; overflow: hidden; position: relative;
-        background: color-mix(in srgb, var(--tk) 9%, transparent);
-        border-bottom: 1px solid color-mix(in srgb, var(--tk) 22%, transparent);
+        position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+        height: var(--ticker-h); display: flex; align-items: center; overflow: hidden;
+        background: #000; border-bottom: 1px solid rgba(255,255,255,.12);
     }
-    .site-ticker-track { display: flex; white-space: nowrap; padding: .45rem 0; }
+    .site-ticker-track { display: flex; white-space: nowrap; }
     .site-ticker-set { display: inline-flex; align-items: center; flex-shrink: 0; }
-    .site-ticker-item { padding: 0 1.4rem; color: var(--tk); font-weight: 700; font-size: .85rem; letter-spacing: .01em; }
-    .site-ticker-sep { color: var(--tk); opacity: .35; font-weight: 700; }
-    /* Scrolling mode (added by JS only when the content overflows) */
-    .site-ticker-track.is-scrolling { width: max-content; will-change: transform; animation: site-ticker-scroll var(--dur, 40s) linear infinite; }
+    .site-ticker-item { padding: 0 1.4rem; color: var(--tk); font-weight: 700; font-size: .86rem; letter-spacing: .01em; }
+    .site-ticker-sep { color: var(--tk); opacity: .4; font-weight: 700; }
+    .site-ticker-track.is-scrolling { animation: site-ticker-scroll var(--dur, 20s) linear infinite; }
     .site-ticker:hover .site-ticker-track.is-scrolling { animation-play-state: paused; }
-    @keyframes site-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes site-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(calc(-1 * var(--unit, 100%))); } }
+
+    /* Make room for the fixed bar and push the sticky navs below it. */
+    body { padding-top: var(--ticker-h); }
+    #main-nav, .lux-nav, .mod-nav, .gl-nav { top: var(--ticker-h) !important; }
 </style>
 <script>
 (function () {
@@ -33,21 +37,19 @@ otherwise they're shown a single time — so short text isn't displayed twice.
     if (!track) return;
     var wrap = track.parentElement;
     var set = track.querySelector('.site-ticker-set');
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     function setup() {
-        // overflowing the bar? duplicate once for a seamless loop + scroll.
-        if (!reduce && set.scrollWidth > wrap.clientWidth + 4) {
-            if (track.children.length < 2) {
-                var clone = set.cloneNode(true);
-                clone.setAttribute('aria-hidden', 'true');
-                track.appendChild(clone);
-            }
-            // ~60px/sec, min 18s — keeps a steady speed regardless of length.
-            var dur = Math.max(18, Math.round(set.scrollWidth / 60));
-            track.style.setProperty('--dur', dur + 's');
-            track.classList.add('is-scrolling');
+        var unit = set.scrollWidth;
+        if (!unit) return;
+        // Clone the set until the track is wider than the bar + one set, so a
+        // fresh copy is always entering as one scrolls off.
+        var guard = 0;
+        while (track.scrollWidth < wrap.clientWidth + unit && guard < 60) {
+            track.appendChild(set.cloneNode(true));
+            guard++;
         }
-        // else: fits — leave a single, static copy (no duplication, no scroll).
+        track.style.setProperty('--unit', unit + 'px');
+        track.style.setProperty('--dur', Math.max(12, Math.round(unit / 70)) + 's'); // steady speed
+        track.classList.add('is-scrolling');
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup();
 })();
