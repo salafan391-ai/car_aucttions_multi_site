@@ -40,29 +40,12 @@
         max-width: 620px; margin: 0 auto 1.75rem; line-height: 1.7;
     }
     .mod-hero-ctas { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
-    /* Logo shown in place of the business name when a logo is set. */
-    .mod-hero-logo { display: block; width: auto; max-width: min(90vw, 460px); max-height: clamp(76px, 13vw, 140px); object-fit: contain; margin: 0 auto 1.1rem; }
-    /* When hero photos exist they become the full-bleed hero background. */
-    .mod-hero--bg { color: #fff; }
-    .mod-hero--bg::before { display: none; }
-    .mod-hero-content { position: relative; z-index: 1; }
-    .mod-hero--bg .mod-hero-title { color: #fff; }
-    .mod-hero--bg .mod-hero-sub { color: rgba(255,255,255,.92); }
-    .mod-hero--bg .mod-hero-logo { filter: drop-shadow(0 6px 24px rgba(0,0,0,.55)); }
-    .mod-hero-media.is-bg {
-        position: absolute; inset: 0; z-index: 0;
-        max-width: none; margin: 0; height: auto;
-        border: 0; border-radius: 0; box-shadow: none;
-    }
-    .mod-hero-media.is-bg::after {
-        content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-        background: linear-gradient(180deg, rgba(7,10,20,.52), rgba(7,10,20,.62));
-    }
-    /* Tenant hero photos as a rounded showcase panel — auto-advancing
-       fade slider when the tenant uploaded more than one image. */
+    /* Tenant hero photos as a rounded showcase panel — auto-advancing fade
+       slider when the tenant uploaded more than one image. When hero photos
+       exist they sit at the top of the hero in place of the text block. */
     .mod-hero-media {
         position: relative;
-        max-width: 1080px; margin: 2.5rem auto 0;
+        max-width: 1080px; margin: 0 auto 2rem;
         height: clamp(220px, 36vw, 440px);
         border-radius: calc(var(--mod-radius) + 8px);
         overflow: hidden;
@@ -316,9 +299,9 @@
 {% block content %}
 <div class="mod-home">
     {% if show_hero %}
-    <section class="mod-hero{% if site_hero_images or site_hero_image %} mod-hero--bg{% endif %}">
+    <section class="mod-hero">
         {% if site_hero_images %}
-        <div class="mod-hero-media is-bg" id="mod-hero-slider">
+        <div class="mod-hero-media" id="mod-hero-slider">
             <style>#mod-hero-slider .mod-hero-slide{pointer-events:none}#mod-hero-slider .mod-hero-slide.is-active{pointer-events:auto}.mod-hero-slide-link{display:block;width:100%;height:100%;cursor:pointer}</style>
             {% for hi in site_hero_images %}
             <div class="mod-hero-slide{% if forloop.first %} is-active{% endif %}">
@@ -334,16 +317,17 @@
             {% endif %}
         </div>
         {% elif site_hero_image %}
-        <div class="mod-hero-media is-bg"><div class="mod-hero-slide is-active"><img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high"></div></div>
+        <div class="mod-hero-media"><div class="mod-hero-slide is-active"><img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high"></div></div>
         {% endif %}
-        <div class="mod-hero-content">
+        {% if not site_hero_images and not site_hero_image %}
         <div class="mod-eyebrow mod-hero-eyebrow"><span>🚢</span> <span class="bilingual" data-lang-ar="تصدير مباشر من كوريا الجنوبية إلى باب بيتك" data-lang-en="Direct export from South Korea to your doorstep" data-lang-es="Exportación directa de Corea del Sur" data-lang-ru="Прямой экспорт из Южной Кореи">تصدير مباشر من كوريا الجنوبية إلى باب بيتك</span></div>
-        {% if site_logo %}<img class="mod-hero-logo" src="{{ site_logo }}" alt="{{ site_name }}">{% else %}<h1 class="mod-hero-title">{{ site_name|default:"سيارات" }}</h1>{% endif %}
+        <h1 class="mod-hero-title">{{ site_name|default:"سيارات" }}</h1>
         <p class="mod-hero-sub bilingual" data-lang-ar="{{ site_tagline|default:'سيارات كورية مفحوصة بعناية — من مزادات ومعارض كوريا، بشحن وتخليص كامل حتى الاستلام.' }}" data-lang-en="{{ site_tagline_en|default:'Carefully inspected Korean cars — from Korea’s auctions and dealers, shipped and cleared all the way to handover.' }}" data-lang-es="Coches coreanos cuidadosamente inspeccionados, enviados y despachados hasta la entrega." data-lang-ru="Тщательно проверенные корейские автомобили — с доставкой и растаможкой до передачи.">{{ site_tagline|default:"سيارات كورية مفحوصة بعناية — من مزادات ومعارض كوريا، بشحن وتخليص كامل حتى الاستلام." }}</p>
         <div class="mod-hero-ctas">
             <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
             <a href="{% url 'contact' %}" class="mod-btn bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Us" data-lang-es="Contacto" data-lang-ru="Связаться">تواصل معنا</a>
         </div>
+        {% endif %}{# end: text block shown only when there are no hero slides #}
         <!-- Hero filter: tabs + Brand/Model/Year accordion -->
         <div class="mod-hf" id="lux-hf">
           <div class="mod-hf-tabs-wrap">
@@ -401,7 +385,6 @@
           </form>
         </div>
 
-        </div><!-- /.mod-hero-content -->
     </section>
     {% endif %}
 
