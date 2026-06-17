@@ -447,8 +447,7 @@
 <nav class="mod-nav" id="mod-nav">
     <div class="mod-nav-inner">
         <a href="{% url 'home' %}" class="mod-brand">
-            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
-            <span>{{ site_name|default:"Motors" }}</span>
+            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% else %}<span>{{ site_name|default:"Motors" }}</span>{% endif %}
         </a>
         <button type="button" class="mod-nav-toggle" onclick="document.getElementById('mod-nav').classList.toggle('mod-nav-mobile-open')" aria-label="Menu">
             <svg class="mod-icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
