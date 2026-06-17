@@ -107,15 +107,11 @@
                                     حذف
                                 </label>
                             </div>
-                            <!-- Title / description / link for this slide -->
+                            <!-- Link for this slide (whole slide is clickable) -->
                             <div class="p-2 bg-gray-50 space-y-1.5">
-                                <input type="text" name="hero_image_title[]" value="{{ img.title }}" placeholder="عنوان الشريحة (اختياري)"
-                                       class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <textarea name="hero_image_desc[]" rows="2" placeholder="وصف الشريحة (اختياري)"
-                                       class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ img.description }}</textarea>
                                 <select onchange="if(this.value){this.parentElement.querySelector('input[name=&quot;hero_image_link[]&quot;]').value=this.value;} this.selectedIndex=0;"
                                         class="w-full px-2 py-1.5 border border-gray-300 rounded text-xs bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="">🔗 زر الإجراء: اختر صفحة…</option>
+                                    <option value="">🔗 رابط الشريحة: اختر صفحة…</option>
                                     {% for pl in page_links %}<option value="{{ pl.url }}">{{ pl.label }}</option>{% endfor %}
                                 </select>
                                 <input type="text" name="hero_image_link[]" value="{{ img.link_url }}" placeholder="أو رابط مخصّص — مثال: /cars/ أو https://…"
