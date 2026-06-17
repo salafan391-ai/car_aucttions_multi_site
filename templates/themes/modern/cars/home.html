@@ -40,6 +40,9 @@
         max-width: 620px; margin: 0 auto 1.75rem; line-height: 1.7;
     }
     .mod-hero-ctas { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    /* CTA overlaid inside the hero slideshow image */
+    .mod-hero-cta-overlay { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .mod-hero-cta-overlay .mod-btn { pointer-events: auto; box-shadow: 0 10px 30px rgba(0,0,0,.4); font-size: 1rem; padding: 0.85rem 1.9rem; }
     /* Tenant hero photos as a rounded showcase panel — auto-advancing fade
        slider when the tenant uploaded more than one image. When hero photos
        exist they sit at the top of the hero in place of the text block. */
@@ -315,13 +318,15 @@
                 {% for hi in site_hero_images %}<button type="button" class="mod-hero-dot{% if forloop.first %} is-active{% endif %}" data-idx="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>{% endfor %}
             </div>
             {% endif %}
+            <div class="mod-hero-cta-overlay">
+                <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
+            </div>
         </div>
         {% elif site_hero_image %}
-        <div class="mod-hero-media"><div class="mod-hero-slide is-active"><img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high"></div></div>
-        {% endif %}
-        {% if site_hero_images or site_hero_image %}
-        <div class="mod-hero-ctas">
-            <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
+        <div class="mod-hero-media"><div class="mod-hero-slide is-active"><img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high"></div>
+            <div class="mod-hero-cta-overlay">
+                <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
+            </div>
         </div>
         {% endif %}
         {% if not site_hero_images and not site_hero_image %}
