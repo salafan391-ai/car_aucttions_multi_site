@@ -1,14 +1,14 @@
 {% comment %}
-Per-tenant announcement ticker — a FIXED black bar pinned to the top that shows
-ONE announcement at a time: each item fades in, holds, fades out, and only then
-does the next appear (sequential, never all at once). Content comes from the
-Tenant (ticker_enabled / ticker_items / ticker_color). The page + sticky navs
-are offset down by the bar height.
+Per-tenant announcement ticker — a FIXED black bar pinned to the top. Each
+announcement scrolls across the bar (enters from the right, exits to the left)
+ONE at a time: the next item starts only after the current one has fully left
+the screen. Content comes from the Tenant (ticker_enabled / ticker_items /
+ticker_color). The page + sticky navs are offset down by the bar height.
 {% endcomment %}
 {% if ticker_enabled and ticker_items %}
-<div class="site-ticker" style="--tk: {{ ticker_color|default:'#dc2626' }};" dir="rtl" role="marquee" aria-label="إعلانات">
+<div class="site-ticker" style="--tk: {{ ticker_color|default:'#dc2626' }};" dir="rtl" aria-label="إعلانات">
     <div class="site-ticker-rotator" data-site-ticker>
-        {% for it in ticker_items %}<span class="site-ticker-item{% if forloop.first %} is-active{% endif %}">{{ it }}</span>{% endfor %}
+        {% for it in ticker_items %}<span class="site-ticker-item">{{ it }}</span>{% endfor %}
     </div>
 </div>
 <style>
@@ -20,15 +20,10 @@ are offset down by the bar height.
     }
     .site-ticker-rotator { position: relative; width: 100%; height: 100%; }
     .site-ticker-item {
-        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-        padding: 0 1rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        color: var(--tk); font-weight: 700; font-size: .86rem; letter-spacing: .01em;
-        opacity: 0; transform: translateY(8px); transition: opacity .45s ease, transform .45s ease;
-        pointer-events: none;
-    }
-    .site-ticker-item.is-active { opacity: 1; transform: none; }
-    @media (prefers-reduced-motion: reduce) {
-        .site-ticker-item { transition: opacity .2s ease; transform: none; }
+        position: absolute; top: 0; left: 0; height: 100%;
+        display: flex; align-items: center; white-space: nowrap;
+        padding: 0 1rem; color: var(--tk); font-weight: 700; font-size: .86rem; letter-spacing: .01em;
+        visibility: hidden; will-change: transform;
     }
 
     /* Make room for the fixed bar and push the sticky navs below it. */
@@ -39,23 +34,42 @@ are offset down by the bar height.
 (function () {
     var rotator = document.querySelector('[data-site-ticker]');
     if (!rotator) return;
+    var bar = rotator.parentElement;
     var items = Array.prototype.slice.call(rotator.querySelectorAll('.site-ticker-item'));
-    if (items.length <= 1) return;  // single item just stays shown
-    var i = 0;
-    var HOLD = 4000;   // visible time per item
-    var GAP = 550;     // wait after one fades out before the next fades in
-    var timer;
-    function next() {
-        items[i].classList.remove('is-active');   // fade current out
-        var prev = i;
-        i = (i + 1) % items.length;
-        setTimeout(function () { items[i].classList.add('is-active'); }, GAP);  // then fade next in
+    if (!items.length) return;
+    var i = 0, busy = false;
+
+    function play() {
+        var el = items[i];
+        items.forEach(function (x) { if (x !== el) x.style.visibility = 'hidden'; });
+        el.style.visibility = 'visible';
+        var w = bar.clientWidth || window.innerWidth;
+        var iw = el.offsetWidth;
+        // Start fully off the right edge.
+        el.style.transition = 'none';
+        el.style.transform = 'translateX(' + w + 'px)';
+        el.getBoundingClientRect();  // force reflow so the start sticks
+        // Scroll to fully off the left edge at a steady speed.
+        var dist = w + iw + 8;
+        var dur = Math.max(5, dist / 95);  // ~95px/sec
+        busy = true;
+        el.style.transition = 'transform ' + dur + 's linear';
+        el.style.transform = 'translateX(-' + (iw + 8) + 'px)';
     }
-    function start() { timer = setInterval(next, HOLD + GAP); }
-    function stop() { clearInterval(timer); }
-    // Pause when the tab is hidden so it doesn't race through items.
-    document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
-    start();
+
+    rotator.addEventListener('transitionend', function (e) {
+        if (e.propertyName !== 'transform' || !busy) return;
+        busy = false;
+        i = (i + 1) % items.length;
+        play();
+    });
+
+    // Pause/resume cleanly with tab visibility (avoid a missed transitionend stall).
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && !busy) play();
+    });
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', play); else play();
 })();
 </script>
 {% endif %}
