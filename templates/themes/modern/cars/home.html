@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static humanize custom_filters %}
+{% load static humanize custom_filters page_tags %}
 
 {% block title %}{{ site_name|default:"سيارات" }} — Premium Selection{% endblock %}
 
@@ -305,12 +305,15 @@
     <section class="mod-hero">
         {% if site_hero_images %}
         <div class="mod-hero-media" id="mod-hero-slider">
-            <style>#mod-hero-slider .mod-hero-slide{pointer-events:none}#mod-hero-slider .mod-hero-slide.is-active{pointer-events:auto}.mod-hero-slide-link{display:block;width:100%;height:100%;cursor:pointer}</style>
+            <style>#mod-hero-slider .mod-hero-slide{pointer-events:none}#mod-hero-slider .mod-hero-slide.is-active{pointer-events:auto}</style>
             {% for hi in site_hero_images %}
             <div class="mod-hero-slide{% if forloop.first %} is-active{% endif %}">
-                {% if hi.link_url %}<a href="{{ hi.link_url }}" class="mod-hero-slide-link" aria-label="{{ site_name|default:'سيارات' }}">{% endif %}
                 <img src="{{ hi.image.url }}" alt="{{ site_name|default:'سيارات' }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
-                {% if hi.link_url %}</a>{% endif %}
+                {% if hi.link_url %}{% with lbl=hi.link_url|page_cta_label %}
+                <div class="mod-hero-cta-overlay">
+                    <a href="{{ hi.link_url }}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="{{ lbl.ar }}" data-lang-en="{{ lbl.en }}" data-lang-es="{{ lbl.es }}" data-lang-ru="{{ lbl.ru }}">{{ lbl.ar }}</a>
+                </div>
+                {% endwith %}{% endif %}
             </div>
             {% endfor %}
             {% if site_hero_images|length > 1 %}
@@ -318,16 +321,9 @@
                 {% for hi in site_hero_images %}<button type="button" class="mod-hero-dot{% if forloop.first %} is-active{% endif %}" data-idx="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>{% endfor %}
             </div>
             {% endif %}
-            <div class="mod-hero-cta-overlay">
-                <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
-            </div>
         </div>
         {% elif site_hero_image %}
-        <div class="mod-hero-media"><div class="mod-hero-slide is-active"><img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high"></div>
-            <div class="mod-hero-cta-overlay">
-                <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
-            </div>
-        </div>
+        <div class="mod-hero-media"><div class="mod-hero-slide is-active"><img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high"></div></div>
         {% endif %}
         {% if not site_hero_images and not site_hero_image %}
         <div class="mod-eyebrow mod-hero-eyebrow"><span>🚢</span> <span class="bilingual" data-lang-ar="تصدير مباشر من كوريا الجنوبية إلى باب بيتك" data-lang-en="Direct export from South Korea to your doorstep" data-lang-es="Exportación directa de Corea del Sur" data-lang-ru="Прямой экспорт из Южной Кореи">تصدير مباشر من كوريا الجنوبية إلى باب بيتك</span></div>
