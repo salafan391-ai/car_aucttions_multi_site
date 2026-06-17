@@ -319,6 +319,11 @@
         {% elif site_hero_image %}
         <div class="mod-hero-media"><div class="mod-hero-slide is-active"><img src="{{ site_hero_image }}" alt="{{ site_name|default:'سيارات' }}" fetchpriority="high"></div></div>
         {% endif %}
+        {% if site_hero_images or site_hero_image %}
+        <div class="mod-hero-ctas">
+            <a href="{% url 'car_list' %}" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تصفح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفح السيارات</a>
+        </div>
+        {% endif %}
         {% if not site_hero_images and not site_hero_image %}
         <div class="mod-eyebrow mod-hero-eyebrow"><span>🚢</span> <span class="bilingual" data-lang-ar="تصدير مباشر من كوريا الجنوبية إلى باب بيتك" data-lang-en="Direct export from South Korea to your doorstep" data-lang-es="Exportación directa de Corea del Sur" data-lang-ru="Прямой экспорт из Южной Кореи">تصدير مباشر من كوريا الجنوبية إلى باب بيتك</span></div>
         <h1 class="mod-hero-title">{{ site_name|default:"سيارات" }}</h1>
