@@ -330,6 +330,11 @@ class GlobalExchangeRates(models.Model):
 class TenantHeroImage(models.Model):
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='hero_images', verbose_name="الموقع")
     image = models.ImageField(upload_to='tenant_hero/', verbose_name="الصورة")
+    link_url = models.CharField(
+        max_length=500, blank=True, default="",
+        verbose_name="رابط الصورة",
+        help_text="عند الضغط على هذه الصورة في الشريحة يتم الانتقال إلى هذا الرابط (اتركه فارغاً لتعطيل الرابط).",
+    )
     order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
 
     class Meta:

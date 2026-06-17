@@ -420,11 +420,13 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
     <!-- Slideshow Background -->
     {% if site_hero_images %}
     <div id="hero-slideshow" class="absolute inset-0 overflow-hidden">
+        <style>#hero-slideshow .hero-slide{pointer-events:none}#hero-slideshow .hero-slide.opacity-100{pointer-events:auto}#hero-slideshow .hero-slide-link{cursor:pointer}</style>
         {% for hero_img in site_hero_images %}
         <div class="hero-slide absolute inset-0 transition-opacity duration-1000 ease-in-out {% if not forloop.first %}opacity-0{% else %}opacity-100{% endif %}"
              {% if forloop.first %}style="background-image: url('{{ hero_img.image.url }}'); background-size: cover; background-position: center;"{% else %}data-bg="{{ hero_img.image.url }}" style="background-size: cover; background-position: center;"{% endif %}>
             <!-- Dark overlay for readability -->
             <div class="absolute inset-0 bg-black/40"></div>
+            {% if hero_img.link_url %}<a href="{{ hero_img.link_url }}" class="hero-slide-link absolute inset-0 z-[1]" aria-label="{{ site_name|default:'' }}"></a>{% endif %}
         </div>
         {% endfor %}
 

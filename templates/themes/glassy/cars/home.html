@@ -319,9 +319,12 @@
 
             {% if site_hero_images %}
             <div class="gl-home-hero-media" id="mod-hero-slider">
+                <style>#mod-hero-slider .gl-home-hero-slide{pointer-events:none}#mod-hero-slider .gl-home-hero-slide.is-active{pointer-events:auto}.gl-home-hero-slide-link{display:block;width:100%;height:100%;cursor:pointer}</style>
                 {% for hi in site_hero_images %}
                 <div class="gl-home-hero-slide{% if forloop.first %} is-active{% endif %}">
+                    {% if hi.link_url %}<a href="{{ hi.link_url }}" class="gl-home-hero-slide-link" aria-label="{{ site_name|default:'سيارات' }}">{% endif %}
                     <img src="{{ hi.image.url }}" alt="{{ site_name|default:'سيارات' }}" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+                    {% if hi.link_url %}</a>{% endif %}
                 </div>
                 {% endfor %}
                 {% if site_hero_images|length > 1 %}
