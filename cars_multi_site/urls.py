@@ -25,7 +25,7 @@ from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from tenants.views import site_settings
+from tenants.views import site_settings, set_dashboard_password
 from tenants.sso_views import launch as sso_launch, enter as sso_enter
 from billing.views import stripe_webhook
 
@@ -204,6 +204,7 @@ urlpatterns = [
     re_path(r"^(?P<fname>google[\w-]+\.html)$", gsc_verify_file),
     path("admin/", admin.site.urls),
     path("settings/", site_settings, name="site_settings"),
+    path("settings/password/", set_dashboard_password, name="set_dashboard_password"),
     # SSO bridge from the pdf_export project — provisions a tenant for the
     # signed-in user and bounces them to their subdomain.
     path("sso/launch/", sso_launch, name="sso_launch"),

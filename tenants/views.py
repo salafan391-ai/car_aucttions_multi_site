@@ -1,10 +1,47 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse, NoReverseMatch
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.db import connection
 from .models import Tenant, TenantPhoneNumber, TenantHeroImage, TenantWorkStep
 from .fonts import font_choices
+
+
+@staff_member_required
+def set_dashboard_password(request):
+    """Let a tenant owner set a password for their dashboard account, so they
+    can log in directly at /login/ (not only via the pdf_export SSO auto-login)."""
+    tenant = getattr(connection, 'tenant', None)
+    if not tenant or tenant.schema_name == 'public':
+        messages.error(request, 'غير متاح من النطاق العام')
+        return redirect('home')
+    if request.method == 'POST':
+        p1 = request.POST.get('new_password1') or ''
+        p2 = request.POST.get('new_password2') or ''
+        errors = []
+        if not p1:
+            errors.append('كلمة المرور مطلوبة.')
+        if p1 != p2:
+            errors.append('كلمتا المرور غير متطابقتين.')
+        try:
+            validate_password(p1, user=request.user)
+        except ValidationError as e:
+            errors.extend(e.messages)
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+        else:
+            request.user.set_password(p1)
+            request.user.save(update_fields=['password'])
+            update_session_auth_hash(request, request.user)  # stay logged in
+            messages.success(
+                request,
+                f'تم تعيين كلمة المرور. يمكنك الآن الدخول مباشرة باسم المستخدم «{request.user.username}» وكلمة المرور.',
+            )
+    return redirect('site_settings')
 
 
 def friendly_page_links():
