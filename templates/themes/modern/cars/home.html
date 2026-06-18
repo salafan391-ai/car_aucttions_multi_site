@@ -46,7 +46,7 @@
     .mod-hero-media {
         position: relative;
         max-width: 1080px; margin: 0 auto 2rem;
-        height: clamp(220px, 36vw, 440px);
+        aspect-ratio: 1080 / 440;   /* same shape at every width — no extra mobile cropping */
         border-radius: calc(var(--mod-radius) + 8px);
         overflow: hidden;
         border: 1px solid var(--mod-line);
