@@ -24,6 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-d!o0+huz$w^paapq#w6n3l-2r!ri)c7l(ju#%s)la@5j63-0ki")
 
+# ── SSO bridge from the pdf_export project ──────────────────────────────────
+# Must match SSO_SHARED_SECRET on pdf_export's settings.
+SSO_SHARED_SECRET   = os.environ.get("SSO_SHARED_SECRET", "")
+# Apex under which new tenant subdomains are created (e.g. "ofleet0.com" →
+# new sites land on `slug.ofleet0.com`). Must have a wildcard DNS record
+# (`*.ofleet0.com → this server`) for the subdomains to actually resolve.
+TENANT_APEX_DOMAIN  = os.environ.get("TENANT_APEX_DOMAIN", "ofleet0.com")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "yes")
 

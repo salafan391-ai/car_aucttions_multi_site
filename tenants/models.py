@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django_tenants.models import TenantMixin, DomainMixin
 from site_cars.image_utils import optimize_image
@@ -6,6 +7,17 @@ from .fonts import font_choices
 
 class Tenant(TenantMixin):
     name = models.CharField(max_length=100)
+    # Public-schema user who provisioned this tenant via the pdf_export SSO
+    # bridge. Used by `sso_views.launch` to detect a returning user and skip
+    # re-provisioning. Nullable because legacy tenants pre-date this field.
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="owned_tenants",
+        null=True, blank=True,
+        verbose_name="مالك الموقع",
+        help_text="حساب المستخدم (في القاعدة العامة) الذي يملك هذا الموقع.",
+    )
     is_active = models.BooleanField(
         default=True,
         verbose_name="الموقع مُفعّل",
