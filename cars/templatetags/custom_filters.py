@@ -36,23 +36,24 @@ def _force_https(url):
 
 def _resize_encar_url(url, width, height):
     """
-    Rewrite encar.com CDN impolicy params to the requested dimensions.
-    Always returns https:// to avoid mixed-content browser blocks.
-    Falls back to the (https-upgraded) original URL for non-encar images.
+    Serve encar.com car photos through the wsrv.nl image CDN, resized to the
+    requested dimensions. Encar's own CDN sends `max-age=0`, so browsers
+    re-validate every image on every visit; wsrv.nl fetches each image once,
+    caches it globally, auto-converts to WebP, and serves it with a long
+    browser cache (`max-age=31536000`) — so they stop reloading.
+
+    Always returns https://. Non-encar images are returned unchanged.
     """
     url = _force_https(url)
     if not url or 'encar.com' not in url:
         return url
     parsed = urlparse(url)
-    # Replace impolicy dimensions — keep other params intact
-    qs = parse_qs(parsed.query, keep_blank_values=True)
-    qs['impolicy'] = ['heightRate']
-    qs['rh'] = [str(height)]
-    qs['cw'] = [str(width)]
-    qs['ch'] = [str(height)]
-    qs['cg'] = ['Center']
-    new_query = urlencode({k: v[0] for k, v in qs.items()})
-    return urlunparse(parsed._replace(query=new_query))
+    # Drop Encar's own resize query; let wsrv fetch the original (over https via
+    # the `ssl:` prefix) and resize it with a centred cover crop.
+    source = 'ssl:' + parsed.netloc + parsed.path
+    return 'https://wsrv.nl/?' + urlencode({
+        'url': source, 'w': width, 'h': height, 'fit': 'cover', 'q': 82,
+    })
 
 
 @register.filter
