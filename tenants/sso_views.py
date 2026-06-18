@@ -159,6 +159,20 @@ def launch(request):
     else:
         domain = tenant.domains.filter(is_primary=True).first()
 
+    # ── Keep the site name in sync with pdf_export on every launch ──
+    # (so editing the business name there and re-launching updates the site).
+    desired_name = (business_name or "").strip()[:100]
+    if desired_name and tenant.name != desired_name:
+        tenant.name = desired_name
+        tenant.save(update_fields=["name"])
+        from django.core.cache import cache as _cache
+        for _k in (
+            f"tenant_branding:{tenant.schema_name}",
+            f"home_html_v9:{tenant.schema_name}",
+            f"home_ctx_v9:{tenant.schema_name}",
+        ):
+            _cache.delete(_k)
+
     # ── Log them in on the PUBLIC schema (so they can see the
     # cross-tenant launcher / admin if any) and bounce to their site ──
     login(request, user)
