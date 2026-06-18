@@ -367,8 +367,14 @@ AWS_S3_FILE_OVERWRITE = False
 # Disable ACL since bucket has Object Ownership enabled
 AWS_DEFAULT_ACL = None
 AWS_BUCKET_ACL = None
+# The media bucket is public-read, so emit STABLE, unsigned URLs. Signed URLs
+# (the default) regenerate their ?Signature/Expires query string on every render,
+# so the browser sees a new URL each visit and re-downloads logos/slides/etc.
+# Unsigned URLs stay identical → the browser caches them.
+AWS_QUERYSTRING_AUTH = False
+# Long, immutable cache on new uploads (filenames are unique — overwrite is off).
 AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
+    'CacheControl': 'public, max-age=31536000, immutable',
 }
 
 # Media files
