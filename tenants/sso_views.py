@@ -18,10 +18,12 @@ import json
 import logging
 import re
 import secrets
+import urllib.request
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.hashers import make_password
+from django.core.files.base import ContentFile
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.db import connection
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
@@ -76,6 +78,77 @@ def _unique_slug(base: str) -> str:
         i += 1
 
 
+# pdf_export payload key -> Tenant field. Text business info synced from the
+# user's pdf_export profile.
+_PROFILE_FIELD_MAP = {
+    "phone": "phone",
+    "whatsapp": "whatsapp",
+    "biz_email": "email",
+    "address": "address",
+    "instagram": "instagram",
+    "tiktok": "tiktok",
+    "snapchat": "snapchat",
+    "tagline": "tagline",
+    "brand_color": "primary_color",
+}
+
+
+def _download_logo(tenant, logo_url):
+    """Fetch the pdf_export logo into the tenant's logo field (only if it has none)."""
+    if not logo_url or tenant.logo:
+        return False
+    try:
+        req = urllib.request.Request(logo_url, headers={"User-Agent": "tenant-cars-sso"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = resp.read()
+        if not data or len(data) > 8_000_000:
+            return False
+        ext = (logo_url.split("?")[0].rsplit(".", 1)[-1] or "png").lower()
+        if ext not in ("png", "jpg", "jpeg", "webp", "gif"):
+            ext = "png"
+        tenant.logo.save(f"{tenant.schema_name}_logo.{ext}", ContentFile(data), save=False)
+        return True
+    except Exception:
+        log.warning("SSO logo fetch failed for %s", tenant.schema_name, exc_info=True)
+        return False
+
+
+def _sync_business_info(tenant, payload, created):
+    """Apply pdf_export business info onto the tenant.
+
+    - name always tracks the payload's business_name.
+    - other text fields are set on creation, otherwise only fill blanks (never
+      clobber edits the owner made in Site Settings).
+    - logo is downloaded only when the tenant has none yet.
+    Busts the branding/home caches if anything changed.
+    """
+    changed = []
+    desired_name = (payload.get("business_name") or "").strip()[:100]
+    if desired_name and tenant.name != desired_name:
+        tenant.name = desired_name
+        changed.append("name")
+    for src, field in _PROFILE_FIELD_MAP.items():
+        val = (payload.get(src) or "").strip()
+        if not val:
+            continue
+        current = getattr(tenant, field, "") or ""
+        if (created or not current) and current != val:
+            setattr(tenant, field, val[:200] if field != "primary_color" else val[:20])
+            changed.append(field)
+    if _download_logo(tenant, (payload.get("logo_url") or "").strip()):
+        changed.append("logo")
+    if changed:
+        tenant.save()
+        from django.core.cache import cache as _cache
+        for _k in (
+            f"tenant_branding:{tenant.schema_name}",
+            f"home_html_v9:{tenant.schema_name}",
+            f"home_ctx_v9:{tenant.schema_name}",
+        ):
+            _cache.delete(_k)
+    return changed
+
+
 @require_GET
 def launch(request):
     """Verify the signed token from pdf_export and provision the user's site."""
@@ -118,6 +191,7 @@ def launch(request):
 
     # ── Find or provision the tenant ────────────────────────────────────
     tenant = Tenant.objects.filter(owner=user).first()
+    was_created = tenant is None
     domain = None
     if tenant is None:
         slug = _unique_slug(_slugify_owner(payload))
@@ -159,19 +233,9 @@ def launch(request):
     else:
         domain = tenant.domains.filter(is_primary=True).first()
 
-    # ── Keep the site name in sync with pdf_export on every launch ──
-    # (so editing the business name there and re-launching updates the site).
-    desired_name = (business_name or "").strip()[:100]
-    if desired_name and tenant.name != desired_name:
-        tenant.name = desired_name
-        tenant.save(update_fields=["name"])
-        from django.core.cache import cache as _cache
-        for _k in (
-            f"tenant_branding:{tenant.schema_name}",
-            f"home_html_v9:{tenant.schema_name}",
-            f"home_ctx_v9:{tenant.schema_name}",
-        ):
-            _cache.delete(_k)
+    # ── Sync business info from pdf_export (name always; other fields on
+    # creation or to fill blanks; logo if none) and bust caches ──
+    _sync_business_info(tenant, payload, created=was_created)
 
     # ── Log them in on the PUBLIC schema (so they can see the
     # cross-tenant launcher / admin if any) and bounce to their site ──
