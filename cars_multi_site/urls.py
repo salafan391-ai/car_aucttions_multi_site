@@ -26,7 +26,7 @@ from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from tenants.views import site_settings
-from tenants.sso_views import launch as sso_launch
+from tenants.sso_views import launch as sso_launch, enter as sso_enter
 from billing.views import stripe_webhook
 
 
@@ -207,6 +207,7 @@ urlpatterns = [
     # SSO bridge from the pdf_export project — provisions a tenant for the
     # signed-in user and bounces them to their subdomain.
     path("sso/launch/", sso_launch, name="sso_launch"),
+    path("sso/enter/", sso_enter, name="sso_enter"),
     path("billing/", include("billing.urls")),
     path("stripe/webhook/", stripe_webhook, name="stripe_webhook"),
     path("accounts/", include("allauth.urls")),

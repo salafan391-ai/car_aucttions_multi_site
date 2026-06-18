@@ -19,6 +19,7 @@ import logging
 import re
 import secrets
 import urllib.request
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
@@ -40,6 +41,7 @@ User = get_user_model()
 
 SSO_MAX_AGE = 5 * 60   # seconds
 SSO_SALT    = "tenant-cars-sso"   # MUST match pdf_export's signer salt
+SSO_ENTER_SALT = "tenant-cars-enter"   # internal: launch → subdomain auto-login
 
 
 def _bad(request, msg: str, status: int = 400):
@@ -212,24 +214,6 @@ def launch(request):
             tenant=tenant,
             is_primary=True,
         )
-
-        # Create a tenant-side superuser with the same email so they can
-        # actually log into /admin/ once they land. We set a random password
-        # — the user will log in with their email + a password reset.
-        with schema_context(tenant.schema_name):
-            tenant_user, created = User.objects.update_or_create(
-                username=user.username[:150],
-                defaults={
-                    "email": email,
-                    "first_name": "",
-                    "is_staff": True,
-                    "is_superuser": True,
-                    "is_active": True,
-                },
-            )
-            if created:
-                tenant_user.password = make_password(secrets.token_urlsafe(24))
-                tenant_user.save(update_fields=["password"])
     else:
         domain = tenant.domains.filter(is_primary=True).first()
 
@@ -237,8 +221,57 @@ def launch(request):
     # creation or to fill blanks; logo if none) and bust caches ──
     _sync_business_info(tenant, payload, created=was_created)
 
-    # ── Log them in on the PUBLIC schema (so they can see the
-    # cross-tenant launcher / admin if any) and bounce to their site ──
-    login(request, user)
-    target = f"https://{domain.domain}/" if domain else "/"
+    # ── Ensure a tenant-side superuser exists (so they own their dashboard) ──
+    tenant_username = (user.username or email.split("@", 1)[0])[:150]
+    with schema_context(tenant.schema_name):
+        tenant_user, created = User.objects.update_or_create(
+            username=tenant_username,
+            defaults={"email": email, "is_staff": True, "is_superuser": True, "is_active": True},
+        )
+        if created:
+            tenant_user.password = make_password(secrets.token_urlsafe(24))
+            tenant_user.save(update_fields=["password"])
+
+    # ── Log them straight into their own dashboard. The public-schema session
+    # can't carry to the subdomain (different schema + auth table), so we hand
+    # off a short-lived signed token to `/sso/enter/` on the subdomain, which
+    # logs in the tenant superuser there. No password for the user to remember.
+    login(request, user)  # public-schema login (for any cross-tenant launcher)
+    if domain:
+        enter_token = TimestampSigner(key=secret, salt=SSO_ENTER_SALT).sign(
+            json.dumps({"u": tenant_username, "s": tenant.schema_name})
+        )
+        target = f"https://{domain.domain}/sso/enter/?{urlencode({'t': enter_token})}"
+    else:
+        target = "/"
     return HttpResponseRedirect(target)
+
+
+@require_GET
+def enter(request):
+    """Tenant-subdomain landing: verify the short-lived token from `launch`
+    and log the user into their own dashboard (runs inside the tenant schema)."""
+    from django.shortcuts import redirect
+    secret = getattr(settings, "SSO_SHARED_SECRET", "")
+    token = request.GET.get("t", "")
+    if not secret or not token:
+        return redirect("home")
+    try:
+        raw = TimestampSigner(key=secret, salt=SSO_ENTER_SALT).unsign(token, max_age=180)
+        data = json.loads(raw)
+    except (BadSignature, SignatureExpired, json.JSONDecodeError):
+        return redirect("home")
+    # Guard: token's schema must match the subdomain we're actually on.
+    if data.get("s") != getattr(connection, "schema_name", None):
+        return redirect("home")
+    try:
+        u = User.objects.get(username=data.get("u"), is_active=True)
+    except User.DoesNotExist:
+        return redirect("home")
+    u.backend = "django.contrib.auth.backends.ModelBackend"
+    login(request, u)
+    try:
+        from django.urls import reverse
+        return redirect(reverse("site_dashboard"))
+    except Exception:
+        return redirect("/")
