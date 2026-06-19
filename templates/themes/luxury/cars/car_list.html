@@ -698,6 +698,57 @@
                     </div>
                     {% endif %}
 
+                    {% if seat_counts %}
+                    <div class="lux-field lux-field-toggle{% if not sel_seat_counts %} is-collapsed{% endif %}">
+                        <label class="lux-label bilingual" data-lang-ar="عدد المقاعد" data-lang-en="Seats" data-lang-es="Asientos" data-lang-ru="Места">
+                            <span>عدد المقاعد</span>
+                            <svg class="lux-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="lux-chips">
+                            {% for s in seat_counts %}
+                            <label>
+                                <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip">{{ s|floatformat:"0" }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if seat_colors %}
+                    <div class="lux-field lux-field-toggle{% if not sel_seat_colors %} is-collapsed{% endif %}">
+                        <label class="lux-label bilingual" data-lang-ar="لون المقاعد" data-lang-en="Seat color" data-lang-es="Color de asientos" data-lang-ru="Цвет сидений">
+                            <span>لون المقاعد</span>
+                            <svg class="lux-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="lux-chips">
+                            {% for sc in seat_colors %}
+                            <label>
+                                <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip"><span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;flex-shrink:0;border:1px solid var(--lux-line);background:{{ sc.name|color_to_css }};"></span><span class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}" data-lang-es="{{ sc.name|translate_color:'es' }}" data-lang-ru="{{ sc.name|translate_color:'ru' }}">{{ sc.name|translate_color }}</span></span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if auction_names %}
+                    <div class="lux-field lux-field-toggle{% if not sel_auction_names %} is-collapsed{% endif %}">
+                        <label class="lux-label bilingual" data-lang-ar="اسم المزاد" data-lang-en="Auction house" data-lang-es="Subasta" data-lang-ru="Аукцион">
+                            <span>اسم المزاد</span>
+                            <svg class="lux-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="lux-chips">
+                            {% for an in auction_names %}
+                            <label>
+                                <input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip">{{ an }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     {% if body_types %}
                     <div class="lux-field lux-field-toggle{% if not sel_body_types %} is-collapsed{% endif %}">
                         <label class="lux-label bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Кузов">
