@@ -935,6 +935,51 @@ def _compute_facet_counts(facet_base, GET):
     return out
 
 
+def _facet_counts_for(request, car_type):
+    """Build the facet base (tab + tenant toggles) and return cached live counts.
+
+    Shared by car_list (initial render) and the car_facets AJAX endpoint (live
+    updates as the user clicks filters, before submitting).
+    """
+    facet_base = _exclude_expired_auctions(ApiCar.objects.all())
+    ftn = getattr(connection, 'tenant', None)
+    if ftn is not None:
+        if not getattr(ftn, 'show_auctions', True):
+            facet_base = facet_base.exclude(category__name='auction')
+        if not getattr(ftn, 'show_encar', True):
+            facet_base = facet_base.filter(category__name='auction')
+    if car_type == 'auction':
+        facet_base = facet_base.filter(category__name='auction')
+    elif car_type == 'cars':
+        facet_base = facet_base.exclude(category__name='auction')
+    elif car_type == 'truck':
+        facet_base = facet_base.exclude(category__name='auction').filter(body__name='truck')
+    # Shared cache key: catalog is shared + only changes on the daily import.
+    cp = {k: sorted(v) for k, v in request.GET.lists() if k not in ('sort', 'page')}
+    ch = hashlib.md5(json.dumps(cp, sort_keys=True).encode()).hexdigest()
+    fa = int(bool(getattr(ftn, 'show_auctions', True))) if ftn is not None else 1
+    fe = int(bool(getattr(ftn, 'show_encar', True))) if ftn is not None else 1
+    key = f"car_facets_v2:{fa}{fe}:{car_type or 'all'}:{ch}"
+    try:
+        fc = cache.get(key)
+        if fc is None:
+            fc = _compute_facet_counts(facet_base, request.GET)
+            cache.set(key, fc, 60 * 30)
+        return fc
+    except Exception:
+        return {}
+
+
+@cache_control(public=True, max_age=60)
+def car_facets(request):
+    """JSON endpoint: live per-option facet counts for the current filter state.
+
+    Used by the sidebar JS to update counts as the user toggles filters without
+    submitting (Encar's iNav behaviour)."""
+    from django.http import JsonResponse
+    return JsonResponse(_facet_counts_for(request, request.GET.get('car_type')))
+
+
 @ensure_csrf_cookie
 @cache_control(public=True, max_age=120)
 def car_list(request):
@@ -1570,36 +1615,8 @@ def car_list(request):
         _ours_params['price_max'] = price_max
     ours_url = _reverse('site_car_list') + (('?' + urlencode(_ours_params)) if _ours_params else '')
 
-    # ── Encar-style live per-option facet counts ──
-    _facet_base = _exclude_expired_auctions(ApiCar.objects.all())
-    _ftn = getattr(connection, 'tenant', None)
-    if _ftn is not None:
-        if not getattr(_ftn, 'show_auctions', True):
-            _facet_base = _facet_base.exclude(category__name='auction')
-        if not getattr(_ftn, 'show_encar', True):
-            _facet_base = _facet_base.filter(category__name='auction')
-    if car_type == 'auction':
-        _facet_base = _facet_base.filter(category__name='auction')
-    elif car_type == 'cars':
-        _facet_base = _facet_base.exclude(category__name='auction')
-    elif car_type == 'truck':
-        _facet_base = _facet_base.exclude(category__name='auction').filter(body__name='truck')
-    # The Encar catalog (ApiCar) is shared across tenants and only changes on the
-    # daily import, so key the facet cache by toggle-state + tab + filter-combo
-    # (NOT schema) — one compute serves every tenant — and keep it 30 min. The
-    # main page response is already cached per-params for anon, so the heavy
-    # aggregation only runs on a cold miss. Guarded so a slow/failed compute
-    # never breaks the page.
-    _fa = int(bool(getattr(_ftn, 'show_auctions', True))) if _ftn is not None else 1
-    _fe = int(bool(getattr(_ftn, 'show_encar', True))) if _ftn is not None else 1
-    _facet_cache_key = f"car_facets_v2:{_fa}{_fe}:{car_type or 'all'}:{_count_hash}"
-    try:
-        facet_counts = cache.get(_facet_cache_key)
-        if facet_counts is None:
-            facet_counts = _compute_facet_counts(_facet_base, request.GET)
-            cache.set(_facet_cache_key, facet_counts, 60 * 30)
-    except Exception:
-        facet_counts = {}
+    # ── Encar-style live per-option facet counts (also served live via /cars/facets/) ──
+    facet_counts = _facet_counts_for(request, car_type)
 
     context = {
         'page_obj': page_obj,

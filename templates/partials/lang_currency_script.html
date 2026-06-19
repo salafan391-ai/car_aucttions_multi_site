@@ -381,4 +381,42 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
     if (document.readyState !== 'loading') initPriceFilters();
     else document.addEventListener('DOMContentLoaded', initPriceFilters);
     document.addEventListener('htmx:afterSwap', initPriceFilters);
+
+    /* ── Live facet counts ───────────────────────────────────────────────
+       Update each filter option's count as the user toggles filters, BEFORE
+       submitting (Encar's iNav behaviour). On change we fetch /cars/facets/
+       with the form's current selections and rewrite the .fc-badge counts. */
+    (function () {
+        var DIMS = ['fuel', 'transmission', 'color', 'body_type', 'seat_count', 'seat_color', 'auction_name'];
+        var TRIGGER = DIMS.concat(['manufacturer', 'model', 'badge', 'year_from', 'year_to', 'price_min', 'price_max', 'mileage_min', 'mileage_max', 'q']);
+        var timer = null;
+        function paramsFor(form) {
+            var fd = new FormData(form), p = new URLSearchParams();
+            fd.forEach(function (v, k) { if (v !== '' && k !== 'page' && k !== 'sort') p.append(k, v); });
+            return p.toString();
+        }
+        function update(form, counts) {
+            form.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+                if (DIMS.indexOf(cb.name) < 0) return;
+                var label = cb.closest('label'); if (!label) return;
+                var badge = label.querySelector('.fc-badge'); if (!badge) return;
+                var c = (counts[cb.name] || {})[cb.value];
+                if (c) { badge.textContent = Number(c).toLocaleString(); badge.hidden = false; badge.style.display = ''; }
+                else { badge.textContent = ''; badge.hidden = true; }
+            });
+        }
+        function refresh(form) {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                fetch('/cars/facets/?' + paramsFor(form), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (c) { if (c) update(form, c); })
+                    .catch(function () {});
+            }, 250);
+        }
+        document.addEventListener('change', function (e) {
+            var t = e.target; if (!t || !t.form) return;
+            if (TRIGGER.indexOf(t.name) >= 0 || t.hasAttribute('data-price-filter')) refresh(t.form);
+        });
+    })();
 </script>

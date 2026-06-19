@@ -14,6 +14,7 @@ urlpatterns = [
     path('', views.landing, name='landing'),
     path('home/', views.home, name='home'),
     path('cars/', views.car_list, name='car_list'),
+    path('cars/facets/', views.car_facets, name='car_facets'),
     path('cars/export-pdf/', views.export_auction_pdf, name='export_auction_pdf'),
     path('cars/check-availability/<str:lot_number>/', views.car_availability_check, name='car_availability_check'),
     path('cars/<str:lot_number>/report/', views.car_report, name='car_report'),
