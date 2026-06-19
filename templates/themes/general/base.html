@@ -85,7 +85,7 @@
         .focus\:ring-brand:focus { --tw-ring-color: var(--color-primary); }
 
         * { box-sizing: border-box; }
-        html, body { background: var(--gc-soft); color: var(--gc-ink); }
+        html, body { background: var(--gc-soft); color: var(--gc-ink); overflow-x: clip; }
         body {
             font-family: 'Raleway', 'Tajawal', system-ui, sans-serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column;
@@ -201,8 +201,18 @@
             .gc-burger { display: inline-flex; }
             .gc-pill-label { display: none; }
             .gc-btn-primary span.gc-btn-text { display: none; }
-            .gc-btn-primary { padding: 0; width: 38px; justify-content: center; }
-            .gc-logo span { font-size: 16px; }
+            /* Fit everything on a phone: let the logo shrink/ellipsis instead of
+               pushing the action cluster off-screen (which caused page-wide
+               horizontal overflow and bled the centred hero text). */
+            .gc-header-inner { gap: 8px; padding: 10px 14px; min-height: 56px; }
+            .gc-logo { flex-shrink: 1; min-width: 0; gap: 7px; }
+            .gc-logo img { height: 34px; }
+            .gc-logo span { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .gc-actions { gap: 6px; }
+            .gc-pill { height: 34px; padding: 0 9px; gap: 5px; }
+            .gc-mode-toggle { width: 34px; height: 34px; font-size: 15px; }
+            .gc-btn-primary { padding: 0; width: 34px; height: 34px; justify-content: center; }
+            .gc-burger { width: 36px; height: 36px; font-size: 18px; }
         }
 
         main.gc-main { flex: 1; }

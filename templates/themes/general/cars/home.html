@@ -6,8 +6,11 @@
 
 {% block extra_head %}
 <style>
-    .gc-home { overflow: hidden; }
-    .gc-wrap { max-width: 1380px; margin: 0 auto; padding: 0 20px; }
+    .gc-home { overflow-x: clip; }
+    .gc-wrap { max-width: 1380px; margin: 0 auto; padding: 0 20px; width: 100%; }
+    /* Let grid columns shrink to the viewport (default min-width:auto would let
+       a wide child push the column past the screen and bleed centred text). */
+    .gc-hero-row > *, .gc-about-row > *, .gc-contact-grid > * { min-width: 0; }
 
     /* ───────── Hero ───────── */
     .gc-hero {
@@ -24,9 +27,10 @@
         font-weight: 900; font-size: 13px; padding: 8px 15px; border-radius: 999px; margin-bottom: 18px;
     }
     .gc-hero h1 {
-        font-size: 54px; font-weight: 900; line-height: 1.12; letter-spacing: -1px;
-        color: var(--gc-ink); margin: 0 0 16px;
+        font-size: clamp(30px, 7.5vw, 54px); font-weight: 900; line-height: 1.14; letter-spacing: -1px;
+        color: var(--gc-ink); margin: 0 0 16px; overflow-wrap: anywhere;
     }
+    .gc-hero h1 .grad { padding-inline: 1px; }
     .gc-hero h1 .grad {
         background: linear-gradient(90deg, var(--gc-red), var(--gc-navy));
         -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
@@ -208,19 +212,33 @@
     html.gc-dark .gc-cta-ghost { background: #111827; color: #f8fafc; }
 
     @media (max-width: 992px) {
-        .gc-hero-row { grid-template-columns: 1fr; }
-        .gc-hero-media { order: -1; }
+        .gc-hero-row { grid-template-columns: 1fr; text-align: center; }
+        .gc-hero-media { order: -1; aspect-ratio: 16/10; }
+        .gc-hero-eyebrow { align-self: center; }
+        .gc-hero p { margin-inline: auto; }
+        .gc-hero-actions { justify-content: center; }
         .gc-about-row { grid-template-columns: 1fr; }
         .gc-links-grid, .gc-stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
         .gc-services-grid, .gc-reviews-grid { grid-template-columns: 1fr; }
         .gc-contact-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
-        .gc-hero h1 { font-size: 38px; }
-        .gc-sec-title { font-size: 30px; }
+        .gc-hero { padding: 36px 0 34px; }
+        .gc-sec { padding: 46px 0; }
+        .gc-sec-head { margin-bottom: 30px; }
+        .gc-sec-title { font-size: 27px; }
+        .gc-hero p { font-size: 16px; line-height: 1.85; margin-bottom: 22px; }
+        .gc-hero-actions { gap: 10px; flex-direction: column; align-items: stretch; }
+        .gc-cta { padding: 14px 20px; font-size: 14.5px; }
+        .gc-hero-actions .gc-cta { justify-content: center; }
         .gc-links-grid { grid-template-columns: 1fr; }
-        .gc-stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
-        .gc-cta-banner h3 { font-size: 26px; }
+        .gc-stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+        .gc-stat { padding: 22px 12px; }
+        .gc-stat-num { font-size: 34px; }
+        .gc-cta-banner { padding: 38px 22px; }
+        .gc-cta-banner h3 { font-size: 24px; }
+        .gc-service { padding: 24px 20px; }
+        .gc-about h3 { font-size: 24px; }
     }
 </style>
 {% endblock %}
