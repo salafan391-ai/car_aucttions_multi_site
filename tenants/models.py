@@ -141,6 +141,7 @@ class Tenant(TenantMixin):
         ('luxury',  '✨ Luxury (فخم — ذهبي/أسود)'),
         ('modern',  '🚀 Modern (عصري — كوري حديث)'),
         ('glassy',  '🔮 Glassy (زجاجي — داكن متوهّج)'),
+        ('general', '🚗 General (جنرال — أبيض كحلي/أحمر)'),
     ]
     template_theme = models.CharField(
         max_length=20,

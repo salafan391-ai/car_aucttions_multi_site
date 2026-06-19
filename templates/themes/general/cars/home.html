@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+{% load static i18n humanize custom_filters whatsapp_tags %}
+
+{% block title %}{{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_description %}{{ site_name|default:"سيارات" }} — سيارات كورية مختارة بعناية، مزادات، قطع غيار وإكسسوارات. جودة موثوقة وأسعار تنافسية وشفافية كاملة.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .gc-home { overflow: hidden; }
+    .gc-wrap { max-width: 1380px; margin: 0 auto; padding: 0 20px; }
+
+    /* ───────── Hero ───────── */
+    .gc-hero {
+        background:
+            radial-gradient(circle at top left, rgba(42,37,100,0.06), transparent 30%),
+            radial-gradient(circle at bottom right, rgba(213,48,48,0.06), transparent 28%),
+            linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 64px 0 56px;
+    }
+    .gc-hero-row { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 40px; align-items: center; }
+    .gc-hero-eyebrow {
+        display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+        background: rgba(42,37,100,0.07); color: var(--gc-navy);
+        font-weight: 900; font-size: 13px; padding: 8px 15px; border-radius: 999px; margin-bottom: 18px;
+    }
+    .gc-hero h1 {
+        font-size: 54px; font-weight: 900; line-height: 1.12; letter-spacing: -1px;
+        color: var(--gc-ink); margin: 0 0 16px;
+    }
+    .gc-hero h1 .grad {
+        background: linear-gradient(90deg, var(--gc-red), var(--gc-navy));
+        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .gc-hero p { font-size: 18px; line-height: 1.95; color: var(--gc-dim); margin: 0 0 28px; max-width: 36em; }
+    .gc-hero-actions { display: flex; flex-wrap: wrap; gap: 14px; }
+    .gc-cta {
+        display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+        padding: 15px 28px; border-radius: 16px; font-weight: 900; font-size: 15.5px; white-space: nowrap;
+        transition: all .28s ease;
+    }
+    .gc-cta-red {
+        background: linear-gradient(135deg, var(--gc-red), var(--gc-red-2)); color: #fff;
+        box-shadow: 0 14px 28px rgba(239,68,68,0.26);
+    }
+    .gc-cta-red:hover { transform: translateY(-2px); background: linear-gradient(135deg, var(--gc-navy), #3b37a4); box-shadow: 0 16px 30px rgba(42,37,100,0.24); }
+    .gc-cta-ghost { background: #fff; color: var(--gc-navy-deep); border: 1.5px solid var(--gc-line); box-shadow: 0 10px 24px rgba(15,23,42,0.05); }
+    .gc-cta-ghost:hover { transform: translateY(-2px); border-color: rgba(42,37,100,0.3); }
+    .gc-hero-media {
+        position: relative; border-radius: 30px; overflow: hidden;
+        aspect-ratio: 16/11; border: 1px solid var(--gc-line);
+        background:
+            linear-gradient(180deg, rgba(255,255,255,0.9), rgba(241,245,249,0.92)),
+            radial-gradient(circle at 30% 20%, rgba(42,37,100,0.12), transparent 60%);
+        box-shadow: 0 26px 60px rgba(15,23,42,0.12);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .gc-hero-media img { width: 100%; height: 100%; object-fit: cover; }
+    .gc-hero-media .gc-hero-glyph { font-size: 160px; color: rgba(42,37,100,0.18); }
+
+    /* ───────── Section title ───────── */
+    .gc-sec { padding: 70px 0; }
+    .gc-sec-head { text-align: center; max-width: 760px; margin: 0 auto 44px; }
+    .gc-sec-eyebrow { color: var(--gc-red); font-weight: 900; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+    .gc-sec-title { font-size: 42px; font-weight: 900; color: var(--gc-ink); margin: 8px 0 12px; line-height: 1.2; }
+    .gc-sec-title .grad { background: linear-gradient(90deg, var(--gc-red), var(--gc-navy)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .gc-sec-sub { font-size: 17px; line-height: 1.85; color: var(--gc-dim); margin: 0; }
+
+    /* ───────── Quick link cards ───────── */
+    .gc-links-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 26px; }
+    .gc-link-card {
+        position: relative; display: flex; flex-direction: column; text-align: center;
+        background: var(--gc-card); border: 1px solid var(--gc-line); border-radius: 28px;
+        padding: 20px 20px 26px; text-decoration: none; overflow: hidden;
+        box-shadow: 0 18px 42px rgba(15,23,42,0.07); transition: all .35s ease;
+    }
+    .gc-link-card::before {
+        content: ""; position: absolute; top: 0; left: 22px; right: 22px; height: 4px; border-radius: 999px;
+        background: linear-gradient(90deg, var(--gc-red-2), var(--gc-navy));
+    }
+    .gc-link-card:hover { transform: translateY(-8px); border-color: rgba(42,37,100,0.18); box-shadow: 0 26px 58px rgba(15,23,42,0.13); }
+    .gc-link-media {
+        height: 180px; border-radius: 22px; border: 1.5px solid #e4ebf5; margin-bottom: 20px;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(180deg, #ffffff, #f1f5f9);
+    }
+    .gc-link-media i { font-size: 74px; background: linear-gradient(135deg, var(--gc-navy), var(--gc-red)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .gc-link-card h3 {
+        font-size: 22px; font-weight: 900; color: var(--gc-ink); margin: 0;
+        display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .gc-link-arrow {
+        width: 28px; height: 28px; border-radius: 999px; background: var(--gc-red);
+        color: #fff; display: inline-flex; align-items: center; justify-content: center;
+        font-size: 15px; font-weight: 900; box-shadow: 0 10px 22px rgba(255,59,68,0.28); transition: all .3s ease;
+    }
+    .gc-link-card:hover .gc-link-arrow { transform: translateX(4px); background: var(--gc-navy-deep); }
+    html[dir="rtl"] .gc-link-card:hover .gc-link-arrow { transform: translateX(-4px); }
+
+    /* ───────── Services ───────── */
+    .gc-services-bg { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+    .gc-services-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 26px; }
+    .gc-service {
+        background: var(--gc-card); border: 1px solid var(--gc-line); border-radius: 24px; padding: 30px 26px;
+        text-align: center; box-shadow: 0 14px 36px rgba(15,23,42,0.06); transition: all .3s ease;
+    }
+    .gc-service:hover { transform: translateY(-6px); box-shadow: 0 22px 48px rgba(15,23,42,0.1); }
+    .gc-service-icon {
+        width: 66px; height: 66px; border-radius: 20px; margin: 0 auto 18px;
+        display: flex; align-items: center; justify-content: center; font-size: 28px; color: #fff;
+        background: linear-gradient(135deg, var(--gc-navy), #3a34a0); box-shadow: 0 12px 26px rgba(42,37,100,0.22);
+    }
+    .gc-service:nth-child(2) .gc-service-icon { background: linear-gradient(135deg, var(--gc-red), var(--gc-red-2)); box-shadow: 0 12px 26px rgba(213,48,48,0.22); }
+    .gc-service h4 { font-size: 21px; font-weight: 900; color: var(--gc-ink); margin: 0 0 10px; }
+    .gc-service p { font-size: 15.5px; line-height: 1.85; color: var(--gc-dim); margin: 0; }
+
+    /* ───────── About ───────── */
+    .gc-about-row { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 44px; align-items: center; }
+    .gc-about-figure {
+        border-radius: 28px; aspect-ratio: 4/3; border: 1px solid var(--gc-line);
+        background: linear-gradient(180deg, #ffffff, #eef2f9), radial-gradient(circle at 30% 30%, rgba(42,37,100,0.1), transparent 60%);
+        display: flex; align-items: center; justify-content: center; box-shadow: 0 22px 50px rgba(15,23,42,0.09); overflow: hidden;
+    }
+    .gc-about-figure img { width: 100%; height: 100%; object-fit: cover; }
+    .gc-about-figure i { font-size: 120px; color: rgba(42,37,100,0.2); }
+    .gc-about h3 { font-size: 30px; font-weight: 900; color: var(--gc-ink); margin: 0 0 16px; line-height: 1.3; }
+    .gc-about p { font-size: 16.5px; line-height: 2; color: #475569; margin: 0 0 14px; }
+
+    /* ───────── Stats ───────── */
+    .gc-stats-bg {
+        background:
+            radial-gradient(circle at top left, rgba(42,37,100,0.05), transparent 26%),
+            linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+    .gc-stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 22px; }
+    .gc-stat {
+        background: var(--gc-card); border: 1px solid var(--gc-line); border-radius: 24px; padding: 30px 18px;
+        text-align: center; box-shadow: 0 14px 34px rgba(15,23,42,0.05);
+    }
+    .gc-stat-num { font-size: 44px; font-weight: 900; color: var(--gc-navy-deep); line-height: 1; }
+    .gc-stat-num .plus { color: var(--gc-red); }
+    .gc-stat-label { font-size: 15px; font-weight: 800; color: var(--gc-dim); margin-top: 10px; }
+
+    /* ───────── Reviews ───────── */
+    .gc-reviews-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 24px; }
+    .gc-review {
+        background: var(--gc-card); border: 1px solid var(--gc-line); border-radius: 24px; padding: 26px;
+        box-shadow: 0 14px 34px rgba(15,23,42,0.06);
+    }
+    .gc-review-stars { color: #f5b301; font-size: 16px; margin-bottom: 12px; }
+    .gc-review p { font-size: 15.5px; line-height: 1.9; color: #334155; margin: 0 0 18px; }
+    .gc-review-name { font-weight: 900; color: var(--gc-ink); font-size: 16px; }
+
+    /* ───────── CTA banner ───────── */
+    .gc-cta-banner {
+        background: linear-gradient(135deg, var(--gc-navy-deep), #3a34a0);
+        border-radius: 30px; padding: 50px 30px; text-align: center; color: #fff;
+        box-shadow: 0 26px 60px rgba(42,37,100,0.28);
+    }
+    .gc-cta-banner h3 { font-size: 34px; font-weight: 900; margin: 0 0 22px; }
+    .gc-cta-white {
+        display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+        background: #fff; color: var(--gc-navy-deep); font-weight: 900; font-size: 16px;
+        padding: 15px 32px; border-radius: 16px; box-shadow: 0 16px 30px rgba(0,0,0,0.18); transition: all .25s ease;
+    }
+    .gc-cta-white:hover { transform: translateY(-2px); background: #f8fafc; }
+
+    /* ───────── Contact ───────── */
+    .gc-contact-bg {
+        background:
+            radial-gradient(circle at top left, rgba(42,37,100,0.04), transparent 28%),
+            radial-gradient(circle at bottom right, rgba(213,48,48,0.04), transparent 26%),
+            linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+    .gc-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+    .gc-contact-card { background: var(--gc-card); border: 1px solid var(--gc-line); border-radius: 26px; padding: 26px; box-shadow: 0 16px 40px rgba(15,23,42,0.07); }
+    .gc-contact-item {
+        display: flex; align-items: flex-start; gap: 16px; padding: 18px; border-radius: 20px;
+        background: var(--gc-soft); border: 1px solid #edf2f7; margin-bottom: 14px; transition: all .25s ease;
+    }
+    .gc-contact-item:hover { transform: translateY(-2px); background: #fff; box-shadow: 0 10px 25px rgba(15,23,42,0.06); }
+    .gc-contact-item i {
+        width: 48px; height: 48px; min-width: 48px; border-radius: 16px; font-size: 20px; color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, var(--gc-navy), #3a34a0); box-shadow: 0 10px 22px rgba(42,37,100,0.18);
+    }
+    .gc-contact-item h3 { margin: 0 0 6px; font-size: 17px; font-weight: 900; color: var(--gc-red); }
+    .gc-contact-item p { margin: 0; color: #475569; line-height: 1.7; font-size: 15px; word-break: break-word; }
+    .gc-contact-item a { color: inherit; text-decoration: none; }
+    .gc-contact-cta { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 18px; }
+    .gc-contact-cta h3 { font-size: 28px; font-weight: 900; color: var(--gc-ink); margin: 0; }
+    .gc-contact-cta p { font-size: 16px; line-height: 1.9; color: var(--gc-dim); margin: 0; }
+
+    /* Dark mode panels */
+    html.gc-dark .gc-hero,
+    html.gc-dark .gc-services-bg,
+    html.gc-dark .gc-stats-bg,
+    html.gc-dark .gc-contact-bg { background: #0b1020; }
+    html.gc-dark .gc-sec-title, html.gc-dark .gc-hero h1, html.gc-dark .gc-about h3,
+    html.gc-dark .gc-service h4, html.gc-dark .gc-stat-num, html.gc-dark .gc-review-name,
+    html.gc-dark .gc-contact-cta h3, html.gc-dark .gc-link-card h3 { color: #f8fafc; }
+    html.gc-dark .gc-link-card, html.gc-dark .gc-service, html.gc-dark .gc-stat,
+    html.gc-dark .gc-review, html.gc-dark .gc-contact-card, html.gc-dark .gc-about-figure,
+    html.gc-dark .gc-hero-media { background: #111827; border-color: rgba(148,163,184,0.2); }
+    html.gc-dark .gc-link-media, html.gc-dark .gc-contact-item { background: #1e293b; border-color: rgba(148,163,184,0.2); }
+    html.gc-dark .gc-hero p, html.gc-dark .gc-sec-sub, html.gc-dark .gc-service p,
+    html.gc-dark .gc-about p, html.gc-dark .gc-review p, html.gc-dark .gc-contact-item p,
+    html.gc-dark .gc-contact-cta p, html.gc-dark .gc-stat-label { color: #cbd5e1; }
+    html.gc-dark .gc-cta-ghost { background: #111827; color: #f8fafc; }
+
+    @media (max-width: 992px) {
+        .gc-hero-row { grid-template-columns: 1fr; }
+        .gc-hero-media { order: -1; }
+        .gc-about-row { grid-template-columns: 1fr; }
+        .gc-links-grid, .gc-stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        .gc-services-grid, .gc-reviews-grid { grid-template-columns: 1fr; }
+        .gc-contact-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+        .gc-hero h1 { font-size: 38px; }
+        .gc-sec-title { font-size: 30px; }
+        .gc-links-grid { grid-template-columns: 1fr; }
+        .gc-stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        .gc-cta-banner h3 { font-size: 26px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gc-home">
+
+    <!-- Hero -->
+    <section class="gc-hero">
+        <div class="gc-wrap gc-hero-row">
+            <div>
+                <span class="gc-hero-eyebrow bilingual" data-lang-ar="سيارات كورية مختارة" data-lang-en="Curated Korean cars" data-lang-es="Coches coreanos selectos" data-lang-ru="Отборные корейские авто"><i class="bi bi-patch-check-fill"></i> سيارات كورية مختارة</span>
+                <h1>
+                    <span class="grad">{{ site_name|default:"GENERAL CARS" }}</span><br>
+                    <span class="bilingual" data-lang-ar="سيارتك، تماماً كما تريدها" data-lang-en="Your car, exactly the way you want it" data-lang-es="Tu coche, tal como lo quieres" data-lang-ru="Ваш автомобиль — именно таким, как вы хотите">سيارتك، تماماً كما تريدها</span>
+                </h1>
+                <p class="bilingual" data-lang-ar="نقدّم لعملائنا مجموعة مختارة بعناية من السيارات الكورية عالية الجودة، مفحوصة بدقّة من فريقنا المختص. نلتزم بتوفير سيارات موثوقة وخدمة من الطراز الأول — بأسعار تنافسية وشفافية كاملة." data-lang-en="We offer a carefully selected collection of high-quality Korean cars, thoroughly inspected by our specialized team — reliable vehicles and top-quality service at competitive prices, with complete transparency." data-lang-es="Ofrecemos una colección de coches coreanos de alta calidad, inspeccionados a fondo por nuestro equipo — vehículos fiables y un servicio de primera a precios competitivos." data-lang-ru="Мы предлагаем тщательно отобранную коллекцию качественных корейских автомобилей, проверенных нашей командой — надёжные авто и первоклассный сервис по конкурентным ценам.">نقدّم لعملائنا مجموعة مختارة بعناية من السيارات الكورية عالية الجودة، مفحوصة بدقّة من فريقنا المختص. نلتزم بتوفير سيارات موثوقة وخدمة من الطراز الأول — بأسعار تنافسية وشفافية كاملة.</p>
+                <div class="gc-hero-actions">
+                    <a href="{% url 'car_list' %}" class="gc-cta gc-cta-red bilingual" data-lang-ar="أفضل العروض" data-lang-en="Hot Deals" data-lang-es="Mejores ofertas" data-lang-ru="Горячие предложения">أفضل العروض</a>
+                    <a href="{% url 'car_list' %}?car_type=auction" class="gc-cta gc-cta-ghost bilingual" data-lang-ar="المزادات الكورية" data-lang-en="Korean Auctions" data-lang-es="Subastas coreanas" data-lang-ru="Корейские аукционы">المزادات الكورية</a>
+                </div>
+            </div>
+            <div class="gc-hero-media">
+                {% if site_hero_image %}<img src="{{ site_hero_image }}" alt="{{ site_name }}">
+                {% elif site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}" style="object-fit:contain; padding:40px;">
+                {% else %}<i class="bi bi-car-front-fill gc-hero-glyph"></i>{% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick links -->
+    <section class="gc-sec">
+        <div class="gc-wrap">
+            <div class="gc-sec-head">
+                <div class="gc-sec-eyebrow bilingual" data-lang-ar="أقسامنا" data-lang-en="Our Sections" data-lang-es="Secciones" data-lang-ru="Разделы">أقسامنا</div>
+                <h2 class="gc-sec-title bilingual" data-lang-ar="أقسامنا الرئيسية" data-lang-en="Our Main Sections" data-lang-es="Nuestras secciones principales" data-lang-ru="Наши основные разделы">أقسامنا الرئيسية</h2>
+            </div>
+            <div class="gc-links-grid">
+                <a href="{% url 'car_list' %}" class="gc-link-card">
+                    <div class="gc-link-media"><i class="bi bi-building"></i></div>
+                    <h3><span class="bilingual" data-lang-ar="معارض كورية" data-lang-en="Korean Showrooms" data-lang-es="Salas coreanas" data-lang-ru="Корейские салоны">معارض كورية</span> <span class="gc-link-arrow">{% if LANGUAGE_CODE == 'ar' %}←{% else %}→{% endif %}</span></h3>
+                </a>
+                <a href="{% url 'car_list' %}?car_type=auction" class="gc-link-card">
+                    <div class="gc-link-media"><i class="bi bi-hammer"></i></div>
+                    <h3><span class="bilingual" data-lang-ar="مزادات كورية" data-lang-en="Korean Auctions" data-lang-es="Subastas coreanas" data-lang-ru="Корейские аукционы">مزادات كورية</span> <span class="gc-link-arrow">{% if LANGUAGE_CODE == 'ar' %}←{% else %}→{% endif %}</span></h3>
+                </a>
+                {% if show_parts %}
+                <a href="{% url 'parts_list' %}" class="gc-link-card">
+                    <div class="gc-link-media"><i class="bi bi-gear-wide-connected"></i></div>
+                    <h3><span class="bilingual" data-lang-ar="قطع الغيار" data-lang-en="Spare Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع الغيار</span> <span class="gc-link-arrow">{% if LANGUAGE_CODE == 'ar' %}←{% else %}→{% endif %}</span></h3>
+                </a>
+                {% endif %}
+                {% if show_accessories %}
+                <a href="{% url 'accessories_list' %}" class="gc-link-card">
+                    <div class="gc-link-media"><i class="bi bi-stars"></i></div>
+                    <h3><span class="bilingual" data-lang-ar="الإكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">الإكسسوارات</span> <span class="gc-link-arrow">{% if LANGUAGE_CODE == 'ar' %}←{% else %}→{% endif %}</span></h3>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Services -->
+    <section class="gc-sec gc-services-bg">
+        <div class="gc-wrap">
+            <div class="gc-services-grid">
+                <div class="gc-service">
+                    <div class="gc-service-icon"><i class="bi bi-hand-thumbs-up-fill"></i></div>
+                    <h4 class="bilingual" data-lang-ar="الثقة" data-lang-en="Trust" data-lang-es="Confianza" data-lang-ru="Доверие">الثقة</h4>
+                    <p class="bilingual" data-lang-ar="نبني علاقات طويلة الأمد قائمة على الصدق والشفافية والمصداقية." data-lang-en="We build long-term relationships through honesty, transparency, and reliability." data-lang-es="Construimos relaciones duraderas basadas en honestidad y transparencia." data-lang-ru="Мы строим долгосрочные отношения на честности и прозрачности.">نبني علاقات طويلة الأمد قائمة على الصدق والشفافية والمصداقية.</p>
+                </div>
+                <div class="gc-service">
+                    <div class="gc-service-icon"><i class="bi bi-shield-check"></i></div>
+                    <h4 class="bilingual" data-lang-ar="الجودة" data-lang-en="Quality" data-lang-es="Calidad" data-lang-ru="Качество">الجودة</h4>
+                    <p class="bilingual" data-lang-ar="نختار ونفحص كل سيارة بعناية لضمان أعلى معايير الجودة." data-lang-en="We carefully select and inspect every vehicle to ensure the highest standards of quality." data-lang-es="Seleccionamos e inspeccionamos cada vehículo con el máximo nivel de calidad." data-lang-ru="Мы тщательно отбираем и проверяем каждый автомобиль.">نختار ونفحص كل سيارة بعناية لضمان أعلى معايير الجودة.</p>
+                </div>
+                <div class="gc-service">
+                    <div class="gc-service-icon"><i class="bi bi-lightning-fill"></i></div>
+                    <h4 class="bilingual" data-lang-ar="التميّز" data-lang-en="Excellence" data-lang-es="Excelencia" data-lang-ru="Совершенство">التميّز</h4>
+                    <p class="bilingual" data-lang-ar="نسعى للتميّز في كل التفاصيل، من الخدمة إلى الأداء." data-lang-en="We strive for excellence in every detail, from service to performance." data-lang-es="Buscamos la excelencia en cada detalle, del servicio al rendimiento." data-lang-ru="Мы стремимся к совершенству в каждой детали.">نسعى للتميّز في كل التفاصيل، من الخدمة إلى الأداء.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About -->
+    <section class="gc-sec" id="gc-about">
+        <div class="gc-wrap">
+            <div class="gc-sec-head">
+                <div class="gc-sec-eyebrow bilingual" data-lang-ar="من نحن" data-lang-en="About Us" data-lang-es="Acerca de" data-lang-ru="О нас">من نحن</div>
+                <h2 class="gc-sec-title bilingual" data-lang-ar="نختار لك الأفضل" data-lang-en="We choose the best for you" data-lang-es="Elegimos lo mejor para ti" data-lang-ru="Мы выбираем лучшее для вас">نختار لك الأفضل</h2>
+            </div>
+            <div class="gc-about-row">
+                <div class="gc-about-figure">
+                    {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}" style="object-fit:contain; padding:36px;">
+                    {% else %}<i class="bi bi-buildings"></i>{% endif %}
+                </div>
+                <div class="gc-about">
+                    <h3 class="bilingual" data-lang-ar="{{ site_name|default:'جنرال كارز' }} — نختار لك الأفضل ونضمن راحة بالك" data-lang-en="{{ site_name|default:'General Cars' }} — we choose the best for you and guarantee your peace of mind" data-lang-es="{{ site_name|default:'General Cars' }} — elegimos lo mejor para ti" data-lang-ru="{{ site_name|default:'General Cars' }} — мы выбираем лучшее для вас">{{ site_name|default:"جنرال كارز" }} — نختار لك الأفضل ونضمن راحة بالك</h3>
+                    <p class="bilingual" data-lang-ar="نتخصّص في توفير وتسويق السيارات الكورية الحديثة بجودة موثوقة وقطع غيار أصلية. يختار فريقنا كل سيارة ويفحصها بعناية لضمان السلامة والأداء ورضا العميل." data-lang-en="We specialize in sourcing and marketing modern Korean vehicles with reliable quality and original spare parts. Our team carefully selects and inspects each car to ensure safety, performance, and customer satisfaction." data-lang-es="Nos especializamos en vehículos coreanos modernos con calidad fiable y repuestos originales, inspeccionados con cuidado." data-lang-ru="Мы специализируемся на современных корейских автомобилях надёжного качества с оригинальными запчастями.">نتخصّص في توفير وتسويق السيارات الكورية الحديثة بجودة موثوقة وقطع غيار أصلية. يختار فريقنا كل سيارة ويفحصها بعناية لضمان السلامة والأداء ورضا العميل.</p>
+                    <p class="bilingual" data-lang-ar="نوفّر تجربة شراء سلسة وشفافة وسريعة، مع دعم متواصل وردود سريعة على كل الاستفسارات." data-lang-en="We provide a smooth, transparent, and fast purchasing experience, with continuous support and quick responses to all inquiries." data-lang-es="Ofrecemos una experiencia de compra fluida, transparente y rápida, con soporte continuo." data-lang-ru="Мы обеспечиваем простой, прозрачный и быстрый процесс покупки с постоянной поддержкой.">نوفّر تجربة شراء سلسة وشفافة وسريعة، مع دعم متواصل وردود سريعة على كل الاستفسارات.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="gc-sec gc-stats-bg">
+        <div class="gc-wrap">
+            <div class="gc-stats-grid">
+                <div class="gc-stat"><div class="gc-stat-num" data-count="{{ cars_count|default:total_cars|default:0 }}">0</div><div class="gc-stat-label bilingual" data-lang-ar="سيارة" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">سيارة</div></div>
+                <div class="gc-stat"><div class="gc-stat-num" data-count="{{ auction_count|default:0 }}">0</div><div class="gc-stat-label bilingual" data-lang-ar="مزاد" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">مزاد</div></div>
+                <div class="gc-stat"><div class="gc-stat-num" data-count="{{ total_manufacturers|default:0 }}">0</div><div class="gc-stat-label bilingual" data-lang-ar="ماركة" data-lang-en="Brands" data-lang-es="Marcas" data-lang-ru="Бренды">ماركة</div></div>
+                <div class="gc-stat"><div class="gc-stat-num" data-count="{{ total_models|default:0 }}">0</div><div class="gc-stat-label bilingual" data-lang-ar="موديل" data-lang-en="Models" data-lang-es="Modelos" data-lang-ru="Модели">موديل</div></div>
+            </div>
+        </div>
+    </section>
+
+    {% if site_reviews %}
+    <!-- Reviews -->
+    <section class="gc-sec">
+        <div class="gc-wrap">
+            <div class="gc-sec-head">
+                <div class="gc-sec-eyebrow bilingual" data-lang-ar="آراء العملاء" data-lang-en="Customer Reviews" data-lang-es="Opiniones" data-lang-ru="Отзывы">آراء العملاء</div>
+                <h2 class="gc-sec-title bilingual" data-lang-ar="تجارب عملائنا" data-lang-en="What our customers say" data-lang-es="Lo que dicen" data-lang-ru="Отзывы клиентов">تجارب عملائنا</h2>
+            </div>
+            <div class="gc-reviews-grid">
+                {% for r in site_reviews|slice:":3" %}
+                <div class="gc-review">
+                    <div class="gc-review-stars">{% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+                    <p>"{{ r.comment }}"</p>
+                    <div class="gc-review-name">{{ r.name|default:'—' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- CTA -->
+    <section class="gc-sec">
+        <div class="gc-wrap">
+            <div class="gc-cta-banner">
+                <h3 class="bilingual" data-lang-ar="وجدت السيارة التي تريدها؟" data-lang-en="Found the car you want?" data-lang-es="¿Encontraste el coche que quieres?" data-lang-ru="Нашли нужный автомобиль?">وجدت السيارة التي تريدها؟</h3>
+                <a href="{% url 'car_list' %}" class="gc-cta-white bilingual" data-lang-ar="تصفّح السيارات" data-lang-en="Browse Cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفّح السيارات</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="gc-sec gc-contact-bg" id="gc-contact">
+        <div class="gc-wrap">
+            <div class="gc-sec-head">
+                <div class="gc-sec-eyebrow bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Us" data-lang-es="Contáctanos" data-lang-ru="Свяжитесь с нами">تواصل معنا</div>
+                <h2 class="gc-sec-title bilingual" data-lang-ar="نسعد بخدمتك" data-lang-en="We're happy to help" data-lang-es="Estamos para ayudarte" data-lang-ru="Рады помочь">نسعد بخدمتك</h2>
+            </div>
+            <div class="gc-contact-grid">
+                <div class="gc-contact-card">
+                    {% if site_address %}
+                    <div class="gc-contact-item">
+                        <i class="bi bi-geo-alt"></i>
+                        <div><h3 class="bilingual" data-lang-ar="العنوان" data-lang-en="Address" data-lang-es="Dirección" data-lang-ru="Адрес">العنوان</h3><p>{{ site_address }}</p></div>
+                    </div>
+                    {% endif %}
+                    {% if site_whatsapp %}
+                    <div class="gc-contact-item">
+                        <i class="bi bi-whatsapp"></i>
+                        <div><h3 class="bilingual" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp">واتساب</h3><p><a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}" target="_blank" rel="noopener" dir="ltr">{{ site_whatsapp }}</a></p></div>
+                    </div>
+                    {% endif %}
+                    {% if site_phone %}
+                    <div class="gc-contact-item">
+                        <i class="bi bi-telephone"></i>
+                        <div><h3 class="bilingual" data-lang-ar="الهاتف" data-lang-en="Phone" data-lang-es="Teléfono" data-lang-ru="Телефон">الهاتف</h3><p><a href="tel:{{ site_phone }}" dir="ltr">{{ site_phone }}</a></p></div>
+                    </div>
+                    {% endif %}
+                    {% if site_email %}
+                    <div class="gc-contact-item">
+                        <i class="bi bi-envelope"></i>
+                        <div><h3 class="bilingual" data-lang-ar="البريد" data-lang-en="Email" data-lang-es="Correo" data-lang-ru="Эл. почта">البريد</h3><p><a href="mailto:{{ site_email }}">{{ site_email }}</a></p></div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="gc-contact-card gc-contact-cta">
+                    <h3 class="bilingual" data-lang-ar="لديك سؤال؟" data-lang-en="Have a question?" data-lang-es="¿Tienes una pregunta?" data-lang-ru="Есть вопрос?">لديك سؤال؟</h3>
+                    <p class="bilingual" data-lang-ar="نحن دائماً سعداء بمساعدتك والإجابة عن استفساراتك. تواصل معنا وسنردّ عليك بأسرع وقت." data-lang-en="We're always happy to assist you and answer your inquiries. Reach out and we'll get back to you quickly." data-lang-es="Siempre estamos encantados de ayudarte. Escríbenos y te responderemos pronto." data-lang-ru="Мы всегда рады помочь и ответить на ваши вопросы. Напишите нам.">نحن دائماً سعداء بمساعدتك والإجابة عن استفساراتك. تواصل معنا وسنردّ عليك بأسرع وقت.</p>
+                    <a href="{% url 'contact' %}" class="gc-cta gc-cta-red bilingual" data-lang-ar="أرسل رسالة" data-lang-en="Send a Message" data-lang-es="Enviar mensaje" data-lang-ru="Отправить сообщение">أرسل رسالة</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* Count-up animation for the stats numbers. */
+(function () {
+    function animate(el) {
+        var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+        if (target <= 0) { el.textContent = '0'; return; }
+        var start = null, dur = 1400;
+        function step(ts) {
+            if (!start) start = ts;
+            var p = Math.min((ts - start) / dur, 1);
+            var val = Math.floor((1 - Math.pow(1 - p, 3)) * target);
+            el.innerHTML = val.toLocaleString() + (p >= 1 ? '<span class="plus">+</span>' : '');
+            if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+    var nums = document.querySelectorAll('.gc-stat-num');
+    if (!('IntersectionObserver' in window)) { nums.forEach(animate); return; }
+    var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+            if (e.isIntersecting) { animate(e.target); io.unobserve(e.target); }
+        });
+    }, { threshold: 0.4 });
+    nums.forEach(function (n) { io.observe(n); });
+})();
+</script>
+{% endblock %}

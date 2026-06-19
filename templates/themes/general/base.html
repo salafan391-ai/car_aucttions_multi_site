@@ -1,0 +1,483 @@
+{% load static tailwind_tags django_htmx custom_filters whatsapp_tags %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root" data-theme="general">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
+    {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+
+    <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{% if seo_keywords %}{{ seo_keywords }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+
+    <meta property="og:title" content="{% block og_title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+    <!-- Global business structured data (every page) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoDealer",
+      "name": "{{ site_name|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
+      {% if site_logo %}"logo": "{{ site_logo }}",
+      "image": "{{ site_logo }}",{% endif %}
+      "description": "{{ seo_description|escapejs }}",
+      {% if site_phone %}"telephone": "{{ site_phone|escapejs }}",{% endif %}
+      {% if site_address %}"address": {"@type": "PostalAddress","streetAddress": "{{ site_address|escapejs }}","addressCountry": "SA"},{% endif %}
+      "areaServed": {"@type": "Country", "name": "SA"}{% if social_links %},
+      "sameAs": [{% for s in social_links %}{% if not forloop.first %},{% endif %}"{{ s|escapejs }}"{% endfor %}]{% endif %}
+    }
+    </script>
+
+    {% tailwind_css %}
+    {% htmx_script %}
+
+    <script>
+    /* Apply saved light/dark mode before paint to avoid a flash. Default: light. */
+    (function () {
+        try {
+            if (localStorage.getItem('gc_mode') === 'dark') {
+                document.documentElement.classList.add('gc-dark');
+            }
+        } catch (e) {}
+    })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --gc-navy: #2a2564;
+            --gc-navy-deep: #1f1b4d;
+            --gc-red: #d53030;
+            --gc-red-2: #ef4444;
+            --gc-ink: #0f172a;
+            --gc-dim: #64748b;
+            --gc-bg: #ffffff;
+            --gc-soft: #f8fafc;
+            --gc-line: #e6edf6;
+            --gc-card: #ffffff;
+            /* For default-markup dashboard pages rendered under the general base */
+            --color-primary: {{ primary_color|default:'#2a2564' }};
+            --color-secondary: {{ secondary_color|default:'#d53030' }};
+        }
+        /* Brand utilities the shared dashboard templates rely on (bg-brand etc.) */
+        .bg-brand { background-color: var(--color-primary); }
+        .bg-brand-hover:hover { background-color: var(--color-secondary); }
+        .text-brand { color: var(--color-primary); }
+        .border-brand { border-color: var(--color-primary); }
+        .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .focus\:ring-brand:focus { --tw-ring-color: var(--color-primary); }
+
+        * { box-sizing: border-box; }
+        html, body { background: var(--gc-soft); color: var(--gc-ink); }
+        body {
+            font-family: 'Raleway', 'Tajawal', system-ui, sans-serif;
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+        }
+        html[lang="ar"] body { font-family: 'Tajawal', 'Raleway', system-ui, sans-serif; }
+        html[lang="ar"] * { letter-spacing: 0 !important; }
+        a { color: inherit; }
+        img { max-width: 100%; }
+
+        /* ───────── Header ───────── */
+        .gc-header {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: saturate(160%) blur(8px);
+            box-shadow: 0 6px 22px rgba(15, 23, 42, 0.06);
+            border-bottom: 1px solid var(--gc-line);
+        }
+        .gc-header-inner {
+            max-width: 1380px; margin: 0 auto;
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 20px; min-height: 64px;
+        }
+        .gc-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+        .gc-logo img { height: 40px; width: auto; display: block; }
+        .gc-logo span {
+            font-weight: 900; font-size: 19px; letter-spacing: -0.3px;
+            color: var(--gc-navy-deep); text-transform: uppercase;
+        }
+        .gc-nav { display: flex; align-items: center; gap: 4px; margin-inline-start: 8px; flex: 1; }
+        .gc-nav a {
+            text-decoration: none; color: #334155; font-weight: 800; font-size: 14.5px;
+            padding: 9px 13px; border-radius: 12px; white-space: nowrap;
+            transition: all .2s ease;
+        }
+        .gc-nav a:hover { color: var(--gc-navy); background: #f1f3fb; }
+        .gc-nav a.active { color: var(--gc-red); }
+        .gc-actions { display: flex; align-items: center; gap: 8px; margin-inline-start: auto; }
+
+        .gc-pill {
+            height: 38px; padding: 0 12px; border-radius: 999px;
+            border: 1px solid rgba(20, 34, 78, 0.10); background: #fff;
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06); cursor: pointer;
+            color: var(--gc-navy-deep); font-weight: 800; font-size: 13px; white-space: nowrap;
+            font-family: inherit; transition: all .22s ease;
+        }
+        .gc-pill:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(0,0,0,0.10); }
+        .gc-pill-icon {
+            width: 24px; height: 24px; border-radius: 50%; background: var(--gc-soft);
+            color: var(--gc-navy); display: inline-flex; align-items: center; justify-content: center;
+            font-size: 13px; flex-shrink: 0;
+        }
+        .gc-pill-label { color: var(--gc-dim); font-weight: 800; font-size: 12px; }
+        .gc-pill-arrow { font-size: 10px; opacity: .7; }
+
+        .gc-switcher { position: relative; }
+        .gc-menu {
+            position: absolute; top: calc(100% + 8px); inset-inline-start: 0;
+            min-width: 180px; background: #fff; border: 1px solid rgba(20,34,78,0.08);
+            border-radius: 14px; padding: 8px; margin: 0; list-style: none;
+            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18); z-index: 1100;
+        }
+        .gc-menu.hidden { display: none; }
+        .gc-menu-item {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            width: 100%; min-height: 40px; padding: 8px 11px; border-radius: 10px;
+            background: transparent; border: 0; cursor: pointer; font-family: inherit;
+            color: #1f2937; font-weight: 800; font-size: 13px; text-align: start;
+            transition: all .15s ease;
+        }
+        .gc-menu-item:hover, .gc-menu-item.gc-menu-active { background: #f5f7fb; color: var(--gc-navy-deep); }
+        .gc-menu-item .lang-check-icon, .gc-menu-item .currency-check-icon { color: var(--gc-red); }
+        .gc-menu-item .lang-check-icon.hidden, .gc-menu-item .currency-check-icon.hidden { display: none; }
+
+        .gc-mode-toggle {
+            width: 38px; height: 38px; border-radius: 50%;
+            border: 1px solid rgba(20, 34, 78, 0.10); background: #fff;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--gc-navy-deep); cursor: pointer; font-size: 16px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06); transition: all .22s ease;
+        }
+        .gc-mode-toggle:hover { transform: translateY(-1px); }
+        .gc-mode-toggle .bi-sun { display: none; }
+        html.gc-dark .gc-mode-toggle .bi-moon-stars { display: none; }
+        html.gc-dark .gc-mode-toggle .bi-sun { display: inline; }
+
+        .gc-btn-primary {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--gc-navy-deep); color: #fff !important; text-decoration: none;
+            font-weight: 800; font-size: 13.5px; padding: 0 16px; height: 38px;
+            border-radius: 999px; white-space: nowrap; border: 0; cursor: pointer;
+            font-family: inherit; box-shadow: 0 8px 18px rgba(31,27,77,0.22); transition: all .22s ease;
+        }
+        .gc-btn-primary:hover { transform: translateY(-1px); background: var(--gc-navy); }
+
+        .gc-burger {
+            display: none; width: 40px; height: 40px; border-radius: 12px;
+            border: 1px solid var(--gc-line); background: #fff; color: var(--gc-navy-deep);
+            align-items: center; justify-content: center; cursor: pointer; font-size: 20px;
+        }
+
+        @media (max-width: 992px) {
+            .gc-nav {
+                position: absolute; top: 100%; inset-inline-start: 0; inset-inline-end: 0;
+                flex-direction: column; align-items: stretch; gap: 2px;
+                background: #fff; padding: 10px 14px 16px; margin: 0;
+                border-bottom: 1px solid var(--gc-line);
+                box-shadow: 0 18px 30px rgba(15,23,42,0.08);
+                display: none;
+            }
+            .gc-header.gc-open .gc-nav { display: flex; }
+            .gc-nav a { font-size: 16px; padding: 12px 14px; }
+            .gc-burger { display: inline-flex; }
+            .gc-pill-label { display: none; }
+            .gc-btn-primary span.gc-btn-text { display: none; }
+            .gc-btn-primary { padding: 0; width: 38px; justify-content: center; }
+            .gc-logo span { font-size: 16px; }
+        }
+
+        main.gc-main { flex: 1; }
+
+        /* ───────── Footer ───────── */
+        .gc-footer {
+            background: #fff; border-top: 1px solid var(--gc-line);
+            padding: 56px 20px 28px; color: var(--gc-dim);
+        }
+        .gc-footer-grid {
+            max-width: 1380px; margin: 0 auto;
+            display: grid; gap: 36px; grid-template-columns: 2fr 1fr 1fr 1.4fr;
+        }
+        @media (max-width: 992px) { .gc-footer-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 560px) { .gc-footer-grid { grid-template-columns: 1fr; } }
+        .gc-footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .gc-footer-brand img { height: 36px; }
+        .gc-footer-brand span { font-weight: 900; font-size: 18px; color: var(--gc-navy-deep); text-transform: uppercase; }
+        .gc-footer-about { font-size: 14.5px; line-height: 1.9; max-width: 34em; margin: 0 0 16px; color: #475569; }
+        .gc-footer-col h4 {
+            color: var(--gc-navy-deep); font-size: 15px; font-weight: 900; margin: 0 0 14px;
+        }
+        .gc-footer-col a, .gc-footer-col p {
+            color: #475569; text-decoration: none; display: block; padding: 5px 0; font-size: 14px; margin: 0;
+        }
+        .gc-footer-col a:hover { color: var(--gc-red); }
+        .gc-social { display: flex; gap: 10px; flex-wrap: wrap; }
+        .gc-social a {
+            width: 40px; height: 40px; border-radius: 12px; background: var(--gc-soft);
+            border: 1px solid var(--gc-line); display: inline-flex; align-items: center; justify-content: center;
+            color: var(--gc-navy); font-size: 18px; transition: all .22s ease;
+        }
+        .gc-social a:hover { background: var(--gc-navy-deep); color: #fff; transform: translateY(-2px); }
+        .gc-footer-bottom {
+            max-width: 1380px; margin: 30px auto 0; padding-top: 22px;
+            border-top: 1px solid var(--gc-line); text-align: center; font-size: 13px; color: var(--gc-dim);
+        }
+
+        /* ───────── Dark mode ───────── */
+        html.gc-dark, html.gc-dark body { background: #0b1020; color: #e5e7eb; }
+        html.gc-dark .gc-header { background: rgba(15,23,42,0.95); border-bottom-color: rgba(148,163,184,0.18); }
+        html.gc-dark .gc-logo span, html.gc-dark .gc-footer-brand span { color: #f8fafc; }
+        html.gc-dark .gc-nav a { color: #cbd5e1; }
+        html.gc-dark .gc-nav a:hover { background: #1e293b; color: #fff; }
+        html.gc-dark .gc-nav { background: #0f172a; border-bottom-color: rgba(148,163,184,0.18); }
+        html.gc-dark .gc-pill, html.gc-dark .gc-mode-toggle, html.gc-dark .gc-burger {
+            background: #111827; border-color: rgba(148,163,184,0.25); color: #f8fafc;
+        }
+        html.gc-dark .gc-pill-icon { background: #1e293b; color: #f8fafc; }
+        html.gc-dark .gc-pill-label { color: #cbd5e1; }
+        html.gc-dark .gc-menu { background: #111827; border-color: rgba(148,163,184,0.22); }
+        html.gc-dark .gc-menu-item { color: #e5e7eb; }
+        html.gc-dark .gc-menu-item:hover, html.gc-dark .gc-menu-item.gc-menu-active { background: #1e293b; color: #fff; }
+        html.gc-dark .gc-footer { background: #0f172a; border-top-color: rgba(148,163,184,0.18); }
+        html.gc-dark .gc-footer-col h4 { color: #f8fafc; }
+        html.gc-dark .gc-footer-col a, html.gc-dark .gc-footer-col p, html.gc-dark .gc-footer-about { color: #cbd5e1; }
+        html.gc-dark .gc-social a { background: #1e293b; border-color: rgba(148,163,184,0.2); color: #e5e7eb; }
+    </style>
+    {% block extra_head %}{% endblock %}
+    {% include "partials/site_font.html" %}
+</head>
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+{% include "partials/ticker.html" %}
+
+<header class="gc-header" id="gc-header">
+    <div class="gc-header-inner">
+        <a href="{% url 'home' %}" class="gc-logo">
+            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
+            <span>{{ site_name|default:"General Cars" }}</span>
+        </a>
+
+        <nav class="gc-nav" id="gc-nav">
+            <a href="{% url 'home' %}" class="bilingual {% if request.resolver_match.url_name == 'home' %}active{% endif %}" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="bilingual {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">السيارات</a>
+            <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+            {% if show_parts %}<a href="{% url 'parts_list' %}" class="bilingual {% if request.resolver_match.url_name == 'parts_list' %}active{% endif %}" data-lang-ar="قطع غيار" data-lang-en="Spare Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
+            {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="bilingual {% if request.resolver_match.url_name == 'accessories_list' %}active{% endif %}" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
+            <a href="{% url 'home' %}#gc-about" class="bilingual" data-lang-ar="من نحن" data-lang-en="About" data-lang-es="Acerca" data-lang-ru="О нас">من نحن</a>
+            <a href="{% url 'home' %}#gc-contact" class="bilingual" data-lang-ar="تواصل" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل</a>
+        </nav>
+
+        <div class="gc-actions">
+            <!-- Currency -->
+            <div class="gc-switcher" id="currency-dropdown">
+                <button type="button" class="gc-pill" onclick="document.getElementById('currency-menu').classList.toggle('hidden'); document.getElementById('lang-menu')?.classList.add('hidden');" title="Currency">
+                    <span class="gc-pill-icon">﷼</span>
+                    <span class="gc-pill-label" id="currency-label">SAR</span>
+                    <i class="bi bi-chevron-down gc-pill-arrow"></i>
+                </button>
+                <ul id="currency-menu" class="gc-menu hidden">
+                    <li><button type="button" data-currency-code="KRW" onclick="setCurrency('KRW')" class="currency-menu-item gc-menu-item"><span>₩ KRW</span> <span class="currency-check-icon hidden">✓</span></button></li>
+                    <li><button type="button" data-currency-code="USD" onclick="setCurrency('USD')" class="currency-menu-item gc-menu-item"><span>$ USD</span> <span class="currency-check-icon hidden">✓</span></button></li>
+                    <li><button type="button" data-currency-code="SAR" onclick="setCurrency('SAR')" class="currency-menu-item gc-menu-item"><span>﷼ SAR</span> <span class="currency-check-icon hidden">✓</span></button></li>
+                    <li><button type="button" data-currency-code="AED" onclick="setCurrency('AED')" class="currency-menu-item gc-menu-item"><span>د.إ AED</span> <span class="currency-check-icon hidden">✓</span></button></li>
+                    <li><button type="button" data-currency-code="EUR" onclick="setCurrency('EUR')" class="currency-menu-item gc-menu-item"><span>€ EUR</span> <span class="currency-check-icon hidden">✓</span></button></li>
+                </ul>
+            </div>
+
+            <!-- Language -->
+            <div class="gc-switcher" id="lang-dropdown">
+                <button type="button" class="gc-pill" onclick="document.getElementById('lang-menu').classList.toggle('hidden'); document.getElementById('currency-menu')?.classList.add('hidden');" title="Language">
+                    <span class="gc-pill-icon"><i class="bi bi-translate"></i></span>
+                    <span class="gc-pill-label"><span id="lang-flag">🇸🇦</span> <span id="lang-label">العربية</span></span>
+                    <i class="bi bi-chevron-down gc-pill-arrow"></i>
+                </button>
+                <ul id="lang-menu" class="gc-menu hidden">
+                    <li><button type="button" data-lang-code="ar" onclick="setLang('ar')" class="lang-menu-item gc-menu-item"><span>العربية</span> <span class="lang-check-icon hidden">✓</span></button></li>
+                    <li><button type="button" data-lang-code="en" onclick="setLang('en')" class="lang-menu-item gc-menu-item"><span>English</span> <span class="lang-check-icon hidden">✓</span></button></li>
+                    <li><button type="button" data-lang-code="es" onclick="setLang('es')" class="lang-menu-item gc-menu-item"><span>Español</span> <span class="lang-check-icon hidden">✓</span></button></li>
+                    <li><button type="button" data-lang-code="ru" onclick="setLang('ru')" class="lang-menu-item gc-menu-item"><span>Русский</span> <span class="lang-check-icon hidden">✓</span></button></li>
+                </ul>
+            </div>
+
+            <button type="button" class="gc-mode-toggle" onclick="gcToggleMode()" aria-label="Toggle dark mode" title="Toggle dark mode">
+                <i class="bi bi-moon-stars"></i><i class="bi bi-sun"></i>
+            </button>
+
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                <a href="{% url 'site_dashboard' %}" class="gc-btn-primary"><i class="bi bi-speedometer2"></i><span class="gc-btn-text bilingual" data-lang-ar="لوحة التحكم" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة التحكم</span></a>
+                {% else %}
+                <a href="{% url 'logout' %}" class="gc-btn-primary"><i class="bi bi-box-arrow-right"></i><span class="gc-btn-text bilingual" data-lang-ar="خروج" data-lang-en="Sign Out" data-lang-es="Salir" data-lang-ru="Выйти">خروج</span></a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}" class="gc-btn-primary"><i class="bi bi-person"></i><span class="gc-btn-text bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</span></a>
+            {% endif %}
+
+            <button type="button" class="gc-burger" onclick="document.getElementById('gc-header').classList.toggle('gc-open')" aria-label="Menu"><i class="bi bi-list"></i></button>
+        </div>
+    </div>
+</header>
+
+<main class="gc-main">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="gc-footer">
+    <div class="gc-footer-grid">
+        <div class="gc-footer-col">
+            <div class="gc-footer-brand">
+                {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
+                <span>{{ site_name|default:"General Cars" }}</span>
+            </div>
+            <p class="gc-footer-about">{{ site_about|default:"نوفّر لعملائنا مجموعة مختارة بعناية من السيارات الكورية عالية الجودة، مفحوصة بدقّة من فريقنا المختص — بأسعار تنافسية وشفافية كاملة." }}</p>
+            <div class="gc-social">
+                {% if site_instagram %}<a href="{{ site_instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="bi bi-instagram"></i></a>{% endif %}
+                {% if site_facebook %}<a href="{{ site_facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="bi bi-facebook"></i></a>{% endif %}
+                {% if site_twitter %}<a href="{{ site_twitter }}" target="_blank" rel="noopener" aria-label="X"><i class="bi bi-twitter-x"></i></a>{% endif %}
+                {% if site_youtube %}<a href="{{ site_youtube }}" target="_blank" rel="noopener" aria-label="YouTube"><i class="bi bi-youtube"></i></a>{% endif %}
+                {% if site_whatsapp %}<a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>{% endif %}
+            </div>
+        </div>
+
+        <div class="gc-footer-col">
+            <h4 class="bilingual" data-lang-ar="تصفّح" data-lang-en="Browse" data-lang-es="Explorar" data-lang-ru="Обзор">تصفّح</h4>
+            <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">السيارات</a>
+            <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+            <a href="{% url 'wishlist' %}" class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
+        </div>
+
+        <div class="gc-footer-col">
+            <h4 class="bilingual" data-lang-ar="خدماتنا" data-lang-en="Services" data-lang-es="Servicios" data-lang-ru="Услуги">خدماتنا</h4>
+            {% if show_parts %}<a href="{% url 'parts_list' %}" class="bilingual" data-lang-ar="قطع الغيار" data-lang-en="Spare Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع الغيار</a>{% endif %}
+            {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="bilingual" data-lang-ar="الإكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">الإكسسوارات</a>{% endif %}
+            <a href="{% url 'home' %}#gc-about" class="bilingual" data-lang-ar="من نحن" data-lang-en="About Us" data-lang-es="Acerca" data-lang-ru="О нас">من نحن</a>
+            <a href="{% url 'contact' %}" class="bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل معنا</a>
+        </div>
+
+        <div class="gc-footer-col">
+            <h4 class="bilingual" data-lang-ar="تواصل" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل</h4>
+            {% if site_address %}<p>{{ site_address }}</p>{% endif %}
+            {% if site_phone %}<a href="tel:{{ site_phone }}" dir="ltr">{{ site_phone }}</a>{% endif %}
+            {% if site_whatsapp %}<a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}" target="_blank" rel="noopener" class="bilingual" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp">واتساب</a>{% endif %}
+            {% if site_email %}<a href="mailto:{{ site_email }}">{{ site_email }}</a>{% endif %}
+        </div>
+    </div>
+    <div class="gc-footer-bottom">
+        <span class="bilingual" data-lang-ar="© {% now 'Y' %} {{ site_name|default:'سيارات' }}. جميع الحقوق محفوظة." data-lang-en="© {% now 'Y' %} {{ site_name|default:'General Cars' }}. All rights reserved." data-lang-es="© {% now 'Y' %} {{ site_name|default:'General Cars' }}. Todos los derechos reservados." data-lang-ru="© {% now 'Y' %} {{ site_name|default:'General Cars' }}. Все права защищены.">© {% now "Y" %} {{ site_name|default:"سيارات" }}. جميع الحقوق محفوظة.</span>
+    </div>
+</footer>
+
+{% include "partials/lang_currency_script.html" %}
+
+<script>
+function gcToggleMode() {
+    var dark = !document.documentElement.classList.contains('gc-dark');
+    document.documentElement.classList.toggle('gc-dark', dark);
+    try { localStorage.setItem('gc_mode', dark ? 'dark' : 'light'); } catch (e) {}
+}
+
+function getCookie(name) {
+    let v = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(function(c) {
+            c = c.trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(c.substring(name.length + 1));
+            }
+        });
+    }
+    return v;
+}
+
+function toggleWishlist(carId) {
+    fetch('/wishlist/toggle/' + carId + '/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) {
+            window.location.href = data.redirect || '/login/?next=' + encodeURIComponent(window.location.pathname);
+        } else {
+            location.reload();
+        }
+    })
+    .catch(function(e) { console.error(e); });
+}
+
+/* Close header dropdowns on outside click */
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('#lang-dropdown')) document.getElementById('lang-menu')?.classList.add('hidden');
+    if (!e.target.closest('#currency-dropdown')) document.getElementById('currency-menu')?.classList.add('hidden');
+});
+</script>
+
+<!-- ── Auction Countdown Engine (same behaviour as the default theme) ── -->
+<style>
+    .auction-countdown { display:inline-flex; align-items:center; gap:5px; font-variant-numeric:tabular-nums; font-weight:800; border-radius:8px; padding:5px 12px; font-size:0.98rem; letter-spacing:0.02em; border:1.5px solid currentColor; transition:background .4s, color .4s; }
+    .auction-countdown .cd-unit { display:inline-flex; flex-direction:column; align-items:center; line-height:1.05; }
+    .auction-countdown .cd-unit small { font-size:0.48em; font-weight:600; opacity:0.85; line-height:1; letter-spacing:.04em; margin-top:1px; }
+    .auction-countdown .cd-sep { opacity:0.45; font-weight:600; }
+    .auction-countdown.cd-lg { font-size:1.7rem; padding:10px 16px; gap:9px; border-width:2px; border-radius:10px; width:100%; justify-content:center; }
+    .auction-countdown.cd-lg .cd-unit small { font-size:0.4em; }
+    .countdown-ok     { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
+    .countdown-soon   { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
+    .countdown-urgent { background:#dc2626; color:#fff; border-color:#dc2626; animation:pulse-red 1s ease-in-out infinite; box-shadow:0 0 18px rgba(220,38,38,.55); }
+    .auction-ended    { background:rgba(15,23,42,.06); color:var(--gc-dim); border-color:transparent; }
+    .auction-ended-badge { font-size:0.8rem; font-weight:700; }
+    @keyframes pulse-red { 0%,100% { opacity:1; } 50% { opacity:0.65; } }
+</style>
+<script>
+(function () {
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function renderCountdown(el, targetMs) {
+        var curLang = localStorage.getItem('site_lang') || 'ar';
+        var U = curLang === 'en'
+            ? { d:'d', h:'h', m:'m', s:'s', ended:'Auction ended' }
+            : { d:'ي', h:'س', m:'د', s:'ث', ended:'انتهى المزاد' };
+        var diff = targetMs - Date.now();
+        if (diff <= 0) { el.innerHTML = '<span class="auction-ended-badge">' + U.ended + '</span>'; el.classList.add('auction-ended'); return false; }
+        var t = Math.floor(diff/1000), days = Math.floor(t/86400), hours = Math.floor((t%86400)/3600), mins = Math.floor((t%3600)/60), secs = t%60;
+        var urgency = diff < 3600000 ? 'countdown-urgent' : diff < 86400000 ? 'countdown-soon' : 'countdown-ok';
+        el.classList.remove('countdown-urgent','countdown-soon','countdown-ok'); el.classList.add(urgency);
+        if (days > 0) {
+            el.innerHTML = '<span class="cd-unit">'+days+'<small>'+U.d+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(hours)+'<small>'+U.h+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(mins)+'<small>'+U.m+'</small></span>';
+        } else {
+            el.innerHTML = '<span class="cd-unit">'+pad(hours)+'<small>'+U.h+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(mins)+'<small>'+U.m+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(secs)+'<small>'+U.s+'</small></span>';
+        }
+        return true;
+    }
+    function initCountdowns() {
+        document.querySelectorAll('[data-auction-date]').forEach(function (el) {
+            var iso = el.getAttribute('data-auction-date'); if (!iso) return;
+            var targetMs = new Date(iso).getTime(); if (isNaN(targetMs)) return;
+            if (!renderCountdown(el, targetMs)) return;
+            var timer = setInterval(function () { if (!renderCountdown(el, targetMs)) clearInterval(timer); }, 1000);
+        });
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initCountdowns); } else { initCountdowns(); }
+    window.initAuctionCountdowns = initCountdowns;
+})();
+</script>
+{% block extra_js %}{% endblock %}
+{% block mobile_bottom_nav %}{% endblock %}
+</body>
+</html>
