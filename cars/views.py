@@ -829,6 +829,112 @@ def ofleet_webhook(request):
 
 
 
+# Sidebar facet dimensions → the ApiCar field they group/count on. Used for the
+# Encar-style live per-option counts (how many cars match if you add that option).
+_FACET_FIELD = {
+    'manufacturer': 'manufacturer_id',
+    'model':        'model_id',
+    'badge':        'badge_id',
+    'color':        'color_id',
+    'seat_color':   'seat_color_id',
+    'body_type':    'body__name',
+    'fuel':         'fuel',
+    'transmission': 'transmission',
+    'seat_count':   'seat_count',
+    'auction_name': 'auction_name',
+}
+
+
+def _apply_sidebar_filters(qs, GET, exclude=None):
+    """Apply every sidebar filter to qs EXCEPT the one named `exclude`.
+
+    Used both for the live result set and (with exclude=<dim>) to compute each
+    facet's option counts so multi-select still shows sibling options.
+    """
+    if exclude != 'q':
+        q = (GET.get('q') or '').strip()
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q) | Q(lot_number__icontains=q) | Q(vin__icontains=q)
+                | Q(manufacturer__name__icontains=q) | Q(model__name__icontains=q)
+                | Q(badge__name__icontains=q)
+            )
+    if exclude != 'manufacturer':
+        v = [x for x in GET.getlist('manufacturer') if x]
+        if v: qs = qs.filter(manufacturer_id__in=v)
+    if exclude != 'model':
+        v = [x for x in GET.getlist('model') if x]
+        if v: qs = qs.filter(model_id__in=v)
+    if exclude != 'badge':
+        v = [x for x in GET.getlist('badge') if x]
+        if v: qs = qs.filter(badge_id__in=v)
+    if exclude != 'year':
+        yf = GET.get('year_from')
+        if yf:
+            try: qs = qs.filter(year__gte=int(yf))
+            except ValueError: pass
+        yt = GET.get('year_to')
+        if yt:
+            try: qs = qs.filter(year__lte=int(yt))
+            except ValueError: pass
+    if exclude != 'color':
+        v = GET.getlist('color')
+        if v: qs = qs.filter(color_id__in=v)
+    if exclude != 'body_type':
+        v = GET.getlist('body_type')
+        if v: qs = qs.filter(body__name__in=v)
+    if exclude != 'fuel':
+        v = GET.getlist('fuel')
+        if v: qs = qs.filter(fuel__in=v)
+    if exclude != 'transmission':
+        v = GET.getlist('transmission')
+        if v: qs = qs.filter(transmission__in=v)
+    if exclude != 'seat_count':
+        v = GET.getlist('seat_count')
+        if v: qs = qs.filter(seat_count__in=v)
+    if exclude != 'seat_color':
+        v = GET.getlist('seat_color')
+        if v: qs = qs.filter(seat_color_id__in=v)
+    if exclude != 'auction_name':
+        v = GET.getlist('auction_name')
+        if v: qs = qs.filter(auction_name__in=v)
+    if exclude != 'status':
+        v = GET.getlist('status')
+        if v: qs = qs.filter(status__in=v)
+    if exclude != 'price':
+        pmn = GET.get('price_min')
+        if pmn:
+            try: qs = qs.filter(price__gte=int(pmn))
+            except ValueError: pass
+        pmx = GET.get('price_max')
+        if pmx:
+            try: qs = qs.filter(price__lte=int(pmx))
+            except ValueError: pass
+    if exclude != 'mileage':
+        mmn = GET.get('mileage_min')
+        if mmn:
+            try: qs = qs.filter(mileage__gte=int(mmn))
+            except ValueError: pass
+        mmx = GET.get('mileage_max')
+        if mmx:
+            try: qs = qs.filter(mileage__lte=int(mmx))
+            except ValueError: pass
+    return qs
+
+
+def _compute_facet_counts(facet_base, GET):
+    """Per-option live counts for each facet (excludes that facet's own filter)."""
+    out = {}
+    for dim, field in _FACET_FIELD.items():
+        fq = _apply_sidebar_filters(facet_base, GET, exclude=dim)
+        out[dim] = {
+            str(r[field]): r['c']
+            for r in fq.values(field).annotate(c=Count('id'))
+            if r[field] not in (None, '')
+        }
+    return out
+
+
 @ensure_csrf_cookie
 @cache_control(public=True, max_age=120)
 def car_list(request):
@@ -1464,10 +1570,42 @@ def car_list(request):
         _ours_params['price_max'] = price_max
     ours_url = _reverse('site_car_list') + (('?' + urlencode(_ours_params)) if _ours_params else '')
 
+    # ── Encar-style live per-option facet counts ──
+    _facet_base = _exclude_expired_auctions(ApiCar.objects.all())
+    _ftn = getattr(connection, 'tenant', None)
+    if _ftn is not None:
+        if not getattr(_ftn, 'show_auctions', True):
+            _facet_base = _facet_base.exclude(category__name='auction')
+        if not getattr(_ftn, 'show_encar', True):
+            _facet_base = _facet_base.filter(category__name='auction')
+    if car_type == 'auction':
+        _facet_base = _facet_base.filter(category__name='auction')
+    elif car_type == 'cars':
+        _facet_base = _facet_base.exclude(category__name='auction')
+    elif car_type == 'truck':
+        _facet_base = _facet_base.exclude(category__name='auction').filter(body__name='truck')
+    # The Encar catalog (ApiCar) is shared across tenants and only changes on the
+    # daily import, so key the facet cache by toggle-state + tab + filter-combo
+    # (NOT schema) — one compute serves every tenant — and keep it 30 min. The
+    # main page response is already cached per-params for anon, so the heavy
+    # aggregation only runs on a cold miss. Guarded so a slow/failed compute
+    # never breaks the page.
+    _fa = int(bool(getattr(_ftn, 'show_auctions', True))) if _ftn is not None else 1
+    _fe = int(bool(getattr(_ftn, 'show_encar', True))) if _ftn is not None else 1
+    _facet_cache_key = f"car_facets_v2:{_fa}{_fe}:{car_type or 'all'}:{_count_hash}"
+    try:
+        facet_counts = cache.get(_facet_cache_key)
+        if facet_counts is None:
+            facet_counts = _compute_facet_counts(_facet_base, request.GET)
+            cache.set(_facet_cache_key, facet_counts, 60 * 30)
+    except Exception:
+        facet_counts = {}
+
     context = {
         'page_obj': page_obj,
         'hero': hero,
         'ours_url': ours_url,
+        'facet_counts': facet_counts,
         'manufacturers': manufacturers,
         'popular_manufacturers': popular_manufacturers,
         'models': models_qs,

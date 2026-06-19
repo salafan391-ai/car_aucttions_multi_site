@@ -485,7 +485,7 @@
                             {% for t in transmissions %}
                             <label>
                                 <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}</span>
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}{% with fc=facet_counts|get_item:'transmission'|get_item:t %}{% if fc %}<span style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;">{{ fc }}</span>{% endif %}{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -502,7 +502,7 @@
                             {% for f in fuels %}
                             <label>
                                 <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}</span>
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}{% with fc=facet_counts|get_item:'fuel'|get_item:f %}{% if fc %}<span style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;">{{ fc }}</span>{% endif %}{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -519,7 +519,7 @@
                             {% for c in colors %}
                             <label>
                                 <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}{% with fc=facet_counts|get_item:'color'|get_item:c.id %}{% if fc %}<span style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;">{{ fc }}</span>{% endif %}{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -536,7 +536,7 @@
                             {% for s in seat_counts %}
                             <label>
                                 <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip">{{ s|floatformat:"0" }}</span>
+                                <span class="gl-list-chip">{{ s|floatformat:"0" }}{% with fc=facet_counts|get_item:'seat_count'|get_item:s %}{% if fc %}<span style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;">{{ fc }}</span>{% endif %}{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -553,7 +553,7 @@
                             {% for sc in seat_colors %}
                             <label>
                                 <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip"><span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;flex-shrink:0;border:1px solid var(--gl-border);background:{{ sc.name|color_to_css }};"></span><span class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}" data-lang-es="{{ sc.name|translate_color:'es' }}" data-lang-ru="{{ sc.name|translate_color:'ru' }}">{{ sc.name|translate_color }}</span></span>
+                                <span class="gl-list-chip"><span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;flex-shrink:0;border:1px solid var(--gl-border);background:{{ sc.name|color_to_css }};"></span><span class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}" data-lang-es="{{ sc.name|translate_color:'es' }}" data-lang-ru="{{ sc.name|translate_color:'ru' }}">{{ sc.name|translate_color }}</span>{% with fc=facet_counts|get_item:'seat_color'|get_item:sc.id %}{% if fc %}<span style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;">{{ fc }}</span>{% endif %}{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -570,7 +570,7 @@
                             {% for an in auction_names %}
                             <label>
                                 <input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip">{{ an }}</span>
+                                <span class="gl-list-chip">{{ an }}{% with fc=facet_counts|get_item:'auction_name'|get_item:an %}{% if fc %}<span style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;">{{ fc }}</span>{% endif %}{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -587,7 +587,7 @@
                             {% for b in body_types %}
                             <label>
                                 <input type="checkbox" name="body_type" value="{{ b }}" {% if b in sel_body_types %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}</span>
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}{% with fc=facet_counts|get_item:'body_type'|get_item:b %}{% if fc %}<span style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;">{{ fc }}</span>{% endif %}{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>

@@ -58,9 +58,14 @@ def _resize_encar_url(url, width, height):
 
 @register.filter
 def get_item(d, key):
-    """Dict lookup by variable key in templates: {{ mydict|get_item:somekey }}."""
+    """Dict lookup by variable key in templates: {{ mydict|get_item:somekey }}.
+
+    Coerces to str on miss so int ids match string-keyed dicts (e.g. facet counts
+    keyed by str(id) looked up with an int id from the template)."""
     try:
-        return d.get(key)
+        if key in d:
+            return d[key]
+        return d.get(str(key))
     except (AttributeError, TypeError):
         return None
 
