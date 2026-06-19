@@ -214,6 +214,11 @@
             .gc-btn-primary { padding: 0; width: 34px; height: 34px; justify-content: center; }
             .gc-burger { width: 36px; height: 36px; font-size: 18px; }
         }
+        @media (max-width: 767px) {
+            /* The bottom nav covers Home/Cars/Wishlist/Account on phones, so the
+               header's account button is redundant — drop it to declutter. */
+            .gc-header .gc-btn-primary { display: none; }
+        }
 
         main.gc-main { flex: 1; }
 
@@ -488,6 +493,121 @@ document.addEventListener('click', function (e) {
 })();
 </script>
 {% block extra_js %}{% endblock %}
-{% block mobile_bottom_nav %}{% endblock %}
+
+{% block mobile_bottom_nav %}
+<style>
+    /* ───────── Mobile bottom nav (phones only) ───────── */
+    @media (min-width: 768px) { .gc-bn { display: none !important; } }
+    @media (max-width: 767px) { body { padding-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)); } }
+
+    .gc-bn {
+        /* z below the car-list filter drawer (dock z-100 / backdrop z-90) so an
+           open drawer covers the bar instead of the bar floating over it. */
+        position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 60;
+        padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px) / 2);
+        background: rgba(255,255,255,0.96); border: 1px solid var(--gc-line);
+        border-radius: 22px; box-shadow: 0 18px 42px rgba(15,23,42,0.16);
+        backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px);
+    }
+    .gc-bn-row { display: grid; grid-template-columns: 1fr 1fr 1.25fr 1fr 1fr; align-items: end; gap: 2px; max-width: 520px; margin: 0 auto; }
+    .gc-bn-link {
+        display: inline-flex; flex-direction: column; align-items: center; gap: 3px;
+        padding: 6px 2px; color: var(--gc-dim); font-size: 10.5px; font-weight: 800;
+        text-decoration: none; position: relative; min-width: 0; transition: color .2s;
+    }
+    .gc-bn-link i { font-size: 20px; line-height: 1; }
+    .gc-bn-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .gc-bn-link.active, .gc-bn-link:hover { color: var(--gc-navy); }
+    .gc-bn-link.active::after {
+        content: ""; position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
+        width: 20px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--gc-red), var(--gc-navy));
+    }
+    .gc-bn-fab-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: -26px; }
+    .gc-bn-fab {
+        width: 54px; height: 54px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, var(--gc-navy-deep), #3b37a4); color: #fff;
+        border: 3px solid #fff; box-shadow: 0 12px 26px -6px rgba(42,37,100,0.55); text-decoration: none;
+    }
+    .gc-bn-fab i { font-size: 22px; line-height: 1; }
+    .gc-bn-fab.is-wa { background: linear-gradient(135deg, #1fab53, #25d366); box-shadow: 0 12px 26px -6px rgba(31,171,83,0.55); }
+    .gc-bn-fab-label { color: var(--gc-navy); font-size: 10px; font-weight: 800; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .gc-bn-fab.is-wa + .gc-bn-fab-label { color: #1fab53; }
+    .gc-bn-badge {
+        position: absolute; top: 0; right: calc(50% - 18px); min-width: 16px; height: 16px; padding: 0 4px;
+        background: var(--gc-red); color: #fff; font-size: 10px; font-weight: 800;
+        display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; border: 1.5px solid #fff;
+    }
+    html.gc-dark .gc-bn { background: rgba(17,24,39,0.96); border-color: rgba(148,163,184,0.22); box-shadow: 0 18px 42px rgba(0,0,0,0.5); }
+    html.gc-dark .gc-bn-link { color: #94a3b8; }
+    html.gc-dark .gc-bn-link.active, html.gc-dark .gc-bn-link:hover { color: #fff; }
+    html.gc-dark .gc-bn-fab { border-color: #111827; }
+    html.gc-dark .gc-bn-fab-label { color: #cbd5e1; }
+    html.gc-dark .gc-bn-badge { border-color: #111827; }
+</style>
+<nav class="gc-bn" aria-label="Mobile navigation">
+    <div class="gc-bn-row">
+        <a href="{% url 'home' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <i class="bi bi-house-door-fill"></i>
+            <span class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</span>
+        </a>
+        <a href="{% url 'car_list' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}">
+            <i class="bi bi-car-front-fill"></i>
+            <span class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</span>
+        </a>
+        {% if user.is_staff %}
+        <div class="gc-bn-fab-wrap">
+            <a href="{% url 'site_car_add' %}" class="gc-bn-fab" aria-label="Add Car"><i class="bi bi-plus-lg"></i></a>
+            <span class="gc-bn-fab-label bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir" data-lang-ru="Добавить">أضف سيارة</span>
+        </div>
+        {% elif site_whatsapp %}
+        {% whatsapp_site_inquiry_message site_name as wa_site_inquiry_msg %}
+        <div class="gc-bn-fab-wrap">
+            <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ wa_site_inquiry_msg }}" target="_blank" rel="noopener" class="gc-bn-fab is-wa" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+            <span class="gc-bn-fab-label bilingual" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp">واتساب</span>
+        </div>
+        {% else %}
+        <div class="gc-bn-fab-wrap">
+            <a href="{% url 'car_list' %}" class="gc-bn-fab" aria-label="Search"><i class="bi bi-search"></i></a>
+            <span class="gc-bn-fab-label bilingual" data-lang-ar="ابحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">ابحث</span>
+        </div>
+        {% endif %}
+        <a href="{% url 'wishlist' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
+            <i class="bi bi-heart-fill"></i>
+            <span class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</span>
+            <span class="gc-bn-badge" id="wishlist-count" style="display:none">0</span>
+        </a>
+        {% if user.is_authenticated %}
+            {% if user.is_staff %}
+            <a href="{% url 'site_dashboard' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'site_dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span class="bilingual" data-lang-ar="لوحة" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة</span>
+            </a>
+            {% else %}
+            <a href="{% url 'logout' %}" class="gc-bn-link">
+                <i class="bi bi-person-fill"></i>
+                <span class="bilingual" data-lang-ar="حسابي" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">حسابي</span>
+            </a>
+            {% endif %}
+        {% else %}
+        <a href="{% url 'login' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span class="bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</span>
+        </a>
+        {% endif %}
+    </div>
+</nav>
+<script>
+(function () {
+    fetch('/wishlist/count/', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+            if (!d || typeof d.count !== 'number' || d.count <= 0) return;
+            var b = document.getElementById('wishlist-count');
+            if (b) { b.textContent = d.count > 99 ? '99+' : d.count; b.style.display = 'inline-flex'; }
+        })
+        .catch(function () {});
+})();
+</script>
+{% endblock mobile_bottom_nav %}
 </body>
 </html>
