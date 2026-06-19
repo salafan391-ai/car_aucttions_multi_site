@@ -297,12 +297,14 @@
                 <!-- Price (collapsible) -->
                 <details class="filter-group" {% if request.GET.price_min or request.GET.price_max %}open{% endif %}>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="السعر (₩)" data-lang-ru="Цена (₩)" data-lang-es="Precio (₩)" data-lang-en="Price (₩)">السعر (₩)</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="السعر (بعملتك)" data-lang-ru="Цена (в вашей валюте)" data-lang-es="Precio (tu moneda)" data-lang-en="Price (your currency)">السعر (بعملتك)</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="من" data-placeholder-ar="من" data-placeholder-ru="от" data-placeholder-es="de" data-placeholder-en="From" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                        <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-ru="к" data-placeholder-es="a" data-placeholder-en="To" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" inputmode="numeric" data-price-filter="min" placeholder="من" data-placeholder-ar="من" data-placeholder-ru="от" data-placeholder-es="de" data-placeholder-en="From" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="hidden" name="price_min" value="{{ request.GET.price_min }}">
+                        <input type="number" inputmode="numeric" data-price-filter="max" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-ru="к" data-placeholder-es="a" data-placeholder-en="To" class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="hidden" name="price_max" value="{{ request.GET.price_max }}">
                     </div>
                 </details>
 
@@ -577,12 +579,14 @@
                 <!-- Price Range -->
                 <details class="filter-group border-t border-gray-100 pt-3" {% if request.GET.price_min or request.GET.price_max %}open{% endif %}>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
-                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="السعر (₩)" data-lang-ru="Цена (₩)" data-lang-es="Precio (₩)" data-lang-en="Price (₩)">السعر (₩)</span>
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="السعر (بعملتك)" data-lang-ru="Цена (в вашей валюте)" data-lang-es="Precio (tu moneda)" data-lang-en="Price (your currency)">السعر (بعملتك)</span>
                         <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="flex gap-2">
-                        <input type="number" name="price_min" value="{{ request.GET.price_min }}" placeholder="من" data-placeholder-ar="من" data-placeholder-ru="от" data-placeholder-es="de" data-placeholder-en="From" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
-                        <input type="number" name="price_max" value="{{ request.GET.price_max }}" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-ru="к" data-placeholder-es="a" data-placeholder-en="To" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="number" inputmode="numeric" data-price-filter="min" placeholder="من" data-placeholder-ar="من" data-placeholder-ru="от" data-placeholder-es="de" data-placeholder-en="From" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="hidden" name="price_min" value="{{ request.GET.price_min }}">
+                        <input type="number" inputmode="numeric" data-price-filter="max" placeholder="إلى" data-placeholder-ar="إلى" data-placeholder-ru="к" data-placeholder-es="a" data-placeholder-en="To" onchange="submitSidebarForm(this.form)" class="flex-1 px-2 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 ring-brand focus:bg-white outline-none transition">
+                        <input type="hidden" name="price_max" value="{{ request.GET.price_max }}">
                     </div>
                 </details>
 

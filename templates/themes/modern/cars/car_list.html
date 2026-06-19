@@ -643,13 +643,15 @@
                     </div>
 
                     <div class="mod-ffield mod-ffield-toggle{% if not request.GET.price_min and not request.GET.price_max %} is-collapsed{% endif %}">
-                        <label class="mod-flabel bilingual" data-lang-ar="السعر (₩)" data-lang-en="Price (₩)" data-lang-es="Precio (₩)" data-lang-ru="Цена (₩)">
-                            <span>السعر (₩)</span>
+                        <label class="mod-flabel bilingual" data-lang-ar="السعر (بعملتك)" data-lang-en="Price (your currency)" data-lang-es="Precio (tu moneda)" data-lang-ru="Цена (в вашей валюте)">
+                            <span>السعر (بعملتك)</span>
                             <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                         </label>
                         <div class="mod-range-pair">
-                            <input type="number" name="price_min" value="{{ request.GET.price_min|default:'' }}" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="mod-finput">
-                            <input type="number" name="price_max" value="{{ request.GET.price_max|default:'' }}" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="mod-finput">
+                            <input type="number" inputmode="numeric" data-price-filter="min" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="mod-finput">
+                            <input type="hidden" name="price_min" value="{{ request.GET.price_min|default:'' }}">
+                            <input type="number" inputmode="numeric" data-price-filter="max" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="mod-finput">
+                            <input type="hidden" name="price_max" value="{{ request.GET.price_max|default:'' }}">
                         </div>
                     </div>
 

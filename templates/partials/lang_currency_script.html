@@ -330,4 +330,55 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
             var m = document.getElementById('currency-menu'); if (m) m.classList.add('hidden');
         }
     });
+
+    /* ── Currency-aware price filter ──────────────────────────────────────
+       The DB price is KRW, but visitors see/type prices in their selected
+       currency. The visible inputs ([data-price-filter]) hold the display
+       value; a paired hidden input (name=price_min/price_max) carries the KRW
+       value that's actually submitted. We convert both ways and re-display on
+       currency change, so filtering by price is always accurate. */
+    function _pfToKRW(v, code) {
+        var c = (window.SITE_CURRENCIES || {})[code];
+        if (!c || code === 'KRW') return Math.round(v);
+        return Math.round(v / (c.rate * (window.SITE_PRICE_MARKUP || 1)));
+    }
+    function _pfToDisp(krw, code) {
+        var c = (window.SITE_CURRENCIES || {})[code];
+        if (!c || code === 'KRW') return Math.round(krw);
+        return Math.round(krw * c.rate * (window.SITE_PRICE_MARKUP || 1));
+    }
+    function _pfHidden(inp) {
+        var which = inp.getAttribute('data-price-filter');
+        var form = inp.form;
+        return form ? form.querySelector('input[type=hidden][name="price_' + which + '"]') : null;
+    }
+    function initPriceFilters() {
+        var code = localStorage.getItem('site_currency') || 'SAR';
+        document.querySelectorAll('[data-price-filter]').forEach(function (inp) {
+            var hidden = _pfHidden(inp);
+            if (!hidden) return;
+            if (hidden.value && inp.dataset.krw !== hidden.value) {
+                inp.value = _pfToDisp(parseFloat(hidden.value), code);
+                inp.dataset.krw = hidden.value;
+            }
+            if (!inp.dataset.bound) {
+                inp.dataset.bound = '1';
+                inp.addEventListener('input', function () {
+                    var raw = parseFloat(inp.value);
+                    hidden.value = (inp.value !== '' && !isNaN(raw)) ? _pfToKRW(raw, localStorage.getItem('site_currency') || 'SAR') : '';
+                    inp.dataset.krw = hidden.value;
+                });
+            }
+        });
+    }
+    document.addEventListener('currencychange', function () {
+        var code = localStorage.getItem('site_currency') || 'SAR';
+        document.querySelectorAll('[data-price-filter]').forEach(function (inp) {
+            var hidden = _pfHidden(inp);
+            if (hidden && hidden.value) { inp.value = _pfToDisp(parseFloat(hidden.value), code); inp.dataset.krw = hidden.value; }
+        });
+    });
+    if (document.readyState !== 'loading') initPriceFilters();
+    else document.addEventListener('DOMContentLoaded', initPriceFilters);
+    document.addEventListener('htmx:afterSwap', initPriceFilters);
 </script>
