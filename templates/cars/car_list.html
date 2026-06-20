@@ -873,7 +873,7 @@ function toggleFilterValue(key, value) {
   htmxGet(params.toString());
 }
 
-// ── Hierarchical tree filter (manufacturer → model → badge) ──
+// ── Hierarchical tree filter (manufacturer → model → version → engine → trim) ──
 // Initialises every .df-tree on the page (drawer + sidebar).
 (function () {
   var carTypeGlobal = '{{ request.GET.car_type|default:"" }}';
@@ -904,10 +904,12 @@ function toggleFilterValue(key, value) {
   }
 
   function buildNode(opts) {
-    // opts: { kind: 'model'|'badge', id, name, langs, count, leaf, checked }
+    // opts: { kind:'model'|'version'|'engine'|'badge', id, value, dataKey,
+    //         inputName, name, langs, count, leaf, checked, logo }
+    var val = (opts.value != null ? opts.value : opts.id);
     var node = document.createElement('div');
     node.className = 'df-tree-node df-' + opts.kind + '-node';
-    node.dataset[opts.kind + 'Id'] = opts.id;
+    node.dataset[opts.dataKey || (opts.kind + 'Id')] = val;
     if (!opts.leaf) node.dataset.loaded = 'false';
 
     var row = document.createElement('div');
@@ -918,8 +920,8 @@ function toggleFilterValue(key, value) {
 
     var input = document.createElement('input');
     input.type = 'checkbox';
-    input.name = opts.kind;
-    input.value = opts.id;
+    input.name = opts.inputName || opts.kind;
+    input.value = val;
     input.className = 'df-tree-cb df-' + opts.kind + '-cb';
     if (opts.checked) input.checked = true;
 
@@ -1005,40 +1007,84 @@ function toggleFilterValue(key, value) {
       });
   }
 
-  function loadBadges(modelNode, qsCarType) {
+  function _treeHint(children) {
+    var h = document.createElement('div');
+    h.className = 'df-tree-hint'; h.textContent = '…';
+    children.appendChild(h); return h;
+  }
+  function _treeEmptyIfNone(children) {
+    if (!children.children.length) {
+      var e = document.createElement('div');
+      e.className = 'df-tree-hint'; e.textContent = '—';
+      children.appendChild(e);
+    }
+  }
+  function _treeLogo(node) {
+    var mfr = node.closest('.df-mfr-node');
+    return (mfr && mfr.dataset.logo) || '';
+  }
+
+  // model group → model versions (with year-range suffix)
+  function loadVersions(modelNode, qsCarType) {
     var mid = modelNode.dataset.modelId;
     var children = modelNode.querySelector(':scope > .df-tree-children');
     if (!children) return Promise.resolve();
-    var existingSelected = new Map();
-    children.querySelectorAll(':scope > .df-badge-node').forEach(function(n) {
-      existingSelected.set(n.dataset.badgeId, n);
-    });
+    var logo = _treeLogo(modelNode);
+    var hint = _treeHint(children);
+    return fetchJSON('/api/model-versions/?model_id=' + encodeURIComponent(mid) + qsCarType)
+      .then(function(arr) {
+        hint.remove();
+        arr.forEach(function(v) {
+          if (!v.car_count) return;
+          var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
+          children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, logo: logo }));
+        });
+        _treeEmptyIfNone(children);
+        modelNode.dataset.loaded = 'true';
+      });
+  }
 
-    // Inherit the parent manufacturer's logo so dynamically-loaded badges
-    // get the same brand image as their ancestor row.
-    var ancestorMfr = modelNode.closest('.df-mfr-node');
-    var inheritedLogo = (ancestorMfr && ancestorMfr.dataset.logo) || '';
+  // model version → engine groups (BadgeGroup)
+  function loadEngines(versionNode, qsCarType) {
+    var modelNode = versionNode.closest('.df-model-node');
+    var mid = modelNode ? modelNode.dataset.modelId : '';
+    var mv = versionNode.dataset.version || '';
+    var children = versionNode.querySelector(':scope > .df-tree-children');
+    if (!children) return Promise.resolve();
+    var logo = _treeLogo(versionNode);
+    var hint = _treeHint(children);
+    return fetchJSON('/api/engine-groups/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + qsCarType)
+      .then(function(arr) {
+        hint.remove();
+        arr.forEach(function(en) {
+          if (!en.car_count) return;
+          children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, logo: logo }));
+        });
+        _treeEmptyIfNone(children);
+        versionNode.dataset.loaded = 'true';
+      });
+  }
 
-    var hint = document.createElement('div');
-    hint.className = 'df-tree-hint';
-    hint.textContent = '…';
-    children.appendChild(hint);
-
-    return fetchJSON('/api/badges/?model_id=' + encodeURIComponent(mid) + qsCarType)
+  // engine group → badges (trims)
+  function loadBadges(engineNode, qsCarType) {
+    var modelNode = engineNode.closest('.df-model-node');
+    var versionNode = engineNode.closest('.df-version-node');
+    var mid = modelNode ? modelNode.dataset.modelId : '';
+    var mv = versionNode ? (versionNode.dataset.version || '') : '';
+    var eg = engineNode.dataset.engine || '';
+    var children = engineNode.querySelector(':scope > .df-tree-children');
+    if (!children) return Promise.resolve();
+    var logo = _treeLogo(engineNode);
+    var hint = _treeHint(children);
+    return fetchJSON('/api/badges-by-engine/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + '&engine_group=' + encodeURIComponent(eg) + qsCarType)
       .then(function(arr) {
         hint.remove();
         arr.forEach(function(b) {
-          if (existingSelected.has(String(b.id))) return;
           if (!b.car_count) return;
-          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: false, logo: inheritedLogo }));
+          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, logo: logo }));
         });
-        if (!children.children.length) {
-          var empty = document.createElement('div');
-          empty.className = 'df-tree-hint';
-          empty.textContent = '—';
-          children.appendChild(empty);
-        }
-        modelNode.dataset.loaded = 'true';
+        _treeEmptyIfNone(children);
+        engineNode.dataset.loaded = 'true';
       });
   }
 
@@ -1056,6 +1102,14 @@ function toggleFilterValue(key, value) {
           return;
         }
         if (node.classList.contains('df-model-node')) {
+          loadVersions(node, qsCarType).then(function() { node.classList.add('is-open'); });
+          return;
+        }
+        if (node.classList.contains('df-version-node')) {
+          loadEngines(node, qsCarType).then(function() { node.classList.add('is-open'); });
+          return;
+        }
+        if (node.classList.contains('df-engine-node')) {
           loadBadges(node, qsCarType).then(function() { node.classList.add('is-open'); });
           return;
         }
@@ -1090,6 +1144,12 @@ function toggleFilterValue(key, value) {
         if (node && !node.classList.contains('is-open')) toggleNode(node);
       } else if (cb.classList.contains('df-model-cb')) {
         var node = cb.closest('.df-model-node');
+        if (node && !node.classList.contains('is-open')) toggleNode(node);
+      } else if (cb.classList.contains('df-version-cb')) {
+        var node = cb.closest('.df-version-node');
+        if (node && !node.classList.contains('is-open')) toggleNode(node);
+      } else if (cb.classList.contains('df-engine-cb')) {
+        var node = cb.closest('.df-engine-node');
         if (node && !node.classList.contains('is-open')) toggleNode(node);
       }
 

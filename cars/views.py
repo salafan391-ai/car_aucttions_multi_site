@@ -1916,6 +1916,99 @@ def api_badges_by_model(request):
     return JsonResponse(badges, safe=False)
 
 
+# ── Encar-style nested cascade: model-group → version → engine → trim ────────
+def _car_type_base(car_type, now, **filters):
+    """ApiCar queryset scoped to a car_type tab, with extra equality filters.
+    Mirrors the car_type branching used by the model/badge API endpoints."""
+    qs = ApiCar.objects.filter(**filters)
+    if car_type == 'auction':
+        return qs.filter(category__name='auction').exclude(auction_date__lt=now)
+    if car_type == 'cars':
+        return qs.exclude(category__name='auction').exclude(body__name='truck')
+    if car_type == 'truck':
+        return qs.filter(body__name='truck').exclude(category__name='auction')
+    return qs.exclude(category__name='auction', auction_date__lt=now)
+
+
+def api_model_versions_by_model(request):
+    """Model versions (generations) under a model group, with year-range + count."""
+    model_id = request.GET.get('model_id')
+    if not model_id:
+        return JsonResponse([], safe=False)
+    car_type = request.GET.get('car_type')
+    schema = getattr(connection, 'schema_name', 'public')
+    ck = f"api_modelversions_v1:{schema}:{model_id}:ct:{car_type or 'all'}"
+    cached = cache.get(ck)
+    if cached is not None:
+        return JsonResponse(cached, safe=False)
+    now = timezone.now()
+    qs = (_car_type_base(car_type, now, model_id=model_id)
+          .exclude(model_version__isnull=True).exclude(model_version=''))
+    merged = {}
+    for r in qs.values('model_version', 'model_year_range').annotate(car_count=Count('id')):
+        e = merged.setdefault(r['model_version'], {'value': r['model_version'], 'car_count': 0, 'year_range': ''})
+        e['car_count'] += r['car_count']
+        if not e['year_range'] and r['model_year_range']:
+            e['year_range'] = r['model_year_range']
+    data = sorted(merged.values(), key=lambda d: -d['car_count'])
+    cache.set(ck, data, 60 * 30)
+    return JsonResponse(data, safe=False)
+
+
+def api_engine_groups_by_version(request):
+    """Engine groups (BadgeGroup) under a model version, with counts."""
+    model_id = request.GET.get('model_id')
+    model_version = request.GET.get('model_version')
+    if not model_id or not model_version:
+        return JsonResponse([], safe=False)
+    car_type = request.GET.get('car_type')
+    schema = getattr(connection, 'schema_name', 'public')
+    import hashlib
+    mvk = hashlib.md5(model_version.encode('utf-8')).hexdigest()[:10]
+    ck = f"api_enginegroups_v1:{schema}:{model_id}:{mvk}:ct:{car_type or 'all'}"
+    cached = cache.get(ck)
+    if cached is not None:
+        return JsonResponse(cached, safe=False)
+    now = timezone.now()
+    qs = (_car_type_base(car_type, now, model_id=model_id, model_version=model_version)
+          .exclude(engine_group__isnull=True).exclude(engine_group=''))
+    data = [{'value': r['engine_group'], 'car_count': r['car_count']}
+            for r in qs.values('engine_group').annotate(car_count=Count('id')).order_by('-car_count')]
+    cache.set(ck, data, 60 * 30)
+    return JsonResponse(data, safe=False)
+
+
+def api_badges_by_engine(request):
+    """Trims (Badge) under a model version + engine group, with counts."""
+    model_id = request.GET.get('model_id')
+    if not model_id:
+        return JsonResponse([], safe=False)
+    model_version = request.GET.get('model_version') or ''
+    engine_group = request.GET.get('engine_group') or ''
+    car_type = request.GET.get('car_type')
+    schema = getattr(connection, 'schema_name', 'public')
+    import hashlib
+    sk = hashlib.md5(f"{model_version}|{engine_group}".encode('utf-8')).hexdigest()[:10]
+    ck = f"api_badges_eng_v1:{schema}:{model_id}:{sk}:ct:{car_type or 'all'}"
+    cached = cache.get(ck)
+    if cached is not None:
+        return JsonResponse(cached, safe=False)
+    now = timezone.now()
+    extra = {'model_id': model_id}
+    if model_version:
+        extra['model_version'] = model_version
+    if engine_group:
+        extra['engine_group'] = engine_group
+    base = _car_type_base(car_type, now, **extra)
+    badges = list(
+        CarBadge.objects.filter(id__in=base.values_list('badge_id', flat=True).distinct())
+        .annotate(car_count=Count('apicar', filter=Q(apicar__in=base)))
+        .order_by('-car_count').values('id', 'name', 'car_count')
+    )
+    cache.set(ck, badges, 60 * 30)
+    return JsonResponse(badges, safe=False)
+
+
 def _get_similar_cars(car, count=6):
     """
     Return up to `count` similar cars matching make + model + badge + year.
