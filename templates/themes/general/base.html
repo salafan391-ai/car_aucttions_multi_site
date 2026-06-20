@@ -396,6 +396,7 @@
         </div>
     </div>
     <div class="gc-footer-bottom">
+        {% if cr_number or cr_barcode %}<div style="margin-bottom:16px;">{% include "partials/_commercial_registration.html" %}</div>{% endif %}
         <span class="bilingual" data-lang-ar="© {% now 'Y' %} {{ site_name|default:'سيارات' }}. جميع الحقوق محفوظة." data-lang-en="© {% now 'Y' %} {{ site_name|default:'General Cars' }}. All rights reserved." data-lang-es="© {% now 'Y' %} {{ site_name|default:'General Cars' }}. Todos los derechos reservados." data-lang-ru="© {% now 'Y' %} {{ site_name|default:'General Cars' }}. Все права защищены.">© {% now "Y" %} {{ site_name|default:"سيارات" }}. جميع الحقوق محفوظة.</span>
     </div>
 </footer>

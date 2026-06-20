@@ -219,6 +219,8 @@ class Tenant(TenantMixin):
     map_url = models.URLField(max_length=500, blank=True, null=True, verbose_name="رابط الخريطة")
     working_hours = models.CharField(max_length=100, blank=True, null=True, verbose_name="ساعات العمل (عربي)")
     working_hours_en = models.CharField(max_length=100, blank=True, null=True, verbose_name="Working Hours (EN)")
+    commercial_registration = models.CharField(max_length=50, blank=True, default="", verbose_name="رقم السجل التجاري")
+    cr_barcode = models.ImageField(upload_to='cr_barcodes/', blank=True, null=True, verbose_name="باركود السجل التجاري", help_text="صورة الباركود/الكود QR للسجل التجاري")
 
     # Contact Person
     contact_person_name = models.CharField(max_length=100, blank=True, null=True, verbose_name="اسم المسؤول")

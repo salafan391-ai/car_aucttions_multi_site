@@ -170,6 +170,9 @@ def tenant_branding(request):
         "site_map_url": tenant.map_url or "",
         "site_working_hours": tenant.working_hours or "",
         "site_working_hours_en": tenant.working_hours_en or "",
+        # Commercial registration (السجل التجاري)
+        "cr_number": getattr(tenant, 'commercial_registration', '') or "",
+        "cr_barcode": _file_url(getattr(tenant, 'cr_barcode', None)),
         # Contact person (legacy single — fallback when no salespeople set)
         "contact_person_name": tenant.contact_person_name or "",
         "contact_person_photo": _file_url(getattr(tenant, 'contact_person_photo', None)),

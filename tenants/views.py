@@ -144,6 +144,16 @@ def site_settings(request):
                 tenant.contact_person_photo.delete(save=False)
             tenant.contact_person_photo = request.FILES['contact_person_photo']
 
+        # Update commercial registration (السجل التجاري)
+        tenant.commercial_registration = request.POST.get('commercial_registration', tenant.commercial_registration)
+        if request.POST.get('cr_barcode_clear') == '1' and tenant.cr_barcode:
+            tenant.cr_barcode.delete(save=False)
+            tenant.cr_barcode = None
+        if 'cr_barcode' in request.FILES:
+            if tenant.cr_barcode:
+                tenant.cr_barcode.delete(save=False)
+            tenant.cr_barcode = request.FILES['cr_barcode']
+
         # Update social media
         tenant.instagram = request.POST.get('instagram', tenant.instagram)
         tenant.twitter = request.POST.get('twitter', tenant.twitter)
@@ -151,7 +161,9 @@ def site_settings(request):
         tenant.tiktok = request.POST.get('tiktok', tenant.tiktok)
         tenant.snapchat = request.POST.get('snapchat', tenant.snapchat)
         tenant.youtube = request.POST.get('youtube', tenant.youtube)
-        
+        tenant.telegram = request.POST.get('telegram', tenant.telegram)
+        tenant.telegram_username = request.POST.get('telegram_username', tenant.telegram_username)
+
         # Update email settings
         tenant.email_host = request.POST.get('email_host', tenant.email_host)
         tenant.email_port = request.POST.get('email_port', tenant.email_port)

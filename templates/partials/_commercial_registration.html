@@ -1,0 +1,24 @@
+{% comment %}
+Commercial registration (السجل التجاري) trust block for the footer:
+the CR number and an optional barcode/QR image. Theme-neutral styling
+(currentColor + translucent neutrals) so it sits on any footer. Renders
+nothing when neither the number nor the barcode is set.
+{% endcomment %}
+{% if cr_number or cr_barcode %}
+<style>
+    .gc-cr { display: inline-flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; border: 1px solid rgba(128,128,128,.22); background: rgba(128,128,128,.06); }
+    .gc-cr-img { height: 54px; width: auto; display: block; background: #fff; border-radius: 8px; padding: 3px; }
+    .gc-cr-text { text-align: start; line-height: 1.4; }
+    .gc-cr-label { font-size: 11px; font-weight: 800; opacity: .65; text-transform: uppercase; letter-spacing: .03em; }
+    .gc-cr-num { font-size: 15px; font-weight: 900; direction: ltr; unicode-bidi: embed; }
+</style>
+<div class="gc-cr">
+    {% if cr_barcode %}<img src="{{ cr_barcode }}" alt="Commercial Registration" class="gc-cr-img" loading="lazy">{% endif %}
+    {% if cr_number %}
+    <div class="gc-cr-text">
+        <div class="gc-cr-label bilingual" data-lang-ar="السجل التجاري" data-lang-en="Commercial Reg." data-lang-es="Reg. comercial" data-lang-ru="Рег. номер">السجل التجاري</div>
+        <div class="gc-cr-num"><bdi>{{ cr_number }}</bdi></div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
