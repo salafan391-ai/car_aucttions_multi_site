@@ -1241,6 +1241,26 @@ function toggleFilterValue(key, value) {
   });
 })();
 
+// ── Keep the sidebar filter form (and its pinned "Show results" footer) fully
+//    within the viewport at every scroll position, even at page-top with a long
+//    expanded tree. Sizes the form from its current top edge to the viewport
+//    bottom so the footer button is never below the fold. ──
+(function () {
+  var form = document.getElementById('filter-form-sidebar');
+  if (!form) return;
+  function fit() {
+    var top = form.getBoundingClientRect().top;
+    var avail = window.innerHeight - top - 16; // 1rem bottom gap
+    form.style.maxHeight = Math.max(260, avail) + 'px';
+  }
+  var raf;
+  function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); }
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule);
+  document.body.addEventListener('htmx:afterSwap', schedule);
+  fit();
+})();
+
 // Remove a single value from a multi-value URL param via HTMX
 function removeFilterValue(key, value) {
     const params = new URLSearchParams(window.location.search);
