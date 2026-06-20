@@ -506,7 +506,7 @@
 }
 .df-tree-name {
     font-size:.78rem; font-weight:500;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    white-space:normal; overflow-wrap:anywhere; word-break:break-word; line-height:1.25;
 }
 .df-tree-count { color:#9ca3af; font-size:.65rem; font-weight:400; flex-shrink:0; }
 .df-tree-row:has(.df-tree-cb:checked) {
@@ -529,10 +529,11 @@
 .df-tree-node.is-open > .df-tree-row .df-tree-toggle svg { transform:rotate(45deg); }
 .df-tree-children {
     display:none; flex-direction:column; gap:.25rem;
-    padding:.3rem 0 .1rem 1.1rem;
-    border-left:1px dashed #e5e7eb; margin-left:.7rem; margin-top:.25rem;
+    padding:.3rem 0 .1rem .55rem;
+    border-left:1px dashed #e5e7eb; margin-left:.4rem; margin-top:.25rem;
 }
-[dir="rtl"] .df-tree-children { padding-left:0; padding-right:1.1rem; border-left:0; border-right:1px dashed #e5e7eb; margin-left:0; margin-right:.7rem; }
+[dir="rtl"] .df-tree-children { padding-left:0; padding-right:.55rem; border-left:0; border-right:1px dashed #e5e7eb; margin-left:0; margin-right:.4rem; }
+.df-tree-count { white-space:nowrap; }
 .df-tree-node.is-open > .df-tree-children { display:flex; }
 .df-tree-hint { color:#9ca3af; font-size:.7rem; padding:.3rem .5rem; font-style:italic; }
 
@@ -1042,7 +1043,7 @@ function toggleFilterValue(key, value) {
         arr.forEach(function(v) {
           if (!v.car_count) return;
           var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
-          children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, checked: selectedSet('model_version').has(v.value), logo: logo }));
+          children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, checked: selectedSet('model_version').has(v.value), logo: '' }));
         });
         _treeEmptyIfNone(children);
         modelNode.dataset.loaded = 'true';
@@ -1063,7 +1064,7 @@ function toggleFilterValue(key, value) {
         hint.remove();
         arr.forEach(function(en) {
           if (!en.car_count) return;
-          children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, checked: selectedSet('engine_group').has(en.value), logo: logo }));
+          children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, checked: selectedSet('engine_group').has(en.value), logo: '' }));
         });
         _treeEmptyIfNone(children);
         versionNode.dataset.loaded = 'true';
@@ -1086,7 +1087,7 @@ function toggleFilterValue(key, value) {
         hint.remove();
         arr.forEach(function(b) {
           if (!b.car_count) return;
-          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: selectedSet('badge').has(String(b.id)), logo: logo }));
+          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: selectedSet('badge').has(String(b.id)), logo: '' }));
         });
         _treeEmptyIfNone(children);
         engineNode.dataset.loaded = 'true';
