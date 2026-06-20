@@ -131,6 +131,15 @@ class ApiCar(models.Model):
     model = models.ForeignKey(CarModel, on_delete=models.CASCADE, db_index=True)
     year = models.IntegerField(db_index=True)
     badge = models.ForeignKey(CarBadge, on_delete=models.CASCADE, db_index=True)
+    # Encar model-tree fields surfaced from the source CSV (English).
+    #   model_version    – specific generation, e.g. "The New Malibu" (vs. model = group "Malibu")
+    #   model_year_range – generation production span, e.g. "18~23"
+    #   engine_group     – Encar BadgeGroup, e.g. "gasoline 2000cc" (fuel + displacement binned to 100cc)
+    #   trim_detail      – Encar BadgeDetail / sub-trim, e.g. "special"
+    model_version = models.CharField(max_length=120, blank=True, null=True, db_index=True)
+    model_year_range = models.CharField(max_length=20, blank=True, null=True, db_index=True)
+    engine_group = models.CharField(max_length=60, blank=True, null=True, db_index=True)
+    trim_detail = models.CharField(max_length=100, blank=True, null=True)
     color = models.ForeignKey(CarColor, on_delete=models.CASCADE, db_index=True)
     seat_color = models.ForeignKey(CarSeatColor, on_delete=models.CASCADE,blank=True,null=True)
     seat_count = models.CharField(max_length=100,blank=True,null=True)

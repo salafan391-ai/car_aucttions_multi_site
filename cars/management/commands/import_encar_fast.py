@@ -394,10 +394,26 @@ class Command(BaseCommand):
             real_vin = ""
         vin = real_vin or norm.get("inner_id") or norm.get("id") or ""
 
+        # Encar model-tree fields (English) straight from the CSV. engine_group
+        # falls back to a local derivation (fuel + displacement binned to 100cc)
+        # so it still works on feeds that don't carry the column.
+        model_version = (norm.get("model_version") or "").strip()
+        model_year_range = (norm.get("model_year_range") or "").strip()
+        trim_detail = (norm.get("trim_detail") or "").strip()
+        engine_group = (norm.get("engine_group") or "").strip()
+        if not engine_group and fuel and power:
+            cc = int(round(power / 100.0)) * 100
+            if cc > 0:
+                engine_group = f"{fuel} {cc}cc"
+
         return {
             "manufacturer_name": manufacturer_name,
             "model_name": model_name,
             "badge_name": badge_name,
+            "model_version": model_version[:120] or None,
+            "model_year_range": model_year_range[:20] or None,
+            "engine_group": engine_group[:60] or None,
+            "trim_detail": trim_detail[:100] or None,
             "lot_number": lot_number,
             "year": year,
             "mileage": mileage,
@@ -564,6 +580,10 @@ class Command(BaseCommand):
                             model=model,
                             year=fields["year"],
                             badge=badge,
+                            model_version=fields["model_version"],
+                            model_year_range=fields["model_year_range"],
+                            engine_group=fields["engine_group"],
+                            trim_detail=fields["trim_detail"],
                             color=color,
                             seat_color=seat_color,
                             transmission=fields["transmission"],
@@ -594,6 +614,10 @@ class Command(BaseCommand):
                             model=model,
                             year=fields["year"],
                             badge=badge,
+                            model_version=fields["model_version"],
+                            model_year_range=fields["model_year_range"],
+                            engine_group=fields["engine_group"],
+                            trim_detail=fields["trim_detail"],
                             color=color,
                             seat_color=seat_color,
                             transmission=fields["transmission"],
@@ -616,6 +640,7 @@ class Command(BaseCommand):
 
             update_fields = [
                 'car_id','title','image','images','manufacturer','vin','lot_number','model','year','badge',
+                'model_version','model_year_range','engine_group','trim_detail',
                 'color','seat_color','transmission','engine','body','power','price','mileage',
                 'drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
             ]
