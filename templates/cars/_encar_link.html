@@ -1,0 +1,23 @@
+{% comment %}
+"View on Encar" source link for Encar (non-auction) cars. Superuser-only —
+same gating as the default theme; it points staff to the original Encar
+listing and is not meant for public visitors. Theme-neutral styling.
+{% endcomment %}
+{% if car.category.name != 'auction' and car.lot_number and request.user.is_superuser %}
+<style>
+    .gc-encar-link {
+        display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%;
+        margin-top: 8px; padding: 11px 14px; border-radius: 12px;
+        border: 1.5px dashed rgba(128,128,128,.42); color: inherit; text-decoration: none;
+        font-weight: 800; font-size: 13px; opacity: .9; transition: border-color .2s, color .2s, opacity .2s;
+    }
+    .gc-encar-link:hover { opacity: 1; border-color: #16b364; color: #16b364; }
+    .gc-encar-link .gc-encar-badge { background: #16b364; color: #fff; font-weight: 900; font-size: 11px; letter-spacing: .02em; padding: 2px 7px; border-radius: 5px; }
+    .gc-encar-link svg { width: 14px; height: 14px; }
+</style>
+<a href="https://fem.encar.com/cars/detail/{{ car.lot_number }}" target="_blank" rel="noopener" class="gc-encar-link">
+    <span class="gc-encar-badge">Encar</span>
+    <span class="bilingual" data-lang-ar="عرض في موقع إنكار" data-lang-en="View on Encar" data-lang-es="Ver en Encar" data-lang-ru="Открыть на Encar">عرض في موقع إنكار</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+</a>
+{% endif %}
