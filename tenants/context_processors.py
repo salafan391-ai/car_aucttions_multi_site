@@ -185,6 +185,7 @@ def tenant_branding(request):
         "site_tiktok": tenant.tiktok or "",
         "site_snapchat": tenant.snapchat or "",
         "site_youtube": tenant.youtube or "",
+        "site_whatsapp_channel": getattr(tenant, 'whatsapp_channel', '') or "",
     "site_telegram": (tenant.telegram if getattr(tenant, 'telegram', None) else (f"https://t.me/{getattr(tenant, 'telegram_username', '').lstrip('@')}" if getattr(tenant, 'telegram_username', None) else "")),
         # Multiple phone numbers
         "phone_numbers": phone_numbers,

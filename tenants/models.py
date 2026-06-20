@@ -211,6 +211,7 @@ class Tenant(TenantMixin):
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم الهاتف")
     phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم هاتف إضافي")
     whatsapp = models.CharField(max_length=20, blank=True, null=True, verbose_name="واتساب")
+    whatsapp_channel = models.URLField(max_length=255, blank=True, null=True, verbose_name="قناة واتساب (رابط)", help_text="رابط قناة الواتساب، مثال: https://whatsapp.com/channel/xxxx")
     email = models.EmailField(blank=True, null=True, verbose_name="البريد الإلكتروني")
     address = models.CharField(max_length=255, blank=True, null=True, verbose_name="العنوان (عربي)")
     address_en = models.CharField(max_length=255, blank=True, null=True, verbose_name="Address (EN)")

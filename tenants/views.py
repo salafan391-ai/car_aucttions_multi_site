@@ -163,6 +163,7 @@ def site_settings(request):
         tenant.youtube = request.POST.get('youtube', tenant.youtube)
         tenant.telegram = request.POST.get('telegram', tenant.telegram)
         tenant.telegram_username = request.POST.get('telegram_username', tenant.telegram_username)
+        tenant.whatsapp_channel = request.POST.get('whatsapp_channel', tenant.whatsapp_channel)
 
         # Update email settings
         tenant.email_host = request.POST.get('email_host', tenant.email_host)

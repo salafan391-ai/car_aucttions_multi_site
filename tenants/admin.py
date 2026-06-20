@@ -126,7 +126,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
         ("Contact", {"fields": ("phone", "phone2", "whatsapp", "email", "map_url"), "description": "ملاحظة: يمكنك إدارة أرقام متعددة في قسم 'أرقام الهواتف' أسفل الصفحة"}),
         ("Contact Person", {"fields": ("contact_person_name", "contact_person_photo")}),
         ("Commercial Registration", {"fields": ("commercial_registration", "cr_barcode")}),
-        ("Social Media", {"fields": ("instagram", "twitter", "facebook", "tiktok", "snapchat", "youtube", "telegram", "telegram_username"), "classes": ("collapse",)}),
+        ("Social Media", {"fields": ("instagram", "twitter", "facebook", "tiktok", "snapchat", "youtube", "telegram", "telegram_username", "whatsapp_channel"), "classes": ("collapse",)}),
         ("Email SMTP Settings", {"fields": ("email_host", "email_port", "email_username", "email_password", "email_use_tls", "email_from_name"), "classes": ("collapse",)}),
         ("ofleet PDF Export API", {"fields": ("ofleet_username", "ofleet_password", "ofleet_split_by_make"), "classes": ("collapse",), "description": "بيانات تسجيل الدخول الخاصة بهذا الموقع لـ API تصدير PDF من ofleet0.com"}),
     )
