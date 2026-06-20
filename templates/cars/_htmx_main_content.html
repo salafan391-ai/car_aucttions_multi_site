@@ -413,13 +413,13 @@
     <div class="flex gap-6 items-start">
 
     <!-- ── SIDEBAR FILTERS (desktop only) ─────────────────── -->
-    <aside id="sidebar-filters" class="hidden lg:block w-64 xl:w-72 shrink-0 sticky top-4 self-start max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-hide">
-        <form method="get" id="filter-form-sidebar" class="bg-white rounded-2xl shadow border border-gray-100"
+    <aside id="sidebar-filters" class="hidden lg:block w-64 xl:w-72 shrink-0 sticky top-4 self-start">
+        <form method="get" id="filter-form-sidebar" class="bg-white rounded-2xl shadow border border-gray-100 flex flex-col max-h-[calc(100vh-5rem)]"
               hx-get="" hx-target="#htmx-main" hx-swap="innerHTML" hx-push-url="true" hx-trigger="submit">
             {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
 
             <!-- Header -->
-            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80 rounded-t-2xl">
+            <div class="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80 rounded-t-2xl">
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                     <span class="font-bold text-sm text-gray-800"><span class="bilingual" data-lang-ar="فلاتر البحث" data-lang-ru="Фильтры поиска" data-lang-es="Filtros de búsqueda" data-lang-en="Search Filters">فلاتر البحث</span></span>
@@ -427,7 +427,7 @@
                 <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="bilingual text-xs text-red-500 hover:text-red-700 font-medium transition" data-lang-ar="مسح الكل" data-lang-ru="Очистить все" data-lang-es="Borrar todo" data-lang-en="Clear All">مسح الكل</a>
             </div>
 
-            <div class="p-4 space-y-5">
+            <div class="p-4 space-y-5 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
 
                 <!-- Search -->
                 <div class="relative">
@@ -621,7 +621,7 @@
             </div>
             <!-- Apply: needed because drilling into the tree (manufacturer/model/
                  version/engine) only expands without submitting. -->
-            <div class="sticky bottom-0 bg-white/95 backdrop-blur border-t border-gray-100 p-3 rounded-b-2xl">
+            <div class="shrink-0 bg-white border-t border-gray-100 p-3 rounded-b-2xl">
                 <button type="submit" class="bilingual w-full py-2.5 bg-brand text-white font-bold rounded-xl transition text-sm hover:opacity-90" data-lang-ar="عرض النتائج" data-lang-ru="Показать результаты" data-lang-es="Ver resultados" data-lang-en="Show results">عرض النتائج</button>
             </div>
         </form>
