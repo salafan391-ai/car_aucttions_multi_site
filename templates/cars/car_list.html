@@ -888,6 +888,11 @@ function toggleFilterValue(key, value) {
     try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
   }
 
+  // Current multi-select values for a filter param, from the URL.
+  function selectedSet(name) {
+    return new Set(new URLSearchParams(window.location.search).getAll(name));
+  }
+
   function makeTogglePlusSvg() {
     var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24');
@@ -995,7 +1000,7 @@ function toggleFilterValue(key, value) {
           if (existingSelected.has(String(m.id))) return;
           if (!m.car_count) return;
           var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
-          children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, count: m.car_count, leaf: qsCarType.indexOf('auction') !== -1, checked: false, logo: m.manufacturer_logo || mfrNode.dataset.logo || '' }));
+          children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, count: m.car_count, leaf: qsCarType.indexOf('auction') !== -1, checked: selectedSet('model').has(String(m.id)), logo: m.manufacturer_logo || mfrNode.dataset.logo || '' }));
         });
         if (!children.children.length) {
           var empty = document.createElement('div');
@@ -1037,7 +1042,7 @@ function toggleFilterValue(key, value) {
         arr.forEach(function(v) {
           if (!v.car_count) return;
           var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
-          children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, logo: logo }));
+          children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, checked: selectedSet('model_version').has(v.value), logo: logo }));
         });
         _treeEmptyIfNone(children);
         modelNode.dataset.loaded = 'true';
@@ -1058,7 +1063,7 @@ function toggleFilterValue(key, value) {
         hint.remove();
         arr.forEach(function(en) {
           if (!en.car_count) return;
-          children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, logo: logo }));
+          children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, checked: selectedSet('engine_group').has(en.value), logo: logo }));
         });
         _treeEmptyIfNone(children);
         versionNode.dataset.loaded = 'true';
@@ -1081,7 +1086,7 @@ function toggleFilterValue(key, value) {
         hint.remove();
         arr.forEach(function(b) {
           if (!b.car_count) return;
-          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, logo: logo }));
+          children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: selectedSet('badge').has(String(b.id)), logo: logo }));
         });
         _treeEmptyIfNone(children);
         engineNode.dataset.loaded = 'true';
@@ -1165,10 +1170,73 @@ function toggleFilterValue(key, value) {
     });
   }
 
+  // ── Preserve expanded paths across HTMX swaps ──
+  // Ticking a tree checkbox auto-submits the sidebar form, which re-renders the
+  // whole tree (collapsing the lazily-loaded version/engine/trim levels). Snapshot
+  // the open paths before the swap and re-expand + re-load them afterwards.
+  var _openPaths = {};
+  var _LOADERS = { manufacturer: loadModels, model: loadVersions, model_version: loadEngines, engine_group: loadBadges };
+
+  function _cbOf(node) { return node.querySelector(':scope > .df-tree-row .df-tree-cb'); }
+  function _pathOf(node) {
+    var path = [], cur = node;
+    while (cur && cur.classList && cur.classList.contains('df-tree-node')) {
+      var cb = _cbOf(cur);
+      if (cb) path.unshift({ name: cb.name, value: cb.value });
+      cur = cur.parentElement && cur.parentElement.closest('.df-tree-node');
+    }
+    return path;
+  }
+  function snapshotTree(root) {
+    var paths = [];
+    root.querySelectorAll('.df-tree-node.is-open').forEach(function(n) {
+      // keep only deepest-open nodes — restoring them re-opens their ancestors
+      if (!n.querySelector(':scope > .df-tree-children > .df-tree-node.is-open')) paths.push(_pathOf(n));
+    });
+    _openPaths[root.id] = paths;
+  }
+  function _escSel(v) { try { return (window.CSS && CSS.escape) ? CSS.escape(v) : v; } catch (e) { return v; } }
+  function _findChild(parent, name, value) {
+    var ch = parent.querySelector(':scope > .df-tree-children');
+    if (!ch) return null;
+    var cbs = ch.querySelectorAll(':scope > .df-tree-node > .df-tree-row .df-tree-cb');
+    for (var i = 0; i < cbs.length; i++) {
+      if (cbs[i].name === name && cbs[i].value === value) return cbs[i].closest('.df-tree-node');
+    }
+    return null;
+  }
+  function restoreTree(root) {
+    var paths = _openPaths[root.id];
+    if (!paths || !paths.length) return;
+    var carType = root.dataset.carType || carTypeGlobal || '';
+    var qsCarType = carType ? '&car_type=' + encodeURIComponent(carType) : '';
+    paths.forEach(function(path) {
+      (function step(i, parent) {
+        if (i >= path.length) return;
+        var seg = path[i];
+        var node = (i === 0)
+          ? root.querySelector('.df-mfr-node[data-mfr-id="' + _escSel(seg.value) + '"]')
+          : _findChild(parent, seg.name, seg.value);
+        if (!node) return;
+        node.classList.add('is-open');
+        if (i === path.length - 1) return;
+        var loader = _LOADERS[seg.name];
+        var p = (loader && node.dataset.loaded === 'false') ? loader(node, qsCarType) : Promise.resolve();
+        p.then(function() { step(i + 1, node); });
+      })(0, null);
+    });
+  }
+
   document.querySelectorAll('.df-tree').forEach(initTree);
-  // Re-init on HTMX swaps that bring new trees into the DOM.
+  // Snapshot open paths just before the sidebar/main area is swapped out.
+  document.body.addEventListener('htmx:beforeSwap', function(e) {
+    if (e.detail && e.detail.target && e.detail.target.id === 'htmx-main') {
+      document.querySelectorAll('.df-tree').forEach(snapshotTree);
+    }
+  });
+  // Re-init + restore expansion on HTMX swaps that bring new trees into the DOM.
   document.body.addEventListener('htmx:afterSwap', function() {
-    document.querySelectorAll('.df-tree').forEach(initTree);
+    document.querySelectorAll('.df-tree').forEach(function(root) { initTree(root); restoreTree(root); });
   });
 })();
 
