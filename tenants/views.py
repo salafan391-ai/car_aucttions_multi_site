@@ -6,7 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.db import connection
-from .models import Tenant, TenantPhoneNumber, TenantHeroImage, TenantWorkStep
+from .models import Tenant, TenantPhoneNumber, TenantHeroImage, TenantWorkStep, TenantSalesPerson
 from .fonts import font_choices
 
 
@@ -143,7 +143,7 @@ def site_settings(request):
             if tenant.contact_person_photo:
                 tenant.contact_person_photo.delete(save=False)
             tenant.contact_person_photo = request.FILES['contact_person_photo']
-        
+
         # Update social media
         tenant.instagram = request.POST.get('instagram', tenant.instagram)
         tenant.twitter = request.POST.get('twitter', tenant.twitter)
@@ -285,6 +285,49 @@ def site_settings(request):
                 except TenantHeroImage.DoesNotExist:
                     pass
 
+        # ── Salespeople (repeatable, each with optional photo) ──
+        sp_ids = request.POST.getlist('salesperson_id[]')
+        sp_names = request.POST.getlist('salesperson_name[]')
+        sp_roles = request.POST.getlist('salesperson_role[]')
+        sp_whatsapps = request.POST.getlist('salesperson_whatsapp[]')
+        sp_phones = request.POST.getlist('salesperson_phone[]')
+        sp_rowkeys = request.POST.getlist('salesperson_rowkey[]')
+
+        # Delete salespeople whose row was removed from the form.
+        kept_ids = [int(i) for i in sp_ids if i.strip().isdigit()]
+        if kept_ids:
+            tenant.sales_people.exclude(id__in=kept_ids).delete()
+        elif not sp_names:
+            tenant.sales_people.all().delete()
+
+        for i, name in enumerate(sp_names):
+            name = name.strip()
+            if not name:
+                continue
+            rowkey = sp_rowkeys[i] if i < len(sp_rowkeys) else str(i)
+            photo = request.FILES.get(f'salesperson_photo_{rowkey}')
+            role = sp_roles[i] if i < len(sp_roles) else ''
+            whatsapp = sp_whatsapps[i] if i < len(sp_whatsapps) else ''
+            phone = sp_phones[i] if i < len(sp_phones) else ''
+            existing_id = sp_ids[i] if i < len(sp_ids) else ''
+
+            if existing_id and existing_id.strip().isdigit():
+                try:
+                    sp = tenant.sales_people.get(id=int(existing_id))
+                except TenantSalesPerson.DoesNotExist:
+                    continue
+                sp.name, sp.role, sp.whatsapp, sp.phone, sp.order = name, role, whatsapp, phone, i
+                if photo:
+                    if sp.photo:
+                        sp.photo.delete(save=False)
+                    sp.photo = photo
+                sp.save()
+            else:
+                TenantSalesPerson.objects.create(
+                    tenant=tenant, name=name, role=role, whatsapp=whatsapp,
+                    phone=phone, order=i, photo=photo if photo else None,
+                )
+
         # Update order + title + description + link of existing hero images
         hero_orders = request.POST.getlist('hero_image_order[]')
         hero_ids = request.POST.getlist('hero_image_id[]')
@@ -347,6 +390,7 @@ def site_settings(request):
         'tenant': tenant,
         'phone_numbers': tenant.phone_numbers.all(),
         'phone_types': TenantPhoneNumber.PHONE_TYPES,
+        'sales_people_admin': tenant.sales_people.all().order_by('order', 'id'),
         'hero_images': tenant.hero_images.all(),
         'work_steps_admin': tenant.work_steps.all().order_by('order', 'id'),
         'site_font_choices': font_choices(),

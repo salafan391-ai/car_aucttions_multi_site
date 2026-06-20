@@ -966,20 +966,7 @@
                 </form>
                 {% endif %}
 
-                {% if contact_person_name or contact_person_photo %}
-                <div class="mod-contact-person">
-                    {% if contact_person_photo %}
-                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" class="mod-contact-photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                    <div class="mod-contact-fallback" style="display:none;">{{ contact_person_name|first }}</div>
-                    {% else %}
-                    <div class="mod-contact-fallback" style="display:flex;">{{ contact_person_name|first }}</div>
-                    {% endif %}
-                    <div class="mod-contact-info">
-                        <div class="mod-contact-name">{{ contact_person_name }}</div>
-                        <div class="mod-contact-role bilingual" data-lang-ar="مسؤول المبيعات" data-lang-en="Sales Representative" data-lang-es="Gerente de ventas" data-lang-ru="Менеджер по продажам">مسؤول المبيعات</div>
-                    </div>
-                </div>
-                {% endif %}
+                {% include "cars/_sales_people.html" %}
 
                 {% if site_whatsapp %}
                 {% whatsapp_order_message car site_name as lux_wa_msg %}

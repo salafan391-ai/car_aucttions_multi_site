@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from django_tenants.admin import TenantAdminMixin
 from django_tenants.utils import schema_context
 
-from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage, TenantWorkStep, GlobalExchangeRates
+from .models import Tenant, Domain, TenantPhoneNumber, TenantHeroImage, TenantWorkStep, TenantSalesPerson, GlobalExchangeRates
 
 from cars.models import CarImage, Manufacturer, BodyType
 
@@ -23,6 +23,13 @@ class TenantPhoneNumberInline(admin.TabularInline):
     extra = 1
     fields = ('phone_number', 'phone_type', 'label', 'is_primary', 'is_active', 'order')
     ordering = ['order', '-is_primary']
+
+
+class TenantSalesPersonInline(admin.TabularInline):
+    model = TenantSalesPerson
+    extra = 1
+    fields = ('name', 'role', 'photo', 'whatsapp', 'phone', 'is_active', 'order')
+    ordering = ['order']
 
 
 class TenantHeroImageInline(admin.TabularInline):
@@ -44,7 +51,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     list_display = ("name", "schema_name", "is_active", "create_superuser_button", "primary_color", "created_at")
     list_editable = ("is_active",)
     list_filter = ("is_active",)
-    inlines = [TenantPhoneNumberInline, TenantHeroImageInline, TenantWorkStepInline]
+    inlines = [TenantPhoneNumberInline, TenantSalesPersonInline, TenantHeroImageInline, TenantWorkStepInline]
 
     # ── Create a superuser inside a tenant's own schema ──
     def get_urls(self):

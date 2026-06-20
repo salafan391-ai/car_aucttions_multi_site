@@ -1,0 +1,72 @@
+{% load humanize custom_filters whatsapp_tags %}
+{% comment %}
+Salespeople block for car detail pages. Theme-neutral (uses currentColor /
+translucent neutrals) so it looks right on light and dark themes alike.
+Falls back to the legacy single contact person when no salespeople exist.
+{% endcomment %}
+<style>
+    .gc-sales-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .gc-sales-card { display: flex; align-items: flex-start; gap: 12px; padding: 12px 13px; border-radius: 14px; border: 1px solid rgba(128,128,128,.22); background: rgba(128,128,128,.07); }
+    .gc-sales-photo, .gc-sales-fallback { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
+    .gc-sales-photo { object-fit: cover; }
+    .gc-sales-fallback { display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; background: rgba(128,128,128,.2); text-transform: uppercase; }
+    .gc-sales-info { flex: 1; min-width: 0; }
+    .gc-sales-name { font-weight: 800; font-size: .96rem; line-height: 1.3; }
+    .gc-sales-role { font-size: .76rem; opacity: .7; margin-top: 1px; }
+    .gc-sales-actions { display: flex; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+    .gc-sales-wa, .gc-sales-call { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 12px; padding: 7px 13px; border-radius: 999px; text-decoration: none; line-height: 1; transition: opacity .2s, transform .2s; }
+    .gc-sales-wa:hover, .gc-sales-call:hover { transform: translateY(-1px); }
+    .gc-sales-wa { background: #25d366; color: #fff; }
+    .gc-sales-call { border: 1.5px solid currentColor; color: inherit; opacity: .85; }
+    .gc-sales-wa svg, .gc-sales-call svg { width: 14px; height: 14px; }
+</style>
+{% if sales_people %}
+{% whatsapp_order_message car site_name as sp_wa_msg %}
+<div class="gc-sales-list">
+    {% for sp in sales_people %}
+    <div class="gc-sales-card">
+        {% if sp.photo %}
+        <img src="{{ sp.photo }}" alt="{{ sp.name }}" class="gc-sales-photo" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="gc-sales-fallback" style="display:none;">{{ sp.name|first }}</div>
+        {% else %}
+        <div class="gc-sales-fallback">{{ sp.name|first }}</div>
+        {% endif %}
+        <div class="gc-sales-info">
+            <div class="gc-sales-name">{{ sp.name }}</div>
+            <div class="gc-sales-role">{% if sp.role %}{{ sp.role }}{% else %}<span class="bilingual" data-lang-ar="مسؤول المبيعات" data-lang-en="Sales Representative" data-lang-es="Gerente de ventas" data-lang-ru="Менеджер по продажам">مسؤول المبيعات</span>{% endif %}</div>
+            {% if sp.whatsapp or sp.phone %}
+            <div class="gc-sales-actions">
+                {% if sp.whatsapp %}
+                <a href="https://wa.me/{{ sp.whatsapp|format_whatsapp_number }}?text={{ sp_wa_msg }}" target="_blank" rel="noopener" class="gc-sales-wa">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    <span class="bilingual" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp">واتساب</span>
+                </a>
+                {% endif %}
+                {% if sp.phone %}
+                <a href="tel:{{ sp.phone }}" class="gc-sales-call">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <span class="bilingual" data-lang-ar="اتصال" data-lang-en="Call" data-lang-es="Llamar" data-lang-ru="Звонок">اتصال</span>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% elif contact_person_name or contact_person_photo %}
+<div class="gc-sales-list">
+    <div class="gc-sales-card">
+        {% if contact_person_photo %}
+        <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" class="gc-sales-photo" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="gc-sales-fallback" style="display:none;">{{ contact_person_name|first }}</div>
+        {% else %}
+        <div class="gc-sales-fallback">{{ contact_person_name|first }}</div>
+        {% endif %}
+        <div class="gc-sales-info">
+            <div class="gc-sales-name">{{ contact_person_name }}</div>
+            <div class="gc-sales-role bilingual" data-lang-ar="مسؤول المبيعات" data-lang-en="Sales Representative" data-lang-es="Gerente de ventas" data-lang-ru="Менеджер по продажам">مسؤول المبيعات</div>
+        </div>
+    </div>
+</div>
+{% endif %}

@@ -104,6 +104,21 @@ def tenant_branding(request):
     _socials = [tenant.instagram, tenant.facebook, tenant.twitter, tenant.youtube, tenant.tiktok]
     _social_links = [s for s in _socials if s and str(s).startswith("http")]
 
+    # Salespeople — repeatable related rows the themes iterate over (each
+    # contactable). Plain dicts so the branding context stays cache-safe.
+    _sales_people = []
+    try:
+        for _sp in tenant.sales_people.filter(is_active=True).order_by('order', 'id'):
+            _sales_people.append({
+                "name": _sp.name,
+                "role": _sp.role or "",
+                "photo": _file_url(getattr(_sp, 'photo', None)),
+                "whatsapp": (_sp.whatsapp or "").strip(),
+                "phone": (_sp.phone or "").strip(),
+            })
+    except Exception:
+        _sales_people = []
+
     result = {
         "site_name": tenant.name or "سيارات",
         "site_logo": _file_url(getattr(tenant, 'logo', None)),
@@ -155,9 +170,11 @@ def tenant_branding(request):
         "site_map_url": tenant.map_url or "",
         "site_working_hours": tenant.working_hours or "",
         "site_working_hours_en": tenant.working_hours_en or "",
-        # Contact person
+        # Contact person (legacy single — fallback when no salespeople set)
         "contact_person_name": tenant.contact_person_name or "",
         "contact_person_photo": _file_url(getattr(tenant, 'contact_person_photo', None)),
+        # Salespeople (list — themes iterate this; each contactable)
+        "sales_people": _sales_people,
         # Social media
         "site_instagram": tenant.instagram or "",
         "site_twitter": tenant.twitter or "",

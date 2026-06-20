@@ -431,3 +431,33 @@ class TenantPhoneNumber(models.Model):
         if self.is_primary:
             TenantPhoneNumber.objects.filter(tenant=self.tenant, is_primary=True).update(is_primary=False)
         super().save(*args, **kwargs)
+
+
+class TenantSalesPerson(models.Model):
+    """A salesperson/contact rep for a tenant, shown on car detail pages.
+
+    Repeatable (like TenantPhoneNumber) so a tenant can list any number of
+    reps, each contactable via their own WhatsApp / phone.
+    """
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='sales_people', verbose_name="الموقع")
+    name = models.CharField(max_length=100, verbose_name="الاسم")
+    role = models.CharField(max_length=80, blank=True, default="", verbose_name="المسمّى", help_text="مثل: مبيعات، خدمة العملاء")
+    photo = models.ImageField(upload_to='sales_people/', blank=True, null=True, verbose_name="الصورة")
+    whatsapp = models.CharField(max_length=30, blank=True, default="", verbose_name="واتساب", help_text="مع رمز الدولة، مثال: 821012345678")
+    phone = models.CharField(max_length=30, blank=True, default="", verbose_name="هاتف")
+    is_active = models.BooleanField(default=True, verbose_name="نشط")
+    order = models.IntegerField(default=0, verbose_name="الترتيب")
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "مندوب مبيعات"
+        verbose_name_plural = "مندوبو المبيعات"
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get('update_fields')
+        if not update_fields and self.photo and getattr(self.photo, '_file', None) is not None:
+            self.photo = optimize_image(self.photo, max_width=400, max_height=400, quality=85)
+        super().save(*args, **kwargs)

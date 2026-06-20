@@ -776,20 +776,7 @@
                 </form>
                 {% endif %}
 
-                {% if contact_person_name or contact_person_photo %}
-                <div class="gl-detail-contact">
-                    {% if contact_person_photo %}
-                    <img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" class="gl-detail-contact-photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                    <div class="gl-detail-contact-fallback" style="display:none;">{{ contact_person_name|first }}</div>
-                    {% else %}
-                    <div class="gl-detail-contact-fallback" style="display:flex;">{{ contact_person_name|first }}</div>
-                    {% endif %}
-                    <div class="gl-detail-contact-info">
-                        <div class="gl-detail-contact-name">{{ contact_person_name }}</div>
-                        <div class="gl-detail-contact-role bilingual" data-lang-ar="مسؤول المبيعات" data-lang-en="Sales Representative" data-lang-es="Gerente de ventas" data-lang-ru="Менеджер по продажам">مسؤول المبيعات</div>
-                    </div>
-                </div>
-                {% endif %}
+                {% include "cars/_sales_people.html" %}
 
                 {% if site_whatsapp %}
                 {% whatsapp_order_message car site_name as gl_wa_msg %}
