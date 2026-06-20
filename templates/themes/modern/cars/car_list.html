@@ -672,57 +672,6 @@
                     </div>
                     {% endif %}
 
-                    {% if engine_groups %}
-                    <div class="mod-ffield mod-ffield-toggle{% if not sel_engine_groups %} is-collapsed{% endif %}">
-                        <label class="mod-flabel bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">
-                            <span>المحرك</span>
-                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                        </label>
-                        <div class="mod-fchips">
-                            {% for e in engine_groups %}
-                            <label>
-                                <input type="checkbox" name="engine_group" value="{{ e }}" {% if e in sel_engine_groups %}checked{% endif %} class="mod-fchip-input">
-                                <span class="mod-fchip">{{ e|pretty_en }}{% with fc=facet_counts|get_item:'engine_group'|get_item:e %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if model_year_ranges %}
-                    <div class="mod-ffield mod-ffield-toggle{% if not sel_model_year_ranges %} is-collapsed{% endif %}">
-                        <label class="mod-flabel bilingual" data-lang-ar="سنوات الجيل" data-lang-en="Year range" data-lang-es="Años" data-lang-ru="Годы">
-                            <span>سنوات الجيل</span>
-                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                        </label>
-                        <div class="mod-fchips">
-                            {% for yr in model_year_ranges %}
-                            <label>
-                                <input type="checkbox" name="model_year_range" value="{{ yr }}" {% if yr in sel_model_year_ranges %}checked{% endif %} class="mod-fchip-input">
-                                <span class="mod-fchip">{{ yr }}{% with fc=facet_counts|get_item:'model_year_range'|get_item:yr %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    {% if trim_details %}
-                    <div class="mod-ffield mod-ffield-toggle{% if not sel_trim_details %} is-collapsed{% endif %}">
-                        <label class="mod-flabel bilingual" data-lang-ar="الفئة" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">
-                            <span>الفئة</span>
-                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                        </label>
-                        <div class="mod-fchips">
-                            {% for td in trim_details %}
-                            <label>
-                                <input type="checkbox" name="trim_detail" value="{{ td }}" {% if td in sel_trim_details %}checked{% endif %} class="mod-fchip-input">
-                                <span class="mod-fchip">{{ td|pretty_en }}{% with fc=facet_counts|get_item:'trim_detail'|get_item:td %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-
                     {% if fuels %}
                     <div class="mod-ffield mod-ffield-toggle{% if not sel_fuels %} is-collapsed{% endif %}">
                         <label class="mod-flabel bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">
