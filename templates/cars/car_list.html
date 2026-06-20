@@ -1122,6 +1122,20 @@ function toggleFilterValue(key, value) {
       node.classList.toggle('is-open');
     }
 
+    // Open + lazy-load a node SYNCHRONOUSLY marking is-open, so a snapshot taken
+    // right after a checkbox-driven auto-submit captures the open state (the
+    // loader's own .then would set is-open too late, after the swap fires).
+    function openAndLoad(node) {
+      if (node.classList.contains('is-open')) return;
+      node.classList.add('is-open');
+      if (node.dataset.loaded !== 'false') return;
+      var loader = node.classList.contains('df-mfr-node') ? loadModels
+                 : node.classList.contains('df-model-node') ? loadVersions
+                 : node.classList.contains('df-version-node') ? loadEngines
+                 : node.classList.contains('df-engine-node') ? loadBadges : null;
+      if (loader) loader(node, qsCarType);
+    }
+
     // Toggle button click — expand/collapse + lazy-load.
     root.addEventListener('click', function(e) {
       var btn = e.target.closest('.df-tree-toggle');
@@ -1146,16 +1160,16 @@ function toggleFilterValue(key, value) {
         });
       } else if (cb.classList.contains('df-mfr-cb')) {
         var node = cb.closest('.df-mfr-node');
-        if (node && !node.classList.contains('is-open')) toggleNode(node);
+        if (node) openAndLoad(node);
       } else if (cb.classList.contains('df-model-cb')) {
         var node = cb.closest('.df-model-node');
-        if (node && !node.classList.contains('is-open')) toggleNode(node);
+        if (node) openAndLoad(node);
       } else if (cb.classList.contains('df-version-cb')) {
         var node = cb.closest('.df-version-node');
-        if (node && !node.classList.contains('is-open')) toggleNode(node);
+        if (node) openAndLoad(node);
       } else if (cb.classList.contains('df-engine-cb')) {
         var node = cb.closest('.df-engine-node');
-        if (node && !node.classList.contains('is-open')) toggleNode(node);
+        if (node) openAndLoad(node);
       }
 
       // Sidebar form auto-submits via HTMX on change — let the existing
