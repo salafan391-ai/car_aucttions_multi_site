@@ -966,6 +966,42 @@
                     <div class="value bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</div>
                 </div>
                 {% endif %}
+                {% if car.model_version %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الجيل" data-lang-en="Model Version" data-lang-es="Versión" data-lang-ru="Поколение">الجيل</div>
+                    </div>
+                    <div class="value">{{ car.model_version }}</div>
+                </div>
+                {% endif %}
+                {% if car.model_year_range %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="سنوات الجيل" data-lang-en="Year Range" data-lang-es="Años" data-lang-ru="Годы">سنوات الجيل</div>
+                    </div>
+                    <div class="value"><bdi dir="ltr">{{ car.model_year_range }}</bdi></div>
+                </div>
+                {% endif %}
+                {% if car.engine_group %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="فئة المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">فئة المحرك</div>
+                    </div>
+                    <div class="value">{{ car.engine_group|capfirst }}</div>
+                </div>
+                {% endif %}
+                {% if car.trim_detail %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الفئة" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">الفئة</div>
+                    </div>
+                    <div class="value">{{ car.trim_detail|capfirst }}</div>
+                </div>
+                {% endif %}
                 {% if car.color %}
                 <div class="gl-detail-spec">
                     <div class="gl-detail-spec-head">
