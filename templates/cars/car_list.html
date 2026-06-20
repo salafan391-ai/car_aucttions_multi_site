@@ -1145,41 +1145,33 @@ function toggleFilterValue(key, value) {
       if (node) toggleNode(node);
     });
 
-    // When a parent is unchecked, also uncheck its descendants. When a
-    // parent is freshly checked, auto-expand to reveal its children.
-    // For the sidebar (form has hx-get), the form's onchange auto-submit
-    // handles re-rendering with up-to-date model/badge data.
+    // Checking a NON-LEAF node (manufacturer/model/version/engine) only EXPANDS
+    // it — no form submit, so the tree never gets swapped/collapsed while you
+    // drill in (no flicker). The selection still applies when you tick a leaf
+    // (trim), uncheck something, or press "Show results". Unchecking a node also
+    // unchecks its descendants and refreshes results.
     root.addEventListener('change', function(e) {
       var cb = e.target;
       if (!cb.classList || !cb.classList.contains('df-tree-cb')) return;
+      var shouldSubmit = true;  // default: leaf check + any uncheck refresh results
       if (!cb.checked) {
         var node = cb.closest('.df-tree-node');
-        if (!node) return;
-        node.querySelectorAll('.df-tree-cb').forEach(function(c) {
-          if (c !== cb) c.checked = false;
-        });
+        if (node) node.querySelectorAll('.df-tree-cb').forEach(function(c) { if (c !== cb) c.checked = false; });
       } else if (cb.classList.contains('df-mfr-cb')) {
-        var node = cb.closest('.df-mfr-node');
-        if (node) openAndLoad(node);
+        var n = cb.closest('.df-mfr-node'); if (n) openAndLoad(n); shouldSubmit = false;
       } else if (cb.classList.contains('df-model-cb')) {
-        var node = cb.closest('.df-model-node');
-        if (node) openAndLoad(node);
+        var n = cb.closest('.df-model-node'); if (n) openAndLoad(n); shouldSubmit = false;
       } else if (cb.classList.contains('df-version-cb')) {
-        var node = cb.closest('.df-version-node');
-        if (node) openAndLoad(node);
+        var n = cb.closest('.df-version-node'); if (n) openAndLoad(n); shouldSubmit = false;
       } else if (cb.classList.contains('df-engine-cb')) {
-        var node = cb.closest('.df-engine-node');
-        if (node) openAndLoad(node);
+        var n = cb.closest('.df-engine-node'); if (n) openAndLoad(n); shouldSubmit = false;
       }
 
-      // Sidebar form auto-submits via HTMX on change — let the existing
-      // submitSidebarForm handler pick up the new checkbox state. The
-      // change event bubbles up to the form; submitSidebarForm is bound to
-      // input/select onchange in the markup. For checkboxes inside the
-      // tree we need to call it explicitly.
-      var form = cb.form;
-      if (form && form.id === 'filter-form-sidebar' && typeof submitSidebarForm === 'function') {
-        submitSidebarForm(form);
+      if (shouldSubmit) {
+        var form = cb.form;
+        if (form && form.id === 'filter-form-sidebar' && typeof submitSidebarForm === 'function') {
+          submitSidebarForm(form);
+        }
       }
     });
   }

@@ -672,6 +672,11 @@
                 </details>
                 {% endif %}
             </div>
+            <!-- Apply: needed because drilling into the tree (manufacturer/model/
+                 version/engine) only expands without submitting. -->
+            <div class="sticky bottom-0 bg-white/95 backdrop-blur border-t border-gray-100 p-3 rounded-b-2xl">
+                <button type="submit" class="bilingual w-full py-2.5 bg-brand text-white font-bold rounded-xl transition text-sm hover:opacity-90" data-lang-ar="عرض النتائج" data-lang-ru="Показать результаты" data-lang-es="Ver resultados" data-lang-en="Show results">عرض النتائج</button>
+            </div>
         </form>
     </aside>
 
