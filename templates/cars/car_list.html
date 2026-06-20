@@ -1154,26 +1154,20 @@ function toggleFilterValue(key, value) {
     root.addEventListener('change', function(e) {
       var cb = e.target;
       if (!cb.classList || !cb.classList.contains('df-tree-cb')) return;
-      var shouldSubmit = true;  // default: leaf check + any uncheck refresh results
       if (!cb.checked) {
         var node = cb.closest('.df-tree-node');
         if (node) node.querySelectorAll('.df-tree-cb').forEach(function(c) { if (c !== cb) c.checked = false; });
       } else if (cb.classList.contains('df-mfr-cb')) {
-        var n = cb.closest('.df-mfr-node'); if (n) openAndLoad(n); shouldSubmit = false;
+        var n = cb.closest('.df-mfr-node'); if (n) openAndLoad(n);
       } else if (cb.classList.contains('df-model-cb')) {
-        var n = cb.closest('.df-model-node'); if (n) openAndLoad(n); shouldSubmit = false;
+        var n = cb.closest('.df-model-node'); if (n) openAndLoad(n);
       } else if (cb.classList.contains('df-version-cb')) {
-        var n = cb.closest('.df-version-node'); if (n) openAndLoad(n); shouldSubmit = false;
+        var n = cb.closest('.df-version-node'); if (n) openAndLoad(n);
       } else if (cb.classList.contains('df-engine-cb')) {
-        var n = cb.closest('.df-engine-node'); if (n) openAndLoad(n); shouldSubmit = false;
+        var n = cb.closest('.df-engine-node'); if (n) openAndLoad(n);
       }
-
-      if (shouldSubmit) {
-        var form = cb.form;
-        if (form && form.id === 'filter-form-sidebar' && typeof submitSidebarForm === 'function') {
-          submitSidebarForm(form);
-        }
-      }
+      // No auto-submit at ANY tree level — selection applies only when the user
+      // presses "Show results" (desktop) / "Apply Filters" (mobile drawer).
     });
   }
 
