@@ -50,6 +50,24 @@
     .lux-select option { background: var(--lux-bg); color: var(--lux-text); }
     .lux-range-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
     .lux-side-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+    /* Desktop sidebar: pin the Apply/Reset bar as an always-visible footer.
+       Scoped to desktop so the off-canvas mobile drawer (<=900px) is unaffected. */
+    @media (min-width: 901px) {
+        .lux-side {
+            display: flex; flex-direction: column;
+            max-height: calc(100vh - 2rem);
+        }
+        .lux-side-form {
+            flex: 1 1 auto; min-height: 0; overflow-y: auto;
+        }
+        .lux-side-actions {
+            flex: 0 0 auto;
+            margin-top: 1rem; padding-top: 1rem;
+            border-top: 1px solid var(--lux-line);
+            background: linear-gradient(180deg, #1a1612 0%, #0f0d0a 100%);
+        }
+    }
     .lux-btn {
         flex: 1; padding: 0.7rem; text-align: center; text-decoration: none;
         border: 1px solid var(--lux-gold); color: var(--lux-gold);

@@ -291,6 +291,22 @@
         .gl-list-tree { max-height: none; overflow-y: visible; }
     }
 
+    /* Desktop: pin the filter actions bar as a footer so it's always visible.
+       Scoped to min-width:921px (complement of the mobile drawer's max-width:920px),
+       so the off-canvas mobile drawer is unaffected. */
+    @media (min-width: 921px) {
+        .gl-list-dock {
+            display: flex; flex-direction: column;
+            max-height: calc(100vh - var(--gl-nav-h) - 1.8rem);
+        }
+        .gl-list-dock-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+        .gl-list-dock-actions {
+            flex: 0 0 auto; margin-top: 0; padding-top: 1rem;
+            border-top: 1px solid var(--gl-border);
+            background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        }
+    }
+
     @media (max-width: 700px) {
         .gl-list-page { padding: 1.4rem 0 2.5rem; }
         .gl-list-seg { width: 100%; }

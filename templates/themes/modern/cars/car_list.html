@@ -63,6 +63,27 @@
     .mod-filter-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
     .mod-filter-actions .mod-btn { flex: 1; }
 
+    /* Desktop only: pin the sidebar action bar as a footer so Apply/Reset stay
+       visible while only the filter list scrolls. Scoped to >900px so the
+       off-canvas mobile drawer (handled in the max-width:900px block) is
+       unaffected and keeps its full-height slide-in behaviour. */
+    @media (min-width: 901px) {
+        .mod-filter-side {
+            display: flex; flex-direction: column;
+            max-height: calc(100vh - 2rem);
+        }
+        .mod-filter-scroll {
+            flex: 1 1 auto; min-height: 0; overflow-y: auto;
+        }
+        .mod-filter-actions {
+            flex: 0 0 auto;
+            margin-top: 0;
+            padding-top: 0.85rem;
+            background: var(--mod-surface);
+            border-top: 1px solid var(--mod-line);
+        }
+    }
+
     /* Multi-select chip checkboxes */
     .mod-fchips {
         display: grid;
