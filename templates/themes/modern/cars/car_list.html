@@ -141,7 +141,7 @@
     }
     .mod-tree-name {
         font-size: 0.82rem; font-weight: 600;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.25;
     }
     .mod-tree-row:has(.mod-tree-cb:checked) {
         background: color-mix(in srgb, var(--mod-brand) 10%, transparent);
@@ -162,9 +162,9 @@
     .mod-tree-node.is-open > .mod-tree-row .mod-tree-toggle svg { transform: rotate(45deg); }
     .mod-tree-children {
         display: none;
-        padding: 0.3rem 0 0.1rem; padding-inline-start: 1.1rem;
+        padding: 0.3rem 0 0.1rem; padding-inline-start: 0.7rem;
         border-inline-start: 1px dashed var(--mod-line);
-        margin-inline-start: 0.7rem; margin-top: 0.25rem;
+        margin-inline-start: 0.45rem; margin-top: 0.25rem;
         flex-direction: column; gap: 0.3rem;
     }
     .mod-tree-node.is-open > .mod-tree-children { display: flex; }
@@ -601,7 +601,7 @@
                                 </div>
                                 <div class="mod-tree-children">
                                     {% for mod in models %}{% if mod.manufacturer_id == m.id %}{% with mod_id_str=mod.id|stringformat:"d" %}
-                                    <div class="mod-tree-node mod-model-node{% if mod_id_str in sel_models %} is-open{% endif %}" data-model-id="{{ mod.id }}" data-loaded="{% if mod_id_str in sel_models %}true{% else %}false{% endif %}">
+                                    <div class="mod-tree-node mod-model-node{% if mod_id_str in sel_models %} is-open{% endif %}" data-model-id="{{ mod.id }}" data-loaded="false">
                                         <div class="mod-tree-row">
                                             <label class="mod-tree-label">
                                                 <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="mod-tree-cb mod-model-cb">
@@ -611,18 +611,7 @@
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                             </button>
                                         </div>
-                                        <div class="mod-tree-children">
-                                            {% for b in badges %}{% if b.model_id == mod.id %}
-                                            <div class="mod-tree-node mod-badge-node" data-badge-id="{{ b.id }}">
-                                                <div class="mod-tree-row">
-                                                    <label class="mod-tree-label">
-                                                        <input type="checkbox" name="badge" value="{{ b.id }}" {% if b.id|stringformat:"d" in sel_badges %}checked{% endif %} class="mod-tree-cb mod-badge-cb">
-                                                        <span class="mod-tree-name">{{ b.name }}</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            {% endif %}{% endfor %}
-                                        </div>
+                                        <div class="mod-tree-children"></div>
                                     </div>
                                     {% endwith %}{% endif %}{% endfor %}
                                 </div>
@@ -1083,6 +1072,11 @@ window.modApplySort = function(value) {
         try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
     }
 
+    // Current multi-select values for a filter param, from the URL.
+    function selectedSet(name) {
+        return new Set(new URLSearchParams(window.location.search).getAll(name));
+    }
+
     function makeToggleSvg() {
         var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('viewBox', '0 0 24 24');
@@ -1098,10 +1092,12 @@ window.modApplySort = function(value) {
     }
 
     function buildNode(opts) {
-        // opts: { kind: 'model'|'badge', id, name, langs, leaf, checked }
+        // opts: { kind:'model'|'version'|'engine'|'badge', id, value, dataKey,
+        //         inputName, name, langs, leaf, checked }
+        var val = (opts.value != null ? opts.value : opts.id);
         var node = document.createElement('div');
         node.className = 'mod-tree-node mod-' + opts.kind + '-node';
-        node.dataset[opts.kind + 'Id'] = opts.id;
+        node.dataset[opts.dataKey || (opts.kind + 'Id')] = val;
         if (!opts.leaf) node.dataset.loaded = 'false';
 
         var row = document.createElement('div');
@@ -1112,8 +1108,8 @@ window.modApplySort = function(value) {
 
         var input = document.createElement('input');
         input.type = 'checkbox';
-        input.name = opts.kind;
-        input.value = opts.id;
+        input.name = opts.inputName || opts.kind;
+        input.value = val;
         input.className = 'mod-tree-cb mod-' + opts.kind + '-cb';
         if (opts.checked) input.checked = true;
 
@@ -1175,7 +1171,7 @@ window.modApplySort = function(value) {
                     var idStr = String(m.id);
                     if (existingSelected.has(idStr)) return;
                     var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
-                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: false }));
+                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: selectedSet('model').has(String(m.id)) }));
                 });
                 if (!children.children.length) {
                     var empty = document.createElement('div');
@@ -1192,39 +1188,88 @@ window.modApplySort = function(value) {
             });
     }
 
-    function loadBadges(modelNode) {
+    function _treeHint(children) {
+        var h = document.createElement('div');
+        h.className = 'mod-tree-hint bilingual';
+        h.setAttribute('data-lang-ar', 'جارٍ التحميل…');
+        h.setAttribute('data-lang-en', 'Loading…');
+        h.setAttribute('data-lang-es', 'Cargando…');
+        h.setAttribute('data-lang-ru', 'Загрузка…');
+        h.textContent = 'جارٍ التحميل…';
+        children.appendChild(h);
+        return h;
+    }
+    function _treeEmptyIfNone(children) {
+        if (!children.children.length) {
+            var e = document.createElement('div');
+            e.className = 'mod-tree-hint bilingual';
+            e.setAttribute('data-lang-ar', 'لا توجد نتائج');
+            e.setAttribute('data-lang-en', 'None');
+            e.setAttribute('data-lang-es', 'Ninguno');
+            e.setAttribute('data-lang-ru', 'Нет');
+            e.textContent = 'لا توجد نتائج';
+            children.appendChild(e);
+        }
+    }
+
+    // model → model versions (with year-range suffix)
+    function loadVersions(modelNode) {
         var mid = modelNode.dataset.modelId;
         var children = modelNode.querySelector(':scope > .mod-tree-children');
         if (!children) return Promise.resolve();
-        var existingSelected = new Map();
-        children.querySelectorAll(':scope > .mod-badge-node').forEach(function(n) {
-            existingSelected.set(n.dataset.badgeId, n);
-        });
+        var hint = _treeHint(children);
+        return fetchJSON('/api/model-versions/?model_id=' + encodeURIComponent(mid) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(v) {
+                    var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
+                    children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, leaf: false, checked: selectedSet('model_version').has(v.value) }));
+                });
+                _treeEmptyIfNone(children);
+                modelNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
 
-        var hint = document.createElement('div');
-        hint.className = 'mod-tree-hint bilingual';
-        hint.setAttribute('data-lang-ar', 'جارٍ التحميل…');
-        hint.setAttribute('data-lang-en', 'Loading…');
-        hint.textContent = 'جارٍ التحميل…';
-        children.appendChild(hint);
+    // model version → engine groups
+    function loadEngines(versionNode) {
+        var modelNode = versionNode.closest('.mod-model-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode.dataset.version || '';
+        var children = versionNode.querySelector(':scope > .mod-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/engine-groups/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(en) {
+                    children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, leaf: false, checked: selectedSet('engine_group').has(en.value) }));
+                });
+                _treeEmptyIfNone(children);
+                versionNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
 
-        return fetchJSON('/api/badges/?model_id=' + encodeURIComponent(mid) + qsCarType)
+    // engine group → badges (trims)
+    function loadBadges(engineNode) {
+        var modelNode = engineNode.closest('.mod-model-node');
+        var versionNode = engineNode.closest('.mod-version-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode ? (versionNode.dataset.version || '') : '';
+        var eg = engineNode.dataset.engine || '';
+        var children = engineNode.querySelector(':scope > .mod-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/badges-by-engine/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + '&engine_group=' + encodeURIComponent(eg) + qsCarType)
             .then(function(arr) {
                 hint.remove();
                 arr.forEach(function(b) {
-                    var idStr = String(b.id);
-                    if (existingSelected.has(idStr)) return;
-                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, leaf: true, checked: false }));
+                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, leaf: true, checked: selectedSet('badge').has(String(b.id)) }));
                 });
-                if (!children.children.length) {
-                    var empty = document.createElement('div');
-                    empty.className = 'mod-tree-hint bilingual';
-                    empty.setAttribute('data-lang-ar', 'لا توجد علامات');
-                    empty.setAttribute('data-lang-en', 'No trims');
-                    empty.textContent = 'لا توجد علامات';
-                    children.appendChild(empty);
-                }
-                modelNode.dataset.loaded = 'true';
+                _treeEmptyIfNone(children);
+                engineNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
             });
     }
 
@@ -1236,6 +1281,14 @@ window.modApplySort = function(value) {
                 return;
             }
             if (node.classList.contains('mod-model-node')) {
+                loadVersions(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('mod-version-node')) {
+                loadEngines(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('mod-engine-node')) {
                 loadBadges(node).then(function() { node.classList.add('is-open'); });
                 return;
             }
@@ -1263,13 +1316,32 @@ window.modApplySort = function(value) {
                 if (c !== cb) c.checked = false;
             });
         } else if (cb.classList.contains('mod-mfr-cb')) {
-            // Auto-expand on first selection so the user sees its models.
+            // Auto-expand on first selection so the user sees its children.
             var node = cb.closest('.mod-mfr-node');
             if (node && !node.classList.contains('is-open')) toggleNode(node);
         } else if (cb.classList.contains('mod-model-cb')) {
             var node = cb.closest('.mod-model-node');
             if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('mod-version-cb')) {
+            var node = cb.closest('.mod-version-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('mod-engine-cb')) {
+            var node = cb.closest('.mod-engine-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
         }
+        // No auto-submit at any level — selection applies on the Apply button.
+    });
+
+    // On initial load, populate any pre-opened (server-rendered is-open)
+    // manufacturer/model nodes whose lazy children aren't loaded yet, so the
+    // restored selection path is visible. Manufacturers load models; models then
+    // load versions. Deeper levels (version/engine) are not server-pre-rendered.
+    root.querySelectorAll('.mod-mfr-node.is-open[data-loaded="false"]').forEach(function(mfrNode) {
+        loadModels(mfrNode).then(function() {
+            mfrNode.querySelectorAll(':scope > .mod-tree-children > .mod-model-node.is-open[data-loaded="false"]').forEach(function(modelNode) {
+                loadVersions(modelNode);
+            });
+        });
     });
 })();
 </script>

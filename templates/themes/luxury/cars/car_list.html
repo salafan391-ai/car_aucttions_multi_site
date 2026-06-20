@@ -213,8 +213,9 @@
     }
     .lux-tree-name {
         font-size: 0.8rem; letter-spacing: 0.05em;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.25;
     }
+    .lux-tree-count { color: var(--lux-text-dim); font-size: 0.65rem; flex-shrink: 0; white-space: nowrap; opacity: 0.75; }
     .lux-tree-row:has(.lux-tree-cb:checked) {
         background: rgba(201,164,90,0.14);
         border-color: var(--lux-gold);
@@ -234,15 +235,15 @@
     .lux-tree-node.is-open > .lux-tree-row .lux-tree-toggle svg { transform: rotate(45deg); }
     .lux-tree-children {
         display: none;
-        padding: 0.3rem 0 0.1rem 1.25rem;
+        padding: 0.3rem 0 0.1rem 0.65rem;
         border-left: 1px dashed var(--lux-line);
-        margin-left: 0.7rem; margin-top: 0.25rem;
+        margin-left: 0.45rem; margin-top: 0.25rem;
         flex-direction: column; gap: 0.25rem;
     }
     [dir="rtl"] .lux-tree-children {
-        padding-left: 0; padding-right: 1.25rem;
+        padding-left: 0; padding-right: 0.65rem;
         border-left: 0; border-right: 1px dashed var(--lux-line);
-        margin-left: 0; margin-right: 0.7rem;
+        margin-left: 0; margin-right: 0.45rem;
     }
     .lux-tree-node.is-open > .lux-tree-children { display: flex; }
     .lux-tree-hint { color: var(--lux-text-dim); font-size: 0.7rem; padding: 0.35rem 0.55rem; font-style: italic; opacity: 0.65; letter-spacing: 0.05em; }
@@ -582,7 +583,7 @@
                                 </div>
                                 <div class="lux-tree-children">
                                     {% for mod in models %}{% if mod.manufacturer_id == m.id %}{% with mod_id_str=mod.id|stringformat:"d" %}
-                                    <div class="lux-tree-node lux-model-node{% if mod_id_str in sel_models %} is-open{% endif %}" data-model-id="{{ mod.id }}" data-loaded="{% if mod_id_str in sel_models %}true{% else %}false{% endif %}">
+                                    <div class="lux-tree-node lux-model-node{% if mod_id_str in sel_models %} is-open{% endif %}" data-model-id="{{ mod.id }}" data-loaded="false">
                                         <div class="lux-tree-row">
                                             <label class="lux-tree-label">
                                                 <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="lux-tree-cb lux-model-cb">
@@ -592,18 +593,7 @@
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                             </button>
                                         </div>
-                                        <div class="lux-tree-children">
-                                            {% for b in badges %}{% if b.model_id == mod.id %}
-                                            <div class="lux-tree-node lux-badge-node" data-badge-id="{{ b.id }}">
-                                                <div class="lux-tree-row">
-                                                    <label class="lux-tree-label">
-                                                        <input type="checkbox" name="badge" value="{{ b.id }}" {% if b.id|stringformat:"d" in sel_badges %}checked{% endif %} class="lux-tree-cb lux-badge-cb">
-                                                        <span class="lux-tree-name">{{ b.name }}</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            {% endif %}{% endfor %}
-                                        </div>
+                                        <div class="lux-tree-children"></div>
                                     </div>
                                     {% endwith %}{% endif %}{% endfor %}
                                 </div>
@@ -1064,6 +1054,11 @@ window.luxApplySort = function(value) {
         try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
     }
 
+    // Current multi-select values for a filter param, from the URL.
+    function selectedSet(name) {
+        return new Set(new URLSearchParams(window.location.search).getAll(name));
+    }
+
     function makeToggleSvg() {
         var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('viewBox', '0 0 24 24');
@@ -1079,10 +1074,12 @@ window.luxApplySort = function(value) {
     }
 
     function buildNode(opts) {
-        // opts: { kind: 'model'|'badge', id, name, langs, leaf, checked }
+        // opts: { kind:'model'|'version'|'engine'|'badge', id, value, dataKey,
+        //         inputName, name, langs, count, leaf, checked }
+        var val = (opts.value != null ? opts.value : opts.id);
         var node = document.createElement('div');
         node.className = 'lux-tree-node lux-' + opts.kind + '-node';
-        node.dataset[opts.kind + 'Id'] = opts.id;
+        node.dataset[opts.dataKey || (opts.kind + 'Id')] = val;
         if (!opts.leaf) node.dataset.loaded = 'false';
 
         var row = document.createElement('div');
@@ -1093,8 +1090,8 @@ window.luxApplySort = function(value) {
 
         var input = document.createElement('input');
         input.type = 'checkbox';
-        input.name = opts.kind;
-        input.value = opts.id;
+        input.name = opts.inputName || opts.kind;
+        input.value = val;
         input.className = 'lux-tree-cb lux-' + opts.kind + '-cb';
         if (opts.checked) input.checked = true;
 
@@ -1111,6 +1108,13 @@ window.luxApplySort = function(value) {
         name.textContent = (opts.langs && opts.langs[lang]) || opts.name;
 
         label.appendChild(input); label.appendChild(name);
+
+        if (typeof opts.count === 'number') {
+            var cnt = document.createElement('span');
+            cnt.className = 'lux-tree-count';
+            cnt.textContent = '(' + opts.count + ')';
+            label.appendChild(cnt);
+        }
         row.appendChild(label);
 
         if (!opts.leaf) {
@@ -1156,7 +1160,7 @@ window.luxApplySort = function(value) {
                     var idStr = String(m.id);
                     if (existingSelected.has(idStr)) return;
                     var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
-                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: false }));
+                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: selectedSet('model').has(String(m.id)) }));
                 });
                 if (!children.children.length) {
                     var empty = document.createElement('div');
@@ -1173,39 +1177,86 @@ window.luxApplySort = function(value) {
             });
     }
 
-    function loadBadges(modelNode) {
+    function _treeHint(children) {
+        var h = document.createElement('div');
+        h.className = 'lux-tree-hint bilingual';
+        h.setAttribute('data-lang-ar', 'جارٍ التحميل…');
+        h.setAttribute('data-lang-en', 'Loading…');
+        h.setAttribute('data-lang-es', 'Cargando…');
+        h.setAttribute('data-lang-ru', 'Загрузка…');
+        h.textContent = 'جارٍ التحميل…';
+        children.appendChild(h);
+        return h;
+    }
+    function _treeEmptyIfNone(children) {
+        if (!children.children.length) {
+            var e = document.createElement('div');
+            e.className = 'lux-tree-hint bilingual';
+            e.setAttribute('data-lang-ar', '—');
+            e.setAttribute('data-lang-en', '—');
+            e.textContent = '—';
+            children.appendChild(e);
+        }
+    }
+
+    // model group → model versions (with year-range suffix)
+    function loadVersions(modelNode) {
         var mid = modelNode.dataset.modelId;
         var children = modelNode.querySelector(':scope > .lux-tree-children');
         if (!children) return Promise.resolve();
-        var existingSelected = new Map();
-        children.querySelectorAll(':scope > .lux-badge-node').forEach(function(n) {
-            existingSelected.set(n.dataset.badgeId, n);
-        });
+        var hint = _treeHint(children);
+        return fetchJSON('/api/model-versions/?model_id=' + encodeURIComponent(mid) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(v) {
+                    if (!v.car_count) return;
+                    var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
+                    children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, checked: selectedSet('model_version').has(v.value) }));
+                });
+                _treeEmptyIfNone(children);
+                modelNode.dataset.loaded = 'true';
+            });
+    }
 
-        var hint = document.createElement('div');
-        hint.className = 'lux-tree-hint bilingual';
-        hint.setAttribute('data-lang-ar', 'جارٍ التحميل…');
-        hint.setAttribute('data-lang-en', 'Loading…');
-        hint.textContent = 'جارٍ التحميل…';
-        children.appendChild(hint);
+    // model version → engine groups
+    function loadEngines(versionNode) {
+        var modelNode = versionNode.closest('.lux-model-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode.dataset.version || '';
+        var children = versionNode.querySelector(':scope > .lux-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/engine-groups/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(en) {
+                    if (!en.car_count) return;
+                    children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, checked: selectedSet('engine_group').has(en.value) }));
+                });
+                _treeEmptyIfNone(children);
+                versionNode.dataset.loaded = 'true';
+            });
+    }
 
-        return fetchJSON('/api/badges/?model_id=' + encodeURIComponent(mid) + qsCarType)
+    // engine group → badges (trims)
+    function loadBadges(engineNode) {
+        var modelNode = engineNode.closest('.lux-model-node');
+        var versionNode = engineNode.closest('.lux-version-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode ? (versionNode.dataset.version || '') : '';
+        var eg = engineNode.dataset.engine || '';
+        var children = engineNode.querySelector(':scope > .lux-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/badges-by-engine/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + '&engine_group=' + encodeURIComponent(eg) + qsCarType)
             .then(function(arr) {
                 hint.remove();
                 arr.forEach(function(b) {
-                    var idStr = String(b.id);
-                    if (existingSelected.has(idStr)) return;
-                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, leaf: true, checked: false }));
+                    if (!b.car_count) return;
+                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: selectedSet('badge').has(String(b.id)) }));
                 });
-                if (!children.children.length) {
-                    var empty = document.createElement('div');
-                    empty.className = 'lux-tree-hint bilingual';
-                    empty.setAttribute('data-lang-ar', 'لا توجد علامات');
-                    empty.setAttribute('data-lang-en', 'No trims');
-                    empty.textContent = 'لا توجد علامات';
-                    children.appendChild(empty);
-                }
-                modelNode.dataset.loaded = 'true';
+                _treeEmptyIfNone(children);
+                engineNode.dataset.loaded = 'true';
             });
     }
 
@@ -1217,6 +1268,14 @@ window.luxApplySort = function(value) {
                 return;
             }
             if (node.classList.contains('lux-model-node')) {
+                loadVersions(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('lux-version-node')) {
+                loadEngines(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('lux-engine-node')) {
                 loadBadges(node).then(function() { node.classList.add('is-open'); });
                 return;
             }
@@ -1250,7 +1309,14 @@ window.luxApplySort = function(value) {
         } else if (cb.classList.contains('lux-model-cb')) {
             var node = cb.closest('.lux-model-node');
             if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('lux-version-cb')) {
+            var node = cb.closest('.lux-version-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('lux-engine-cb')) {
+            var node = cb.closest('.lux-engine-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
         }
+        // No auto-submit at any tree level — selection applies via the Apply button.
     });
 })();
 </script>

@@ -109,7 +109,7 @@
     }
     .gl-list-chip-input:focus-visible + .gl-list-chip { outline: 2px solid var(--gl-brand); outline-offset: 2px; }
 
-    /* Hierarchical tree: make → model → badge */
+    /* Hierarchical tree: make → model → version → engine → trim */
     .gl-list-tree { display: flex; flex-direction: column; gap: .3rem; max-height: 360px; overflow-y: auto; padding-inline-end: .15rem; }
     .gl-list-tree::-webkit-scrollbar { width: 6px; }
     .gl-list-tree::-webkit-scrollbar-thumb { background: var(--gl-border-2); border-radius: 3px; }
@@ -123,7 +123,7 @@
     .gl-list-tree-row:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); color: var(--gl-ink); }
     .gl-list-tree-label { flex: 1; display: flex; align-items: center; gap: .4rem; cursor: pointer; user-select: none; min-width: 0; margin: 0; position: relative; }
     .gl-list-tree-cb { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; clip: rect(0 0 0 0); }
-    .gl-list-tree-name { font-size: .82rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gl-list-tree-name { font-size: .82rem; font-weight: 600; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.25; }
     .gl-list-tree-row:has(.gl-list-tree-cb:checked) {
         background: color-mix(in srgb, var(--gl-brand) 16%, transparent);
         border-color: var(--gl-brand); color: var(--gl-brand);
@@ -141,9 +141,9 @@
     .gl-list-tree-node.is-open > .gl-list-tree-row .gl-list-tree-toggle svg { transform: rotate(45deg); }
     .gl-list-tree-children {
         display: none; flex-direction: column; gap: .3rem;
-        padding: .3rem 0 .1rem; padding-inline-start: 1rem;
+        padding: .3rem 0 .1rem; padding-inline-start: .6rem;
         border-inline-start: 1px dashed var(--gl-border-2);
-        margin-inline-start: .65rem; margin-top: .25rem;
+        margin-inline-start: .45rem; margin-top: .25rem;
     }
     .gl-list-tree-node.is-open > .gl-list-tree-children { display: flex; }
     .gl-list-tree-hint { color: var(--gl-faint); font-size: .72rem; padding: .35rem .55rem; }
@@ -410,7 +410,7 @@
                                 </div>
                                 <div class="gl-list-tree-children">
                                     {% for mod in models %}{% if mod.manufacturer_id == m.id %}{% with mod_id_str=mod.id|stringformat:"d" %}
-                                    <div class="gl-list-tree-node gl-model-node{% if mod_id_str in sel_models %} is-open{% endif %}" data-model-id="{{ mod.id }}" data-loaded="{% if mod_id_str in sel_models %}true{% else %}false{% endif %}">
+                                    <div class="gl-list-tree-node gl-model-node" data-model-id="{{ mod.id }}" data-loaded="false">
                                         <div class="gl-list-tree-row">
                                             <label class="gl-list-tree-label">
                                                 <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="gl-list-tree-cb gl-model-cb">
@@ -420,18 +420,7 @@
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                             </button>
                                         </div>
-                                        <div class="gl-list-tree-children">
-                                            {% for b in badges %}{% if b.model_id == mod.id %}
-                                            <div class="gl-list-tree-node gl-badge-node" data-badge-id="{{ b.id }}">
-                                                <div class="gl-list-tree-row">
-                                                    <label class="gl-list-tree-label">
-                                                        <input type="checkbox" name="badge" value="{{ b.id }}" {% if b.id|stringformat:"d" in sel_badges %}checked{% endif %} class="gl-list-tree-cb gl-badge-cb">
-                                                        <span class="gl-list-tree-name">{{ b.name }}</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            {% endif %}{% endfor %}
-                                        </div>
+                                        <div class="gl-list-tree-children"></div>
                                     </div>
                                     {% endwith %}{% endif %}{% endfor %}
                                 </div>
@@ -905,10 +894,18 @@ window.glApplySort = function(value) {
         return svg;
     }
 
+    // Current multi-select values for a filter param, from the URL.
+    function selectedSet(name) {
+        return new Set(new URLSearchParams(window.location.search).getAll(name));
+    }
+
     function buildNode(opts) {
+        // opts: { kind:'model'|'version'|'engine'|'badge', id, value, dataKey,
+        //         inputName, name, langs, leaf, checked }
+        var val = (opts.value != null ? opts.value : opts.id);
         var node = document.createElement('div');
         node.className = 'gl-list-tree-node gl-' + opts.kind + '-node';
-        node.dataset[opts.kind + 'Id'] = opts.id;
+        node.dataset[opts.dataKey || (opts.kind + 'Id')] = val;
         if (!opts.leaf) node.dataset.loaded = 'false';
 
         var row = document.createElement('div');
@@ -919,8 +916,8 @@ window.glApplySort = function(value) {
 
         var input = document.createElement('input');
         input.type = 'checkbox';
-        input.name = opts.kind;
-        input.value = opts.id;
+        input.name = opts.inputName || opts.kind;
+        input.value = val;
         input.className = 'gl-list-tree-cb gl-' + opts.kind + '-cb';
         if (opts.checked) input.checked = true;
 
@@ -982,7 +979,7 @@ window.glApplySort = function(value) {
                     var idStr = String(m.id);
                     if (existingSelected.has(idStr)) return;
                     var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
-                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: false }));
+                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: selectedSet('model').has(idStr) }));
                 });
                 if (!children.children.length) {
                     var empty = document.createElement('div');
@@ -999,39 +996,87 @@ window.glApplySort = function(value) {
             });
     }
 
-    function loadBadges(modelNode) {
+    function _treeHint(children) {
+        var h = document.createElement('div');
+        h.className = 'gl-list-tree-hint bilingual';
+        h.setAttribute('data-lang-ar', 'جارٍ التحميل…');
+        h.setAttribute('data-lang-en', 'Loading…');
+        h.setAttribute('data-lang-es', 'Cargando…');
+        h.setAttribute('data-lang-ru', 'Загрузка…');
+        h.textContent = 'جارٍ التحميل…';
+        children.appendChild(h);
+        return h;
+    }
+    function _treeEmptyIfNone(children) {
+        if (!children.children.length) {
+            var e = document.createElement('div');
+            e.className = 'gl-list-tree-hint bilingual';
+            e.setAttribute('data-lang-ar', 'لا توجد نتائج');
+            e.setAttribute('data-lang-en', 'No results');
+            e.setAttribute('data-lang-es', 'Sin resultados');
+            e.setAttribute('data-lang-ru', 'Нет результатов');
+            e.textContent = 'لا توجد نتائج';
+            children.appendChild(e);
+        }
+    }
+
+    // model → model versions (with year-range suffix)
+    function loadVersions(modelNode) {
         var mid = modelNode.dataset.modelId;
         var children = modelNode.querySelector(':scope > .gl-list-tree-children');
         if (!children) return Promise.resolve();
-        var existingSelected = new Map();
-        children.querySelectorAll(':scope > .gl-badge-node').forEach(function(n) {
-            existingSelected.set(n.dataset.badgeId, n);
-        });
+        var hint = _treeHint(children);
+        return fetchJSON('/api/model-versions/?model_id=' + encodeURIComponent(mid) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(v) {
+                    var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
+                    children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, leaf: false, checked: selectedSet('model_version').has(v.value) }));
+                });
+                _treeEmptyIfNone(children);
+                modelNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
 
-        var hint = document.createElement('div');
-        hint.className = 'gl-list-tree-hint bilingual';
-        hint.setAttribute('data-lang-ar', 'جارٍ التحميل…');
-        hint.setAttribute('data-lang-en', 'Loading…');
-        hint.textContent = 'جارٍ التحميل…';
-        children.appendChild(hint);
+    // model version → engine groups
+    function loadEngines(versionNode) {
+        var modelNode = versionNode.closest('.gl-model-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode.dataset.version || '';
+        var children = versionNode.querySelector(':scope > .gl-list-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/engine-groups/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(en) {
+                    children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, leaf: false, checked: selectedSet('engine_group').has(en.value) }));
+                });
+                _treeEmptyIfNone(children);
+                versionNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
 
-        return fetchJSON('/api/badges/?model_id=' + encodeURIComponent(mid) + qsCarType)
+    // engine group → badges (trims)
+    function loadBadges(engineNode) {
+        var modelNode = engineNode.closest('.gl-model-node');
+        var versionNode = engineNode.closest('.gl-version-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode ? (versionNode.dataset.version || '') : '';
+        var eg = engineNode.dataset.engine || '';
+        var children = engineNode.querySelector(':scope > .gl-list-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/badges-by-engine/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + '&engine_group=' + encodeURIComponent(eg) + qsCarType)
             .then(function(arr) {
                 hint.remove();
                 arr.forEach(function(b) {
-                    var idStr = String(b.id);
-                    if (existingSelected.has(idStr)) return;
-                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, leaf: true, checked: false }));
+                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, leaf: true, checked: selectedSet('badge').has(String(b.id)) }));
                 });
-                if (!children.children.length) {
-                    var empty = document.createElement('div');
-                    empty.className = 'gl-list-tree-hint bilingual';
-                    empty.setAttribute('data-lang-ar', 'لا توجد علامات');
-                    empty.setAttribute('data-lang-en', 'No trims');
-                    empty.textContent = 'لا توجد علامات';
-                    children.appendChild(empty);
-                }
-                modelNode.dataset.loaded = 'true';
+                _treeEmptyIfNone(children);
+                engineNode.dataset.loaded = 'true';
             });
     }
 
@@ -1043,6 +1088,14 @@ window.glApplySort = function(value) {
                 return;
             }
             if (node.classList.contains('gl-model-node')) {
+                loadVersions(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('gl-version-node')) {
+                loadEngines(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('gl-engine-node')) {
                 loadBadges(node).then(function() { node.classList.add('is-open'); });
                 return;
             }
@@ -1072,6 +1125,12 @@ window.glApplySort = function(value) {
             if (node && !node.classList.contains('is-open')) toggleNode(node);
         } else if (cb.classList.contains('gl-model-cb')) {
             var node = cb.closest('.gl-model-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('gl-version-cb')) {
+            var node = cb.closest('.gl-version-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('gl-engine-cb')) {
+            var node = cb.closest('.gl-engine-node');
             if (node && !node.classList.contains('is-open')) toggleNode(node);
         }
     });
