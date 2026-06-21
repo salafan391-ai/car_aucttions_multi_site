@@ -34,6 +34,21 @@ def ingest_from_r2(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "invalid JSON body"}, status=400)
 
+    # KB Cha Cha Cha — Encar-schema CSV → isolated 'kbchachacha' category.
+    if (body.get("kind") or "").strip() == "kbchachacha":
+        kb_url = (body.get("r2_url") or "").strip() or \
+            "https://pub-08cf22ed84b040d8baafb1e3cad62dc7.r2.dev/kbchachacha/kb_cars.csv"
+
+        def background_kb():
+            try:
+                call_command("import_kb_csv", "--url", kb_url, "--delete-stale")
+                print(f"[ingest] import_kb_csv OK: {kb_url}", flush=True)
+            except Exception as exc:  # noqa: BLE001
+                print(f"[ingest] import_kb_csv FAILED: {kb_url}: {exc}", flush=True)
+
+        threading.Thread(target=background_kb, daemon=True).start()
+        return JsonResponse({"ok": True, "status": "started", "kind": "kbchachacha", "url": kb_url})
+
     r2_key = (body.get("r2_key") or "").strip()
     if not r2_key:
         return JsonResponse({"error": "r2_key required"}, status=400)
