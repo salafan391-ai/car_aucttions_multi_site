@@ -1251,7 +1251,7 @@ def car_list(request):
     if car_type == 'auction':
         # Use flat values_list to avoid a correlated subquery — cached 15 min
         _auction_mfr_key = f"car_list_v2:auction_manufacturers:{schema}"
-        _static_cache_key = f"car_list_v3:static_filters_auction:{schema}"
+        _static_cache_key = f"car_list_v4:static_filters_auction:{schema}"
         _pop_mfr_key = f"car_list_v2:popular_manufacturers_auction:{schema}"
 
         manufacturers      = cache.get(_auction_mfr_key)

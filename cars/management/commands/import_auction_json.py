@@ -485,6 +485,12 @@ class Command(BaseCommand):
                 "options": enriched_options,
             }
 
+            # Auction source has no engine_group; derive it (fuel + cc binned to
+            # the nearest 100) so the "engine (fuel+cc)" filter works.
+            _f, _p = car_data["fuel"], car_data["power"]
+            if _f and _p:
+                car_data["engine_group"] = f"{_f} {int(round(_p / 100.0)) * 100}cc"
+
             if car_id in existing_car_ids:
                 cars_to_update.append(car_data)
             elif car_id in seen_car_ids:
@@ -530,7 +536,7 @@ class Command(BaseCommand):
                             "year", "color", "transmission", "power", "price",
                             "mileage", "fuel", "images", "inspection_image",
                             "points", "address", "vin", "seat_count", "entry",
-                            "drive_wheel", "options",
+                            "drive_wheel", "options", "engine_group",
                         ],
                         batch_size=500,
                     )

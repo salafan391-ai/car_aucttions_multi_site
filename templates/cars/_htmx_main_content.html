@@ -184,6 +184,23 @@
                             {% include 'cars/_filter_tree.html' with tree_id="drawer-tree-root" car_type=request.GET.car_type %}
                         </details>
                     </div>
+                    {% if request.GET.car_type == 'auction' and engine_groups %}
+                    <!-- Engine (fuel + cc) — auction only -->
+                    <div class="col-span-2">
+                        <details class="filter-group" {% if sel_engine_groups %}open{% endif %}>
+                            <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="المحرك (الوقود + السعة)" data-lang-ru="Двигатель" data-lang-es="Motor" data-lang-en="Engine (fuel + cc)">المحرك (الوقود + السعة)</span>
+                                <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                                {% for e in engine_groups %}
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="engine_group" value="{{ e }}" {% if e in sel_engine_groups %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ e|pretty_en }}{% with fc=facet_counts|get_item:'engine_group'|get_item:e %}<span class="fc-badge text-[10px] font-bold opacity-50 ms-1"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span></label>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    </div>
+                    {% endif %}
                     <!-- Year (collapsible) -->
                     <div class="col-span-2">
                         <details class="filter-group" {% if request.GET.year_from or request.GET.year_to %}open{% endif %}>
@@ -444,6 +461,22 @@
                     <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
                     {% include 'cars/_filter_tree.html' with tree_id="sidebar-tree-root" car_type=request.GET.car_type %}
                 </details>
+
+                {% if request.GET.car_type == 'auction' and engine_groups %}
+                <!-- Engine (fuel + cc) — auction cars lack version/engine tree data -->
+                <details class="filter-group border-t border-gray-100 pt-3" {% if sel_engine_groups %}open{% endif %}>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="المحرك (الوقود + السعة)" data-lang-ru="Двигатель" data-lang-es="Motor" data-lang-en="Engine (fuel + cc)">المحرك (الوقود + السعة)</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                        {% for e in engine_groups %}
+                        <label class="cursor-pointer select-none"><input type="checkbox" name="engine_group" value="{{ e }}" {% if e in sel_engine_groups %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ e|pretty_en }}{% with fc=facet_counts|get_item:'engine_group'|get_item:e %}<span class="fc-badge text-[10px] font-bold opacity-50 ms-1"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span></label>
+                        {% endfor %}
+                    </div>
+                </details>
+                {% endif %}
 
 
                 <!-- Year (collapsible) -->
