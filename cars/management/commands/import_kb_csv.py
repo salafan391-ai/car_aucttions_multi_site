@@ -292,27 +292,26 @@ class Command(BaseCommand):
         return new_lns
 
     def _backfill_slugs(self):
-        """Backfill empty slugs for bulk_created rows (save() bypassed). Same
-        raw SQL approach as import_auction_json."""
-        with connection.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE cars_apicar
-                SET slug = CONCAT(
-                    COALESCE(CAST(year AS TEXT), ''), '-',
-                    LOWER(REGEXP_REPLACE(
-                        COALESCE((SELECT name FROM cars_manufacturer WHERE id = manufacturer_id), ''),
-                        '[^a-zA-Z0-9]+', '-', 'g'
-                    )), '-',
-                    LOWER(REGEXP_REPLACE(
-                        COALESCE((SELECT name FROM cars_carmodel WHERE id = model_id), ''),
-                        '[^a-zA-Z0-9]+', '-', 'g'
-                    )), '-',
-                    CAST(id AS TEXT)
+        """Backfill empty slugs for bulk_created rows (save() bypassed).
+        JOIN-based (not correlated subqueries) + statement_timeout lifted, so it
+        completes for ~122k rows instead of silently timing out."""
+        with transaction.atomic():
+            with connection.cursor() as cur:
+                cur.execute("SET LOCAL statement_timeout = 0")
+                cur.execute(
+                    """
+                    UPDATE cars_apicar a
+                    SET slug = CONCAT(
+                        COALESCE(CAST(a.year AS TEXT), ''), '-',
+                        LOWER(REGEXP_REPLACE(COALESCE(m.name, ''), '[^a-zA-Z0-9]+', '-', 'g')), '-',
+                        LOWER(REGEXP_REPLACE(COALESCE(cm.name, ''), '[^a-zA-Z0-9]+', '-', 'g')), '-',
+                        CAST(a.id AS TEXT)
+                    )
+                    FROM cars_manufacturer m, cars_carmodel cm
+                    WHERE m.id = a.manufacturer_id AND cm.id = a.model_id
+                      AND (a.slug IS NULL OR a.slug = '')
+                    """
                 )
-                WHERE slug IS NULL OR slug = ''
-                """
-            )
 
     def _delete_stale(self, cat, seen_lns, dry_run):
         """Delete kbchachacha-category cars not seen in this CSV. SCOPED to the
