@@ -484,11 +484,13 @@ class Command(BaseCommand):
                 "vin": car_id,
                 "drive_wheel": (item.get("wheel") or "")[:100],
                 "options": enriched_options,
-                # auction-feed extras (inspection record)
-                "first_registration": (item.get("first_registration") or "")[:20],
+                # auction-feed extras (inspection record). Sources name these
+                # differently: lotte uses notes/first_registration; skcarrental
+                # uses special_notes/first_reg_date (same Korean defect vocab).
+                "first_registration": (item.get("first_registration") or item.get("first_reg_date") or "")[:20],
                 "usage_type": translate_usage(item.get("use"))[:40],
                 "features": (item.get("features") or "")[:255],
-                "inspection_notes": translate_notes(item.get("notes")),
+                "inspection_notes": translate_notes(item.get("notes") or item.get("special_notes")),
             }
 
             # Auction source has no engine_group; derive it (fuel + cc binned to
