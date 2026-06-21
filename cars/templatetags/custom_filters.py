@@ -27,6 +27,14 @@ def _extra_dict(enum_name: str, lang: str):
 register = template.Library()
 
 
+@register.filter
+def split(value, sep=" • "):
+    """Split a string into a list (default separator ' • '), dropping blanks."""
+    if not value:
+        return []
+    return [p.strip() for p in str(value).split(sep) if p.strip()]
+
+
 def _force_https(url):
     """Upgrade http:// to https:// to prevent mixed-content browser blocks."""
     if url and url.startswith('http://'):

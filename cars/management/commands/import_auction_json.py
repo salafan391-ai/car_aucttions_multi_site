@@ -231,6 +231,7 @@ class Command(BaseCommand):
 
         # Local imports — match the dashboard view layout.
         from cars.normalization import normalize_transmission, normalize_fuel, normalize_name
+        from cars.auction_ko import translate_usage, translate_notes
         from cars.translation_utils import translate_batch
 
         auction_category = self._safe_get_or_create(Category.objects, name="auction")
@@ -483,6 +484,11 @@ class Command(BaseCommand):
                 "vin": car_id,
                 "drive_wheel": (item.get("wheel") or "")[:100],
                 "options": enriched_options,
+                # auction-feed extras (inspection record)
+                "first_registration": (item.get("first_registration") or "")[:20],
+                "usage_type": translate_usage(item.get("use"))[:40],
+                "features": (item.get("features") or "")[:255],
+                "inspection_notes": translate_notes(item.get("notes")),
             }
 
             # Auction source has no engine_group; derive it (fuel + cc binned to
@@ -537,6 +543,8 @@ class Command(BaseCommand):
                             "mileage", "fuel", "images", "inspection_image",
                             "points", "address", "vin", "seat_count", "entry",
                             "drive_wheel", "options", "engine_group",
+                            "first_registration", "usage_type", "features",
+                            "inspection_notes",
                         ],
                         batch_size=500,
                     )

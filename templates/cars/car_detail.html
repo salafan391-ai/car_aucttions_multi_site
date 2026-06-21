@@ -304,6 +304,24 @@
             </div>
             {% endif %}
 
+            {% if car.inspection_notes %}
+            <!-- Auction inspection notes / disclosed defects -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl shadow-sm p-6 mt-6 detail-section">
+                <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-amber-900">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                    <span class="bilingual" data-lang-ar="ملاحظات فحص المزاد / العيوب المُعلنة" data-lang-ru="Заметки осмотра / дефекты" data-lang-es="Notas de inspección / defectos" data-lang-en="Auction Inspection Notes / Disclosed Defects">ملاحظات فحص المزاد / العيوب المُعلنة</span>
+                </h2>
+                <div class="flex flex-wrap gap-2">
+                    {% for note in car.inspection_notes|split:" • " %}
+                    <span class="inline-flex items-center gap-1.5 bg-white border border-amber-200 text-amber-800 text-sm rounded-lg px-3 py-1.5">
+                        <span class="text-amber-500 font-bold">⚠</span>{{ note }}
+                    </span>
+                    {% endfor %}
+                </div>
+                <p class="text-[11px] text-amber-700 opacity-70 mt-3 bilingual" data-lang-ar="مأخوذة من تقرير فحص المزاد؛ قد لا تكون شاملة." data-lang-ru="Из отчёта осмотра аукциона." data-lang-es="Del informe de inspección de la subasta." data-lang-en="From the auction inspection report; may not be exhaustive.">مأخوذة من تقرير فحص المزاد؛ قد لا تكون شاملة.</p>
+            </div>
+            {% endif %}
+
             <!-- Details Table -->
             <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 detail-section">
                 <h2 class="text-xl font-bold mb-4 bilingual" data-lang-ar="المواصفات" data-lang-ru="Технические характеристики" data-lang-es="Presupuesto" data-lang-en="Specifications">المواصفات</h2>
@@ -385,6 +403,24 @@
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="الفئة" data-lang-ru="Комплектация" data-lang-es="Acabado" data-lang-en="Trim">الفئة</div>
                         <div class="font-bold text-sm">{{ car.trim_detail|capfirst }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.first_registration %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="تاريخ أول تسجيل" data-lang-ru="Первая регистрация" data-lang-es="Primer registro" data-lang-en="First Registration">تاريخ أول تسجيل</div>
+                        <div class="font-bold text-sm"><bdi dir="ltr">{{ car.first_registration }}</bdi></div>
+                    </div>
+                    {% endif %}
+                    {% if car.usage_type %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="نوع الاستخدام" data-lang-ru="Использование" data-lang-es="Uso" data-lang-en="Prior Use">نوع الاستخدام</div>
+                        <div class="font-bold text-sm">{{ car.usage_type }}</div>
+                    </div>
+                    {% endif %}
+                    {% if car.features %}
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="المميزات" data-lang-ru="Особенности" data-lang-es="Características" data-lang-en="Features">المميزات</div>
+                        <div class="font-bold text-sm">{{ car.features }}</div>
                     </div>
                     {% endif %}
                     <div class="bg-gray-50 rounded-xl p-4">

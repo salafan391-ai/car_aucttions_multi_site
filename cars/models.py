@@ -140,6 +140,15 @@ class ApiCar(models.Model):
     model_year_range = models.CharField(max_length=20, blank=True, null=True, db_index=True)
     engine_group = models.CharField(max_length=60, blank=True, null=True, db_index=True)
     trim_detail = models.CharField(max_length=100, blank=True, null=True)
+    # Auction-feed extras (from the Lotte/AutoHub/etc. inspection record):
+    #   first_registration – exact first-registration date, e.g. "2021.03.29"
+    #   usage_type         – prior use (rental/lease/private/…), translated, filterable
+    #   features           – trim/feature highlight line, e.g. "TURBO LT"
+    #   inspection_notes   – auctioneer's defect report, translated (condition disclosure)
+    first_registration = models.CharField(max_length=20, blank=True, default="")
+    usage_type = models.CharField(max_length=40, blank=True, default="", db_index=True)
+    features = models.CharField(max_length=255, blank=True, default="")
+    inspection_notes = models.TextField(blank=True, default="")
     color = models.ForeignKey(CarColor, on_delete=models.CASCADE, db_index=True)
     seat_color = models.ForeignKey(CarSeatColor, on_delete=models.CASCADE,blank=True,null=True)
     seat_count = models.CharField(max_length=100,blank=True,null=True)

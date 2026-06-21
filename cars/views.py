@@ -1115,6 +1115,10 @@ def car_list(request):
     if sel_engine_groups:
         qs = qs.filter(engine_group__in=sel_engine_groups)
 
+    sel_usage_types = request.GET.getlist('usage_type')
+    if sel_usage_types:
+        qs = qs.filter(usage_type__in=sel_usage_types)
+
     sel_model_year_ranges = request.GET.getlist('model_year_range')
     if sel_model_year_ranges:
         qs = qs.filter(model_year_range__in=sel_model_year_ranges)
@@ -1251,7 +1255,7 @@ def car_list(request):
     if car_type == 'auction':
         # Use flat values_list to avoid a correlated subquery — cached 15 min
         _auction_mfr_key = f"car_list_v2:auction_manufacturers:{schema}"
-        _static_cache_key = f"car_list_v4:static_filters_auction:{schema}"
+        _static_cache_key = f"car_list_v5:static_filters_auction:{schema}"
         _pop_mfr_key = f"car_list_v2:popular_manufacturers_auction:{schema}"
 
         manufacturers      = cache.get(_auction_mfr_key)
@@ -1295,6 +1299,7 @@ def car_list(request):
             _scolor_ids = set(_auction_qs.values_list('seat_color_id', flat=True).distinct())
             _anames     = sorted(v for v in _auction_qs.values_list('auction_name', flat=True).distinct() if v)
             _engine_groups = sorted(v for v in _auction_qs.values_list('engine_group', flat=True).distinct() if v)[:40]
+            _usage_types   = sorted(v for v in _auction_qs.values_list('usage_type', flat=True).distinct() if v)
             _myr_ranges    = sorted((v for v in _auction_qs.values_list('model_year_range', flat=True).distinct() if v), reverse=True)
             _trim_details  = sorted(v for v in _auction_qs.values_list('trim_detail', flat=True).distinct() if v)[:40]
 
@@ -1308,6 +1313,7 @@ def car_list(request):
                 'seat_colors': list(CarSeatColor.objects.filter(id__in=_scolor_ids).order_by('name')),
                 'auction_names': _anames,
                 'engine_groups': _engine_groups,
+                'usage_types': _usage_types,
                 'model_year_ranges': _myr_ranges,
                 'trim_details': _trim_details,
             }
@@ -1508,6 +1514,7 @@ def car_list(request):
     seat_colors   = static_filters['seat_colors']
     auction_names = static_filters['auction_names']
     engine_groups     = static_filters.get('engine_groups', [])
+    usage_types       = static_filters.get('usage_types', [])
     model_year_ranges = static_filters.get('model_year_ranges', [])
     trim_details      = static_filters.get('trim_details', [])
 
@@ -1675,6 +1682,7 @@ def car_list(request):
         'seat_colors': seat_colors,
         'auction_names': auction_names,
         'engine_groups': engine_groups,
+        'usage_types': usage_types,
         'model_year_ranges': model_year_ranges,
         'trim_details': trim_details,
         'auction_name': request.GET.get('auction_name', ''),
@@ -1699,6 +1707,7 @@ def car_list(request):
         'sel_seat_colors':   request.GET.getlist('seat_color'),
         'sel_auction_names': request.GET.getlist('auction_name'),
         'sel_engine_groups':     request.GET.getlist('engine_group'),
+        'sel_usage_types':       request.GET.getlist('usage_type'),
         'sel_model_year_ranges': request.GET.getlist('model_year_range'),
         'sel_trim_details':      request.GET.getlist('trim_detail'),
     }
