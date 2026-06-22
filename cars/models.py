@@ -149,6 +149,8 @@ class ApiCar(models.Model):
     usage_type = models.CharField(max_length=40, blank=True, default="", db_index=True)
     features = models.CharField(max_length=255, blank=True, default="")
     inspection_notes = models.TextField(blank=True, default="")
+    # KB: external performance-inspection report URL (carmodoo/iwsp/autocafe/…)
+    inspection_report_url = models.CharField(max_length=500, blank=True, default="")
     color = models.ForeignKey(CarColor, on_delete=models.CASCADE, db_index=True)
     seat_color = models.ForeignKey(CarSeatColor, on_delete=models.CASCADE,blank=True,null=True)
     seat_count = models.CharField(max_length=100,blank=True,null=True)

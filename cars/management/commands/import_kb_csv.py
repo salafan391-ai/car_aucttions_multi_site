@@ -199,6 +199,7 @@ class Command(BaseCommand):
         "seat_color", "lot_number", "year", "mileage", "price", "fuel",
         "transmission", "model_version", "model_year_range", "engine_group",
         "trim_detail", "address", "images", "seat_count", "vin", "image",
+        "inspection_report_url",
     ]
 
     def _build_car_kwargs(self, cat, ln, car_id, fields, manufacturer, model,
@@ -228,6 +229,7 @@ class Command(BaseCommand):
             "vin": fields.get("vin") or ln,
             "image": fields.get("image"),
             "title": title[:100],
+            "inspection_report_url": (fields.get("inspection_report_url") or "")[:500],
         }
 
     def _flush_batch(self, cat, batch, caches, dry_run, counters):
@@ -353,6 +355,8 @@ class Command(BaseCommand):
                 fields = ef._row_to_fields(row)
                 if not fields["lot_number"]:
                     continue
+                # KB-only column not in _row_to_fields — carry it through.
+                fields["inspection_report_url"] = row.get("inspection_report_url", "")
 
                 # Namespace the lot so KB lots can never collide with Encar lots.
                 ln = "kb-" + fields["lot_number"]

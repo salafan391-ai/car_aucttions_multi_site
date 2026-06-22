@@ -322,6 +322,22 @@
             </div>
             {% endif %}
 
+            {% if car.inspection_report_url %}
+            <!-- KB performance-inspection report (original; translated view coming soon) -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 detail-section">
+                <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-gray-800">
+                    <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="bilingual" data-lang-ar="تقرير فحص أداء المركبة" data-lang-ru="Отчёт о техосмотре" data-lang-es="Informe de inspección" data-lang-en="Vehicle Inspection Report">تقرير فحص أداء المركبة</span>
+                </h2>
+                <a href="{{ car.inspection_report_url }}" target="_blank" rel="noopener noreferrer"
+                   class="w-full flex items-center justify-center gap-2 bg-brand hover:opacity-90 text-white font-bold py-3.5 px-4 rounded-xl transition shadow hover:shadow-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    <span class="bilingual" data-lang-ar="عرض التقرير الأصلي" data-lang-ru="Открыть отчёт" data-lang-es="Ver informe original" data-lang-en="View original report">عرض التقرير الأصلي</span>
+                </a>
+                <p class="text-[11px] text-gray-400 mt-2 bilingual" data-lang-ar="التقرير الرسمي لفحص أداء المركبة (بالكورية). نسخة مترجمة قريبًا." data-lang-en="Official Korean vehicle performance-inspection report. Translated view coming soon.">التقرير الرسمي لفحص أداء المركبة (بالكورية). نسخة مترجمة قريبًا.</p>
+            </div>
+            {% endif %}
+
             <!-- Details Table -->
             <div class="bg-white rounded-2xl shadow-sm p-6 mt-6 detail-section">
                 <h2 class="text-xl font-bold mb-4 bilingual" data-lang-ar="المواصفات" data-lang-ru="Технические характеристики" data-lang-es="Presupuesto" data-lang-en="Specifications">المواصفات</h2>

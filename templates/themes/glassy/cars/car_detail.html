@@ -897,6 +897,19 @@
         </script>
         {% endif %}
 
+        {% if car.inspection_report_url %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="فحص رسمي" data-lang-en="Official Inspection" data-lang-es="Inspección oficial" data-lang-ru="Официальная проверка">فحص رسمي</small>
+                <span class="bilingual" data-lang-ar="تقرير فحص أداء المركبة" data-lang-en="Vehicle Inspection Report">تقرير فحص أداء المركبة</span>
+            </h2>
+            <a href="{{ car.inspection_report_url }}" target="_blank" rel="noopener noreferrer" class="gl-btn gl-btn-solid gl-detail-cta">
+                <span class="bilingual" data-lang-ar="عرض التقرير الأصلي" data-lang-en="View original report">عرض التقرير الأصلي</span>
+            </a>
+            <p style="color: var(--gl-muted); font-size: .72rem; margin: .7rem 0 0;" class="bilingual" data-lang-ar="التقرير الرسمي لفحص أداء المركبة (بالكورية). نسخة مترجمة قريبًا." data-lang-en="Official Korean vehicle performance-inspection report. Translated view coming soon.">التقرير الرسمي لفحص أداء المركبة (بالكورية). نسخة مترجمة قريبًا.</p>
+        </section>
+        {% endif %}
+
         <section class="gl-detail-section">
             <h2>
                 <small class="bilingual" data-lang-ar="التفاصيل الكاملة" data-lang-en="Full Details" data-lang-es="Detalles completos" data-lang-ru="Полные данные">التفاصيل الكاملة</small>
