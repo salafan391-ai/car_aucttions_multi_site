@@ -11,6 +11,7 @@ Keys on `SiteCar.external_id = "hc_<idx>"`, so reruns upsert.
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 from datetime import datetime
@@ -19,7 +20,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
 from django_tenants.utils import schema_context
 
@@ -114,6 +115,13 @@ def _load_cookie(cli_cookie: str | None) -> str:
     return ""
 
 
+def _advisory_lock_key(schema: str) -> int:
+    """Stable signed-64-bit Postgres advisory-lock key for a schema's import."""
+    h = hashlib.sha256(f"happycar_import:{schema}".encode()).hexdigest()
+    # 15 hex digits = 60 bits — comfortably inside Postgres bigint range.
+    return int(h[:15], 16)
+
+
 class Command(BaseCommand):
     help = "Import HappyCar auction listings into a tenant's SiteCar table."
 
@@ -170,6 +178,22 @@ class Command(BaseCommand):
             raise CommandError("Refusing to import into the 'public' schema.")
         if not Tenant.objects.filter(schema_name=schema).exists():
             raise CommandError(f"Tenant with schema_name={schema!r} does not exist.")
+
+        # Cross-process mutex: refuse to start if another import for this same
+        # schema is already running — no matter how it was triggered (dashboard,
+        # manual CLI, cron). A session-level Postgres advisory lock is atomic and
+        # is released automatically when this process exits (even on crash/kill),
+        # so there are no stale locks to clean up.
+        lock_key = _advisory_lock_key(schema)
+        with connection.cursor() as cur:
+            cur.execute("SELECT pg_try_advisory_lock(%s)", [lock_key])
+            if not cur.fetchone()[0]:
+                raise CommandError(
+                    f"Another import_happycar for schema {schema!r} is already "
+                    f"running (advisory lock {lock_key} held). Aborting to avoid "
+                    f"a duplicate concurrent import."
+                )
+        self._advisory_lock_key = lock_key
 
         cookie = _load_cookie(opts["cookie"])
         if not cookie:
