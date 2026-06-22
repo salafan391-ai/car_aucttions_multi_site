@@ -804,6 +804,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                                 </svg>
                             </button>
+                            {% if car.inspection_report_url %}<span title="تقرير فحص أداء المركبة متوفر" class="absolute {% if car.status == 'sold' %}top-9{% else %}top-2{% endif %} left-2 w-6 h-6 rounded-full flex items-center justify-center shadow z-10" style="background:rgba(255,255,255,.92)"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m1 7H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V17a2 2 0 01-2 2z"/></svg></span>{% endif %}
                             {% if car.auction_date %}<div class="gl-list-card-cd"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>{% endif %}
                         </div>
                         <div class="gl-list-card-body">
