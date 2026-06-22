@@ -11,16 +11,17 @@ Keys on `SiteCar.external_id = "hc_<idx>"`, so reruns upsert.
 """
 from __future__ import annotations
 
-import hashlib
+import fcntl
 import os
 import re
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connection, transaction
+from django.db import transaction
 from django.utils import timezone
 from django_tenants.utils import schema_context
 
@@ -115,13 +116,6 @@ def _load_cookie(cli_cookie: str | None) -> str:
     return ""
 
 
-def _advisory_lock_key(schema: str) -> int:
-    """Stable signed-64-bit Postgres advisory-lock key for a schema's import."""
-    h = hashlib.sha256(f"happycar_import:{schema}".encode()).hexdigest()
-    # 15 hex digits = 60 bits — comfortably inside Postgres bigint range.
-    return int(h[:15], 16)
-
-
 class Command(BaseCommand):
     help = "Import HappyCar auction listings into a tenant's SiteCar table."
 
@@ -181,19 +175,25 @@ class Command(BaseCommand):
 
         # Cross-process mutex: refuse to start if another import for this same
         # schema is already running — no matter how it was triggered (dashboard,
-        # manual CLI, cron). A session-level Postgres advisory lock is atomic and
-        # is released automatically when this process exits (even on crash/kill),
-        # so there are no stale locks to clean up.
-        lock_key = _advisory_lock_key(schema)
-        with connection.cursor() as cur:
-            cur.execute("SELECT pg_try_advisory_lock(%s)", [lock_key])
-            if not cur.fetchone()[0]:
-                raise CommandError(
-                    f"Another import_happycar for schema {schema!r} is already "
-                    f"running (advisory lock {lock_key} held). Aborting to avoid "
-                    f"a duplicate concurrent import."
-                )
-        self._advisory_lock_key = lock_key
+        # manual CLI, cron). An OS file lock (flock) is held for this process's
+        # whole lifetime and auto-released by the kernel when the process exits
+        # (incl. crash/kill), so there are no stale locks to clean up. We keep the
+        # fd on the instance so it isn't garbage-collected (which would release
+        # the lock). Unlike a DB session lock, flock survives the long, DB-idle
+        # scraping phase and doesn't depend on the connection/pooler.
+        lock_path = os.path.join(tempfile.gettempdir(), f"happycar_import_{schema}.lock")
+        self._lock_fd = open(lock_path, "w")
+        try:
+            fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except (BlockingIOError, OSError):
+            self._lock_fd.close()
+            self._lock_fd = None
+            raise CommandError(
+                f"Another import_happycar for schema {schema!r} is already "
+                f"running. Aborting to avoid a duplicate concurrent import."
+            )
+        self._lock_fd.write(str(os.getpid()))
+        self._lock_fd.flush()
 
         cookie = _load_cookie(opts["cookie"])
         if not cookie:
