@@ -13,8 +13,11 @@ under `BASE_DIR/.happycar_cache/` so reruns can parse without re-fetching.
 from __future__ import annotations
 
 import concurrent.futures
+import http.cookiejar
+import json
 import re
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Iterable
@@ -26,6 +29,8 @@ from . import classifier as _classify
 BASE_URL = "https://www.happycarservice.com"
 LIST_AJAX = f"{BASE_URL}/content/auction_ins.ajax.html"
 DETAIL_URL = f"{BASE_URL}/content/ins_view.html"
+LOGIN_PAGE = f"{BASE_URL}/member/login.html"
+LOGIN_AJAX = f"{BASE_URL}/member/login.ajax.html"
 PAGE_SIZE = 33
 
 CACHE_DIR = Path(settings.BASE_DIR) / ".happycar_cache"
@@ -259,6 +264,59 @@ def _looks_like_login_redirect(data: bytes) -> bool:
         return False
     head = data[:600].lower()
     return b"/member/login.html" in head or b"location.href=" in head and b"login" in head
+
+
+def login(member_id: str, member_pwd: str, log=print) -> str:
+    """Log in to happycarservice.com and return an authenticated cookie string.
+
+    Seeds a session by GETting the login page, then POSTs the credentials to
+    login.ajax.html (JSON response: rst_code == 1 means success). Returns the
+    "PHPSESSID=…" cookie header value to pass to scrape_list/scrape_details.
+    Raises HappyCarAuthError on bad credentials or a missing session cookie.
+    """
+    if not member_id or not member_pwd:
+        raise HappyCarAuthError("HappyCar login requires both an id and a password.")
+
+    ua = _headers("")["User-Agent"]
+    jar = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+
+    # 1) Seed PHPSESSID from the login page.
+    opener.open(
+        urllib.request.Request(LOGIN_PAGE, headers={"User-Agent": ua}),
+        timeout=30,
+    ).read()
+
+    # 2) Authenticate.
+    body = urllib.parse.urlencode({
+        "member_id": member_id, "member_pwd": member_pwd, "id_save": "N",
+    }).encode()
+    headers = {
+        "User-Agent": ua,
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": LOGIN_PAGE,
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+    raw = opener.open(
+        urllib.request.Request(LOGIN_AJAX, data=body, headers=headers), timeout=30,
+    ).read()
+    try:
+        resp = json.loads(raw.decode("utf-8", errors="replace"))
+    except ValueError:
+        resp = {}
+    if resp.get("rst_code") != 1:
+        msg = resp.get("rst_msg") or "unknown error"
+        raise HappyCarAuthError(
+            f"HappyCar login failed for id {member_id!r}: {msg} "
+            f"(rst_code={resp.get('rst_code')}). Check HAPPYCAR_USER / HAPPYCAR_PASS."
+        )
+
+    sess = next((c.value for c in jar if c.name == "PHPSESSID"), None)
+    if not sess:
+        raise HappyCarAuthError("HappyCar login succeeded but no PHPSESSID cookie was set.")
+    log("  logged in to HappyCar as " + member_id)
+    return f"PHPSESSID={sess}"
 
 
 def scrape_details(

@@ -130,6 +130,15 @@ class Command(BaseCommand):
                   "Falls back to HAPPYCAR_COOKIE env var or .happycar_cookie file."),
         )
         parser.add_argument(
+            "--username", default=None,
+            help="HappyCar login id. Falls back to HAPPYCAR_USER env var. "
+                 "When set (and no --cookie), the importer logs in to get a fresh cookie.",
+        )
+        parser.add_argument(
+            "--password", default=None,
+            help="HappyCar login password. Falls back to HAPPYCAR_PASS env var.",
+        )
+        parser.add_argument(
             "--pages", type=int, default=None,
             help="Cap the number of list pages fetched (useful for testing).",
         )
@@ -195,11 +204,21 @@ class Command(BaseCommand):
         self._lock_fd.write(str(os.getpid()))
         self._lock_fd.flush()
 
+        # Cookie resolution: an explicit cookie wins; otherwise, if credentials
+        # are available (flags or HAPPYCAR_USER / HAPPYCAR_PASS env), log in to
+        # mint a fresh authenticated cookie — avoids the manual copy-paste and
+        # the mid-run session expiry of a hand-pasted PHPSESSID.
         cookie = _load_cookie(opts["cookie"])
         if not cookie:
+            username = opts.get("username") or os.environ.get("HAPPYCAR_USER", "").strip()
+            password = opts.get("password") or os.environ.get("HAPPYCAR_PASS", "").strip()
+            if username and password:
+                self._log("Logging in to HappyCar…")
+                cookie = _scraper.login(username, password, log=self._log)
+        if not cookie:
             self.stdout.write(self.style.WARNING(
-                "No session cookie set — will fetch anonymous listings (usually "
-                "fewer cars than a logged-in session sees)."
+                "No session cookie or login credentials set — will fetch anonymous "
+                "listings (usually fewer cars, and detail pages need a login)."
             ))
 
         lang = opts["lang"]
