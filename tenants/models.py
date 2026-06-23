@@ -246,6 +246,11 @@ class Tenant(TenantMixin):
     email_use_tls = models.BooleanField(default=True, verbose_name="Use TLS")
     email_from_name = models.CharField(max_length=100, blank=True, verbose_name="From Name")
 
+    # HappyCar import credentials — stored per tenant so the importer can
+    # auto-login (mint a fresh session) on every run, no cookie pasting.
+    happycar_username = models.CharField(max_length=150, blank=True, default="", verbose_name="اسم مستخدم HappyCar")
+    happycar_password = models.CharField(max_length=255, blank=True, default="", verbose_name="كلمة مرور HappyCar")
+
     # Currency Exchange Rates (per 1 KRW)
     rate_usd = models.DecimalField(max_digits=10, decimal_places=6, default=0.00067, verbose_name="سعر الدولار USD")
     rate_sar = models.DecimalField(max_digits=10, decimal_places=6, default=0.00250, verbose_name="سعر الريال SAR")

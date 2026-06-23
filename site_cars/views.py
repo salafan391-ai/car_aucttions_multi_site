@@ -1253,7 +1253,26 @@ def import_happycar_view(request):
             messages.info(request, "استيراد جارٍ بالفعل، الرجاء الانتظار حتى ينتهي.")
             return redirect('import_happycar')
 
-        cookie = (request.POST.get('cookie') or '').strip()
+        # HappyCar login: store the username/password on the tenant so they're
+        # reused on every future run. The password field is left blank to keep
+        # the saved one; a new value replaces it.
+        from tenants.models import Tenant
+        tenant_obj = Tenant.objects.filter(schema_name=schema).first()
+        hc_user = (request.POST.get('happycar_username') or '').strip()
+        hc_pass = request.POST.get('happycar_password') or ''
+        if tenant_obj is not None:
+            fields = []
+            if hc_user != (tenant_obj.happycar_username or ''):
+                tenant_obj.happycar_username = hc_user
+                fields.append('happycar_username')
+            if hc_pass:  # only overwrite when a new password is entered
+                tenant_obj.happycar_password = hc_pass
+                fields.append('happycar_password')
+            if fields:
+                tenant_obj.save(update_fields=fields)
+            hc_user = tenant_obj.happycar_username
+            hc_pass = tenant_obj.happycar_password
+
         lang = request.POST.get('lang') or 'en'
         if lang not in ('ar', 'en', 'ko'):
             lang = 'en'
@@ -1277,9 +1296,16 @@ def import_happycar_view(request):
         if request.POST.get('dry_run'):
             cmd.append('--dry-run')
 
+        # Pass THIS tenant's credentials (never inherit a global cookie/creds
+        # from the environment, so one tenant can't import with another's login).
         env = os.environ.copy()
-        if cookie:
-            env['HAPPYCAR_COOKIE'] = cookie
+        env.pop('HAPPYCAR_COOKIE', None)
+        if hc_user and hc_pass:
+            env['HAPPYCAR_USER'] = hc_user
+            env['HAPPYCAR_PASS'] = hc_pass
+        else:
+            env.pop('HAPPYCAR_USER', None)
+            env.pop('HAPPYCAR_PASS', None)
 
         log_fd, log_path = tempfile.mkstemp(
             prefix=f'happycar-{schema}-', suffix='.log')
@@ -1323,6 +1349,9 @@ def import_happycar_view(request):
                             .filter(external_id__startswith='hc_')
                             .exclude(status='sold').count())
 
+    from tenants.models import Tenant
+    _t = Tenant.objects.filter(schema_name=schema).first()
+
     return render(request, 'site_cars/import_happycar.html', {
         'schema': schema,
         'running': running,
@@ -1330,6 +1359,8 @@ def import_happycar_view(request):
         'log_output': log_output,
         'cmd_preview': state.get('cmd', ''),
         'unsold_damaged_count': unsold_damaged_count,
+        'happycar_username': (_t.happycar_username if _t else ''),
+        'happycar_has_password': bool(_t and _t.happycar_password),
     })
 
 
