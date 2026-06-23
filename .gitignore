@@ -24,3 +24,5 @@ db.sqlite3
 
 # HappyCar import tool local cache
 .happycar_cache/
+# HappyCar session cookie — never commit (use HAPPYCAR_USER/HAPPYCAR_PASS instead)
+.happycar_cookie

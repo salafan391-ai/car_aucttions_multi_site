@@ -204,17 +204,22 @@ class Command(BaseCommand):
         self._lock_fd.write(str(os.getpid()))
         self._lock_fd.flush()
 
-        # Cookie resolution: an explicit cookie wins; otherwise, if credentials
-        # are available (flags or HAPPYCAR_USER / HAPPYCAR_PASS env), log in to
-        # mint a fresh authenticated cookie — avoids the manual copy-paste and
-        # the mid-run session expiry of a hand-pasted PHPSESSID.
-        cookie = _load_cookie(opts["cookie"])
+        # Cookie resolution precedence:
+        #   1. explicit --cookie flag (manual override)
+        #   2. log in with credentials (--username/--password or HAPPYCAR_USER /
+        #      HAPPYCAR_PASS env) → a fresh authenticated cookie every run. This
+        #      beats a stale env/file cookie so the import never uses an expired
+        #      session (the cause of the mid-run login-redirect failures).
+        #   3. HAPPYCAR_COOKIE env var / .happycar_cookie file (legacy fallback)
+        cookie = (opts["cookie"] or "").strip()
         if not cookie:
             username = opts.get("username") or os.environ.get("HAPPYCAR_USER", "").strip()
             password = opts.get("password") or os.environ.get("HAPPYCAR_PASS", "").strip()
             if username and password:
                 self._log("Logging in to HappyCar…")
                 cookie = _scraper.login(username, password, log=self._log)
+        if not cookie:
+            cookie = _load_cookie(None)
         if not cookie:
             self.stdout.write(self.style.WARNING(
                 "No session cookie or login credentials set — will fetch anonymous "
