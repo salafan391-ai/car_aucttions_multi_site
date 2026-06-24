@@ -931,6 +931,7 @@
     function refresh() {
         document.getElementById('gl-share-count').textContent = cart.length;
         bar.classList.toggle('show', cart.length > 0);  // persistent indicator, not tied to mode
+        if (window.glUpdateCartBadge) window.glUpdateCartBadge();  // live header/nav badge
     }
     function markCards() {
         document.querySelectorAll('.gl-list-card').forEach(function (c) {
