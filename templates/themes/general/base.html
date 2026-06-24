@@ -285,14 +285,11 @@
 <header class="gc-header" id="gc-header">
     <div class="gc-header-inner">
         <a href="{% url 'home' %}" class="gc-logo">
-            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
-            <span>{{ site_name|default:"General Cars" }}</span>
+            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% else %}<span>{{ site_name|default:"General Cars" }}</span>{% endif %}
         </a>
 
         <nav class="gc-nav" id="gc-nav">
             <a href="{% url 'home' %}" class="bilingual {% if request.resolver_match.url_name == 'home' %}active{% endif %}" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
-            <a href="{% url 'car_list' %}" class="bilingual {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">السيارات</a>
-            <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
             {% if show_parts %}<a href="{% url 'parts_list' %}" class="bilingual {% if request.resolver_match.url_name == 'parts_list' %}active{% endif %}" data-lang-ar="قطع غيار" data-lang-en="Spare Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
             {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="bilingual {% if request.resolver_match.url_name == 'accessories_list' %}active{% endif %}" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
             <a href="{% url 'home' %}#gc-about" class="bilingual" data-lang-ar="من نحن" data-lang-en="About" data-lang-es="Acerca" data-lang-ru="О нас">من نحن</a>
