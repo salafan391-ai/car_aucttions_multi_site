@@ -891,16 +891,29 @@
         box-shadow: 0 6px 16px rgba(42,37,100,.4);
     }
     .gl-share-bar {
-        position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 1300;
-        display: none; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px;
-        background: var(--gl-bg-2); border: 1px solid var(--gl-border); box-shadow: var(--gl-shadow-lg);
-        max-width: calc(100vw - 24px);
+        /* z below the filter drawer (z-90/100) so an open drawer covers it. */
+        position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 55;
+        display: none; align-items: center; gap: 8px; padding: 8px 8px 8px 15px; border-radius: 16px;
+        background: rgba(255,255,255,0.97); border: 1px solid var(--gc-line, #e5e7eb);
+        box-shadow: 0 18px 42px rgba(15,23,42,0.18);
+        backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px);
+        max-width: calc(100vw - 20px);
     }
+    html.gc-dark .gl-share-bar { background: rgba(17,24,39,0.97); border-color: rgba(148,163,184,0.22); }
     .gl-share-bar.show { display: flex; }
-    .gl-share-bar b { color: var(--gl-brand); }
-    .gl-share-bar button, .gl-share-bar a { font-family: inherit; font-weight: 800; font-size: .82rem; border-radius: 10px; cursor: pointer; padding: .55rem .9rem; border: 0; text-decoration: none; display: inline-block; }
-    .gl-share-bar .b-export { background: var(--gl-grad-solid); color: #fff; }
-    .gl-share-bar .b-clear { background: var(--gl-glass); color: var(--gl-muted); border: 1px solid var(--gl-border); }
+    .gl-share-bar > span:first-child { font-size: .85rem; white-space: nowrap; color: var(--gc-ink, #111827); }
+    html.gc-dark .gl-share-bar > span:first-child { color: #e5e7eb; }
+    .gl-share-bar b { color: var(--gc-primary, #4338ca); font-size: 1.05rem; }
+    .gl-share-bar a, .gl-share-bar button { font-family: inherit; font-weight: 800; font-size: .82rem; border-radius: 11px; cursor: pointer; padding: .6rem 1rem; border: 0; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+    .gl-share-bar .b-export { background: linear-gradient(135deg, var(--gc-navy-deep, #2a2564), #3b37a4); color: #fff; }
+    .gl-share-bar .b-export::after { content: "←"; font-size: 1rem; }
+    .gl-share-bar .b-clear { background: transparent; color: var(--gc-dim, #6b7280); padding: .6rem .7rem; }
+    .gl-share-bar .b-clear:hover { color: var(--gc-red, #dc2626); }
+    /* On phones the bottom nav already sits at the very bottom — float this
+       above it (full-width pill) so the two bars don't stack/overlap. */
+    @media (max-width: 767px) {
+        .gl-share-bar { left: 10px; right: 10px; transform: none; max-width: none; bottom: calc(5.6rem + 16px); justify-content: space-between; }
+    }
 </style>
 
 <div class="gl-share-bar" id="gl-share-bar">
