@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.db.models import Q, Max
+from django.db.models import Q, Max, F
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Count
@@ -1471,7 +1471,7 @@ def car_list(request):
 
     if sel_models:
         _mdl_key_part = sel_models[0] if len(sel_models) == 1 else '-'.join(sorted(sel_models))
-        _badges_cache_key = f"car_list_v2:badges_cnt:{_mdl_key_part}:{car_type or 'all'}"
+        _badges_cache_key = f"car_list_v3:badges_cnt:{_mdl_key_part}:{car_type or 'all'}"
         badges = cache.get(_badges_cache_key)
         if badges is None:
             if car_type == 'auction':
@@ -1486,9 +1486,13 @@ def car_list(request):
                 _badge_filter = ~Q(apicar__category__name='kbchachacha') & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id__in=sel_models)
             badges = list(
                 CarBadge.objects.filter(model_id__in=sel_models)
-                .annotate(car_count=Count('apicar', filter=_badge_filter))
+                .annotate(
+                    car_count=Count('apicar', filter=_badge_filter),
+                    max_year=Max('apicar__year', filter=_badge_filter),
+                )
                 .filter(car_count__gt=0)
-                .distinct().order_by('-car_count')
+                # Newest generation first (by latest model year), count as tiebreaker.
+                .distinct().order_by(F('max_year').desc(nulls_last=True), '-car_count')
             )
             cache.set(_badges_cache_key, badges, 60 * 15)
     else:
@@ -1948,7 +1952,7 @@ def api_badges_by_model(request):
 
     schema = getattr(connection, 'schema_name', 'public')
     car_type_key = request.GET.get('car_type') or 'all'
-    _cache_key = f"api_badges_v2:{schema}:{model_id}:ct:{car_type_key}"
+    _cache_key = f"api_badges_v3:{schema}:{model_id}:ct:{car_type_key}"
     cached = cache.get(_cache_key)
     if cached is not None:
         return JsonResponse(cached, safe=False)
@@ -1987,8 +1991,13 @@ def api_badges_by_model(request):
 
     badges = list(
         CarBadge.objects.filter(id__in=badge_ids)
-        .annotate(car_count=Count('apicar', filter=_badge_count_filter))
-        .order_by('-car_count').values('id', 'name', 'car_count')
+        .annotate(
+            car_count=Count('apicar', filter=_badge_count_filter),
+            max_year=Max('apicar__year', filter=_badge_count_filter),
+        )
+        # Newest generation first (by latest model year), count as tiebreaker.
+        .order_by(F('max_year').desc(nulls_last=True), '-car_count')
+        .values('id', 'name', 'car_count')
     )
     cache.set(_cache_key, badges, 60 * 30)  # 30 minutes
     return JsonResponse(badges, safe=False)
