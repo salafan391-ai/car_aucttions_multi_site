@@ -64,7 +64,9 @@
     .gc-hero-slider { position: absolute; inset: 0; }
     .gc-hero-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .9s ease, visibility .9s; display: block; text-decoration: none; }
     .gc-hero-slide.active { opacity: 1; visibility: visible; }
+    .gc-hero-slide-link { display: block; width: 100%; height: 100%; }
     .gc-hero-slide img { width: 100%; height: 100%; object-fit: cover; }
+    .gc-hero-slide-desc { font-weight: 600; font-size: .86rem; line-height: 1.45; opacity: .95; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .gc-hero-slide-cap {
         position: absolute; inset-inline: 0; bottom: 0; padding: 46px 22px 18px; text-align: start;
         background: linear-gradient(to top, rgba(15,23,42,0.85), rgba(15,23,42,0.35) 55%, transparent);
@@ -293,10 +295,32 @@
                 <p class="bilingual" data-lang-ar="نقدّم لعملائنا مجموعة مختارة بعناية من السيارات الكورية عالية الجودة، مفحوصة بدقّة من فريقنا المختص. نلتزم بتوفير سيارات موثوقة وخدمة من الطراز الأول — بأسعار تنافسية وشفافية كاملة." data-lang-en="We offer a carefully selected collection of high-quality Korean cars, thoroughly inspected by our specialized team — reliable vehicles and top-quality service at competitive prices, with complete transparency." data-lang-es="Ofrecemos una colección de coches coreanos de alta calidad, inspeccionados a fondo por nuestro equipo — vehículos fiables y un servicio de primera a precios competitivos." data-lang-ru="Мы предлагаем тщательно отобранную коллекцию качественных корейских автомобилей, проверенных нашей командой — надёжные авто и первоклассный сервис по конкурентным ценам.">نقدّم لعملائنا مجموعة مختارة بعناية من السيارات الكورية عالية الجودة، مفحوصة بدقّة من فريقنا المختص. نلتزم بتوفير سيارات موثوقة وخدمة من الطراز الأول — بأسعار تنافسية وشفافية كاملة.</p>
             </div>
             <div class="gc-hero-media">
-                {% with hero_slides=latest_cars|slice:":6" %}
-                {% if hero_slides %}
+                {% if site_hero_images %}
+                {# Slides you manage in the dashboard (Site settings → hero images) #}
                 <div class="gc-hero-slider" id="gc-hero-slider">
-                    {% for car in hero_slides %}
+                    {% for hi in site_hero_images %}
+                    <div class="gc-hero-slide{% if forloop.first %} active{% endif %}">
+                        {% if hi.link_url %}<a href="{{ hi.link_url }}" class="gc-hero-slide-link" aria-label="{{ hi.title|default:site_name }}">{% endif %}
+                        <img src="{{ hi.image.url }}" alt="{{ hi.title|default:site_name }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+                        {% if hi.title or hi.description %}
+                        <div class="gc-hero-slide-cap">
+                            {% if hi.title %}<span class="gc-hero-slide-name">{{ hi.title }}</span>{% endif %}
+                            {% if hi.description %}<span class="gc-hero-slide-desc">{{ hi.description }}</span>{% endif %}
+                        </div>
+                        {% endif %}
+                        {% if hi.link_url %}</a>{% endif %}
+                    </div>
+                    {% endfor %}
+                    {% if site_hero_images|length > 1 %}
+                    <div class="gc-hero-dots" id="gc-hero-dots">
+                        {% for hi in site_hero_images %}<button type="button" class="gc-hero-dot{% if forloop.first %} active{% endif %}" data-i="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% elif latest_cars %}
+                {# No dashboard slides yet → auto-showcase the latest cars #}
+                <div class="gc-hero-slider" id="gc-hero-slider">
+                    {% for car in latest_cars|slice:":6" %}
                     <a href="{% url 'car_detail' car.slug %}" class="gc-hero-slide{% if forloop.first %} active{% endif %}">
                         {% if car.image %}<img src="{{ car.image|img_thumb }}" alt="{{ car.title }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
                         {% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_thumb }}" alt="{{ car.title }}" loading="lazy">{% endif %}
@@ -306,16 +330,15 @@
                         </div>
                     </a>
                     {% endfor %}
-                    {% if hero_slides|length > 1 %}
+                    {% if latest_cars|length > 1 %}
                     <div class="gc-hero-dots" id="gc-hero-dots">
-                        {% for car in hero_slides %}<button type="button" class="gc-hero-dot{% if forloop.first %} active{% endif %}" data-i="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>{% endfor %}
+                        {% for car in latest_cars|slice:":6" %}<button type="button" class="gc-hero-dot{% if forloop.first %} active{% endif %}" data-i="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>{% endfor %}
                     </div>
                     {% endif %}
                 </div>
                 {% elif site_hero_image %}<img src="{{ site_hero_image }}" alt="{{ site_name }}">
                 {% elif site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}" style="object-fit:contain; padding:40px;">
                 {% else %}<i class="bi bi-car-front-fill gc-hero-glyph"></i>{% endif %}
-                {% endwith %}
             </div>
         </div>
     </section>
