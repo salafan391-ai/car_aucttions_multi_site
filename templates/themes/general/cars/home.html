@@ -60,6 +60,21 @@
     }
     .gc-hero-media img { width: 100%; height: 100%; object-fit: cover; }
     .gc-hero-media .gc-hero-glyph { font-size: 160px; color: rgba(42,37,100,0.18); }
+    /* Hero slideshow — cycles featured cars instead of a static logo. */
+    .gc-hero-slider { position: absolute; inset: 0; }
+    .gc-hero-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .9s ease, visibility .9s; display: block; text-decoration: none; }
+    .gc-hero-slide.active { opacity: 1; visibility: visible; }
+    .gc-hero-slide img { width: 100%; height: 100%; object-fit: cover; }
+    .gc-hero-slide-cap {
+        position: absolute; inset-inline: 0; bottom: 0; padding: 46px 22px 18px; text-align: start;
+        background: linear-gradient(to top, rgba(15,23,42,0.85), rgba(15,23,42,0.35) 55%, transparent);
+        color: #fff; display: flex; flex-direction: column; gap: 1px;
+    }
+    .gc-hero-slide-name { font-weight: 800; font-size: 1.05rem; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gc-hero-slide-price { font-weight: 900; font-size: .98rem; direction: ltr; text-align: start; }
+    .gc-hero-dots { position: absolute; bottom: 14px; inset-inline-end: 18px; display: flex; gap: 6px; z-index: 3; }
+    .gc-hero-dot { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 999px; background: rgba(255,255,255,0.55); cursor: pointer; transition: all .3s ease; }
+    .gc-hero-dot.active { background: #fff; width: 22px; }
 
     /* ───────── Section title ───────── */
     .gc-sec { padding: 70px 0; }
@@ -278,9 +293,29 @@
                 <p class="bilingual" data-lang-ar="نقدّم لعملائنا مجموعة مختارة بعناية من السيارات الكورية عالية الجودة، مفحوصة بدقّة من فريقنا المختص. نلتزم بتوفير سيارات موثوقة وخدمة من الطراز الأول — بأسعار تنافسية وشفافية كاملة." data-lang-en="We offer a carefully selected collection of high-quality Korean cars, thoroughly inspected by our specialized team — reliable vehicles and top-quality service at competitive prices, with complete transparency." data-lang-es="Ofrecemos una colección de coches coreanos de alta calidad, inspeccionados a fondo por nuestro equipo — vehículos fiables y un servicio de primera a precios competitivos." data-lang-ru="Мы предлагаем тщательно отобранную коллекцию качественных корейских автомобилей, проверенных нашей командой — надёжные авто и первоклассный сервис по конкурентным ценам.">نقدّم لعملائنا مجموعة مختارة بعناية من السيارات الكورية عالية الجودة، مفحوصة بدقّة من فريقنا المختص. نلتزم بتوفير سيارات موثوقة وخدمة من الطراز الأول — بأسعار تنافسية وشفافية كاملة.</p>
             </div>
             <div class="gc-hero-media">
-                {% if site_hero_image %}<img src="{{ site_hero_image }}" alt="{{ site_name }}">
+                {% with hero_slides=latest_cars|slice:":6" %}
+                {% if hero_slides %}
+                <div class="gc-hero-slider" id="gc-hero-slider">
+                    {% for car in hero_slides %}
+                    <a href="{% url 'car_detail' car.slug %}" class="gc-hero-slide{% if forloop.first %} active{% endif %}">
+                        {% if car.image %}<img src="{{ car.image|img_thumb }}" alt="{{ car.title }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
+                        {% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_thumb }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                        <div class="gc-hero-slide-cap">
+                            <span class="gc-hero-slide-name">{{ car.title }}</span>
+                            {% if car.price %}<span class="gc-hero-slide-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</span>{% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% if hero_slides|length > 1 %}
+                    <div class="gc-hero-dots" id="gc-hero-dots">
+                        {% for car in hero_slides %}<button type="button" class="gc-hero-dot{% if forloop.first %} active{% endif %}" data-i="{{ forloop.counter0 }}" aria-label="Slide {{ forloop.counter }}"></button>{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% elif site_hero_image %}<img src="{{ site_hero_image }}" alt="{{ site_name }}">
                 {% elif site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}" style="object-fit:contain; padding:40px;">
                 {% else %}<i class="bi bi-car-front-fill gc-hero-glyph"></i>{% endif %}
+                {% endwith %}
             </div>
         </div>
     </section>
@@ -452,6 +487,28 @@
 
 {% block extra_js %}
 <script>
+/* Hero slideshow — auto-advance featured cars, dots, pause on hover. */
+(function () {
+    var slider = document.getElementById('gc-hero-slider');
+    if (!slider) return;
+    var slides = slider.querySelectorAll('.gc-hero-slide');
+    var dots = slider.querySelectorAll('.gc-hero-dot');
+    if (slides.length < 2) return;
+    var i = 0, timer = null;
+    function go(n) {
+        slides[i].classList.remove('active'); if (dots[i]) dots[i].classList.remove('active');
+        i = (n + slides.length) % slides.length;
+        slides[i].classList.add('active'); if (dots[i]) dots[i].classList.add('active');
+    }
+    function start() { stop(); timer = setInterval(function () { go(i + 1); }, 4000); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    dots.forEach(function (d) {
+        d.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); go(+d.dataset.i); start(); });
+    });
+    slider.addEventListener('mouseenter', stop);
+    slider.addEventListener('mouseleave', start);
+    start();
+})();
 /* Count-up animation for the stats numbers. */
 (function () {
     function animate(el) {
