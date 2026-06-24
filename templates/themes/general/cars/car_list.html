@@ -898,74 +898,47 @@
     }
     .gl-share-bar.show { display: flex; }
     .gl-share-bar b { color: var(--gl-brand); }
-    .gl-share-bar button { font-family: inherit; font-weight: 800; font-size: .82rem; border-radius: 10px; cursor: pointer; padding: .55rem .9rem; border: 0; }
+    .gl-share-bar button, .gl-share-bar a { font-family: inherit; font-weight: 800; font-size: .82rem; border-radius: 10px; cursor: pointer; padding: .55rem .9rem; border: 0; text-decoration: none; display: inline-block; }
     .gl-share-bar .b-export { background: var(--gl-grad-solid); color: #fff; }
     .gl-share-bar .b-clear { background: var(--gl-glass); color: var(--gl-muted); border: 1px solid var(--gl-border); }
-    .gl-share-overlay { position: fixed; inset: 0; background: rgba(3,3,12,.55); z-index: 1400; display: none; align-items: center; justify-content: center; padding: 16px; }
-    .gl-share-overlay.show { display: flex; }
-    .gl-share-panel { width: 100%; max-width: 560px; max-height: 80vh; overflow-y: auto; background: var(--gl-bg-2); border: 1px solid var(--gl-border); border-radius: 18px; padding: 20px; }
-    .gl-share-panel h3 { margin: 0 0 4px; font-size: 1.2rem; font-weight: 900; color: var(--gl-ink); }
-    .gl-share-panel .sub { font-size: .82rem; color: var(--gl-muted); margin: 0 0 14px; }
-    .gl-share-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--gl-border); }
-    .gl-share-row .t { flex: 1; min-width: 0; font-size: .82rem; color: var(--gl-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .gl-share-row input { flex: 1.4; min-width: 0; font-size: .72rem; font-family: monospace; direction: ltr; background: var(--gl-glass); border: 1px solid var(--gl-border); color: var(--gl-muted); border-radius: 8px; padding: 5px 7px; }
-    .gl-share-row .c, .gl-share-foot .ca { font-weight: 800; font-size: .74rem; padding: 5px 10px; border-radius: 8px; border: 0; cursor: pointer; background: var(--gl-grad-solid); color: #fff; }
-    .gl-share-row .rm { font-weight: 800; font-size: .74rem; padding: 5px 9px; border-radius: 8px; cursor: pointer; background: var(--gl-glass); color: var(--gl-danger); border: 1px solid var(--gl-border); }
-    .gl-share-foot { display: flex; gap: 10px; margin-top: 16px; }
-    .gl-share-foot .ca { flex: 1; padding: 11px; }
-    .gl-share-foot .cl { flex: 0 0 auto; padding: 11px 16px; border-radius: 10px; border: 1px solid var(--gl-border); background: var(--gl-glass); color: var(--gl-muted); font-weight: 800; cursor: pointer; }
 </style>
 
 <div class="gl-share-bar" id="gl-share-bar">
     <span>🛒 <b id="gl-share-count">0</b> <span class="bilingual" data-lang-ar="في السلة" data-lang-en="in cart" data-lang-es="en lista" data-lang-ru="в корзине">في السلة</span></span>
-    <button type="button" class="b-export" onclick="glShareExport()"><span class="bilingual" data-lang-ar="تصدير الروابط" data-lang-en="Export links" data-lang-es="Exportar" data-lang-ru="Экспорт">تصدير الروابط</span></button>
+    <a href="{% url 'cart_page' %}" class="b-export"><span class="bilingual" data-lang-ar="فتح السلة" data-lang-en="Open cart" data-lang-es="Abrir" data-lang-ru="Открыть">فتح السلة</span></a>
     <button type="button" class="b-clear" onclick="glShareClear()"><span class="bilingual" data-lang-ar="مسح" data-lang-en="Clear" data-lang-es="Limpiar" data-lang-ru="Очистить">مسح</span></button>
-</div>
-
-<div class="gl-share-overlay" id="gl-share-overlay" onclick="if(event.target===this)glShareClose()">
-    <div class="gl-share-panel">
-        <h3 class="bilingual" data-lang-ar="روابط السيارات في السلة" data-lang-en="Cart — car links" data-lang-es="Enlaces" data-lang-ru="Ссылки">روابط السيارات في السلة</h3>
-        <p class="sub bilingual" data-lang-ar="انسخ رابط كل سيارة، أو انسخها كلها دفعة واحدة." data-lang-en="Copy each car's link, or copy them all at once." data-lang-es="Copia los enlaces." data-lang-ru="Скопируйте ссылки.">انسخ رابط كل سيارة، أو انسخها كلها دفعة واحدة.</p>
-        <div id="gl-share-list"></div>
-        <div class="gl-share-foot">
-            <button type="button" class="ca" onclick="glShareCopyAll(this)"><span class="bilingual" data-lang-ar="نسخ كل الروابط" data-lang-en="Copy all links" data-lang-es="Copiar todo" data-lang-ru="Копировать всё">نسخ كل الروابط</span></button>
-            <button type="button" class="cl" onclick="glShareClose()"><span class="bilingual" data-lang-ar="إغلاق" data-lang-en="Close" data-lang-es="Cerrar" data-lang-ru="Закрыть">إغلاق</span></button>
-        </div>
-    </div>
 </div>
 
 <script>
 (function () {
-    var KEY = 'gl_share_cart_v1';
+    var KEY = 'gl_share_cart_v2';
     var grid = document.querySelector('.gl-list-grid');
     var toggle = document.getElementById('gl-share-toggle');
     var bar = document.getElementById('gl-share-bar');
-    var overlay = document.getElementById('gl-share-overlay');
     // Re-parent to <body> so position:fixed is relative to the viewport even if
     // an ancestor (transform/overflow) would otherwise clip it.
     if (bar) document.body.appendChild(bar);
-    if (overlay) document.body.appendChild(overlay);
     var mode = false;
 
-    // Cart persists across pages/filters so staff can collect cars while
-    // browsing, then copy them all. Map keeps insertion order.
-    var cart = new Map();  // absoluteUrl -> title
-    function load() {
-        try { (JSON.parse(localStorage.getItem(KEY)) || []).forEach(function (e) { cart.set(e[0], e[1]); }); } catch (e) {}
-    }
-    function save() {
-        try { localStorage.setItem(KEY, JSON.stringify(Array.from(cart.entries()))); } catch (e) {}
-    }
+    // Cart persists across pages/filters (localStorage) so staff can collect
+    // cars while browsing, then open the cart page to copy each link. Each
+    // entry carries enough to render a card on the cart page.
+    var cart = [];  // [{url, title, sub, image, price}]
+    function load() { try { cart = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { cart = []; } }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(cart)); } catch (e) {} }
+    function idx(url) { for (var i = 0; i < cart.length; i++) { if (cart[i].url === url) return i; } return -1; }
+
     function refresh() {
-        document.getElementById('gl-share-count').textContent = cart.size;
-        bar.classList.toggle('show', cart.size > 0);  // persistent indicator, not tied to mode
+        document.getElementById('gl-share-count').textContent = cart.length;
+        bar.classList.toggle('show', cart.length > 0);  // persistent indicator, not tied to mode
     }
     function markCards() {
         document.querySelectorAll('.gl-list-card').forEach(function (c) {
             var u = new URL(c.getAttribute('href'), location.origin).href;
-            c.classList.toggle('gl-selected', cart.has(u));
+            c.classList.toggle('gl-selected', idx(u) !== -1);
         });
     }
+    function txt(el, sel) { var n = el.querySelector(sel); return n ? n.textContent.replace(/\s+/g, ' ').trim() : ''; }
 
     window.glToggleShareMode = function () {
         mode = !mode;
@@ -979,46 +952,23 @@
         if (!card) return;
         e.preventDefault(); e.stopPropagation();
         var url = new URL(card.getAttribute('href'), location.origin).href;
-        if (cart.has(url)) { cart.delete(url); card.classList.remove('gl-selected'); }
+        var at = idx(url);
+        if (at !== -1) { cart.splice(at, 1); card.classList.remove('gl-selected'); }
         else {
-            var name = card.querySelector('.gl-list-card-name');
-            cart.set(url, (name ? name.textContent : '').trim() || url);
+            var img = card.querySelector('.gl-list-card-img img');
+            cart.push({
+                url: url,
+                title: txt(card, '.gl-list-card-name') || url,
+                sub: txt(card, '.gl-list-card-make'),
+                image: img ? img.src : '',
+                price: txt(card, '.gl-list-card-price')
+            });
             card.classList.add('gl-selected');
         }
         save(); refresh();
     }, true);
 
-    window.glShareClear = function () {
-        cart.clear(); save(); markCards(); refresh();
-    };
-    function removeFromCart(url) {
-        cart.delete(url); save(); markCards(); refresh();
-        if (!cart.size) glShareClose(); else glShareExport();
-    }
-    window.glShareExport = function () {
-        if (!cart.size) return;
-        var list = document.getElementById('gl-share-list');
-        var i = 0, html = '';
-        cart.forEach(function (title, url) {
-            i++;
-            html += '<div class="gl-share-row"><span class="t">' + i + '. ' + String(title).replace(/</g, '&lt;') +
-                '</span><input readonly value="' + url + '" onclick="this.select()">' +
-                '<button type="button" class="c" data-u="' + url + '">نسخ</button>' +
-                '<button type="button" class="rm" data-u="' + url + '" title="إزالة">✕</button></div>';
-        });
-        list.innerHTML = html;
-        list.querySelectorAll('.c').forEach(function (b) { b.addEventListener('click', function () { glCopy(b.dataset.u, b); }); });
-        list.querySelectorAll('.rm').forEach(function (b) { b.addEventListener('click', function () { removeFromCart(b.dataset.u); }); });
-        document.getElementById('gl-share-overlay').classList.add('show');
-    };
-    window.glShareClose = function () { document.getElementById('gl-share-overlay').classList.remove('show'); };
-    window.glShareCopyAll = function (btn) { glCopy(Array.from(cart.keys()).join('\n'), btn); };
-    function glCopy(text, btn) {
-        var label = btn.querySelector('span') || btn, orig = label.textContent;
-        navigator.clipboard.writeText(text).then(function () {
-            label.textContent = '✓'; setTimeout(function () { label.textContent = orig; }, 1200);
-        }).catch(function () {});
-    }
+    window.glShareClear = function () { cart = []; save(); markCards(); refresh(); };
 
     load(); markCards(); refresh();  // restore cart on every page load
 })();

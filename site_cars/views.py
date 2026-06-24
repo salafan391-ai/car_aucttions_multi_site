@@ -2212,3 +2212,10 @@ def shared_collection(request, token):
     return render(request, "site_cars/shared_collection.html", {
         "collection": sc, "cars": cars,
     })
+
+
+@staff_member_required
+def cart_page(request):
+    """Dedicated 'share cart' page. The cart lives in the browser (localStorage,
+    filled from the car list); this page renders it with each car's own link."""
+    return render(request, "site_cars/cart.html", {})

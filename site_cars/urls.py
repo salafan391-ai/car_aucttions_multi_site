@@ -9,6 +9,7 @@ urlpatterns = [
     path('dashboard/share/create/', views.share_create, name='share_create'),
     path('dashboard/share/<int:pk>/delete/', views.share_delete, name='share_delete'),
     path('c/<str:token>/', views.shared_collection, name='shared_collection'),
+    path('share-cart/', views.cart_page, name='cart_page'),
     path('our-cars/', views.site_car_list, name='site_car_list'),
     path('our-cars/add/', views.site_car_add, name='site_car_add'),
     path('our-cars/<int:pk>/', views.site_car_detail, name='site_car_detail'),
