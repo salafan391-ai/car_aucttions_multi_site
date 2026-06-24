@@ -420,3 +420,32 @@ class SiteEmailLog(models.Model):
 
     def __str__(self):
         return f"{self.email_type} → {self.recipient_email} ({self.status})"
+
+
+class SharedCollection(models.Model):
+    """A staff-built shareable selection of cars (any type — ApiCar / SiteCar).
+    Referenced by a short token in a public URL; car_refs holds type-tagged ids
+    like "api:123" / "site:45" so a collection can mix the global catalogue and
+    the tenant's own cars."""
+    token = models.CharField(max_length=16, unique=True, db_index=True, editable=False)
+    title = models.CharField(max_length=120, blank=True, default="", verbose_name="عنوان")
+    car_refs = models.JSONField(default=list, verbose_name="السيارات")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "مجموعة مشاركة"
+        verbose_name_plural = "مجموعات المشاركة"
+
+    def __str__(self):
+        return self.title or self.token
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            import secrets
+            for _ in range(10):
+                tok = secrets.token_urlsafe(8)[:12]
+                if not SharedCollection.objects.filter(token=tok).exists():
+                    self.token = tok
+                    break
+        super().save(*args, **kwargs)

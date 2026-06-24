@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Avg, Sum, Count, Q, F, Func, Value, CharField
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -2097,4 +2097,118 @@ def _saas_owner_dashboard(request):
         "overdue_count": overdue_count,
         "none_count": none_count,
         "monthly_revenue": monthly_revenue,
+    })
+
+
+# ──────────────────── Shareable car collections (staff) ────────────────────
+
+def _resolve_collection_refs(refs):
+    """Turn ["api:123", "site:45"] into display dicts for the builder/share page.
+    Skips refs whose car no longer exists."""
+    from cars.models import ApiCar
+    from .models import SiteCar
+    api_ids = [r.split(":", 1)[1] for r in refs if r.startswith("api:")]
+    site_ids = [r.split(":", 1)[1] for r in refs if r.startswith("site:")]
+    api = {str(c.id): c for c in ApiCar.objects.filter(id__in=api_ids).select_related("manufacturer", "model")}
+    site = {str(c.id): c for c in SiteCar.objects.filter(id__in=site_ids)}
+    out = []
+    for r in refs:  # preserve the chosen order
+        kind, _id = (r.split(":", 1) + [""])[:2]
+        if kind == "api" and _id in api:
+            c = api[_id]
+            img = c.image or (c.images[0] if getattr(c, "images", None) else "")
+            out.append({
+                "ref": r, "kind": "api", "title": c.title,
+                "year": c.year, "price": c.price, "currency": "KRW", "src_currency": "",
+                "image": img, "url": reverse("car_detail", args=[c.slug]) if c.slug else "#",
+            })
+        elif kind == "site" and _id in site:
+            c = site[_id]
+            out.append({
+                "ref": r, "kind": "site", "title": c.title,
+                "year": c.year, "price": c.price, "currency": c.currency, "src_currency": c.currency,
+                "image": (c.image.url if c.image else ""),
+                "url": reverse("site_car_detail", args=[c.id]),
+            })
+    return out
+
+
+@staff_member_required
+def share_search(request):
+    """AJAX: search the full catalogue (ApiCar + SiteCar) for the share builder."""
+    if _is_public_schema():
+        return JsonResponse({"results": []})
+    from cars.models import ApiCar
+    q = (request.GET.get("q") or "").strip()
+    results = []
+    if q:
+        api = (ApiCar.objects.filter(
+                    Q(title__icontains=q) | Q(manufacturer__name__icontains=q)
+                    | Q(model__name__icontains=q) | Q(lot_number__icontains=q))
+               .select_related("manufacturer", "model")[:15])
+        for c in api:
+            img = c.image or (c.images[0] if getattr(c, "images", None) else "")
+            results.append({"ref": f"api:{c.id}", "title": c.title, "year": c.year,
+                            "price": c.price, "currency": "KRW", "kind": "api", "image": img})
+        site = SiteCar.objects.filter(
+            Q(title__icontains=q) | Q(manufacturer__icontains=q) | Q(model__icontains=q))[:15]
+        for c in site:
+            results.append({"ref": f"site:{c.id}", "title": c.title, "year": c.year,
+                            "price": c.price, "currency": c.currency, "kind": "site",
+                            "image": (c.image.url if c.image else "")})
+    return JsonResponse({"results": results})
+
+
+@staff_member_required
+def share_builder(request):
+    """Staff page to build shareable car collections + list existing ones."""
+    if _is_public_schema():
+        return redirect("site_dashboard")
+    from .models import SharedCollection
+    collections = SharedCollection.objects.all()[:50]
+    return render(request, "site_cars/share_builder.html", {
+        "collections": collections,
+    })
+
+
+@staff_member_required
+@require_POST
+def share_create(request):
+    if _is_public_schema():
+        return redirect("site_dashboard")
+    from .models import SharedCollection
+    import json as _json
+    try:
+        refs = _json.loads(request.POST.get("refs") or "[]")
+    except ValueError:
+        refs = []
+    refs = [r for r in refs if isinstance(r, str) and (r.startswith("api:") or r.startswith("site:"))][:60]
+    if not refs:
+        messages.error(request, "اختر سيارة واحدة على الأقل.")
+        return redirect("share_builder")
+    sc = SharedCollection.objects.create(title=(request.POST.get("title") or "").strip(), car_refs=refs)
+    messages.success(request, "تم إنشاء رابط المشاركة.")
+    return redirect(f"{reverse('share_builder')}?new={sc.token}")
+
+
+@staff_member_required
+@require_POST
+def share_delete(request, pk):
+    if _is_public_schema():
+        return redirect("site_dashboard")
+    from .models import SharedCollection
+    SharedCollection.objects.filter(pk=pk).delete()
+    messages.success(request, "تم حذف المجموعة.")
+    return redirect("share_builder")
+
+
+def shared_collection(request, token):
+    """Public page rendering a shared car collection."""
+    if _is_public_schema():
+        raise Http404
+    from .models import SharedCollection
+    sc = get_object_or_404(SharedCollection, token=token)
+    cars = _resolve_collection_refs(sc.car_refs)
+    return render(request, "site_cars/shared_collection.html", {
+        "collection": sc, "cars": cars,
     })

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ collection.title|default:"مجموعة سيارات" }} - {{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-8 pb-24 md:pb-8">
+
+    <div class="text-center mb-8">
+        <p class="text-sm font-bold text-brand bilingual" data-lang-ar="مختارة لك" data-lang-en="Selected for you" data-lang-es="Para ti" data-lang-ru="Для вас">مختارة لك</p>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 mt-1">{{ collection.title|default:"" }}</h1>
+        <p class="text-sm text-gray-500 mt-1">{{ cars|length }} <span class="bilingual" data-lang-ar="سيارة" data-lang-en="cars" data-lang-es="coches" data-lang-ru="авто">سيارة</span></p>
+    </div>
+
+    {% if cars %}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for c in cars %}
+        <a href="{{ c.url }}" class="group bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition flex flex-col">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
+                {% if c.image %}<img src="{{ c.image }}" alt="{{ c.title }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition">
+                {% else %}<div class="w-full h-full flex items-center justify-center text-gray-300"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 13l2-5a2 2 0 011.9-1.4h10.2A2 2 0 0119 8l2 5M5 17h14M6 17a2 2 0 11-4 0 2 2 0 014 0zm16 0a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>{% endif %}
+            </div>
+            <div class="p-3 flex flex-col flex-1">
+                <div class="text-sm font-bold text-gray-900 line-clamp-2">{{ c.title }}</div>
+                <div class="text-xs text-gray-400 mt-0.5">{{ c.year }}</div>
+                <div class="mt-auto pt-2 font-extrabold text-brand text-sm">
+                    {% if c.price %}
+                    {% if c.kind == 'site' %}<span data-price-src="{{ c.price }}" data-cur-src="{{ c.src_currency }}">{{ c.price|intcomma }} {{ c.currency }}</span>
+                    {% else %}<span data-price-krw="{{ c.price }}">{{ c.price|intcomma }} ₩</span>{% endif %}
+                    {% else %}<span class="text-gray-500 bilingual" data-lang-ar="السعر عند الطلب" data-lang-en="Price on request">السعر عند الطلب</span>{% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm p-12 text-center text-gray-400">
+        <p class="bilingual" data-lang-ar="لم تعد هذه السيارات متاحة" data-lang-en="These cars are no longer available" data-lang-es="Ya no disponibles" data-lang-ru="Эти авто больше недоступны">لم تعد هذه السيارات متاحة</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

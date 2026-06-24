@@ -3,6 +3,12 @@ from . import views
 
 urlpatterns = [
     path('dashboard/', views.dashboard, name='site_dashboard'),
+    # Shareable car collections (staff builder + public view)
+    path('dashboard/share/', views.share_builder, name='share_builder'),
+    path('dashboard/share/search/', views.share_search, name='share_search'),
+    path('dashboard/share/create/', views.share_create, name='share_create'),
+    path('dashboard/share/<int:pk>/delete/', views.share_delete, name='share_delete'),
+    path('c/<str:token>/', views.shared_collection, name='shared_collection'),
     path('our-cars/', views.site_car_list, name='site_car_list'),
     path('our-cars/add/', views.site_car_add, name='site_car_add'),
     path('our-cars/<int:pk>/', views.site_car_detail, name='site_car_detail'),

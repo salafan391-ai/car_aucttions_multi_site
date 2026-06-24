@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog
+from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SharedCollection
+
+
+@admin.register(SharedCollection)
+class SharedCollectionAdmin(admin.ModelAdmin):
+    list_display = ("token", "title", "created_at")
+    search_fields = ("token", "title")
+    readonly_fields = ("token", "created_at")
 
 
 class SiteCarImageInline(admin.TabularInline):
