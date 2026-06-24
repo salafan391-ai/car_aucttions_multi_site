@@ -127,3 +127,28 @@ class ShopItemImage(models.Model):
             except Exception:
                 pass
         super().save(*args, **kwargs)
+
+
+class ShopRequest(models.Model):
+    """A customer request for a part/accessory that's not in the catalogue —
+    submitted from the empty-catalogue form on the public parts/accessories page."""
+    KIND_CHOICES = [
+        ("part", "قطع غيار"),
+        ("accessory", "إكسسوارات"),
+    ]
+    kind = models.CharField(max_length=10, choices=KIND_CHOICES, default="part", verbose_name="النوع")
+    car_vin = models.CharField(max_length=40, blank=True, default="", verbose_name="رقم الهيكل (VIN)")
+    car_description = models.TextField(blank=True, default="", verbose_name="وصف السيارة")
+    phone = models.CharField(max_length=30, verbose_name="رقم الهاتف")
+    email = models.EmailField(blank=True, default="", verbose_name="البريد الإلكتروني")
+    item_description = models.TextField(verbose_name="وصف القطعة/الإكسسوار المطلوب")
+    is_handled = models.BooleanField(default=False, verbose_name="تمت المعالجة")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "طلب قطعة/إكسسوار"
+        verbose_name_plural = "طلبات القطع والإكسسوارات"
+
+    def __str__(self):
+        return f"{self.get_kind_display()} request — {self.phone}"

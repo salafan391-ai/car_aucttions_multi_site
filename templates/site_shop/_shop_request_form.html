@@ -1,0 +1,69 @@
+{% load i18n %}
+{% comment %}
+"Request a part/accessory" form, shown on the public parts/accessories page
+when the catalogue is empty and the feature is active. Theme-neutral styling
+(translucent neutrals + currentColor) so it sits on light and dark themes.
+Expects: kind ("part"/"accessory"), is_part.
+{% endcomment %}
+<style>
+    .sr-wrap { max-width: 640px; margin: 0 auto; padding: 28px 22px 30px; border-radius: 22px;
+        border: 1px solid rgba(128,128,128,.22); background: rgba(128,128,128,.06); text-align: start; }
+    .sr-head { text-align: center; margin-bottom: 20px; }
+    .sr-head h3 { font-size: 22px; font-weight: 900; margin: 0 0 6px; }
+    .sr-head p { font-size: 14px; opacity: .7; margin: 0; }
+    .sr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .sr-field { display: flex; flex-direction: column; gap: 6px; }
+    .sr-field.full { grid-column: 1 / -1; }
+    .sr-field label { font-size: 13px; font-weight: 800; }
+    .sr-field label .opt { font-weight: 500; opacity: .55; font-size: 11px; }
+    .sr-field input, .sr-field textarea {
+        width: 100%; padding: 11px 13px; border-radius: 12px; font-family: inherit; font-size: 14px;
+        border: 1px solid rgba(128,128,128,.32); background: rgba(255,255,255,.9); color: #111;
+    }
+    .sr-field textarea { resize: vertical; min-height: 80px; }
+    .sr-submit { grid-column: 1 / -1; margin-top: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 14px 20px; border: 0; border-radius: 14px; cursor: pointer; font-family: inherit;
+        font-weight: 900; font-size: 15px; color: #fff;
+        background: linear-gradient(135deg, var(--color-primary, #2a2564), var(--color-secondary, #d53030)); }
+    .sr-submit:hover { filter: brightness(1.06); }
+    @media (max-width: 560px) { .sr-grid { grid-template-columns: 1fr; } }
+</style>
+<div class="sr-wrap">
+    <div class="sr-head">
+        {% if is_part %}
+        <h3 class="bilingual" data-lang-ar="لم تجد قطعة الغيار التي تريدها؟" data-lang-en="Didn't find the part you need?" data-lang-es="¿No encontraste la pieza?" data-lang-ru="Не нашли нужную деталь?">لم تجد قطعة الغيار التي تريدها؟</h3>
+        {% else %}
+        <h3 class="bilingual" data-lang-ar="لم تجد الإكسسوار الذي تريده؟" data-lang-en="Didn't find the accessory you need?" data-lang-es="¿No encontraste el accesorio?" data-lang-ru="Не нашли нужный аксессуар?">لم تجد الإكسسوار الذي تريده؟</h3>
+        {% endif %}
+        <p class="bilingual" data-lang-ar="املأ النموذج وسنبحث عنه لك ونتواصل معك." data-lang-en="Fill in the form and we'll source it and get back to you." data-lang-es="Completa el formulario y te contactaremos." data-lang-ru="Заполните форму — мы найдём и свяжемся с вами.">املأ النموذج وسنبحث عنه لك ونتواصل معك.</p>
+    </div>
+    <form method="post" action="{% url 'shop_request' %}" class="sr-grid">
+        {% csrf_token %}
+        <input type="hidden" name="kind" value="{{ kind }}">
+        <div class="sr-field">
+            <label class="bilingual" data-lang-ar="رقم الهيكل (VIN) <span class='opt'>(اختياري)</span>" data-lang-en="Chassis no. (VIN) <span class='opt'>(optional)</span>" data-lang-es="VIN <span class='opt'>(opcional)</span>" data-lang-ru="VIN <span class='opt'>(необязательно)</span>">رقم الهيكل (VIN) <span class="opt">(اختياري)</span></label>
+            <input type="text" name="car_vin" dir="ltr" maxlength="40">
+        </div>
+        <div class="sr-field">
+            <label class="bilingual" data-lang-ar="رقم الهاتف" data-lang-en="Phone number" data-lang-es="Teléfono" data-lang-ru="Телефон">رقم الهاتف</label>
+            <input type="text" name="phone" dir="ltr" required>
+        </div>
+        <div class="sr-field full">
+            <label class="bilingual" data-lang-ar="وصف سيارتك <span class='opt'>(الماركة، الموديل، السنة)</span>" data-lang-en="About your car <span class='opt'>(make, model, year)</span>" data-lang-es="Sobre tu coche <span class='opt'>(marca, modelo, año)</span>" data-lang-ru="О вашем авто <span class='opt'>(марка, модель, год)</span>">وصف سيارتك <span class="opt">(الماركة، الموديل، السنة)</span></label>
+            <textarea name="car_description" rows="2"></textarea>
+        </div>
+        <div class="sr-field">
+            <label class="bilingual" data-lang-ar="البريد الإلكتروني <span class='opt'>(اختياري)</span>" data-lang-en="Email <span class='opt'>(optional)</span>" data-lang-es="Correo <span class='opt'>(opcional)</span>" data-lang-ru="Эл. почта <span class='opt'>(необязательно)</span>">البريد الإلكتروني <span class="opt">(اختياري)</span></label>
+            <input type="email" name="email" dir="ltr">
+        </div>
+        <div class="sr-field full">
+            {% if is_part %}
+            <label class="bilingual" data-lang-ar="وصف القطعة المطلوبة" data-lang-en="Describe the part you need" data-lang-es="Describe la pieza" data-lang-ru="Опишите нужную деталь">وصف القطعة المطلوبة</label>
+            {% else %}
+            <label class="bilingual" data-lang-ar="وصف الإكسسوار المطلوب" data-lang-en="Describe the accessory you need" data-lang-es="Describe el accesorio" data-lang-ru="Опишите аксессуар">وصف الإكسسوار المطلوب</label>
+            {% endif %}
+            <textarea name="item_description" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="sr-submit bilingual" data-lang-ar="إرسال الطلب" data-lang-en="Send Request" data-lang-es="Enviar solicitud" data-lang-ru="Отправить запрос">إرسال الطلب</button>
+    </form>
+</div>

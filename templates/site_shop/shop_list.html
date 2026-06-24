@@ -101,10 +101,15 @@
     {% endif %}
 
     {% else %}
+    {% if messages %}{% for m in messages %}<div class="max-w-2xl mx-auto mb-5 px-4 py-3 rounded-xl text-center text-sm font-bold {% if m.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+    {% if catalogue_empty and feature_active %}
+    {% include "site_shop/_shop_request_form.html" %}
+    {% else %}
     <div class="bg-white rounded-2xl shadow-sm p-12 text-center text-gray-400">
         <svg class="w-16 h-16 mx-auto mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-        <p class="bilingual" data-lang-ar="لا توجد منتجات حالياً" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товаров">لا توجد منتجات حالياً</p>
+        <p class="bilingual" data-lang-ar="لا توجد منتجات حالياً" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товاров">لا توجد منتجات حالياً</p>
     </div>
+    {% endif %}
     {% endif %}
 </section>
 {% endblock %}

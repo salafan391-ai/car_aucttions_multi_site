@@ -65,10 +65,20 @@ def _shop_list(request, kind):
         paginator = Paginator(qs, 24)
         items = paginator.get_page(request.GET.get("page"))
 
+    tenant = getattr(connection, "tenant", None)
+    feature_active = bool(getattr(
+        tenant, "show_parts" if kind == "part" else "show_accessories", True))
+    # True only when the catalogue has NO items of this kind at all (ignoring
+    # filters) — that's when we offer the "request it" form instead.
+    catalogue_empty = (not _is_public_schema()
+                       and not ShopItem.objects.filter(kind=kind).exists())
+
     context = {
         "items": items,
         "kind": kind,
         "is_part": kind == "part",
+        "feature_active": feature_active,
+        "catalogue_empty": catalogue_empty,
         "kind_label_ar": labels["ar"],
         "kind_labels": labels,
         "categories": categories,
@@ -91,6 +101,59 @@ def parts_list(request):
 
 def accessories_list(request):
     return _shop_list(request, "accessory")
+
+
+@require_POST
+def shop_request(request):
+    """Handle the 'request a part/accessory' form shown when the catalogue is
+    empty. Saves the request and notifies the tenant by email (best effort)."""
+    if _is_public_schema():
+        return redirect("home")
+
+    kind = request.POST.get("kind")
+    if kind not in ("part", "accessory"):
+        kind = "part"
+
+    phone = (request.POST.get("phone") or "").strip()
+    item_description = (request.POST.get("item_description") or "").strip()
+    redirect_name = "parts_list" if kind == "part" else "accessories_list"
+
+    if not phone or not item_description:
+        messages.error(request, "الرجاء إدخال رقم الهاتف ووصف الطلب.")
+        return redirect(redirect_name)
+
+    from .models import ShopRequest
+    req = ShopRequest.objects.create(
+        kind=kind,
+        car_vin=(request.POST.get("car_vin") or "").strip(),
+        car_description=(request.POST.get("car_description") or "").strip(),
+        phone=phone,
+        email=(request.POST.get("email") or "").strip(),
+        item_description=item_description,
+    )
+
+    # Notify the tenant by email (best effort — never blocks the response).
+    try:
+        from site_cars.email_utils import send_tenant_email, get_tenant_email_config
+        cfg = get_tenant_email_config() or {}
+        to_addr = (cfg.get("email") if isinstance(cfg, dict) else None) \
+            or getattr(getattr(connection, "tenant", None), "email", None)
+        if to_addr:
+            label = KIND_LABELS[kind]["ar"]
+            body = (
+                f"<h3>طلب {label} جديد</h3>"
+                f"<p><b>رقم الهاتف:</b> {req.phone}</p>"
+                f"<p><b>البريد:</b> {req.email or '—'}</p>"
+                f"<p><b>رقم الهيكل (VIN):</b> {req.car_vin or '—'}</p>"
+                f"<p><b>وصف السيارة:</b> {req.car_description or '—'}</p>"
+                f"<p><b>المطلوب:</b> {req.item_description}</p>"
+            )
+            send_tenant_email(to_addr, f"طلب {label} جديد", body, email_type="shop_request")
+    except Exception:
+        pass
+
+    messages.success(request, "تم إرسال طلبك بنجاح، سنتواصل معك قريباً.")
+    return redirect(redirect_name)
 
 
 def _shop_detail(request, pk, kind):

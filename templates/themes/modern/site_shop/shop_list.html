@@ -238,10 +238,13 @@
         {% endif %}
 
         {% else %}
+        {% if messages %}{% for m in messages %}<div class="mod-shop-empty" style="padding:14px 18px;margin-bottom:16px;font-weight:700;">{{ m }}</div>{% endfor %}{% endif %}
+        {% if catalogue_empty and feature_active %}{% include "site_shop/_shop_request_form.html" %}{% else %}
         <div class="mod-shop-empty">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
             <p class="bilingual" data-lang-ar="لا توجد منتجات حالياً" data-lang-en="No items yet" data-lang-es="Aún no hay artículos" data-lang-ru="Пока нет товаров">لا توجد منتجات حالياً</p>
         </div>
+        {% endif %}
         {% endif %}
     </div>
 </section>

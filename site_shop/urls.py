@@ -8,6 +8,7 @@ urlpatterns = [
     path("parts/<int:pk>/", views.parts_detail, name="parts_detail"),
     path("accessories/", views.accessories_list, name="accessories_list"),
     path("accessories/<int:pk>/", views.accessories_detail, name="accessories_detail"),
+    path("shop/request/", views.shop_request, name="shop_request"),
 
     # Staff CRUD (parts + accessories share these, distinguished by ?kind=)
     path("dashboard/shop/", views.shop_manage, name="shop_manage"),

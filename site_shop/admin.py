@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import ShopItem, ShopItemImage
+from .models import ShopItem, ShopItemImage, ShopRequest
+
+
+@admin.register(ShopRequest)
+class ShopRequestAdmin(admin.ModelAdmin):
+    list_display = ("kind", "phone", "email", "car_vin", "is_handled", "created_at")
+    list_filter = ("kind", "is_handled")
+    list_editable = ("is_handled",)
+    search_fields = ("phone", "email", "car_vin", "car_description", "item_description")
+    readonly_fields = ("created_at",)
 
 
 class ShopItemImageInline(admin.TabularInline):
