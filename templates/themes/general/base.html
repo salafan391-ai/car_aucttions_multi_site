@@ -577,33 +577,33 @@ document.addEventListener('click', function (e) {
             <span class="gc-bn-fab-label bilingual" data-lang-ar="ابحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">ابحث</span>
         </div>
         {% endif %}
+        {% if user.is_staff %}
+        <a href="{% url 'cart_page' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'cart_page' %}active{% endif %}">
+            <i class="bi bi-cart-fill"></i>
+            <span class="bilingual" data-lang-ar="السلة" data-lang-en="Cart" data-lang-es="Carrito" data-lang-ru="Корзина">السلة</span>
+            <span class="gc-bn-badge" id="gc-bn-cart-count" style="display:none">0</span>
+        </a>
+        <a href="{% url 'site_dashboard' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'site_dashboard' %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i>
+            <span class="bilingual" data-lang-ar="لوحة" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة</span>
+        </a>
+        {% else %}
         <a href="{% url 'wishlist' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
             <i class="bi bi-heart-fill"></i>
             <span class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</span>
             <span class="gc-bn-badge" id="wishlist-count" style="display:none">0</span>
         </a>
         {% if user.is_authenticated %}
-            {% if user.is_staff %}
-            <a href="{% url 'cart_page' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'cart_page' %}active{% endif %}">
-                <i class="bi bi-cart3"></i>
-                <span class="bilingual" data-lang-ar="السلة" data-lang-en="Cart" data-lang-es="Carrito" data-lang-ru="Корзина">السلة</span>
-                <span class="gc-bn-badge" id="gc-bn-cart-count" style="display:none">0</span>
-            </a>
-            <a href="{% url 'site_dashboard' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'site_dashboard' %}active{% endif %}">
-                <i class="bi bi-speedometer2"></i>
-                <span class="bilingual" data-lang-ar="لوحة" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة</span>
-            </a>
-            {% else %}
-            <a href="{% url 'logout' %}" class="gc-bn-link">
-                <i class="bi bi-person-fill"></i>
-                <span class="bilingual" data-lang-ar="حسابي" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">حسابي</span>
-            </a>
-            {% endif %}
+        <a href="{% url 'logout' %}" class="gc-bn-link">
+            <i class="bi bi-person-fill"></i>
+            <span class="bilingual" data-lang-ar="حسابي" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">حسابي</span>
+        </a>
         {% else %}
         <a href="{% url 'login' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
             <i class="bi bi-box-arrow-in-right"></i>
             <span class="bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</span>
         </a>
+        {% endif %}
         {% endif %}
     </div>
 </nav>
