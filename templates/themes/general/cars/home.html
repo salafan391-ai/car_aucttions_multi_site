@@ -70,8 +70,9 @@
     .gc-sec-sub { font-size: 17px; line-height: 1.85; color: var(--gc-dim); margin: 0; }
 
     /* ───────── Quick link cards ───────── */
-    .gc-links-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 26px; }
+    .gc-links-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
     .gc-link-card {
+        flex: 1 1 240px; max-width: 320px;
         position: relative; display: flex; flex-direction: column; text-align: center;
         background: var(--gc-card); border: 1px solid var(--gc-line); border-radius: 28px;
         padding: 20px 20px 26px; text-decoration: none; overflow: hidden;
