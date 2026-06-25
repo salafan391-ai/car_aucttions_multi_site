@@ -98,13 +98,38 @@ Expects: kind ("part"/"accessory"), is_part.
 <script>
 // Live preview of the captured/chosen photo + auto-read the VIN from it.
 function srPhotoPreview(input) {
-    var field = input.closest('.sr-field');
-    var img = field ? field.querySelector('.sr-photo-preview') : null;
-    if (img && input.files && input.files[0]) {
-        img.src = URL.createObjectURL(input.files[0]);
-        img.style.display = '';
+    var file = input.files && input.files[0];
+    if (!file) return;
+    function done() {
+        var field = input.closest('.sr-field');
+        var img = field ? field.querySelector('.sr-photo-preview') : null;
+        if (img && input.files[0]) { img.src = URL.createObjectURL(input.files[0]); img.style.display = ''; }
+        srVinOcr(input);
     }
-    srVinOcr(input);
+    // iPhone HEIC → JPEG so the OCR and the saved image work everywhere
+    // (mobile browsers usually convert already; this is a safeguard).
+    if (/image\/(heic|heif)/i.test(file.type || '') || /\.(heic|heif)$/i.test(file.name || '')) {
+        srHeicToJpeg(file).then(function (jpg) {
+            if (jpg) { try { var dt = new DataTransfer(); dt.items.add(jpg); input.files = dt.files; } catch (e) {} }
+            done();
+        });
+    } else { done(); }
+}
+function srHeicToJpeg(file) {
+    return new Promise(function (resolve) {
+        var url = URL.createObjectURL(file), img = new Image();
+        img.onload = function () {
+            try {
+                var max = 2200, sc = Math.min(1, max / Math.max(img.width, img.height));
+                var c = document.createElement('canvas');
+                c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                c.toBlob(function (b) { URL.revokeObjectURL(url); resolve(b ? new File([b], 'photo.jpg', { type: 'image/jpeg' }) : null); }, 'image/jpeg', 0.9);
+            } catch (e) { URL.revokeObjectURL(url); resolve(null); }
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };  // browser can't decode HEIC → keep original
+        img.src = url;
+    });
 }
 function srVinOcr(input) {
     var form = input.closest('form');
