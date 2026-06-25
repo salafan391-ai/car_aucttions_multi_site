@@ -1269,6 +1269,22 @@ window.glApplySort = function(value) {
         node.classList.toggle('is-open');
     }
 
+    // When a manufacturer is selected, focus on it — hide the other
+    // manufacturers until it's deselected (any other checked ones stay shown).
+    function updateMfrVisibility() {
+        var nodes = root.querySelectorAll('.gl-mfr-node');
+        var anyChecked = false;
+        nodes.forEach(function(n) {
+            var cb = n.querySelector('.gl-mfr-cb');
+            if (cb && cb.checked) anyChecked = true;
+        });
+        nodes.forEach(function(n) {
+            var cb = n.querySelector('.gl-mfr-cb');
+            n.style.display = (anyChecked && !(cb && cb.checked)) ? 'none' : '';
+        });
+    }
+    updateMfrVisibility();  // honor any pre-selected manufacturer on load
+
     root.addEventListener('click', function(e) {
         var btn = e.target.closest('.gl-list-tree-toggle');
         if (!btn) return;
@@ -1299,6 +1315,7 @@ window.glApplySort = function(value) {
             var node = cb.closest('.gl-engine-node');
             if (node && !node.classList.contains('is-open')) toggleNode(node);
         }
+        if (cb.classList.contains('gl-mfr-cb')) updateMfrVisibility();
     });
 })();
 </script>
