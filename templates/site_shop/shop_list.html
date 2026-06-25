@@ -10,9 +10,11 @@
         <div>
             <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 bilingual"
                 data-lang-ar="{{ kind_labels.ar }}" data-lang-en="{{ kind_labels.en }}" data-lang-es="{{ kind_labels.es }}" data-lang-ru="{{ kind_labels.ru }}">{{ kind_labels.ar }}</h1>
+            {% if not catalogue_empty %}
             <p class="text-sm text-gray-500 mt-1">{{ items.paginator.count|default:0 }}
-                <span class="bilingual" data-lang-ar="منتج" data-lang-en="items" data-lang-es="artículos" data-lang-ru="товаров">منتج</span>
+                <span class="bilingual" data-lang-ar="منتج" data-lang-en="items" data-lang-es="artículos" data-lang-ru="товاров">منتج</span>
             </p>
+            {% endif %}
         </div>
         {% if user.is_staff %}
         <a href="{% url 'shop_add' %}?kind={{ kind }}" class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white font-bold px-4 py-2.5 rounded-xl text-sm transition">
@@ -22,7 +24,8 @@
         {% endif %}
     </div>
 
-    <!-- Filters -->
+    <!-- Filters (hidden when the catalogue is empty — only the request form shows) -->
+    {% if not catalogue_empty %}
     <form method="get" class="bg-white rounded-2xl shadow-sm p-4 mb-6 grid grid-cols-2 md:grid-cols-6 gap-3">
         <input type="text" name="q" value="{{ active_filters.q }}" placeholder="بحث بالاسم أو رقم القطعة…"
                class="col-span-2 md:col-span-2 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-transparent">
@@ -50,6 +53,7 @@
             </button>
         </div>
     </form>
+    {% endif %}
 
     <!-- Grid -->
     {% if items %}

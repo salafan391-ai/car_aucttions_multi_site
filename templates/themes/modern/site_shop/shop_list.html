@@ -157,7 +157,8 @@
             {% endif %}
         </div>
 
-        <!-- Filters -->
+        <!-- Filters (hidden when the catalogue is empty — only the request form shows) -->
+        {% if not catalogue_empty %}
         <form method="get" class="mod-shop-filter">
             <div class="mod-shop-filter-grid">
                 <input class="span-2" type="text" name="q" value="{{ active_filters.q }}" placeholder="بحث بالاسم أو رقم القطعة…"
@@ -185,6 +186,7 @@
                 </div>
             </div>
         </form>
+        {% endif %}
 
         <!-- Grid -->
         {% if items %}

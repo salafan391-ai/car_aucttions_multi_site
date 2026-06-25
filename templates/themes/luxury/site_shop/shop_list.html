@@ -158,6 +158,7 @@
             {% endif %}
         </div>
 
+        {% if not catalogue_empty %}
         <form method="get" class="lux-shop-filter">
             <input type="text" name="q" value="{{ active_filters.q }}" placeholder="بحث بالاسم أو رقم القطعة…"
                    data-placeholder-ar="بحث بالاسم أو رقم القطعة…" data-placeholder-en="Search name or part no.…" data-placeholder-es="Buscar nombre o nº de pieza…" data-placeholder-ru="Поиск по названию или номеру…">
@@ -183,6 +184,7 @@
                 <button type="submit" class="lux-shop-filter-submit bilingual" data-lang-ar="فلترة" data-lang-en="Filter" data-lang-es="Filtrar" data-lang-ru="Фильтр">فلترة</button>
             </div>
         </form>
+        {% endif %}
 
         {% if items %}
         <div class="lux-shop-grid">

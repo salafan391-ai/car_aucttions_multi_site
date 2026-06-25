@@ -84,7 +84,8 @@
             {% endif %}
         </div>
 
-        <!-- Filters -->
+        <!-- Filters (hidden when the catalogue is empty — only the request form shows) -->
+        {% if not catalogue_empty %}
         <form method="get" class="gl-shop-filter gl-card">
             <div class="gl-shop-filter-grid">
                 <div class="span-2">
@@ -128,6 +129,7 @@
                 </div>
             </div>
         </form>
+        {% endif %}
 
         <!-- Grid -->
         {% if items %}
