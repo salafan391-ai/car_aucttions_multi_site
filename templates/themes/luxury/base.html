@@ -115,14 +115,15 @@
         .lux-nav-inner {
             max-width: 1320px; margin: 0 auto;
             display: flex; align-items: center; gap: 2rem;
-            padding: 1.25rem 1.5rem;
+            padding: 0.8rem 1.5rem;
         }
         .lux-brand {
             display: flex; align-items: center; gap: 0.75rem;
             color: var(--lux-text); text-decoration: none;
             font-size: 1.1rem; letter-spacing: 0.15em; text-transform: uppercase;
         }
-        .lux-brand img { height: 36px; width: auto; }
+        .lux-brand img { height: 36px; width: auto; display: block; }
+        .lux-brand-logo img { height: 60px; }
         .lux-nav-links { display: flex; gap: 2rem; flex: 1; }
         .lux-nav-link {
             color: var(--lux-text-dim); text-decoration: none;
@@ -170,9 +171,10 @@
         .lux-nav-mobile-open .lux-nav-toggle .lux-icon-close { display: block; }
 
         @media (max-width: 768px) {
-            .lux-nav-inner { gap: 0.75rem; padding: 0.85rem 1rem; }
+            .lux-nav-inner { gap: 0.75rem; padding: 0.55rem 1rem; }
             .lux-brand { font-size: 1rem; letter-spacing: 0.12em; }
             .lux-brand img { height: 30px; }
+            .lux-brand-logo img { height: 48px; }
             .lux-nav-links, .lux-nav-actions { display: none; }
             .lux-mode-toggle-mobile { display: inline-flex; flex-shrink: 0; }
             .lux-nav-toggle {
@@ -453,9 +455,9 @@
 
 <nav class="lux-nav" id="lux-nav">
     <div class="lux-nav-inner">
-        <a href="{% url 'home' %}" class="lux-brand">
-            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% endif %}
-            <span>{{ site_name|default:"Premium Motors" }}</span>
+        <a href="{% url 'home' %}" class="lux-brand{% if site_logo %} lux-brand-logo{% endif %}">
+            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">
+            {% else %}<span>{{ site_name|default:"Premium Motors" }}</span>{% endif %}
         </a>
         <button type="button" class="lux-nav-toggle" onclick="document.getElementById('lux-nav').classList.toggle('lux-nav-mobile-open')" aria-label="Menu">
             <svg class="lux-icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
