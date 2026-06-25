@@ -280,6 +280,8 @@
     /* CTA — reuse .gl-btn primitives but ensure block + spacing */
     .gl-detail-cta { width: 100%; margin-bottom: .65rem; }
     .gl-detail-cta svg { width: 1rem; height: 1rem; }
+    /* WhatsApp messaging CTA: phones only (on desktop wa.me needs WhatsApp Web). */
+    @media (min-width: 768px) { .gl-detail-cta-wa { display: none !important; } }
     .gl-detail-save-form { margin: 0 0 .65rem; }
 
     /* Status / encar pills */
@@ -780,7 +782,7 @@
 
                 {% if site_whatsapp %}
                 {% whatsapp_order_message car site_name as gl_wa_msg %}
-                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ gl_wa_msg }}" data-wa-krw="{{ car.price }}" target="_blank" rel="noopener" class="gl-btn gl-btn-solid gl-detail-cta bilingual" data-lang-ar="استفسار عبر واتساب" data-lang-en="Inquire via WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить через WhatsApp">استفسار عبر واتساب</a>
+                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ gl_wa_msg }}" data-wa-krw="{{ car.price }}" target="_blank" rel="noopener" class="gl-btn gl-btn-solid gl-detail-cta gl-detail-cta-wa bilingual" data-lang-ar="استفسار عبر واتساب" data-lang-en="Inquire via WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить через WhatsApp">استفسار عبر واتساب</a>
                 {% endif %}
                 {% if car.price and import_calc_enabled %}
                 <button type="button" onclick="glCalcOpen()" class="gl-btn gl-detail-cta bilingual" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</button>
