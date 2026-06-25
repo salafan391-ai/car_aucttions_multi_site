@@ -157,6 +157,39 @@ def shop_request(request):
     return redirect(redirect_name)
 
 
+@staff_member_required
+def shop_requests(request):
+    """Dashboard list of customer part/accessory requests (from the empty-catalogue form)."""
+    if _is_public_schema():
+        messages.error(request, "غير متاح من النطاق العام")
+        return redirect("home")
+    from .models import ShopRequest
+    flt = request.GET.get("filter") or "unhandled"
+    qs = ShopRequest.objects.all()
+    if flt != "all":
+        qs = qs.filter(is_handled=False)
+    paginator = Paginator(qs, 30)
+    page = paginator.get_page(request.GET.get("page"))
+    return render(request, "site_shop/shop_requests.html", {
+        "requests": page,
+        "filter": flt,
+        "unhandled_count": ShopRequest.objects.filter(is_handled=False).count(),
+    })
+
+
+@staff_member_required
+@require_POST
+def shop_request_toggle(request, pk):
+    """Toggle a request's handled flag."""
+    if _is_public_schema():
+        return redirect("home")
+    from .models import ShopRequest
+    req = get_object_or_404(ShopRequest, pk=pk)
+    req.is_handled = not req.is_handled
+    req.save(update_fields=["is_handled"])
+    return redirect(request.POST.get("next") or "shop_requests")
+
+
 def _shop_detail(request, pk, kind):
     item = get_object_or_404(ShopItem, pk=pk, kind=kind)
     related = ShopItem.objects.filter(kind=kind).exclude(pk=item.pk)

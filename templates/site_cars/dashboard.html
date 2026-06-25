@@ -137,6 +137,11 @@
                 <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
                 <span class="text-xs font-medium text-emerald-700">استيراد قطع/إكسسوارات</span>
             </a>
+            <a href="{% url 'shop_requests' %}" class="relative flex flex-col items-center gap-2 p-4 rounded-xl bg-rose-50 hover:bg-rose-100 transition text-center">
+                {% if shop_requests_unhandled %}<span class="absolute top-2 inset-inline-start-2 min-w-[20px] h-5 px-1.5 rounded-full bg-rose-600 text-white text-[11px] font-bold flex items-center justify-center" style="inset-inline-start:.5rem">{{ shop_requests_unhandled }}</span>{% endif %}
+                <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span class="text-xs font-medium text-rose-700 bilingual" data-lang-ar="طلبات العملاء" data-lang-en="Requests" data-lang-es="Solicitudes" data-lang-ru="Запросы">طلبات العملاء</span>
+            </a>
             <a href="{% url 'staff_orders' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition text-center">
                 <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 <span class="text-xs font-medium text-amber-700">إدارة الطلبات</span>

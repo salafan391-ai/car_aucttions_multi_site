@@ -12,6 +12,8 @@ urlpatterns = [
 
     # Staff CRUD (parts + accessories share these, distinguished by ?kind=)
     path("dashboard/shop/", views.shop_manage, name="shop_manage"),
+    path("dashboard/shop/requests/", views.shop_requests, name="shop_requests"),
+    path("dashboard/shop/requests/<int:pk>/toggle/", views.shop_request_toggle, name="shop_request_toggle"),
     path("dashboard/shop/import/", views.shop_import, name="shop_import"),
     path("dashboard/shop/add/", views.shop_add, name="shop_add"),
     path("dashboard/shop/<int:pk>/edit/", views.shop_edit, name="shop_edit"),

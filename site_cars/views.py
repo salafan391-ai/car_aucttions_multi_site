@@ -84,6 +84,11 @@ def dashboard(request):
         'recent_sold': recent_sold,
         'site_cars_list': site_cars_list,
     }
+    try:
+        from site_shop.models import ShopRequest
+        context['shop_requests_unhandled'] = ShopRequest.objects.filter(is_handled=False).count()
+    except Exception:
+        context['shop_requests_unhandled'] = 0
     return render(request, 'site_cars/dashboard.html', context)
 
 
