@@ -16,6 +16,7 @@ Expects: kind ("part"/"accessory"), is_part.
     .sr-field.full { grid-column: 1 / -1; }
     .sr-field label { font-size: 13px; font-weight: 800; }
     .sr-field label .opt { font-weight: 500; opacity: .55; font-size: 11px; }
+    .sr-hint { font-size: 11.5px; font-weight: 500; opacity: .62; line-height: 1.5; }
     .sr-field input, .sr-field textarea {
         width: 100%; padding: 11px 13px; border-radius: 12px; font-family: inherit; font-size: 14px;
         border: 1px solid rgba(128,128,128,.32); background: rgba(255,255,255,.9); color: #111;
@@ -43,6 +44,7 @@ Expects: kind ("part"/"accessory"), is_part.
         <div class="sr-field">
             <label class="bilingual" data-lang-ar="رقم الهيكل (VIN)" data-lang-en="Chassis no. (VIN)" data-lang-es="VIN" data-lang-ru="VIN">رقم الهيكل (VIN)</label>
             <input type="text" name="car_vin" dir="ltr" maxlength="40" required>
+            <span class="sr-hint bilingual" data-lang-ar="يوجد عادةً أسفل الزجاج الأمامي من جهة السائق، أو على إطار باب السائق، أو في رخصة السير/استمارة السيارة (17 خانة)." data-lang-en="Usually at the base of the windshield (driver's side), on the driver's door frame, or on your vehicle registration (17 characters)." data-lang-es="Suele estar en la base del parabrisas (lado del conductor), en el marco de la puerta del conductor o en el permiso de circulación (17 caracteres)." data-lang-ru="Обычно внизу лобового стекла (со стороны водителя), на стойке двери водителя или в техпаспорте (17 символов).">يوجد عادةً أسفل الزجاج الأمامي من جهة السائق، أو على إطار باب السائق، أو في رخصة السير/استمارة السيارة (17 خانة).</span>
         </div>
         <div class="sr-field">
             <label class="bilingual" data-lang-ar="رقم الهاتف" data-lang-en="Phone number" data-lang-es="Teléfono" data-lang-ru="Телефон">رقم الهاتف</label>
