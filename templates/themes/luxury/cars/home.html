@@ -359,6 +359,11 @@
           .lux-hf-empty{grid-column:1/-1;text-align:center;color:var(--lux-text-dim);padding:1rem;font-size:.85rem;}
           .lux-hf-search{width:100%;display:flex;align-items:center;justify-content:center;gap:.6rem;padding:1.05rem;border:0;cursor:pointer;background:var(--lux-gold);color:var(--lux-bg);font-family:inherit;font-weight:700;font-size:.95rem;letter-spacing:.05em;transition:background .2s;}
           .lux-hf-search:hover{background:var(--lux-gold-bright);}
+          /* Light mode: the card/option buttons use hardcoded dark backgrounds — flip to light. */
+          .lux-light .lux-hf-card{background:rgba(255,255,255,.62);}
+          .lux-light .lux-hf-opt{background:rgba(255,255,255,.55);}
+          .lux-light .lux-hf-opt.is-selected{background:rgba(120,92,30,.14);}
+          .lux-light .lux-hf-search{color:#fff;}
           .lux-hf-search svg{width:1.1rem;height:1.1rem;}
         </style>
         <div class="lux-hf" id="lux-hf">
