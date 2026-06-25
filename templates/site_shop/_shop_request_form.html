@@ -31,12 +31,16 @@ Expects: kind ("part"/"accessory"), is_part.
         font-weight: 900; font-size: 15px; color: #fff;
         background: linear-gradient(135deg, var(--color-primary, #2a2564), var(--color-secondary, #d53030)); }
     .sr-submit:hover { filter: brightness(1.06); }
-    .sr-photo-btn { display: flex; align-items: center; justify-content: center; gap: 9px; padding: 14px; cursor: pointer;
-        border: 1.5px dashed rgba(128,128,128,.4); border-radius: 12px; font-weight: 700; font-size: 13px; opacity: .85; transition: all .15s; }
-    .sr-photo-btn input { display: none; }
-    .sr-photo-btn:hover { opacity: 1; border-color: var(--color-primary, #2a2564); }
-    .sr-photo-btn svg { flex: none; }
-    .sr-photo-preview { margin-top: 10px; width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; background: rgba(128,128,128,.08); }
+    /* Inline camera button inside the VIN input */
+    .sr-vin-wrap { position: relative; direction: ltr; }
+    .sr-vin-wrap input[name="car_vin"] { padding-inline-end: 52px; }
+    .sr-vin-cam { position: absolute; inset-inline-end: 5px; top: 50%; transform: translateY(-50%);
+        width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; background: linear-gradient(135deg, var(--color-primary, #2a2564), var(--color-secondary, #d53030)); color: #fff; }
+    .sr-vin-cam:hover { filter: brightness(1.08); }
+    .sr-vin-cam input { display: none; }
+    .sr-vin-cam svg { flex: none; }
+    .sr-photo-preview { margin-top: 10px; width: 100%; max-height: 180px; object-fit: contain; border-radius: 12px; background: rgba(128,128,128,.08); }
     .sr-submit-wa { background: linear-gradient(135deg, #1fab53, #25d366); }
     .sr-submit-wa svg { flex: none; }
     @media (max-width: 560px) { .sr-grid { grid-template-columns: 1fr; } }
@@ -55,8 +59,15 @@ Expects: kind ("part"/"accessory"), is_part.
         <input type="hidden" name="kind" value="{{ kind }}">
         <div class="sr-field">
             <label class="bilingual" data-lang-ar="رقم الهيكل (VIN)" data-lang-en="Chassis no. (VIN)" data-lang-es="VIN" data-lang-ru="VIN">رقم الهيكل (VIN)</label>
-            <input type="text" name="car_vin" dir="ltr" maxlength="40" required>
+            <div class="sr-vin-wrap">
+                <input type="text" name="car_vin" dir="ltr" maxlength="40" required>
+                <label class="sr-vin-cam" title="صوّر رقم الهيكل لملئه تلقائياً" aria-label="Scan VIN">
+                    <input type="file" name="photo" accept="image/*" capture="environment" onchange="srPhotoPreview(this)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </label>
+            </div>
             <span class="sr-vin-status" style="display:none"></span>
+            <img class="sr-photo-preview" alt="" style="display:none">
             <span class="sr-hint bilingual" data-lang-ar="يوجد عادةً أسفل الزجاج الأمامي من جهة السائق، أو على إطار باب السائق، أو في رخصة السير/استمارة السيارة (17 خانة)." data-lang-en="Usually at the base of the windshield (driver's side), on the driver's door frame, or on your vehicle registration (17 characters)." data-lang-es="Suele estar en la base del parabrisas (lado del conductor), en el marco de la puerta del conductor o en el permiso de circulación (17 caracteres)." data-lang-ru="Обычно внизу лобового стекла (со стороны водителя), на стойке двери водителя или в техпаспорте (17 символов).">يوجد عادةً أسفل الزجاج الأمامي من جهة السائق، أو على إطار باب السائق، أو في رخصة السير/استمارة السيارة (17 خانة).</span>
         </div>
         <div class="sr-field">
@@ -78,15 +89,6 @@ Expects: kind ("part"/"accessory"), is_part.
             <label class="bilingual" data-lang-ar="وصف الإكسسوار المطلوب" data-lang-en="Describe the accessory you need" data-lang-es="Describe el accesorio" data-lang-ru="Опишите аксессуар">وصف الإكسسوار المطلوب</label>
             {% endif %}
             <textarea name="item_description" rows="3" required></textarea>
-        </div>
-        <div class="sr-field full">
-            <label class="bilingual" data-lang-ar="صورة رقم الهيكل (VIN) <span class='opt'>(اختياري)</span>" data-lang-en="Photo of the VIN <span class='opt'>(optional)</span>" data-lang-es="Foto del VIN <span class='opt'>(opcional)</span>" data-lang-ru="Фото VIN <span class='opt'>(необязательно)</span>">صورة رقم الهيكل (VIN) <span class="opt">(اختياري)</span></label>
-            <label class="sr-photo-btn">
-                <input type="file" name="photo" accept="image/*" capture="environment" onchange="srPhotoPreview(this)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                <span class="bilingual" data-lang-ar="صوّر رقم الهيكل وسنملؤه تلقائياً" data-lang-en="Photograph the VIN — we'll fill it automatically" data-lang-es="Fotografía el VIN — lo rellenamos" data-lang-ru="Сфотографируйте VIN — заполним автоматически">صوّر رقم الهيكل وسنملؤه تلقائياً</span>
-            </label>
-            <img class="sr-photo-preview" alt="" style="display:none">
         </div>
         {% if site_whatsapp %}
         <button type="submit" class="sr-submit sr-submit-wa bilingual" data-lang-ar="إرسال عبر واتساب" data-lang-en="Send via WhatsApp" data-lang-es="Enviar por WhatsApp" data-lang-ru="Отправить в WhatsApp"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.207zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg> <span class="bilingual" data-lang-ar="إرسال عبر واتساب" data-lang-en="Send via WhatsApp" data-lang-es="Enviar por WhatsApp" data-lang-ru="Отправить в WhatsApp">إرسال عبر واتساب</span></button>
