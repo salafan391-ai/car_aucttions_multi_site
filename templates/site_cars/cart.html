@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}سلة المشاركة — {{ site_name|default:"سيارات" }}{% endblock %}
+{% block title %}سلة الروابط — {{ site_name|default:"سيارات" }}{% endblock %}
 {% block meta_robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
@@ -44,7 +44,7 @@
 <section class="sc-cart-wrap">
     <div class="sc-cart-head">
         <div>
-            <h1 class="sc-cart-title">🛒 <span class="bilingual" data-lang-ar="سلة المشاركة" data-lang-en="Share cart" data-lang-es="Carrito" data-lang-ru="Корзина">سلة المشاركة</span></h1>
+            <h1 class="sc-cart-title">🔗 <span class="bilingual" data-lang-ar="سلة الروابط" data-lang-en="Share links" data-lang-es="Enlaces" data-lang-ru="Ссылки">سلة الروابط</span></h1>
             <p class="sc-cart-sub bilingual" data-lang-ar="أضف السيارات من القائمة، ثم انسخ رابط كل سيارة (يعرض الصورة وبعض المعلومات عند الإرسال) — فُرادى أو كلها دفعة واحدة." data-lang-en="Add cars from the list, then copy each car's link (shows the photo & info when sent) — one by one or all at once." data-lang-es="Añade coches y copia cada enlace." data-lang-ru="Добавьте авто и копируйте ссылки.">أضف السيارات من القائمة، ثم انسخ رابط كل سيارة (يعرض الصورة وبعض المعلومات عند الإرسال) — فُرادى أو كلها دفعة واحدة.</p>
         </div>
         <a href="{% url 'car_list' %}" class="sc-cart-back bilingual" data-lang-ar="→ العودة للسيارات" data-lang-en="← Back to cars" data-lang-es="← Coches" data-lang-ru="← Авто">→ العودة للسيارات</a>
@@ -60,7 +60,7 @@
 
     <div class="sc-cart-empty" id="sc-empty" style="display:none">
         <div class="ico">🛒</div>
-        <p class="bilingual" data-lang-ar="سلة المشاركة فارغة. افتح قائمة السيارات واضغط «أضف للسلة»." data-lang-en="Your share cart is empty. Open the car list and tap “Add to cart”." data-lang-es="El carrito está vacío." data-lang-ru="Корзина пуста.">سلة المشاركة فارغة. افتح قائمة السيارات واضغط «أضف للسلة».</p>
+        <p class="bilingual" data-lang-ar="سلة الروابط فارغة. افتح قائمة السيارات واضغط «ضف روابط المشاركة»." data-lang-en="Your share links list is empty. Open the car list and tap “Add share links”." data-lang-es="La lista está vacía." data-lang-ru="Список пуст.">سلة الروابط فارغة. افتح قائمة السيارات واضغط «ضف روابط المشاركة».</p>
         <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="تصفّح السيارات" data-lang-en="Browse cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفّح السيارات</a>
     </div>
 </section>
@@ -109,7 +109,7 @@
         });
     }
     window.scClear = function () {
-        if (!cart.length || !confirm('إفراغ سلة المشاركة؟')) return;
+        if (!cart.length || !confirm('إفراغ سلة الروابط؟')) return;
         cart = []; save(); render();
     };
     window.scCopyAll = function (btn) { copy(cart.map(function (c) { return c.url; }).join('\n'), btn); };
