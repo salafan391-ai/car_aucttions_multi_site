@@ -41,8 +41,8 @@ Expects: kind ("part"/"accessory"), is_part.
         {% csrf_token %}
         <input type="hidden" name="kind" value="{{ kind }}">
         <div class="sr-field">
-            <label class="bilingual" data-lang-ar="رقم الهيكل (VIN) <span class='opt'>(اختياري)</span>" data-lang-en="Chassis no. (VIN) <span class='opt'>(optional)</span>" data-lang-es="VIN <span class='opt'>(opcional)</span>" data-lang-ru="VIN <span class='opt'>(необязательно)</span>">رقم الهيكل (VIN) <span class="opt">(اختياري)</span></label>
-            <input type="text" name="car_vin" dir="ltr" maxlength="40">
+            <label class="bilingual" data-lang-ar="رقم الهيكل (VIN)" data-lang-en="Chassis no. (VIN)" data-lang-es="VIN" data-lang-ru="VIN">رقم الهيكل (VIN)</label>
+            <input type="text" name="car_vin" dir="ltr" maxlength="40" required>
         </div>
         <div class="sr-field">
             <label class="bilingual" data-lang-ar="رقم الهاتف" data-lang-en="Phone number" data-lang-es="Teléfono" data-lang-ru="Телефон">رقم الهاتف</label>

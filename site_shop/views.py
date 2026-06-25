@@ -116,16 +116,17 @@ def shop_request(request):
 
     phone = (request.POST.get("phone") or "").strip()
     item_description = (request.POST.get("item_description") or "").strip()
+    car_vin = (request.POST.get("car_vin") or "").strip()
     redirect_name = "parts_list" if kind == "part" else "accessories_list"
 
-    if not phone or not item_description:
-        messages.error(request, "الرجاء إدخال رقم الهاتف ووصف الطلب.")
+    if not car_vin or not phone or not item_description:
+        messages.error(request, "الرجاء إدخال رقم الهيكل (VIN) ورقم الهاتف ووصف الطلب.")
         return redirect(redirect_name)
 
     from .models import ShopRequest
     req = ShopRequest.objects.create(
         kind=kind,
-        car_vin=(request.POST.get("car_vin") or "").strip(),
+        car_vin=car_vin,
         car_description=(request.POST.get("car_description") or "").strip(),
         phone=phone,
         email=(request.POST.get("email") or "").strip(),
