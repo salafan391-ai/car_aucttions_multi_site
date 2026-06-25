@@ -4,9 +4,12 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Q
+from django.http import JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+import base64
+import os
 import re
 
 from site_cars.image_utils import optimize_image
@@ -418,3 +421,54 @@ def shop_import(request):
     return render(request, "site_shop/shop_import.html", {
         "kind": kind, "is_part": kind == "part", "kind_label_ar": KIND_LABELS[kind]["ar"],
     })
+
+
+# VIN charset excludes I, O, Q.
+_VIN_TOKEN = re.compile(r"^[A-HJ-NPR-Z0-9]{17}$")
+
+
+def _extract_vin(text):
+    """Find a 17-char VIN inside OCR'd text."""
+    up = (text or "").upper()
+    for tok in re.split(r"[^A-Z0-9]+", up):
+        if len(tok) == 17 and _VIN_TOKEN.match(tok):
+            return tok
+    despaced = re.sub(r"[^A-Z0-9]", "", up)
+    m = re.findall(r"(?<![A-Z0-9])[A-HJ-NPR-Z0-9]{17}(?![A-Z0-9])", despaced)
+    return m[0] if m else None
+
+
+@require_POST
+def shop_vin_ocr(request):
+    """Best-effort: read a VIN from an uploaded photo (Google Vision OCR).
+    Public — used by the request form's camera. Degrades to {vin: null}."""
+    f = request.FILES.get("photo")
+    if not f or not (f.content_type or "").startswith("image/") or f.size > 8 * 1024 * 1024:
+        return JsonResponse({"vin": None})
+    key = os.environ.get("GOOGLE_VISION_API_KEY") or os.environ.get("GOOGLE_TRANSLATE_API_KEY")
+    if not key:
+        return JsonResponse({"vin": None, "error": "unavailable"})
+    # Light per-IP throttle — it's a public endpoint hitting a paid API.
+    from django.core.cache import cache
+    ip = request.META.get("REMOTE_ADDR", "")
+    ck = f"vinocr:{getattr(connection, 'schema_name', '')}:{ip}"
+    n = cache.get(ck, 0)
+    if n >= 30:
+        return JsonResponse({"vin": None, "error": "rate"})
+    cache.set(ck, n + 1, 3600)
+    try:
+        import requests
+        content = base64.b64encode(f.read()).decode()
+        resp = requests.post(
+            "https://vision.googleapis.com/v1/images:annotate?key=" + key,
+            json={"requests": [{"image": {"content": content},
+                                "features": [{"type": "TEXT_DETECTION"}]}]},
+            timeout=15,
+        )
+        ann = (resp.json().get("responses") or [{}])[0]
+        text = (ann.get("fullTextAnnotation") or {}).get("text") or ""
+        if not text and ann.get("textAnnotations"):
+            text = ann["textAnnotations"][0].get("description", "")
+        return JsonResponse({"vin": _extract_vin(text)})
+    except Exception:
+        return JsonResponse({"vin": None})

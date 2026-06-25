@@ -17,6 +17,10 @@ Expects: kind ("part"/"accessory"), is_part.
     .sr-field label { font-size: 13px; font-weight: 800; }
     .sr-field label .opt { font-weight: 500; opacity: .55; font-size: 11px; }
     .sr-hint { font-size: 11.5px; font-weight: 500; opacity: .62; line-height: 1.5; }
+    .sr-vin-status { font-size: 11.5px; font-weight: 700; line-height: 1.5; }
+    .sr-vin-status.ok { color: #1a8a4a; }
+    .sr-vin-status.warn { color: #c2410c; }
+    .sr-vin-filled { border-color: #1fab53 !important; background: rgba(31,171,83,.06) !important; }
     .sr-field input, .sr-field textarea {
         width: 100%; padding: 11px 13px; border-radius: 12px; font-family: inherit; font-size: 14px;
         border: 1px solid rgba(128,128,128,.32); background: rgba(255,255,255,.9); color: #111;
@@ -46,12 +50,13 @@ Expects: kind ("part"/"accessory"), is_part.
         {% endif %}
         <p class="bilingual" data-lang-ar="املأ النموذج وسنبحث عنه لك ونتواصل معك." data-lang-en="Fill in the form and we'll source it and get back to you." data-lang-es="Completa el formulario y te contactaremos." data-lang-ru="Заполните форму — мы найдём и свяжемся с вами.">املأ النموذج وسنبحث عنه لك ونتواصل معك.</p>
     </div>
-    <form method="post" action="{% url 'shop_request' %}" class="sr-grid" enctype="multipart/form-data"{% if site_whatsapp %} data-wa="{{ site_whatsapp|format_whatsapp_number }}" onsubmit="return srToWhatsapp(this)"{% endif %}>
+    <form method="post" action="{% url 'shop_request' %}" class="sr-grid" enctype="multipart/form-data" data-ocr="{% url 'shop_vin_ocr' %}"{% if site_whatsapp %} data-wa="{{ site_whatsapp|format_whatsapp_number }}" onsubmit="return srToWhatsapp(this)"{% endif %}>
         {% csrf_token %}
         <input type="hidden" name="kind" value="{{ kind }}">
         <div class="sr-field">
             <label class="bilingual" data-lang-ar="رقم الهيكل (VIN)" data-lang-en="Chassis no. (VIN)" data-lang-es="VIN" data-lang-ru="VIN">رقم الهيكل (VIN)</label>
             <input type="text" name="car_vin" dir="ltr" maxlength="40" required>
+            <span class="sr-vin-status" style="display:none"></span>
             <span class="sr-hint bilingual" data-lang-ar="يوجد عادةً أسفل الزجاج الأمامي من جهة السائق، أو على إطار باب السائق، أو في رخصة السير/استمارة السيارة (17 خانة)." data-lang-en="Usually at the base of the windshield (driver's side), on the driver's door frame, or on your vehicle registration (17 characters)." data-lang-es="Suele estar en la base del parabrisas (lado del conductor), en el marco de la puerta del conductor o en el permiso de circulación (17 caracteres)." data-lang-ru="Обычно внизу лобового стекла (со стороны водителя), на стойке двери водителя или в техпаспорте (17 символов).">يوجد عادةً أسفل الزجاج الأمامي من جهة السائق، أو على إطار باب السائق، أو في رخصة السير/استمارة السيارة (17 خانة).</span>
         </div>
         <div class="sr-field">
@@ -91,7 +96,7 @@ Expects: kind ("part"/"accessory"), is_part.
     </form>
 </div>
 <script>
-// Live preview of the captured/chosen photo.
+// Live preview of the captured/chosen photo + auto-read the VIN from it.
 function srPhotoPreview(input) {
     var field = input.closest('.sr-field');
     var img = field ? field.querySelector('.sr-photo-preview') : null;
@@ -99,6 +104,33 @@ function srPhotoPreview(input) {
         img.src = URL.createObjectURL(input.files[0]);
         img.style.display = '';
     }
+    srVinOcr(input);
+}
+function srVinOcr(input) {
+    var form = input.closest('form');
+    if (!form || !input.files || !input.files[0]) return;
+    var url = form.getAttribute('data-ocr');
+    if (!url) return;
+    var vinField = form.elements['car_vin'];
+    var status = form.querySelector('.sr-vin-status');
+    function setStatus(txt, cls) { if (!status) return; status.style.display = ''; status.textContent = txt; status.className = 'sr-vin-status' + (cls ? ' ' + cls : ''); }
+    setStatus('📷 جارٍ قراءة رقم الهيكل من الصورة…', '');
+    var fd = new FormData();
+    fd.append('photo', input.files[0]);
+    var csrf = form.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrf) fd.append('csrfmiddlewaretoken', csrf.value);
+    fetch(url, { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d && d.vin) {
+                vinField.value = d.vin;
+                vinField.classList.add('sr-vin-filled');
+                setStatus('✓ تم تعبئة رقم الهيكل من الصورة — تأكّد منه', 'ok');
+            } else {
+                setStatus('تعذّرت قراءة رقم الهيكل، يُرجى إدخاله يدوياً', 'warn');
+            }
+        })
+        .catch(function () { if (status) status.style.display = 'none'; });
 }
 </script>
 {% if site_whatsapp %}

@@ -9,6 +9,7 @@ urlpatterns = [
     path("accessories/", views.accessories_list, name="accessories_list"),
     path("accessories/<int:pk>/", views.accessories_detail, name="accessories_detail"),
     path("shop/request/", views.shop_request, name="shop_request"),
+    path("shop/vin-ocr/", views.shop_vin_ocr, name="shop_vin_ocr"),
 
     # Staff CRUD (parts + accessories share these, distinguished by ?kind=)
     path("dashboard/shop/", views.shop_manage, name="shop_manage"),
