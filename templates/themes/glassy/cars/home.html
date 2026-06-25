@@ -280,6 +280,7 @@
                 <input type="hidden" name="manufacturer" id="lux-hf-mfg" value="">
                 <input type="hidden" name="model" id="lux-hf-model" value="">
                 <input type="hidden" name="year_from" id="lux-hf-year" value="">
+                <input type="hidden" name="year_to" id="lux-hf-year-to" value="">
                 <div class="gl-home-hf-card">
                   <div class="gl-home-hf-row" data-acc="brand">
                     <button type="button" class="gl-home-hf-row-head"><svg class="gl-home-hf-chev" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -642,6 +643,7 @@
   var mfgInput   = document.getElementById('lux-hf-mfg');
   var modelInput = document.getElementById('lux-hf-model');
   var yearInput  = document.getElementById('lux-hf-year');
+  var yearToInput = document.getElementById('lux-hf-year-to');
   var brandGrid  = document.getElementById('lux-hf-brand-grid');
   var modelGrid  = document.getElementById('lux-hf-model-grid');
   var brandLabel = document.getElementById('lux-hf-brand-label');
@@ -736,16 +738,31 @@
     openRow('year');
   });
 
-  // Year — delegated (grid is rebuilt for showroom mode).
+  // Year — from→to range. First tap sets "from", second sets "to".
+  var yFrom = '', yTo = '';
+  function syncYears() {
+    var lo = yFrom && yTo ? Math.min(+yFrom, +yTo) : (yFrom ? +yFrom : null);
+    var hi = yFrom && yTo ? Math.max(+yFrom, +yTo) : (yFrom ? +yFrom : null);
+    if (yFrom && yTo) {
+      yearInput.value = lo; if (yearToInput) yearToInput.value = hi;
+      sel.year = lo; sel.yearTo = hi; setLabel(yearLabel, lo + ' - ' + hi);
+    } else if (yFrom) {
+      yearInput.value = yFrom; if (yearToInput) yearToInput.value = '';
+      sel.year = yFrom; sel.yearTo = ''; setLabel(yearLabel, (lang() === 'en' ? 'From ' : 'من ') + yFrom);
+    } else {
+      yearInput.value = ''; if (yearToInput) yearToInput.value = ''; sel.year = ''; sel.yearTo = ''; resetYearLabel();
+    }
+    if (yearGrid) yearGrid.querySelectorAll('.gl-home-hf-year-opt').forEach(function (o) {
+      var y = +o.dataset.year; o.classList.toggle('is-selected', lo !== null && y >= lo && y <= hi);
+    });
+  }
   if (yearGrid) yearGrid.addEventListener('click', function (e) {
     var opt = e.target.closest('.gl-home-hf-year-opt');
     if (!opt) return;
-    yearGrid.querySelectorAll('.gl-home-hf-year-opt').forEach(function (o) { o.classList.remove('is-selected'); });
-    opt.classList.add('is-selected');
-    sel.year = opt.dataset.year;
-    yearInput.value = opt.dataset.year;
-    setLabel(yearLabel, opt.dataset.year);
-    openRow(null);
+    if (!yFrom || (yFrom && yTo)) { yFrom = opt.dataset.year; yTo = ''; }
+    else { yTo = opt.dataset.year; }
+    syncYears();
+    if (yFrom && yTo) openRow(null);
   });
 
   // Tabs
@@ -762,12 +779,12 @@
       if (yearGrid) yearGrid.innerHTML = (SITE.years || []).map(function (y) {
         return '<button type="button" class="gl-home-hf-opt gl-home-hf-year-opt" data-year="' + y + '">' + y + '</button>';
       }).join('');
-      [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = true; });
+      [carType, mfgInput, modelInput, yearInput, yearToInput].forEach(function (el) { if (el) el.disabled = true; });
     } else {
       form.action = carListUrl;
       brandGrid.innerHTML = brandGridOrig;       // restore Encar catalog grid
       if (yearGrid) yearGrid.innerHTML = yearGridOrig;
-      [carType, mfgInput, modelInput, yearInput].forEach(function (el) { if (el) el.disabled = false; });
+      [carType, mfgInput, modelInput, yearInput, yearToInput].forEach(function (el) { if (el) el.disabled = false; });
       carType.value = (type === 'auction') ? 'auction' : 'cars';
       var attr = type === 'auction' ? 'auctionCount' : 'carsCount';
       brandGrid.querySelectorAll('.gl-home-hf-brand-opt').forEach(function (opt) {
@@ -777,8 +794,9 @@
         if (c) c.textContent = n;
       });
     }
-    sel = { make: '', model: '', year: '' };
-    mfgInput.value = ''; modelInput.value = ''; yearInput.value = '';
+    sel = { make: '', model: '', year: '', yearTo: '' };
+    yFrom = ''; yTo = '';
+    mfgInput.value = ''; modelInput.value = ''; yearInput.value = ''; if (yearToInput) yearToInput.value = '';
     modelGrid.innerHTML = '';
     resetBrandLabel(); resetModelLabel(); resetYearLabel();
     openRow(null);
@@ -793,12 +811,12 @@
       var p = new URLSearchParams();
       if (sel.make) p.set('make', sel.make);
       if (sel.model) p.set('model', sel.model);
-      if (sel.year) { p.set('year_min', sel.year); p.set('year_max', sel.year); }
+      if (sel.year) { p.set('year_min', sel.year); p.set('year_max', sel.yearTo || sel.year); }
       var qs = p.toString();
       window.location.href = siteUrl + (qs ? '?' + qs : '');
       return;
     }
-    [carType, mfgInput, modelInput, yearInput].forEach(function (el) {
+    [carType, mfgInput, modelInput, yearInput, yearToInput].forEach(function (el) {
       if (el && (!el.value || !el.value.trim())) el.disabled = true;
     });
   });
