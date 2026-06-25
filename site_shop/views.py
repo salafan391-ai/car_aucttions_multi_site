@@ -124,6 +124,9 @@ def shop_request(request):
         return redirect(redirect_name)
 
     from .models import ShopRequest
+    photo = request.FILES.get("photo")
+    if photo and not (photo.content_type or "").startswith("image/"):
+        photo = None
     req = ShopRequest.objects.create(
         kind=kind,
         car_vin=car_vin,
@@ -131,6 +134,7 @@ def shop_request(request):
         phone=phone,
         email=(request.POST.get("email") or "").strip(),
         item_description=item_description,
+        image=photo,
     )
 
     # Notify the tenant by email (best effort — never blocks the response).
@@ -141,6 +145,13 @@ def shop_request(request):
             or getattr(getattr(connection, "tenant", None), "email", None)
         if to_addr:
             label = KIND_LABELS[kind]["ar"]
+            photo_html = ""
+            if req.image:
+                img_url = request.build_absolute_uri(req.image.url)
+                photo_html = (
+                    f'<p><b>الصورة:</b> <a href="{img_url}">عرض الصورة</a></p>'
+                    f'<p><img src="{img_url}" style="max-width:360px;border-radius:8px"></p>'
+                )
             body = (
                 f"<h3>طلب {label} جديد</h3>"
                 f"<p><b>رقم الهاتف:</b> {req.phone}</p>"
@@ -148,6 +159,7 @@ def shop_request(request):
                 f"<p><b>رقم الهيكل (VIN):</b> {req.car_vin or '—'}</p>"
                 f"<p><b>وصف السيارة:</b> {req.car_description or '—'}</p>"
                 f"<p><b>المطلوب:</b> {req.item_description}</p>"
+                f"{photo_html}"
             )
             send_tenant_email(to_addr, f"طلب {label} جديد", body, email_type="shop_request")
     except Exception:

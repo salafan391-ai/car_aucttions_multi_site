@@ -142,6 +142,7 @@ class ShopRequest(models.Model):
     phone = models.CharField(max_length=30, verbose_name="رقم الهاتف")
     email = models.EmailField(blank=True, default="", verbose_name="البريد الإلكتروني")
     item_description = models.TextField(verbose_name="وصف القطعة/الإكسسوار المطلوب")
+    image = models.ImageField(upload_to="shop_requests/", blank=True, null=True, verbose_name="صورة")
     is_handled = models.BooleanField(default=False, verbose_name="تمت المعالجة")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -152,3 +153,8 @@ class ShopRequest(models.Model):
 
     def __str__(self):
         return f"{self.get_kind_display()} request — {self.phone}"
+
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, "file"):
+            self.image = optimize_image(self.image, max_width=1600, max_height=1600, quality=80)
+        super().save(*args, **kwargs)

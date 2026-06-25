@@ -38,6 +38,11 @@
                         <a href="tel:{{ r.phone }}" class="text-brand font-bold" dir="ltr">{{ r.phone }}</a>
                         {% if r.email %}<a href="mailto:{{ r.email }}" class="text-gray-600 underline" dir="ltr">{{ r.email }}</a>{% endif %}
                     </div>
+                    {% if r.image %}
+                    <a href="{{ r.image.url }}" target="_blank" rel="noopener" class="inline-block mt-3">
+                        <img src="{{ r.image.url }}" alt="" class="h-24 w-24 object-cover rounded-xl border border-gray-100">
+                    </a>
+                    {% endif %}
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                     <a href="https://wa.me/{{ r.phone|format_whatsapp_number }}" target="_blank" rel="noopener"
