@@ -127,16 +127,17 @@ def _exclude_expired_auctions(qs):
 
 @cache_control(public=True, max_age=600)
 def landing(request):
-    """Opening page – logo + CTA cards. Redirects to home if landing_is_active is False."""
+    """Opening page – logo + CTA cards. When landing_is_active is False, serve the
+    home page directly at "/" (no redirect to /home/)."""
     # Site-builder override: if a tenant has published a Page(kind='home'), render that.
     from site_builder.views import render_home_if_configured
     sb_response = render_home_if_configured(request)
     if sb_response is not None:
         return sb_response
 
-    # Skip landing page if disabled for this tenant
+    # Landing disabled → the home page IS the root URL ("/").
     if not getattr(connection.tenant, 'landing_is_active', True):
-        return redirect('home')
+        return home(request)
 
     schema = getattr(connection, 'schema_name', 'public')
 
