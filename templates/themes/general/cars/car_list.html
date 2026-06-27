@@ -484,6 +484,7 @@
                 </h3>
                 <form method="get" id="gl-filter-form" class="gl-list-dock-scroll">
                     {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+                    {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
 
                     <div class="gl-list-field">
                         <label class="gl-list-flabel bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>

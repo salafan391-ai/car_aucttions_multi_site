@@ -744,27 +744,27 @@
                 <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="sort-menu" class="hidden absolute top-full mt-1.5 left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden min-w-[140px]">
-                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-created_at"
+                <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'sort' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}sort=-created_at"
                    class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-created_at' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
                     الأحدث{% if current_sort == '-created_at' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
                 </a>
-                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=price"
+                <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'sort' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}sort=price"
                    class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == 'price' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
                     الأرخص{% if current_sort == 'price' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
                 </a>
-                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-price"
+                <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'sort' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}sort=-price"
                    class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-price' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
                     الأغلى{% if current_sort == '-price' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
                 </a>
-                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-year"
+                <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'sort' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}sort=-year"
                    class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-year' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
                     الأحدث صنعاً{% if current_sort == '-year' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
                 </a>
-                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=mileage"
+                <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'sort' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}sort=mileage"
                    class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == 'mileage' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
                     أقل مسافة{% if current_sort == 'mileage' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
                 </a>
-                <a href="?{% for k,v in request.GET.items %}{% if k != 'sort' and k != 'page' %}{{ k }}={{ v|qs_value }}&{% endif %}{% endfor %}sort=-mileage"
+                <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'sort' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v|qs_value }}&{% endfor %}{% endif %}{% endfor %}sort=-mileage"
                    class="flex items-center justify-between px-4 py-2.5 text-xs hover:bg-gray-50 transition {% if current_sort == '-mileage' %}font-semibold text-brand bg-brand/5{% else %}text-gray-700{% endif %}">
                     أكثر مسافة{% if current_sort == '-mileage' %}<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{% endif %}
                 </a>

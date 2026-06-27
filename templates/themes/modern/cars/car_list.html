@@ -597,6 +597,7 @@
                 <h3 class="mod-filter-title bilingual" data-lang-ar="تصفية" data-lang-en="Refine" data-lang-es="Refinar" data-lang-ru="Фильтр">تصفية</h3>
                 <form method="get" id="lux-filter-form" class="mod-filter-scroll">
                     {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+                    {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
 
                     <div class="mod-ffield">
                         <label class="mod-flabel bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>

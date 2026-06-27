@@ -913,6 +913,9 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
     if exclude != 'engine_group':
         v = GET.getlist('engine_group')
         if v: qs = qs.filter(engine_group__in=v)
+    if exclude != 'model_version':
+        v = GET.getlist('model_version')
+        if v: qs = qs.filter(model_version__in=v)
     if exclude != 'model_year_range':
         v = GET.getlist('model_year_range')
         if v: qs = qs.filter(model_year_range__in=v)
@@ -1125,6 +1128,10 @@ def car_list(request):
     sel_engine_groups = request.GET.getlist('engine_group')
     if sel_engine_groups:
         qs = qs.filter(engine_group__in=sel_engine_groups)
+
+    sel_model_versions = request.GET.getlist('model_version')
+    if sel_model_versions:
+        qs = qs.filter(model_version__in=sel_model_versions)
 
     sel_usage_types = request.GET.getlist('usage_type')
     if sel_usage_types:
@@ -1766,6 +1773,7 @@ def car_list(request):
         'sel_seat_colors':   request.GET.getlist('seat_color'),
         'sel_auction_names': request.GET.getlist('auction_name'),
         'sel_engine_groups':     request.GET.getlist('engine_group'),
+        'sel_model_versions':    request.GET.getlist('model_version'),
         'sel_usage_types':       request.GET.getlist('usage_type'),
         'sel_model_year_ranges': request.GET.getlist('model_year_range'),
         'sel_trim_details':      request.GET.getlist('trim_detail'),
