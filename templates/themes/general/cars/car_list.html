@@ -691,7 +691,7 @@
             </aside>
 
             <div>
-                {% if sel_manufacturers or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
+                {% if sel_manufacturers or sel_models or sel_badges or sel_model_versions or sel_engine_groups or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
                 <div class="gl-list-active">
                     {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'manufacturer' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
@@ -720,6 +720,12 @@
                     {% for b in badges %}{% if b.id|stringformat:"d" in sel_badges %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'badge' or v != b.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">{{ b.name }} <span class="x">×</span></a>
                     {% endif %}{% endfor %}
+                    {% for mv in sel_model_versions %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'model_version' or v != mv %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ mv|pretty_en }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for eg in sel_engine_groups %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'engine_group' or v != eg %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ eg|pretty_en }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
                     {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'color' or v != c.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
                         <span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>
