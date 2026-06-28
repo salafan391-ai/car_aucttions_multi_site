@@ -700,3 +700,19 @@ def real_badge(name):
     if not name or str(name).strip().lower() in ("unknown", "غير معروف"):
         return ""
     return pretty_en(name)
+
+
+@register.filter
+def car_trim(car):
+    """Best label for the trim slot: the real badge name, else the engine
+    displacement (engine_group, e.g. 'Gasoline 2500cc'), else ''. Auction cars
+    from Encar frequently have badge='unknown' but a populated engine_group."""
+    if not car:
+        return ""
+    b = getattr(getattr(car, "badge", None), "name", None)
+    if b and str(b).strip().lower() not in ("unknown", "غير معروف"):
+        return pretty_en(b)
+    eg = getattr(car, "engine_group", None)
+    if eg and str(eg).strip():
+        return pretty_en(str(eg).strip())
+    return ""

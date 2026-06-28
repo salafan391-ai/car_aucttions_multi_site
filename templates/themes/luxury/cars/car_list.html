@@ -915,7 +915,7 @@
                             <h3 class="lux-card-name">
                                 {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
                             </h3>
-                            {% if car.badge.name|real_badge %}<div class="lux-card-trim"><bdi>{{ car.badge.name|real_badge }}</bdi></div>{% endif %}
+                            {% if car|car_trim %}<div class="lux-card-trim"><bdi>{{ car|car_trim }}</bdi></div>{% endif %}
                             {% if car.price %}<div class="lux-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
                             {% if car.auction_date %}<div style="margin:.1rem 0 .5rem;"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>{% endif %}
                             <div class="lux-card-meta">

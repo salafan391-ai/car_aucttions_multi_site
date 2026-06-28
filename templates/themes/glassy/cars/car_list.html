@@ -738,7 +738,7 @@
                             <h3 class="gl-list-card-name">
                                 {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
                             </h3>
-                            {% if car.badge.name|real_badge %}<div class="gl-list-card-trim"><bdi>{{ car.badge.name|real_badge }}</bdi></div>{% endif %}
+                            {% if car|car_trim %}<div class="gl-list-card-trim"><bdi>{{ car|car_trim }}</bdi></div>{% endif %}
                             {% if car.price %}<div class="gl-list-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
                             <div class="gl-list-card-meta">
                                 {% if car.mileage %}

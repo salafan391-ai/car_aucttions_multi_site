@@ -609,7 +609,7 @@
                 </div>
                 <div class="gl-detail-hero-name">
                     {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}" data-lang-es="{{ car.model|translate_model:'en' }}" data-lang-ru="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
-                    {% with bn=car.badge.name|real_badge %}{% if bn %}<span class="gl-chip brand"><bdi>{{ bn }}</bdi></span>{% endif %}{% endwith %}
+                    {% with bn=car|car_trim %}{% if bn %}<span class="gl-chip brand"><bdi>{{ bn }}</bdi></span>{% endif %}{% endwith %}
                 </div>
             </div>
             <div class="gl-detail-hero-side">
@@ -672,7 +672,7 @@
                 <div class="gl-detail-id">
                     <div class="make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
                     <h1 class="model">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h1>
-                    <div class="year">{{ car.year }}{% with bn=car.badge.name|real_badge %}{% if bn %} · <bdi>{{ bn }}</bdi>{% endif %}{% endwith %}</div>
+                    <div class="year">{{ car.year }}{% with bn=car|car_trim %}{% if bn %} · <bdi>{{ bn }}</bdi>{% endif %}{% endwith %}</div>
                 </div>
                 {% if car.lot_number %}
                 <div class="gl-detail-lot"><span class="bilingual" data-lang-ar="رقم القطعة" data-lang-en="Lot #" data-lang-es="Lote #" data-lang-ru="Лот #">رقم القطعة</span>: {{ car.lot_number }}</div>
@@ -1479,7 +1479,7 @@
                             · {{ s.year }}
                         </div>
                         <h3 class="gl-detail-similar-name">{% if s.model %}<span class="bilingual" data-lang-ar="{{ s.model|translate_model }}" data-lang-en="{{ s.model|translate_model:'en' }}">{{ s.model|translate_model }}</span>{% else %}{{ s.title }}{% endif %}</h3>
-                        {% if s.badge.name|real_badge %}<div class="gl-detail-similar-trim"><bdi>{{ s.badge.name|real_badge }}</bdi></div>{% endif %}
+                        {% if s|car_trim %}<div class="gl-detail-similar-trim"><bdi>{{ s|car_trim }}</bdi></div>{% endif %}
                         {% if s.price %}<div class="gl-detail-similar-price" data-price-krw="{{ s.price }}">{{ s.price|intcomma }} ₩</div>{% endif %}
                     </div>
                 </a>
