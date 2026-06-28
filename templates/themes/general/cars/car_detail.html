@@ -856,28 +856,6 @@
         </section>
         {% endif %}
 
-        {% if car.markers %}
-        <section class="gl-detail-section">
-            <h2>
-                <small class="bilingual" data-lang-ar="فحص المزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">فحص المزاد</small>
-                <span class="bilingual" data-lang-ar="نقاط الفحص" data-lang-en="Inspection Markers" data-lang-es="Marcas de inspección" data-lang-ru="Отметки осмотра">نقاط الفحص</span>
-            </h2>
-            <div class="gl-detail-markers" dir="rtl">
-                {% for panel, m in car.markers.items %}
-                <div class="gl-detail-marker">
-                    <span class="mk">{{ panel|panel_label }}</span>
-                    <span class="mv">
-                        {% if m.code %}<span class="gl-marker-code" dir="ltr">{{ m.code }}</span>{% endif %}
-                        {% if m.status == "replaced" %}<span class="gl-marker-st replaced bilingual" data-lang-ar="تبديل" data-lang-en="Replaced" data-lang-es="Cambiado" data-lang-ru="Замена">تبديل</span>
-                        {% elif m.status == "repaired" %}<span class="gl-marker-st repaired bilingual" data-lang-ar="تصليح" data-lang-en="Repaired" data-lang-es="Reparado" data-lang-ru="Ремонт">تصليح</span>
-                        {% else %}<span class="gl-marker-st good bilingual" data-lang-ar="سليم" data-lang-en="Good" data-lang-es="Bien" data-lang-ru="Хорошо">سليم</span>{% endif %}
-                    </span>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
-
         {% if car.price and import_calc_enabled %}
         <div class="gl-detail-modal" id="gl-calc-modal" onclick="if(event.target===this)glCalcClose()">
             <div class="gl-detail-modal-inner" dir="rtl">
@@ -1406,6 +1384,22 @@
                 <span class="bilingual" data-lang-ar="صورة الفحص" data-lang-en="Inspection Sheet" data-lang-es="Hoja de inspección" data-lang-ru="Лист осмотра">صورة الفحص</span>
             </h2>
             <img src="{{ car.inspection_image|https_url }}" alt="Inspection sheet" class="gl-detail-insp-img" loading="lazy">
+            {% if car.markers %}
+            <div class="gl-detail-insp-title bilingual" data-lang-ar="نقاط الفحص" data-lang-en="Inspection Markers" data-lang-es="Marcas de inspección" data-lang-ru="Отметки осмотра" style="margin-top:1.1rem;">نقاط الفحص</div>
+            <div class="gl-detail-markers" dir="rtl">
+                {% for panel, m in car.markers.items %}
+                <div class="gl-detail-marker">
+                    <span class="mk">{{ panel|panel_label }}</span>
+                    <span class="mv">
+                        {% if m.code %}<span class="gl-marker-code" dir="ltr">{{ m.code }}</span>{% endif %}
+                        {% if m.status == "replaced" %}<span class="gl-marker-st replaced bilingual" data-lang-ar="تبديل" data-lang-en="Replaced" data-lang-es="Cambiado" data-lang-ru="Замена">تبديل</span>
+                        {% elif m.status == "repaired" %}<span class="gl-marker-st repaired bilingual" data-lang-ar="تصليح" data-lang-en="Repaired" data-lang-es="Reparado" data-lang-ru="Ремонт">تصليح</span>
+                        {% else %}<span class="gl-marker-st good bilingual" data-lang-ar="سليم" data-lang-en="Good" data-lang-es="Bien" data-lang-ru="Хорошо">سليم</span>{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
             {% if inspection_legend %}
             <div class="gl-detail-insp-sheet-legend">
                 {% for code, label_ar, label_en in inspection_legend %}
