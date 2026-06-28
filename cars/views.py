@@ -856,6 +856,29 @@ _FACET_FIELD = {
     'trim_detail':      'trim_detail',
 }
 
+# Auction inspection-marker panels offered as a multi-select filter. Selecting a
+# panel matches auctions whose markers record that panel as 'replaced' (the
+# serious, structural cases). Order = global frequency of replacements.
+_MARKER_PANEL_LABELS = {
+    'left_front_fender':  ('الرفرف الأمامي الأيسر', 'Left Front Fender'),
+    'right_front_fender': ('الرفرف الأمامي الأيمن', 'Right Front Fender'),
+    'hood_front':         ('مقدمة غطاء المحرك', 'Hood Front'),
+    'trunk_lid':          ('غطاء الصندوق', 'Trunk Lid'),
+    'right_rear_door':    ('الباب الخلفي الأيمن', 'Right Rear Door'),
+    'right_front_door':   ('الباب الأمامي الأيمن', 'Right Front Door'),
+    'left_front_door':    ('الباب الأمامي الأيسر', 'Left Front Door'),
+    'left_rear_door':     ('الباب الخلفي الأيسر', 'Left Rear Door'),
+    'rear_member':        ('العارضة الخلفية', 'Rear Member'),
+    'right_rear_quarter': ('الجناح الخلفي الأيمن', 'Right Rear Quarter'),
+    'center_floor':       ('الأرضية الوسطى', 'Center Floor'),
+    'left_rear_quarter':  ('الجناح الخلفي الأيسر', 'Left Rear Quarter'),
+    'front_member':       ('العارضة الأمامية', 'Front Member'),
+    'rear_floor':         ('الأرضية الخلفية', 'Rear Floor'),
+    'roof':               ('السقف', 'Roof'),
+}
+_MARKER_PANELS = list(_MARKER_PANEL_LABELS.keys())
+_MARKER_PANEL_SET = set(_MARKER_PANELS)
+
 
 def _apply_sidebar_filters(qs, GET, exclude=None):
     """Apply every sidebar filter to qs EXCEPT the one named `exclude`.
@@ -922,6 +945,13 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
     if exclude != 'trim_detail':
         v = GET.getlist('trim_detail')
         if v: qs = qs.filter(trim_detail__in=v)
+    if exclude != 'marker_panel':
+        v = [x for x in GET.getlist('marker_panel') if x in _MARKER_PANEL_SET]
+        if v:
+            cond = Q()
+            for p in v:
+                cond |= Q(**{f'markers__{p}__status': 'replaced'})
+            qs = qs.filter(cond)
     if exclude != 'status':
         v = GET.getlist('status')
         if v: qs = qs.filter(status__in=v)
@@ -956,6 +986,16 @@ def _compute_facet_counts(facet_base, GET):
             for r in fq.values(field).annotate(c=Count('id'))
             if r[field] not in (None, '')
         }
+    # marker_panel: per-panel 'replaced' counts (JSONB — not a plain GROUP BY)
+    mq = (_apply_sidebar_filters(facet_base, GET, exclude='marker_panel')
+          .filter(category__name='auction').exclude(markers__isnull=True))
+    mp = {}
+    for m in mq.values_list('markers', flat=True):
+        if isinstance(m, dict):
+            for p, info in m.items():
+                if p in _MARKER_PANEL_SET and isinstance(info, dict) and info.get('status') == 'replaced':
+                    mp[p] = mp.get(p, 0) + 1
+    out['marker_panel'] = mp
     return out
 
 
@@ -1145,6 +1185,13 @@ def car_list(request):
     sel_trim_details = request.GET.getlist('trim_detail')
     if sel_trim_details:
         qs = qs.filter(trim_detail__in=sel_trim_details)
+
+    sel_marker_panels = [x for x in request.GET.getlist('marker_panel') if x in _MARKER_PANEL_SET]
+    if sel_marker_panels:
+        _mp_cond = Q()
+        for _p in sel_marker_panels:
+            _mp_cond |= Q(**{f'markers__{_p}__status': 'replaced'})
+        qs = qs.filter(_mp_cond)
 
     sel_seat_counts = request.GET.getlist('seat_count')
     if sel_seat_counts:
@@ -1778,6 +1825,8 @@ def car_list(request):
         'sel_usage_types':       request.GET.getlist('usage_type'),
         'sel_model_year_ranges': request.GET.getlist('model_year_range'),
         'sel_trim_details':      request.GET.getlist('trim_detail'),
+        'marker_panels':         [(k, ar, en) for k, (ar, en) in _MARKER_PANEL_LABELS.items()],
+        'sel_marker_panels':     sel_marker_panels,
     }
     # HTMX partial request — return only the car grid fragment
     if request.htmx:

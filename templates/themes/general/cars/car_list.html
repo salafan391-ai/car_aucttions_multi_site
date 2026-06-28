@@ -468,7 +468,7 @@
         <button type="button" class="gl-list-trigger" onclick="glOpenFilters()">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 12h12M10 20h4"/></svg>
             <span class="bilingual" data-lang-ar="ابحث عن سيارتك المثالية" data-lang-en="Find Your Perfect Car" data-lang-es="Encuentra tu coche ideal" data-lang-ru="Найдите свой идеальный авто">ابحث عن سيارتك المثالية</span>
-            {% if sel_manufacturers or sel_models or sel_badges or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+            {% if sel_manufacturers or sel_models or sel_badges or sel_marker_panels or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
             <span class="dot"></span>
             {% endif %}
         </button>
@@ -575,6 +575,23 @@
                             <label>
                                 <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="gl-list-chip-input">
                                 <span class="gl-list-chip bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}{% with fc=facet_counts|get_item:'transmission'|get_item:t %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.GET.car_type == 'auction' and marker_panels %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_marker_panels %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="قطع مستبدلة (الفحص)" data-lang-en="Replaced parts (inspection)" data-lang-es="Piezas reemplazadas" data-lang-ru="Заменённые детали">
+                            <span>قطع مستبدلة (الفحص)</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for key, ar, en in marker_panels %}
+                            <label>
+                                <input type="checkbox" name="marker_panel" value="{{ key }}" {% if key in sel_marker_panels %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_panel'|get_item:key %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -691,7 +708,7 @@
             </aside>
 
             <div>
-                {% if sel_manufacturers or sel_models or sel_badges or sel_model_versions or sel_engine_groups or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
+                {% if sel_manufacturers or sel_models or sel_badges or sel_model_versions or sel_engine_groups or sel_marker_panels or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
                 <div class="gl-list-active">
                     {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'manufacturer' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
@@ -725,6 +742,9 @@
                     {% endfor %}
                     {% for eg in sel_engine_groups %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'engine_group' or v != eg %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ eg|pretty_en }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for mp in sel_marker_panels %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_panel' or v != mp %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ mp|panel_label }}</bdi> <span class="x">×</span></a>
                     {% endfor %}
                     {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'color' or v != c.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
