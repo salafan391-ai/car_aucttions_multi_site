@@ -75,9 +75,9 @@
                     <!-- Year & Badge -->
                     <div class="flex items-center justify-between text-sm mb-3">
                         <span class="text-gray-600">{{ item.car.year }}</span>
-                        {% if item.car.badge.name %}
+                        {% if item.car.badge.name|real_badge %}
                             <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
-                                {{ item.car.badge.name }}
+                                {{ item.car.badge.name|real_badge }}
                             </span>
                         {% endif %}
                     </div>

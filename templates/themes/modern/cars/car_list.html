@@ -933,7 +933,7 @@
                             <h3 class="mod-car-name">
                                 {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
                             </h3>
-                            {% if car.badge.name %}<div class="mod-car-trim"><bdi>{{ car.badge.name|pretty_en }}</bdi></div>{% endif %}
+                            {% if car.badge.name|real_badge %}<div class="mod-car-trim"><bdi>{{ car.badge.name|real_badge }}</bdi></div>{% endif %}
                             {% if car.price %}<div class="mod-car-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
                             {% if car.auction_date %}<div style="margin:.1rem 0 .5rem;"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>{% endif %}
                             <div class="mod-car-meta">

@@ -109,7 +109,7 @@
                             {% if item.car.year %} · {{ item.car.year }}{% endif %}
                         </div>
                         <h3 class="lux-card-name">{% if item.car.model %}<span class="bilingual" data-lang-ar="{{ item.car.model|translate_model }}" data-lang-en="{{ item.car.model|translate_model:'en' }}">{{ item.car.model|translate_model }}</span>{% else %}{{ item.car.title }}{% endif %}</h3>
-                        {% if item.car.badge.name %}<div class="lux-card-trim">{{ item.car.badge.name }}</div>{% endif %}
+                        {% if item.car.badge.name|real_badge %}<div class="lux-card-trim">{{ item.car.badge.name|real_badge }}</div>{% endif %}
                         {% if item.car.price %}<div class="lux-card-price" data-price-krw="{{ item.car.price }}">{{ item.car.price|intcomma }} ₩</div>{% endif %}
                         <div class="lux-card-meta">
                             {% if item.car.mileage %}<span class="bilingual" data-lang-ar="{{ item.car.mileage|intcomma }} كم" data-lang-en="{{ item.car.mileage|intcomma }} km" data-lang-es="{{ item.car.mileage|intcomma }} km" data-lang-ru="{{ item.car.mileage|intcomma }} км">{{ item.car.mileage|intcomma }} كم</span>{% endif %}

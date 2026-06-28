@@ -1399,7 +1399,7 @@
                             · {{ s.year }}
                         </div>
                         <h3 class="gl-detail-similar-name">{% if s.model %}<span class="bilingual" data-lang-ar="{{ s.model|translate_model }}" data-lang-en="{{ s.model|translate_model:'en' }}">{{ s.model|translate_model }}</span>{% else %}{{ s.title }}{% endif %}</h3>
-                        {% if s.badge.name %}<div class="gl-detail-similar-trim"><bdi>{{ s.badge.name|pretty_en }}</bdi></div>{% endif %}
+                        {% if s.badge.name|real_badge %}<div class="gl-detail-similar-trim"><bdi>{{ s.badge.name|real_badge }}</bdi></div>{% endif %}
                         {% if s.price %}<div class="gl-detail-similar-price" data-price-krw="{{ s.price }}">{{ s.price|intcomma }} ₩</div>{% endif %}
                     </div>
                 </a>
