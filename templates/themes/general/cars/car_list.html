@@ -581,7 +581,7 @@
                     </div>
                     {% endif %}
 
-                    {% if request.GET.car_type == 'auction' and marker_types %}
+                    {% if marker_types and request.GET.car_type != 'kbchachacha' %}
                     <div class="gl-list-field gl-list-field-toggle{% if not sel_marker_types %} is-collapsed{% endif %}">
                         <label class="gl-list-flabel bilingual" data-lang-ar="استبعاد حسب نوع الضرر" data-lang-en="Exclude by damage type" data-lang-es="Excluir por tipo de daño" data-lang-ru="Исключить по типу повреждения">
                             <span>استبعاد حسب نوع الضرر</span>

@@ -890,26 +890,19 @@ _MARKER_TYPE_LABELS = {
 }
 _MARKER_TYPES = list(_MARKER_TYPE_LABELS.keys())
 _MARKER_TYPE_SET = set(_MARKER_TYPES)
-_MARKER_TYPE_SQL = {
-    'replaced': ("e.value->>'status' = 'replaced'", []),
-    'painted':  ("upper(e.value->>'code') LIKE %s", ['%W%']),
-}
 
 
 def _marker_type_subq(types):
-    """RawSQL subquery: ids of auctions with ANY panel matching any given type."""
-    preds, params = [], []
-    for t in types:
-        if t in _MARKER_TYPE_SQL:
-            pred, pp = _MARKER_TYPE_SQL[t]
-            preds.append('(' + pred + ')')
-            params += pp
-    if not preds:
+    """RawSQL subquery: ids of cars (auction `markers` OR encar
+    `extra_features.outers/inners`) that have ANY part of a given damage type.
+    Backed by the car_dmg_types() GIN index, so it stays fast over 160k+ cars."""
+    types = [t for t in types if t in _MARKER_TYPE_SET]
+    if not types:
         return None
-    where = ' OR '.join(preds)
+    ph = ",".join("%s" for _ in types)
     return RawSQL(
-        "SELECT id FROM cars_apicar WHERE markers IS NOT NULL AND EXISTS "
-        "(SELECT 1 FROM jsonb_each(markers) e WHERE " + where + ")", params)
+        f"SELECT id FROM cars_apicar WHERE car_dmg_types(extra_features, markers) && ARRAY[{ph}]::text[]",
+        types)
 
 
 def _apply_sidebar_filters(qs, GET, exclude=None):
@@ -1036,10 +1029,13 @@ def _compute_facet_counts(facet_base, GET):
                 if p in _MARKER_PANEL_SET and isinstance(info, dict) and info.get('status') == 'replaced':
                     mp[p] = mp.get(p, 0) + 1
     out['marker_panel'] = mp
-    # marker_type: how many (sibling-filtered) auctions would be hidden per type
-    mt_base = _apply_sidebar_filters(facet_base, GET, exclude='marker_type').filter(category__name='auction')
+    # marker_type: how many (sibling-filtered) cars would be hidden per type
+    # (auctions via markers, encar via extra_features — both via car_dmg_types)
+    mt_base = _apply_sidebar_filters(facet_base, GET, exclude='marker_type')
     out['marker_type'] = {
-        t: mt_base.filter(pk__in=_marker_type_subq([t])).count()
+        t: mt_base.extra(  # direct && lets Postgres combine the GIN index with siblings
+            where=["car_dmg_types(extra_features, markers) && ARRAY[%s]::text[]"], params=[t]
+        ).count()
         for t in _MARKER_TYPES
     }
     return out

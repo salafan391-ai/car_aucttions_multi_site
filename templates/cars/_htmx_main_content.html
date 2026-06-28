@@ -201,7 +201,7 @@
                         </details>
                     </div>
                     {% endif %}
-                    {% if request.GET.car_type == 'auction' and marker_types %}
+                    {% if marker_types and request.GET.car_type != 'kbchachacha' %}
                     <!-- Exclude by damage type — auction only -->
                     <div class="col-span-2">
                         <details class="filter-group" {% if sel_marker_types %}open{% endif %}>
@@ -526,7 +526,7 @@
                 </details>
                 {% endif %}
 
-                {% if request.GET.car_type == 'auction' and marker_types %}
+                {% if marker_types and request.GET.car_type != 'kbchachacha' %}
                 <!-- Exclude by damage type — auction only -->
                 <details class="filter-group border-t border-gray-100 pt-3" {% if sel_marker_types %}open{% endif %}>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
