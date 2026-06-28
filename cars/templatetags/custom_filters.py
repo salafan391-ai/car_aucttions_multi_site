@@ -682,3 +682,12 @@ def video_embed(url):
     if m:
         return 'https://player.vimeo.com/video/' + m.group(1)
     return ''
+
+@register.filter
+def displacement_cc(engine_group):
+    """Extract the displacement from an engine_group like 'diesel 2000cc' → '2000cc'."""
+    if not engine_group:
+        return ""
+    import re
+    m = re.search(r"(\d{3,5})\s*cc", str(engine_group), re.I)
+    return f"{m.group(1)}cc" if m else ""

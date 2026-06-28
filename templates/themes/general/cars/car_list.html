@@ -820,6 +820,7 @@
                             <div class="gl-list-card-make">
                                 {% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}
                                 {% if car.year %} · {{ car.year }}{% endif %}
+                                {% if car.fuel %} · <span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
                             </div>
                             <h3 class="gl-list-card-name">
                                 {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
@@ -839,12 +840,12 @@
                                     <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
                                 </span>
                                 {% endif %}
-                                {% if car.fuel %}
+                                {% with cc=car.engine_group|displacement_cc %}{% if cc %}
                                 <span class="gl-chip">
-                                    <span class="gl-list-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
-                                    <span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>
+                                    <span class="gl-list-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="13" height="9" rx="1"/><path d="M16 11h2l3 3v0M7 8V5h4v3M9 17v2M13 17v2"/></svg></span>
+                                    <span dir="ltr">{{ cc }}</span>
                                 </span>
-                                {% endif %}
+                                {% endif %}{% endwith %}
                             </div>
                         </div>
                     </a>
