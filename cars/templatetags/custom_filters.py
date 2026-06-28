@@ -716,3 +716,9 @@ def car_trim(car):
     if eg and str(eg).strip():
         return pretty_en(str(eg).strip())
     return ""
+
+
+@register.filter
+def panel_label(value):
+    """Human-readable inspection panel name: 'left_rear_door' -> 'Left Rear Door'."""
+    return str(value or "").replace("_", " ").title()

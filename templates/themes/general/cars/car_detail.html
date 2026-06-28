@@ -416,6 +416,15 @@
     }
     .insp-diagram { position: relative; width: 100%; user-select: none; background: #fff; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); overflow: hidden; }
     .insp-diagram img { width: 100%; display: block; }
+    .gl-detail-markers { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .5rem; margin-top: 1rem; }
+    .gl-detail-marker { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .55rem .8rem; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); background: rgba(255,255,255,0.04); font-size: .85rem; }
+    .gl-detail-marker .mk { color: var(--gl-muted); }
+    .gl-detail-marker .mv { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; }
+    .gl-marker-code { font-weight: 800; color: var(--gl-brand); background: color-mix(in srgb, var(--gl-brand) 12%, transparent); border-radius: 5px; padding: .05rem .4rem; min-width: 1.7rem; text-align: center; }
+    .gl-marker-st { font-size: .72rem; font-weight: 700; border-radius: 5px; padding: .1rem .45rem; }
+    .gl-marker-st.replaced { color: #dc2626; background: rgba(220,38,38,.13); }
+    .gl-marker-st.repaired { color: #d97706; background: rgba(217,119,6,.13); }
+    .gl-marker-st.good { color: #16a34a; background: rgba(22,163,74,.13); }
     .insp-badge {
         position: absolute; width: 5.5%; aspect-ratio: 1/1; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
@@ -844,6 +853,28 @@
                 </table>
             </div>
             {% endif %}
+        </section>
+        {% endif %}
+
+        {% if car.markers %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="فحص المزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">فحص المزاد</small>
+                <span class="bilingual" data-lang-ar="نقاط الفحص" data-lang-en="Inspection Markers" data-lang-es="Marcas de inspección" data-lang-ru="Отметки осмотра">نقاط الفحص</span>
+            </h2>
+            <div class="gl-detail-markers" dir="rtl">
+                {% for panel, m in car.markers.items %}
+                <div class="gl-detail-marker">
+                    <span class="mk">{{ panel|panel_label }}</span>
+                    <span class="mv">
+                        {% if m.code %}<span class="gl-marker-code" dir="ltr">{{ m.code }}</span>{% endif %}
+                        {% if m.status == "replaced" %}<span class="gl-marker-st replaced bilingual" data-lang-ar="تبديل" data-lang-en="Replaced" data-lang-es="Cambiado" data-lang-ru="Замена">تبديل</span>
+                        {% elif m.status == "repaired" %}<span class="gl-marker-st repaired bilingual" data-lang-ar="تصليح" data-lang-en="Repaired" data-lang-es="Reparado" data-lang-ru="Ремонт">تصليح</span>
+                        {% else %}<span class="gl-marker-st good bilingual" data-lang-ar="سليم" data-lang-en="Good" data-lang-es="Bien" data-lang-ru="Хорошо">سليم</span>{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
         </section>
         {% endif %}
 
