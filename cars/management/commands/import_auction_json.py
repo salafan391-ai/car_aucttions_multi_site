@@ -491,6 +491,7 @@ class Command(BaseCommand):
                 "usage_type": translate_usage(item.get("use"))[:40],
                 "features": (item.get("features") or "")[:255],
                 "inspection_notes": translate_notes(item.get("notes") or item.get("special_notes")),
+                "markers": item.get("markers") or None,
             }
 
             # Auction source has no engine_group; derive it (fuel + cc binned to
@@ -546,7 +547,7 @@ class Command(BaseCommand):
                             "points", "address", "vin", "seat_count", "entry",
                             "drive_wheel", "options", "engine_group",
                             "first_registration", "usage_type", "features",
-                            "inspection_notes",
+                            "inspection_notes", "markers",
                         ],
                         batch_size=500,
                     )

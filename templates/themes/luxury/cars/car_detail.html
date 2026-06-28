@@ -1401,6 +1401,17 @@
                 {% endfor %}
             </div>
             {% endif %}
+            <!-- Damage Markers (extracted) -->
+            {% if car.markers %}
+            <div class="lux-inspection-legend">
+                {% for panel, m in car.markers.items %}
+                <div class="lux-inspection-legend-item">
+                    <span class="lux-inspection-code">{% if m.code %}{{ m.code }}{% endif %}</span>
+                    <span>{{ panel|title }} — {% if m.status == "replaced" %}<span class="bilingual" data-lang-ar="تبديل" data-lang-en="Replaced">تبديل</span>{% elif m.status == "repaired" %}<span class="bilingual" data-lang-ar="تصليح" data-lang-en="Repaired">تصليح</span>{% else %}<span class="bilingual" data-lang-ar="سليم" data-lang-en="Good">سليم</span>{% endif %}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </section>
         {% endif %}
 

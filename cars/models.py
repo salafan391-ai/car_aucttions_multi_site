@@ -181,7 +181,8 @@ class ApiCar(models.Model):
     description = models.TextField(blank=True,null=True)
     slug = models.SlugField(max_length=200, unique=True, blank=True, null=True, db_index=True)
     entry = models.CharField(max_length=100, blank=True, null=True, db_index=True)  # New field for entry number or date
-    
+    markers = models.JSONField(blank=True, null=True)  # inspection markers {panel: {status, code}}
+
     class Meta:
         indexes = [
             models.Index(fields=['-created_at', 'status']),
