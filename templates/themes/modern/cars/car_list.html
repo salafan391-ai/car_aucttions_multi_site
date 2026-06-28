@@ -100,13 +100,13 @@
         opacity: 0; pointer-events: none;
     }
     .mod-fchip {
-        flex: 1; display: inline-flex; align-items: center; justify-content: center;
+        flex: 1; display: inline-flex; align-items: center; justify-content: space-between;
         gap: 0.4rem;
         padding: 0.5rem 0.7rem; border: 1px solid var(--mod-line); border-radius: 999px;
         background: var(--mod-surface-2);
         color: var(--mod-muted); cursor: pointer; user-select: none;
         font-size: 0.78rem; font-weight: 600;
-        transition: all 0.15s ease; text-align: center;
+        transition: all 0.15s ease; text-align: start;
     }
     .mod-fchip:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
     .mod-fchip-input:checked + .mod-fchip {
