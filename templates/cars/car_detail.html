@@ -126,9 +126,9 @@
                 <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
                 <span class="font-light text-white/60 text-xl sm:text-2xl mr-1">{{ car.year }}</span>
             </h1>
-            {% if car.badge.name %}
+            {% if car.badge.name|real_badge %}
             <div class="mb-3">
-                <span class="inline-flex items-center text-xs sm:text-sm font-semibold px-3 py-1 rounded-full max-w-full truncate" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(4px);"><bdi>{{ car.badge.name|pretty_en }}</bdi></span>
+                <span class="inline-flex items-center text-xs sm:text-sm font-semibold px-3 py-1 rounded-full max-w-full truncate" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(4px);"><bdi>{{ car.badge.name|real_badge }}</bdi></span>
             </div>
             {% endif %}
             <div class="flex flex-wrap items-center gap-3">
@@ -350,10 +350,10 @@
                         <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="الموديل" data-lang-ru="Модель" data-lang-es="Modelo" data-lang-en="Model">الموديل</div>
                         <div class="font-bold text-sm bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</div>
                     </div>
-                    {% if car.badge.name %}
+                    {% if car.badge.name|real_badge %}
                     <div class="bg-gray-50 rounded-xl p-4">
                         <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="تفاصيل الموديل" data-lang-ru="Детали модели" data-lang-es="Detalles del modelo" data-lang-en="Trim">تفاصيل الموديل</div>
-                        <div class="font-bold text-sm"><bdi>{{ car.badge.name|pretty_en }}</bdi></div>
+                        <div class="font-bold text-sm"><bdi>{{ car.badge.name|real_badge }}</bdi></div>
                     </div>
                     {% else %}
                         {% if car.points %}

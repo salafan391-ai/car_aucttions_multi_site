@@ -691,3 +691,12 @@ def displacement_cc(engine_group):
     import re
     m = re.search(r"(\d{3,5})\s*cc", str(engine_group), re.I)
     return f"{m.group(1)}cc" if m else ""
+
+
+@register.filter
+def real_badge(name):
+    """Prettified badge/trim name, or '' when it's the placeholder 'unknown'.
+    Auction source data often has badge='unknown'; treat that as no trim."""
+    if not name or str(name).strip().lower() in ("unknown", "غير معروف"):
+        return ""
+    return pretty_en(name)

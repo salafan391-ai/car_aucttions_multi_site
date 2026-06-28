@@ -529,7 +529,7 @@
                 </div>
                 <div class="gl-detail-hero-name">
                     {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}" data-lang-es="{{ car.model|translate_model:'en' }}" data-lang-ru="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
-                    {% if car.badge.name %}<span class="gl-chip brand"><bdi>{{ car.badge.name|pretty_en }}</bdi></span>{% endif %}
+                    {% if car.badge.name|real_badge %}<span class="gl-chip brand"><bdi>{{ car.badge.name|real_badge }}</bdi></span>{% endif %}
                 </div>
             </div>
             <div class="gl-detail-hero-side">
@@ -592,7 +592,7 @@
                 <div class="gl-detail-id">
                     <div class="make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
                     <h1 class="model">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h1>
-                    <div class="year">{{ car.year }}{% if car.badge.name %} · <bdi>{{ car.badge.name|pretty_en }}</bdi>{% endif %}</div>
+                    <div class="year">{{ car.year }}{% if car.badge.name|real_badge %} · <bdi>{{ car.badge.name|real_badge }}</bdi>{% endif %}</div>
                 </div>
                 {% if car.lot_number %}
                 <div class="gl-detail-lot"><span class="bilingual" data-lang-ar="رقم القطعة" data-lang-en="Lot #" data-lang-es="Lote #" data-lang-ru="Лот #">رقم القطعة</span>: {{ car.lot_number }}</div>
@@ -934,13 +934,13 @@
                     <div class="value bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</div>
                 </div>
                 {% endif %}
-                {% if car.badge.name %}
+                {% if car.badge.name|real_badge %}
                 <div class="gl-detail-spec">
                     <div class="gl-detail-spec-head">
                         <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/></svg></span>
                         <div class="label bilingual" data-lang-ar="تفاصيل الموديل" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">تفاصيل الموديل</div>
                     </div>
-                    <div class="value"><bdi>{{ car.badge.name|pretty_en }}</bdi></div>
+                    <div class="value"><bdi>{{ car.badge.name|real_badge }}</bdi></div>
                 </div>
                 {% endif %}
                 {% if car.year %}
