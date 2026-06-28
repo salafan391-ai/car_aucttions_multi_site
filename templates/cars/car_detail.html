@@ -326,7 +326,7 @@
             </div>
             {% endif %}
 
-            {% if car.inspection_notes and car.category.name != 'auction' %}{# auction notes hidden for now #}
+            {% if car.inspection_notes %}
             <!-- Auction inspection notes / disclosed defects -->
             <div class="bg-amber-50 border border-amber-200 rounded-2xl shadow-sm p-6 mt-6 detail-section">
                 <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-amber-900">
