@@ -583,10 +583,11 @@
 
                     {% if request.GET.car_type == 'auction' and marker_panels %}
                     <div class="gl-list-field gl-list-field-toggle{% if not sel_marker_panels %} is-collapsed{% endif %}">
-                        <label class="gl-list-flabel bilingual" data-lang-ar="قطع مستبدلة (الفحص)" data-lang-en="Replaced parts (inspection)" data-lang-es="Piezas reemplazadas" data-lang-ru="Заменённые детали">
-                            <span>قطع مستبدلة (الفحص)</span>
+                        <label class="gl-list-flabel bilingual" data-lang-ar="استبعاد قطع مستبدلة" data-lang-en="Exclude replaced parts" data-lang-es="Excluir piezas reemplazadas" data-lang-ru="Исключить заменённые детали">
+                            <span>استبعاد قطع مستبدلة</span>
                             <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                         </label>
+                        <p class="bilingual" style="margin:.1rem 0 .55rem; font-size:.72rem; line-height:1.5; color:var(--gl-muted);" data-lang-ar="تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)" data-lang-en="Hides auctions where the chosen panel was replaced (number = how many are hidden)" data-lang-es="Oculta subastas donde el panel fue reemplazado" data-lang-ru="Скрывает аукционы с заменённой деталью">تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)</p>
                         <div class="gl-list-chips">
                             {% for key, ar, en in marker_panels %}
                             <label>
@@ -744,7 +745,7 @@
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'engine_group' or v != eg %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ eg|pretty_en }}</bdi> <span class="x">×</span></a>
                     {% endfor %}
                     {% for mp in sel_marker_panels %}
-                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_panel' or v != mp %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ mp|panel_label }}</bdi> <span class="x">×</span></a>
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_panel' or v != mp %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi class="bilingual" data-lang-ar="بدون {{ mp|panel_label }}" data-lang-en="No {{ mp|panel_label }}" data-lang-es="Sin {{ mp|panel_label }}" data-lang-ru="Без {{ mp|panel_label }}">بدون {{ mp|panel_label }}</bdi> <span class="x">×</span></a>
                     {% endfor %}
                     {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'color' or v != c.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">

@@ -948,10 +948,13 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
     if exclude != 'marker_panel':
         v = [x for x in GET.getlist('marker_panel') if x in _MARKER_PANEL_SET]
         if v:
+            # Excluder: hide auctions where ANY selected panel was replaced.
+            # Exclude by id of the matching set (NULL-safe — a plain exclude()
+            # on a JSONB key drops rows where the key is simply absent).
             cond = Q()
             for p in v:
                 cond |= Q(**{f'markers__{p}__status': 'replaced'})
-            qs = qs.filter(cond)
+            qs = qs.exclude(pk__in=ApiCar.objects.filter(cond).values('pk'))
     if exclude != 'status':
         v = GET.getlist('status')
         if v: qs = qs.filter(status__in=v)
@@ -1188,10 +1191,11 @@ def car_list(request):
 
     sel_marker_panels = [x for x in request.GET.getlist('marker_panel') if x in _MARKER_PANEL_SET]
     if sel_marker_panels:
+        # Excluder: hide auctions where ANY selected panel was replaced (NULL-safe).
         _mp_cond = Q()
         for _p in sel_marker_panels:
             _mp_cond |= Q(**{f'markers__{_p}__status': 'replaced'})
-        qs = qs.filter(_mp_cond)
+        qs = qs.exclude(pk__in=ApiCar.objects.filter(_mp_cond).values('pk'))
 
     sel_seat_counts = request.GET.getlist('seat_count')
     if sel_seat_counts:
