@@ -201,6 +201,38 @@
                         </details>
                     </div>
                     {% endif %}
+                    {% if request.GET.car_type == 'auction' and marker_types %}
+                    <!-- Exclude by damage type — auction only -->
+                    <div class="col-span-2">
+                        <details class="filter-group" {% if sel_marker_types %}open{% endif %}>
+                            <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="استبعاد حسب نوع الضرر" data-lang-ru="Исключить по типу" data-lang-es="Excluir por tipo de daño" data-lang-en="Exclude by damage type">استبعاد حسب نوع الضرر</span>
+                                <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                                {% for key, ar, en in marker_types %}
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="marker_type" value="{{ key }}" {% if key in sel_marker_types %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_type'|get_item:key %}<span class="fc-badge text-[10px] font-bold opacity-50 ms-1"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span></label>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    </div>
+                    {% endif %}
+                    {% if request.GET.car_type == 'auction' and marker_panels %}
+                    <!-- Exclude replaced parts — auction only -->
+                    <div class="col-span-2">
+                        <details class="filter-group" {% if sel_marker_panels %}open{% endif %}>
+                            <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                                <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="استبعاد قطع مستبدلة" data-lang-ru="Исключить заменённые детали" data-lang-es="Excluir piezas reemplazadas" data-lang-en="Exclude replaced parts">استبعاد قطع مستبدلة</span>
+                                <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                                {% for key, ar, en in marker_panels %}
+                                <label class="cursor-pointer select-none"><input type="checkbox" name="marker_panel" value="{{ key }}" {% if key in sel_marker_panels %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_panel'|get_item:key %}<span class="fc-badge text-[10px] font-bold opacity-50 ms-1"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span></label>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    </div>
+                    {% endif %}
                     {% if request.GET.car_type == 'auction' and usage_types %}
                     <!-- Usage type (rental/lease/private) — auction only -->
                     <div class="col-span-2">
@@ -489,6 +521,36 @@
                     <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
                         {% for e in engine_groups %}
                         <label class="cursor-pointer select-none"><input type="checkbox" name="engine_group" value="{{ e }}" {% if e in sel_engine_groups %}checked{% endif %} class="sr-only peer"><span class="block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm">{{ e|pretty_en }}{% with fc=facet_counts|get_item:'engine_group'|get_item:e %}<span class="fc-badge text-[10px] font-bold opacity-50 ms-1"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span></label>
+                        {% endfor %}
+                    </div>
+                </details>
+                {% endif %}
+
+                {% if request.GET.car_type == 'auction' and marker_types %}
+                <!-- Exclude by damage type — auction only -->
+                <details class="filter-group border-t border-gray-100 pt-3" {% if sel_marker_types %}open{% endif %}>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="استبعاد حسب نوع الضرر" data-lang-ru="Исключить по типу" data-lang-es="Excluir por tipo de daño" data-lang-en="Exclude by damage type">استبعاد حسب نوع الضرر</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                        {% for key, ar, en in marker_types %}
+                        <label class="cursor-pointer select-none"><input type="checkbox" name="marker_type" value="{{ key }}" {% if key in sel_marker_types %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_type'|get_item:key %}<span class="fc-badge text-[10px] font-bold opacity-50 ms-1"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span></label>
+                        {% endfor %}
+                    </div>
+                </details>
+                {% endif %}
+
+                {% if request.GET.car_type == 'auction' and marker_panels %}
+                <!-- Exclude replaced parts — auction only -->
+                <details class="filter-group border-t border-gray-100 pt-3" {% if sel_marker_panels %}open{% endif %}>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="استبعاد قطع مستبدلة" data-lang-ru="Исключить заменённые детали" data-lang-es="Excluir piezas reemplazadas" data-lang-en="Exclude replaced parts">استبعاد قطع مستبدلة</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                        {% for key, ar, en in marker_panels %}
+                        <label class="cursor-pointer select-none"><input type="checkbox" name="marker_panel" value="{{ key }}" {% if key in sel_marker_panels %}checked{% endif %} class="sr-only peer"><span class="bilingual block w-full text-center px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_panel'|get_item:key %}<span class="fc-badge text-[10px] font-bold opacity-50 ms-1"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span></label>
                         {% endfor %}
                     </div>
                 </details>

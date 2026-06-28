@@ -385,7 +385,7 @@
         <button type="button" class="gl-list-trigger" onclick="glOpenFilters()">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 12h12M10 20h4"/></svg>
             <span class="bilingual" data-lang-ar="ابحث عن سيارتك المثالية" data-lang-en="Find Your Perfect Car" data-lang-es="Encuentra tu coche ideal" data-lang-ru="Найдите свой идеальный авто">ابحث عن سيارتك المثالية</span>
-            {% if sel_manufacturers or sel_models or sel_badges or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+            {% if sel_manufacturers or sel_models or sel_badges or sel_marker_panels or sel_marker_types or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
             <span class="dot"></span>
             {% endif %}
         </button>
@@ -492,6 +492,42 @@
                             <label>
                                 <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="gl-list-chip-input">
                                 <span class="gl-list-chip bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}{% with fc=facet_counts|get_item:'transmission'|get_item:t %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.GET.car_type == 'auction' and marker_types %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_marker_types %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="استبعاد حسب نوع الضرر" data-lang-en="Exclude by damage type" data-lang-es="Excluir por tipo de daño" data-lang-ru="Исключить по типу повреждения">
+                            <span>استبعاد حسب نوع الضرر</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <p class="bilingual" style="margin:.1rem 0 .55rem; font-size:.72rem; line-height:1.5; color:var(--gl-muted);" data-lang-ar="إخفاء المزادات التي بها قطع من النوع المختار (الرقم = عدد المخفية)" data-lang-en="Hides auctions that have any part of the chosen type (number = how many are hidden)" data-lang-es="Oculta subastas con piezas del tipo elegido" data-lang-ru="Скрывает аукционы с деталями выбранного типа">إخفاء المزادات التي بها قطع من النوع المختار (الرقم = عدد المخفية)</p>
+                        <div class="gl-list-chips">
+                            {% for key, ar, en in marker_types %}
+                            <label>
+                                <input type="checkbox" name="marker_type" value="{{ key }}" {% if key in sel_marker_types %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_type'|get_item:key %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.GET.car_type == 'auction' and marker_panels %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_marker_panels %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="استبعاد قطع مستبدلة" data-lang-en="Exclude replaced parts" data-lang-es="Excluir piezas reemplazadas" data-lang-ru="Исключить заменённые детали">
+                            <span>استبعاد قطع مستبدلة</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <p class="bilingual" style="margin:.1rem 0 .55rem; font-size:.72rem; line-height:1.5; color:var(--gl-muted);" data-lang-ar="تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)" data-lang-en="Hides auctions where the chosen panel was replaced (number = how many are hidden)" data-lang-es="Oculta subastas donde el panel fue reemplazado" data-lang-ru="Скрывает аукционы с заменённой деталью">تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)</p>
+                        <div class="gl-list-chips">
+                            {% for key, ar, en in marker_panels %}
+                            <label>
+                                <input type="checkbox" name="marker_panel" value="{{ key }}" {% if key in sel_marker_panels %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_panel'|get_item:key %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -608,7 +644,7 @@
             </aside>
 
             <div>
-                {% if sel_manufacturers or sel_models or sel_badges or sel_model_versions or sel_engine_groups or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
+                {% if sel_manufacturers or sel_models or sel_badges or sel_model_versions or sel_engine_groups or sel_marker_panels or sel_marker_types or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
                 <div class="gl-list-active">
                     {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'manufacturer' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
@@ -643,6 +679,12 @@
                     {% for eg in sel_engine_groups %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'engine_group' or v != eg %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ eg|pretty_en }}</bdi> <span class="x">×</span></a>
                     {% endfor %}
+                    {% for mp in sel_marker_panels %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_panel' or v != mp %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi class="bilingual" data-lang-ar="بدون {{ mp|panel_label }}" data-lang-en="No {{ mp|panel_label }}" data-lang-es="Sin {{ mp|panel_label }}" data-lang-ru="Без {{ mp|panel_label }}">بدون {{ mp|panel_label }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for key, ar, en in marker_types %}{% if key in sel_marker_types %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_type' or v != key %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi class="bilingual" data-lang-ar="بدون {{ ar }}" data-lang-en="No {{ en }}" data-lang-es="Sin {{ en }}" data-lang-ru="Без {{ en }}">بدون {{ ar }}</bdi> <span class="x">×</span></a>
+                    {% endif %}{% endfor %}
                     {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
                     <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'color' or v != c.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
                         <span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>
