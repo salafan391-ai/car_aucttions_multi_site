@@ -14,6 +14,7 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.db.models import Q, Max, F
+from django.db.models.expressions import RawSQL
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Count
@@ -879,6 +880,37 @@ _MARKER_PANEL_LABELS = {
 _MARKER_PANELS = list(_MARKER_PANEL_LABELS.keys())
 _MARKER_PANEL_SET = set(_MARKER_PANELS)
 
+# Exclude auctions by inspection damage TYPE (across any panel). The raw Encar
+# codes X (exchange) and Q (repair) sit on ~100% of auctions so they're useless
+# as a filter; only these two discriminate. SQL predicate runs over every panel
+# in the markers JSONB via jsonb_each.
+_MARKER_TYPE_LABELS = {
+    'replaced': ('قطع مُستبدلة', 'Replaced parts'),
+    'painted':  ('قطع مرشوشة (دهان)', 'Painted parts'),
+}
+_MARKER_TYPES = list(_MARKER_TYPE_LABELS.keys())
+_MARKER_TYPE_SET = set(_MARKER_TYPES)
+_MARKER_TYPE_SQL = {
+    'replaced': ("e.value->>'status' = 'replaced'", []),
+    'painted':  ("upper(e.value->>'code') LIKE %s", ['%W%']),
+}
+
+
+def _marker_type_subq(types):
+    """RawSQL subquery: ids of auctions with ANY panel matching any given type."""
+    preds, params = [], []
+    for t in types:
+        if t in _MARKER_TYPE_SQL:
+            pred, pp = _MARKER_TYPE_SQL[t]
+            preds.append('(' + pred + ')')
+            params += pp
+    if not preds:
+        return None
+    where = ' OR '.join(preds)
+    return RawSQL(
+        "SELECT id FROM cars_apicar WHERE markers IS NOT NULL AND EXISTS "
+        "(SELECT 1 FROM jsonb_each(markers) e WHERE " + where + ")", params)
+
 
 def _apply_sidebar_filters(qs, GET, exclude=None):
     """Apply every sidebar filter to qs EXCEPT the one named `exclude`.
@@ -955,6 +987,11 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
             for p in v:
                 cond |= Q(**{f'markers__{p}__status': 'replaced'})
             qs = qs.exclude(pk__in=ApiCar.objects.filter(cond).values('pk'))
+    if exclude != 'marker_type':
+        v = [x for x in GET.getlist('marker_type') if x in _MARKER_TYPE_SET]
+        sub = _marker_type_subq(v)
+        if sub is not None:
+            qs = qs.exclude(pk__in=sub)
     if exclude != 'status':
         v = GET.getlist('status')
         if v: qs = qs.filter(status__in=v)
@@ -999,6 +1036,12 @@ def _compute_facet_counts(facet_base, GET):
                 if p in _MARKER_PANEL_SET and isinstance(info, dict) and info.get('status') == 'replaced':
                     mp[p] = mp.get(p, 0) + 1
     out['marker_panel'] = mp
+    # marker_type: how many (sibling-filtered) auctions would be hidden per type
+    mt_base = _apply_sidebar_filters(facet_base, GET, exclude='marker_type').filter(category__name='auction')
+    out['marker_type'] = {
+        t: mt_base.filter(pk__in=_marker_type_subq([t])).count()
+        for t in _MARKER_TYPES
+    }
     return out
 
 
@@ -1196,6 +1239,11 @@ def car_list(request):
         for _p in sel_marker_panels:
             _mp_cond |= Q(**{f'markers__{_p}__status': 'replaced'})
         qs = qs.exclude(pk__in=ApiCar.objects.filter(_mp_cond).values('pk'))
+
+    sel_marker_types = [x for x in request.GET.getlist('marker_type') if x in _MARKER_TYPE_SET]
+    _mt_sub = _marker_type_subq(sel_marker_types)
+    if _mt_sub is not None:
+        qs = qs.exclude(pk__in=_mt_sub)
 
     sel_seat_counts = request.GET.getlist('seat_count')
     if sel_seat_counts:
@@ -1831,6 +1879,8 @@ def car_list(request):
         'sel_trim_details':      request.GET.getlist('trim_detail'),
         'marker_panels':         [(k, ar, en) for k, (ar, en) in _MARKER_PANEL_LABELS.items()],
         'sel_marker_panels':     sel_marker_panels,
+        'marker_types':          [(k, ar, en) for k, (ar, en) in _MARKER_TYPE_LABELS.items()],
+        'sel_marker_types':      sel_marker_types,
     }
     # HTMX partial request — return only the car grid fragment
     if request.htmx:
