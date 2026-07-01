@@ -1020,12 +1020,14 @@
         if (at !== -1) { cart.splice(at, 1); card.classList.remove('gl-selected'); }
         else {
             var img = card.querySelector('.gl-list-card-img img');
+            var pe = card.querySelector('.gl-list-card-price');
             cart.push({
                 url: url,
                 title: txt(card, '.gl-list-card-name') || url,
                 sub: txt(card, '.gl-list-card-make'),
                 image: img ? img.src : '',
-                price: txt(card, '.gl-list-card-price')
+                price: txt(card, '.gl-list-card-price'),
+                priceKrw: pe ? (pe.getAttribute('data-price-krw') || '') : ''
             });
             card.classList.add('gl-selected');
         }

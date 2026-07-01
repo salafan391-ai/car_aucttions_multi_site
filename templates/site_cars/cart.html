@@ -77,6 +77,21 @@
     function save() { try { localStorage.setItem(KEY, JSON.stringify(cart)); } catch (e) {} }
     function esc(s) { return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]; }); }
 
+    // Convert the stored raw KRW to the visitor's selected currency, so the cart
+    // never shows the won amount mislabelled. Falls back to any captured text.
+    function priceHtml(c) {
+        var krw = parseFloat(c.priceKrw);
+        var CUR = window.SITE_CURRENCIES;
+        if (!isNaN(krw) && krw && CUR) {
+            var code = localStorage.getItem('site_currency') || 'SAR';
+            var cfg = CUR[code] || CUR.SAR;
+            var mk = window.SITE_PRICE_MARKUP || 1;
+            var v = code === 'KRW' ? krw : Math.round(krw * cfg.rate * mk);
+            return esc(v.toLocaleString() + ' ' + cfg.symbol);
+        }
+        return esc(c.price || '');
+    }
+
     function render() {
         document.getElementById('sc-count').textContent = cart.length;
         actions.style.display = cart.length ? '' : 'none';
@@ -90,7 +105,7 @@
                     '<div class="sc-card-info">' +
                         (c.sub ? '<div class="sc-card-sub">' + esc(c.sub) + '</div>' : '') +
                         '<div class="sc-card-name">' + esc(c.title) + '</div>' +
-                        (c.price ? '<div class="sc-card-price">' + esc(c.price) + '</div>' : '') +
+                        ((c.priceKrw || c.price) ? '<div class="sc-card-price">' + priceHtml(c) + '</div>' : '') +
                     '</div>' +
                 '</div>' +
                 '<div class="sc-card-foot">' +
@@ -120,6 +135,9 @@
         }).catch(function () {});
     }
     load(); render();
+    // Re-render once the currency script has initialised (and on any currency
+    // switch) so prices show in the visitor's currency, not raw KRW.
+    document.addEventListener('currencychange', function () { render(); });
 })();
 </script>
 {% endblock %}
