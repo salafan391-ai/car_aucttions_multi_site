@@ -2537,7 +2537,10 @@ def register_view(request):
             user.last_name = request.POST.get('last_name', '')
             user.email = request.POST.get('email', '')
             user.save()
-            auth_login(request, user)
+            # Multiple AUTHENTICATION_BACKENDS are configured (ModelBackend +
+            # allauth), so Django can't infer which one to log the new user in
+            # with — be explicit, otherwise auth_login raises and registration 500s.
+            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'تم إنشاء حسابك بنجاح! مرحباً بك.')
             return redirect('home')
     else:
