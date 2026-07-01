@@ -470,6 +470,7 @@
             <a href="{% url 'car_list' %}?car_type=auction" class="mod-nav-link bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
             {% if show_parts %}<a href="{% url 'parts_list' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'parts_list' %}active{% endif %}" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
             {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'accessories_list' %}active{% endif %}" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
+            <a href="{% url 'account' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'account' %}active{% endif %}" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</a>
             <a href="{% url 'wishlist' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
             <a href="{% url 'contact' %}" class="mod-nav-link bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل معنا</a>
         </div>
@@ -556,6 +557,7 @@
             <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
             <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</a>
             <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+            <a href="{% url 'account' %}" class="bilingual" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</a>
             <a href="{% url 'wishlist' %}" class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
         </div>
 
@@ -786,6 +788,7 @@ function toggleWishlist(carId) {
         </div>
         {% endif %}
 
+        <a href="{% url 'account' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</a>
         <a href="{% url 'wishlist' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-9-10.5A5.5 5.5 0 0112 5a5.5 5.5 0 019 5.5C19 15.5 12 21 12 21z"/></svg>
             <span class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</span>

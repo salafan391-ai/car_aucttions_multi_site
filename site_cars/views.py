@@ -19,7 +19,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
-from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteBillItem, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq
+from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteBillItem, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq, UserProfile
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from cars.models import Wishlist
 from .image_utils import optimize_image, batch_optimize_images
 
 
@@ -462,6 +465,46 @@ def my_orders(request):
         .prefetch_related('items__site_car').order_by('-date')
     )
     return render(request, 'site_cars/my_orders.html', {'orders': orders, 'invoices': invoices})
+
+
+@login_required
+def account_view(request):
+    """User profile / account page: edit info, change password, quick links."""
+    if _is_public_schema():
+        return redirect('home')
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    pw_form = PasswordChangeForm(request.user)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'info':
+            u = request.user
+            u.first_name = (request.POST.get('first_name') or '').strip()
+            u.last_name = (request.POST.get('last_name') or '').strip()
+            u.email = (request.POST.get('email') or '').strip()
+            u.save()
+            profile.phone = (request.POST.get('phone') or '').strip()
+            if request.FILES.get('avatar'):
+                profile.avatar = request.FILES['avatar']
+            profile.save()
+            messages.success(request, 'تم تحديث معلوماتك بنجاح.')
+            return redirect('account')
+        elif action == 'password':
+            pw_form = PasswordChangeForm(request.user, request.POST)
+            if pw_form.is_valid():
+                pw_form.save()
+                update_session_auth_hash(request, pw_form.user)  # stay logged in
+                messages.success(request, 'تم تغيير كلمة المرور بنجاح.')
+                return redirect('account')
+            else:
+                messages.error(request, 'تعذّر تغيير كلمة المرور، تحقّق من الحقول.')
+    ctx = {
+        'profile': profile,
+        'pw_form': pw_form,
+        'wishlist_count': Wishlist.objects.filter(session_key=request.session.session_key).count() if request.session.session_key else 0,
+        'orders_count': SiteOrder.objects.filter(user=request.user).count(),
+        'unread_count': SiteMessage.objects.filter(recipient=request.user, is_read=False).count(),
+    }
+    return render(request, 'site_cars/account.html', ctx)
 
 
 @login_required

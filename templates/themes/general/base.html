@@ -388,6 +388,7 @@
             <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
             <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">السيارات</a>
             <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+            <a href="{% url 'account' %}" class="bilingual" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</a>
             <a href="{% url 'wishlist' %}" class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
         </div>
 
@@ -595,6 +596,7 @@ document.addEventListener('click', function (e) {
             <span class="bilingual" data-lang-ar="لوحة" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة</span>
         </a>
         {% else %}
+        <a href="{% url 'account' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</a>
         <a href="{% url 'wishlist' %}" class="gc-bn-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
             <i class="bi bi-heart-fill"></i>
             <span class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</span>

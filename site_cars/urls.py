@@ -26,6 +26,7 @@ urlpatterns = [
     path('our-cars/<int:pk>/invoice/<int:bill_pk>/shipment/', views.shipment_edit, name='shipment_edit'),
     path('sold-cars/', views.sold_cars, name='sold_cars'),
     path('order/<int:pk>/', views.place_order, name='place_order'),
+    path('account/', views.account_view, name='account'),
     path('my-orders/', views.my_orders, name='my_orders'),
     path('my-orders/<int:pk>/', views.order_detail, name='order_detail'),
     path('rate/<int:pk>/', views.rate_car, name='rate_car'),

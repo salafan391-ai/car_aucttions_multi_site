@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}حسابي | {{ site_name|default:"سيارات" }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+
+    {% if messages %}
+    <div class="mb-5 space-y-2">
+        {% for m in messages %}
+        <div class="px-4 py-3 rounded-xl text-sm font-semibold {% if m.tags == 'error' %}bg-red-50 text-red-600 border border-red-100{% else %}bg-green-50 text-green-700 border border-green-100{% endif %}">{{ m }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-7">
+        {% if profile.avatar %}
+        <img src="{{ profile.avatar.url }}" alt="" class="w-16 h-16 rounded-full object-cover border border-gray-200">
+        {% else %}
+        <div class="w-16 h-16 rounded-full bg-brand/15 text-brand flex items-center justify-center font-extrabold text-2xl">{{ user.get_short_name|default:user.username|first|upper }}</div>
+        {% endif %}
+        <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900 truncate">{{ user.get_full_name|default:user.get_short_name|default:user.username }}</h1>
+            <p class="text-sm text-gray-500 truncate">{{ user.email|default:"—" }}</p>
+        </div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="grid grid-cols-3 gap-3 mb-8">
+        <a href="{% url 'wishlist' %}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center hover:shadow-md transition">
+            <div class="text-2xl font-extrabold text-brand">{{ wishlist_count }}</div>
+            <div class="text-xs font-bold text-gray-500 mt-1 bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</div>
+        </a>
+        <a href="{% url 'my_orders' %}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center hover:shadow-md transition">
+            <div class="text-2xl font-extrabold text-brand">{{ orders_count }}</div>
+            <div class="text-xs font-bold text-gray-500 mt-1 bilingual" data-lang-ar="طلباتي" data-lang-en="My Orders" data-lang-es="Pedidos" data-lang-ru="Заказы">طلباتي</div>
+        </a>
+        <a href="{% url 'inbox' %}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center hover:shadow-md transition relative">
+            <div class="text-2xl font-extrabold text-brand">{{ unread_count }}</div>
+            <div class="text-xs font-bold text-gray-500 mt-1 bilingual" data-lang-ar="الرسائل" data-lang-en="Inbox" data-lang-es="Mensajes" data-lang-ru="Сообщения">الرسائل</div>
+        </a>
+    </div>
+
+    <!-- Edit info -->
+    <section class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 mb-6">
+        <h2 class="text-lg font-extrabold text-gray-900 mb-4 bilingual" data-lang-ar="معلوماتي" data-lang-en="My information" data-lang-es="Mi información" data-lang-ru="Мои данные">معلوماتي</h2>
+        <form method="post" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="info">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="block">
+                    <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="الاسم الأول" data-lang-en="First name" data-lang-es="Nombre" data-lang-ru="Имя">الاسم الأول</span>
+                    <input type="text" name="first_name" value="{{ user.first_name }}" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-brand/40 focus:border-brand outline-none">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="اسم العائلة" data-lang-en="Last name" data-lang-es="Apellido" data-lang-ru="Фамилия">اسم العائلة</span>
+                    <input type="text" name="last_name" value="{{ user.last_name }}" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-brand/40 focus:border-brand outline-none">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="البريد الإلكتروني" data-lang-en="Email" data-lang-es="Correo" data-lang-ru="Эл. почта">البريد الإلكتروني</span>
+                    <input type="email" name="email" value="{{ user.email }}" dir="ltr" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-brand/40 focus:border-brand outline-none">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="رقم الجوال" data-lang-en="Phone" data-lang-es="Teléfono" data-lang-ru="Телефон">رقم الجوال</span>
+                    <input type="tel" name="phone" value="{{ profile.phone }}" dir="ltr" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-brand/40 focus:border-brand outline-none">
+                </label>
+            </div>
+            <label class="block">
+                <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="الصورة الشخصية" data-lang-en="Profile photo" data-lang-es="Foto" data-lang-ru="Фото">الصورة الشخصية</span>
+                <input type="file" name="avatar" accept="image/*" class="mt-1 w-full text-sm text-gray-500 file:me-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand/10 file:text-brand file:font-semibold">
+            </label>
+            <button type="submit" class="bg-brand text-white font-bold px-6 py-2.5 rounded-xl hover:opacity-90 transition bilingual" data-lang-ar="حفظ التغييرات" data-lang-en="Save changes" data-lang-es="Guardar" data-lang-ru="Сохранить">حفظ التغييرات</button>
+        </form>
+    </section>
+
+    <!-- Change password -->
+    <section class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 mb-6">
+        <h2 class="text-lg font-extrabold text-gray-900 mb-4 bilingual" data-lang-ar="تغيير كلمة المرور" data-lang-en="Change password" data-lang-es="Cambiar contraseña" data-lang-ru="Сменить пароль">تغيير كلمة المرور</h2>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="password">
+            {% if pw_form.errors %}
+            <div class="text-xs text-red-600 font-semibold">
+                {% for field in pw_form %}{% for e in field.errors %}<div>• {{ e }}</div>{% endfor %}{% endfor %}
+                {% for e in pw_form.non_field_errors %}<div>• {{ e }}</div>{% endfor %}
+            </div>
+            {% endif %}
+            <label class="block">
+                <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="كلمة المرور الحالية" data-lang-en="Current password" data-lang-es="Actual" data-lang-ru="Текущий пароль">كلمة المرور الحالية</span>
+                <input type="password" name="old_password" autocomplete="current-password" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-brand/40 focus:border-brand outline-none">
+            </label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="block">
+                    <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="كلمة المرور الجديدة" data-lang-en="New password" data-lang-es="Nueva" data-lang-ru="Новый пароль">كلمة المرور الجديدة</span>
+                    <input type="password" name="new_password1" autocomplete="new-password" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-brand/40 focus:border-brand outline-none">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-gray-500 bilingual" data-lang-ar="تأكيد كلمة المرور" data-lang-en="Confirm password" data-lang-es="Confirmar" data-lang-ru="Подтвердите">تأكيد كلمة المرور</span>
+                    <input type="password" name="new_password2" autocomplete="new-password" class="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 ring-brand/40 focus:border-brand outline-none">
+                </label>
+            </div>
+            <button type="submit" class="bg-gray-900 text-white font-bold px-6 py-2.5 rounded-xl hover:opacity-90 transition bilingual" data-lang-ar="تحديث كلمة المرور" data-lang-en="Update password" data-lang-es="Actualizar" data-lang-ru="Обновить">تحديث كلمة المرور</button>
+        </form>
+    </section>
+
+    <div class="text-center">
+        <a href="{% url 'logout' %}" class="inline-block text-sm font-bold text-red-500 hover:text-red-600 bilingual" data-lang-ar="تسجيل الخروج" data-lang-en="Sign out" data-lang-es="Cerrar sesión" data-lang-ru="Выйти">تسجيل الخروج</a>
+    </div>
+</div>
+{% endblock %}

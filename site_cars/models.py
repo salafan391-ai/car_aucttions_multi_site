@@ -449,3 +449,18 @@ class SharedCollection(models.Model):
                     self.token = tok
                     break
         super().save(*args, **kwargs)
+
+
+class UserProfile(models.Model):
+    """Per-tenant profile for an end-user account (extends auth.User)."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    phone = models.CharField("رقم الجوال", max_length=30, blank=True, default="")
+    avatar = models.ImageField("الصورة الشخصية", upload_to="avatars/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "ملف مستخدم"
+        verbose_name_plural = "ملفات المستخدمين"
+
+    def __str__(self):
+        return f"Profile: {self.user}"
