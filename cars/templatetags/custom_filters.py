@@ -722,3 +722,21 @@ def car_trim(car):
 def panel_label(value):
     """Human-readable inspection panel name: 'left_rear_door' -> 'Left Rear Door'."""
     return str(value or "").replace("_", " ").title()
+
+
+@register.filter
+def sar_price(krw):
+    """KRW price -> whole-number SAR, for server-rendered meta/OG/schema tags
+    (there's no JS there to convert). Matches the on-site rate x 1.01 markup."""
+    try:
+        krw = float(krw or 0)
+    except (TypeError, ValueError):
+        return 0
+    if krw <= 0:
+        return 0
+    try:
+        from tenants.models import GlobalExchangeRates
+        rate = float(GlobalExchangeRates.get_solo().rate_sar or 0.0025)
+    except Exception:
+        rate = 0.0025
+    return int(round(krw * rate * 1.01))

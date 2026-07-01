@@ -4,11 +4,11 @@
 {% block title %}{{ car.year }} {{ car.manufacturer.name }} {{ car.model.name }} — {{ site_name }}{% endblock %}
 
 {% block og_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
-{% block og_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block og_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|sar_price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
 {% block og_type %}product{% endblock %}
 {% block og_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% elif site_logo %}{% absolute_url site_logo %}{% else %}{% absolute_url '/static/images/og-car-default.jpg' %}{% endif %}{% endblock %}
 {% block twitter_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
-{% block twitter_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block twitter_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|sar_price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
 {% block twitter_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% elif site_logo %}{% absolute_url site_logo %}{% else %}{% absolute_url '/static/images/og-car-default.jpg' %}{% endif %}{% endblock %}
 
 {% block extra_head %}
@@ -17,7 +17,7 @@
     "@context": "https://schema.org",
     "@type": "Car",
     "name": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}",
-    "description": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|intcomma }} ريال",
+    "description": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|sar_price|intcomma }} ريال",
     "brand": { "@type": "Brand", "name": "{{ car.manufacturer.name }}" },
     "model": "{{ car.model.name }}",
     "vehicleModelDate": "{{ car.year }}",
@@ -29,7 +29,7 @@
     "itemCondition": "https://schema.org/UsedCondition",
     "offers": {
         "@type": "Offer",
-        "price": "{{ car.price }}",
+        "price": "{{ car.price|sar_price }}",
         "priceCurrency": "SAR",
         "availability": "{% if car.status == 'available' %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
         "itemCondition": "https://schema.org/UsedCondition",
