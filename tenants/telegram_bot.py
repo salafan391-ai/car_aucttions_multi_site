@@ -8,6 +8,7 @@ chat id on the tenant. Then the share cart can send each car to that chat.
 """
 import hashlib
 import hmac
+import time
 
 import requests
 from django.conf import settings
@@ -49,11 +50,20 @@ def verify_connect_token(token):
 def _call(method, **data):
     if not _token():
         return None
-    try:
-        r = requests.post(_API.format(token=_token(), method=method), json=data, timeout=12)
-        return r.json()
-    except Exception:
-        return None
+    url = _API.format(token=_token(), method=method)
+    # Retry on 429 (bulk sends to one chat get throttled) honouring retry_after.
+    for attempt in range(3):
+        try:
+            r = requests.post(url, json=data, timeout=15)
+            body = r.json()
+        except Exception:
+            return None
+        if r.status_code == 429 and attempt < 2:
+            wait = ((body.get("parameters") or {}).get("retry_after") or 1)
+            time.sleep(min(wait, 5))
+            continue
+        return body
+    return body
 
 
 def send_message(chat_id, text):

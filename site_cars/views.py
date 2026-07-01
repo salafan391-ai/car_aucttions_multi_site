@@ -2297,28 +2297,32 @@ def telegram_send(request):
         return JsonResponse({"error": "not_configured"}, status=400)
     if not chat_id:
         return JsonResponse({"error": "not_connected"}, status=400)
+    import html as _html
     import json as _json
     try:
         cars = _json.loads((request.body or b"").decode() or "{}").get("cars", [])
     except Exception:
         cars = []
+    cars = [c for c in cars if (c.get("url") or "").strip()]
     sent = 0
     for c in cars[:60]:
         url = (c.get("url") or "").strip()
-        if not url:
-            continue
-        title = (c.get("title") or "").strip()
+        title = _html.escape((c.get("title") or "").strip())
+        sub = _html.escape((c.get("sub") or "").strip())
         img = (c.get("image") or "").strip()
         krw = c.get("priceKrw")
         price = f"{sar_price(krw):,} ﷼" if krw else (c.get("price") or "").strip()
         caption = "\n".join(p for p in [
             f"🚗 <b>{title}</b>" if title else "",
+            sub,
             f"💰 {price}" if price else "",
             url,
         ] if p)
+        # Each car is its own photo+caption message; if Telegram can't fetch the
+        # image, fall back to a text message so no car is silently dropped.
         res = tg.send_photo(chat_id, img, caption) if img else tg.send_message(chat_id, caption)
         if res and res.get("ok"):
             sent += 1
         elif img and (tg.send_message(chat_id, caption) or {}).get("ok"):
-            sent += 1  # photo url rejected by Telegram -> fell back to text
+            sent += 1
     return JsonResponse({"sent": sent, "total": len(cars)})
