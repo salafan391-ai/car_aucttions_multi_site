@@ -53,6 +53,7 @@
     <div class="sc-cart-actions" id="sc-actions" style="display:none">
         <span class="sc-cart-count"><b id="sc-count">0</b> <span class="bilingual" data-lang-ar="سيارة في السلة" data-lang-en="cars in cart" data-lang-es="coches" data-lang-ru="авто">سيارة في السلة</span></span>
         <button type="button" class="sc-btn sc-btn-primary" onclick="scCopyAll(this)"><span class="bilingual" data-lang-ar="نسخ كل الروابط" data-lang-en="Copy all links" data-lang-es="Copiar todo" data-lang-ru="Копировать всё">نسخ كل الروابط</span></button>
+        <button type="button" class="sc-btn sc-btn-tg" id="sc-tg-btn" onclick="scTelegram(this)" style="display:none; background:#229ED9; color:#fff;"><span id="sc-tg-label">✈️ <span class="bilingual" data-lang-ar="إرسال إلى تيليجرام" data-lang-en="Send to Telegram" data-lang-es="Enviar a Telegram" data-lang-ru="В Telegram">إرسال إلى تيليجرام</span></span></button>
         <button type="button" class="sc-btn sc-btn-ghost" onclick="scClear()"><span class="bilingual" data-lang-ar="إفراغ السلة" data-lang-en="Empty cart" data-lang-es="Vaciar" data-lang-ru="Очистить">إفراغ السلة</span></button>
     </div>
 
@@ -138,6 +139,52 @@
     // Re-render once the currency script has initialised (and on any currency
     // switch) so prices show in the visitor's currency, not raw KRW.
     document.addEventListener('currencychange', function () { render(); });
+
+    // ── Telegram: send each car to the dealer's connected ofleet0_bot chat ──
+    var TG = { configured: false, connected: false, link: '' };
+    var btn = document.getElementById('sc-tg-btn');
+    function tgLabel(html) { document.getElementById('sc-tg-label').innerHTML = html; }
+    fetch("{% url 'telegram_status' %}", { headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            TG = d || TG;
+            if (!TG.configured) return;                 // bot not set up on the server
+            btn.style.display = '';
+            if (!TG.connected) tgLabel('🔗 <span class="bilingual" data-lang-ar="ربط تيليجرام" data-lang-en="Connect Telegram">ربط تيليجرام</span>');
+        }).catch(function () {});
+
+    window.scTelegram = function (b) {
+        if (!TG.connected) {                             // first time → open the deep link to connect
+            if (TG.link) window.open(TG.link, '_blank', 'noopener');
+            alert('افتح المحادثة مع البوت واضغط «Start» لربط حسابك، ثم عد وأرسل.');
+            TG.connected = true;                         // optimistic; webhook stores the chat id
+            tgLabel('✈️ <span class="bilingual" data-lang-ar="إرسال إلى تيليجرام" data-lang-en="Send to Telegram">إرسال إلى تيليجرام</span>');
+            return;
+        }
+        if (!cart.length) return;
+        tgLabel('⏳');
+        fetch("{% url 'telegram_send' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+            body: JSON.stringify({ cars: cart })
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            if (res.ok && !res.j.error) {
+                tgLabel('✓ ' + (res.j.sent || 0));
+            } else if (res.j.error === 'not_connected') {
+                TG.connected = false;
+                tgLabel('🔗 <span class="bilingual" data-lang-ar="ربط تيليجرام" data-lang-en="Connect Telegram">ربط تيليجرام</span>');
+                if (TG.link) window.open(TG.link, '_blank', 'noopener');
+            } else {
+                tgLabel('⚠️');
+            }
+            setTimeout(function () { tgLabel('✈️ <span class="bilingual" data-lang-ar="إرسال إلى تيليجرام" data-lang-en="Send to Telegram">إرسال إلى تيليجرام</span>'); }, 2500);
+        }).catch(function () { tgLabel('⚠️'); });
+    };
+    function getCsrf() {
+        var m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+    }
 })();
 </script>
 {% endblock %}

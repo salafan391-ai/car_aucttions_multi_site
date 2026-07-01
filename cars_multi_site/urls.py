@@ -28,6 +28,7 @@ from django.views.decorators.http import require_POST
 from tenants.views import site_settings, set_dashboard_password
 from tenants.sso_views import launch as sso_launch, enter as sso_enter
 from tenants import oauth_relay
+from tenants.telegram_views import telegram_webhook
 from billing.views import stripe_webhook
 
 
@@ -217,6 +218,8 @@ urlpatterns = [
     path("oauth/google/start/", oauth_relay.google_start, name="google_oauth_start"),
     path("oauth/google/relay/", oauth_relay.google_relay, name="google_oauth_relay"),
     path("oauth/google/resume/", oauth_relay.google_resume, name="google_oauth_resume"),
+    # Telegram bot webhook (fixed URL; secret in the path).
+    path("telegram/webhook/<str:secret>/", telegram_webhook, name="telegram_webhook"),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
     path("", include("site_shop.urls")),

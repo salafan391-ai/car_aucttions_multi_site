@@ -237,6 +237,8 @@ class Tenant(TenantMixin):
     # Telegram: allow either a full URL (https://t.me/...) or a username (without @)
     telegram = models.URLField(max_length=255, blank=True, null=True, verbose_name="تيليجرام (رابط)")
     telegram_username = models.CharField(max_length=64, blank=True, null=True, verbose_name="تيليجرام (اسم المستخدم)", help_text="ادخل اسم المستخدم بدون @ — سيُحوّل تلقائياً إلى رابط t.me/username")
+    # Chat id captured when the dealer connects ofleet0_bot (for pushing car links).
+    telegram_chat_id = models.CharField(max_length=32, blank=True, default="", verbose_name="Telegram chat id (bot)")
 
     # SMTP Email Settings
     email_host = models.CharField(max_length=255, blank=True, default='smtp.gmail.com', verbose_name="SMTP Host")

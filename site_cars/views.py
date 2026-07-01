@@ -2267,3 +2267,58 @@ def cart_page(request):
     """Dedicated 'share cart' page. The cart lives in the browser (localStorage,
     filled from the car list); this page renders it with each car's own link."""
     return render(request, "site_cars/cart.html", {})
+
+
+@staff_member_required
+def telegram_status(request):
+    """Whether this dealer's Telegram is connected + the one-time connect link."""
+    from tenants import telegram_bot as tg
+    tenant = getattr(connection, "tenant", None)
+    link = ""
+    if tenant and tg.is_configured() and tg.bot_username():
+        link = f"https://t.me/{tg.bot_username()}?start={tg.connect_token(tenant.id)}"
+    return JsonResponse({
+        "configured": tg.is_configured(),
+        "connected": bool(getattr(tenant, "telegram_chat_id", "")),
+        "link": link,
+    })
+
+
+@staff_member_required
+def telegram_send(request):
+    """Push the share-cart cars to the dealer's connected Telegram chat."""
+    if request.method != "POST":
+        return JsonResponse({"error": "post"}, status=405)
+    from tenants import telegram_bot as tg
+    from cars.templatetags.custom_filters import sar_price
+    tenant = getattr(connection, "tenant", None)
+    chat_id = getattr(tenant, "telegram_chat_id", "") if tenant else ""
+    if not tg.is_configured():
+        return JsonResponse({"error": "not_configured"}, status=400)
+    if not chat_id:
+        return JsonResponse({"error": "not_connected"}, status=400)
+    import json as _json
+    try:
+        cars = _json.loads((request.body or b"").decode() or "{}").get("cars", [])
+    except Exception:
+        cars = []
+    sent = 0
+    for c in cars[:60]:
+        url = (c.get("url") or "").strip()
+        if not url:
+            continue
+        title = (c.get("title") or "").strip()
+        img = (c.get("image") or "").strip()
+        krw = c.get("priceKrw")
+        price = f"{sar_price(krw):,} ﷼" if krw else (c.get("price") or "").strip()
+        caption = "\n".join(p for p in [
+            f"🚗 <b>{title}</b>" if title else "",
+            f"💰 {price}" if price else "",
+            url,
+        ] if p)
+        res = tg.send_photo(chat_id, img, caption) if img else tg.send_message(chat_id, caption)
+        if res and res.get("ok"):
+            sent += 1
+        elif img and (tg.send_message(chat_id, caption) or {}).get("ok"):
+            sent += 1  # photo url rejected by Telegram -> fell back to text
+    return JsonResponse({"sent": sent, "total": len(cars)})

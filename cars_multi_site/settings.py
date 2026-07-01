@@ -342,6 +342,12 @@ _GOOGLE_SECRET = os.environ.get("GOOGLE_OAUTH_SECRET", "")
 # (https://<domain>/oauth/google/relay/), Google login works on every tenant
 # domain. When empty, login falls back to the normal per-domain allauth flow.
 OAUTH_RELAY_DOMAIN = os.environ.get("OAUTH_RELAY_DOMAIN", "").strip()
+
+# Telegram bot (ofleet0_bot): dealers connect their chat via a deep link and
+# push car links to it from the share cart.
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "").strip().lstrip("@")
+TELEGRAM_WEBHOOK_SECRET = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "").strip()
 _APPLE_CLIENT_ID = os.environ.get("APPLE_CLIENT_ID", "")        # Services ID, e.g. com.brand.signin
 _APPLE_KEY_ID = os.environ.get("APPLE_KEY_ID", "")
 _APPLE_TEAM_ID = os.environ.get("APPLE_TEAM_ID", "")
