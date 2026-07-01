@@ -788,7 +788,6 @@ function toggleWishlist(carId) {
         </div>
         {% endif %}
 
-        <a href="{% url 'account' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</a>
         <a href="{% url 'wishlist' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-9-10.5A5.5 5.5 0 0112 5a5.5 5.5 0 019 5.5C19 15.5 12 21 12 21z"/></svg>
             <span class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</span>
@@ -802,7 +801,7 @@ function toggleWishlist(carId) {
             <span class="bilingual" data-lang-ar="لوحة" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة</span>
         </a>
         {% else %}
-        <a href="{% url 'logout' %}" class="mod-bn-link">
+        <a href="{% url 'account' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20a7 7 0 0114 0"/></svg>
             <span class="bilingual" data-lang-ar="حسابي" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">حسابي</span>
         </a>

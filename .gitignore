@@ -26,3 +26,7 @@ db.sqlite3
 .happycar_cache/
 # HappyCar session cookie — never commit (use HAPPYCAR_USER/HAPPYCAR_PASS instead)
 .happycar_cookie
+client-offer.html
+client-offer.pdf
+payoneer-qr.png
+bank-qr.png
