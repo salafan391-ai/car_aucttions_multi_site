@@ -719,6 +719,25 @@ def car_trim(car):
 
 
 @register.filter
+def share_car_title(car):
+    """Title used when sharing/sending a car (cart, Telegram): always rebuilt as
+    'Make Model Transmission Fuel CC' from structured fields — never the raw
+    ApiCar.title. Missing pieces are simply dropped."""
+    if not car:
+        return ""
+    mk = pretty_en(getattr(getattr(car, "manufacturer", None), "name", "") or "")
+    md = pretty_en(getattr(getattr(car, "model", None), "name", "") or "")
+    tr = pretty_en(getattr(car, "transmission", "") or "")
+    fu = pretty_en(getattr(car, "fuel", "") or "")
+    cc = displacement_cc(getattr(car, "engine_group", "") or "")
+    if not cc:
+        p = getattr(car, "power", None)
+        if p:
+            cc = f"{p}cc"
+    return " ".join(x for x in (mk, md, tr, fu, cc) if x).strip()
+
+
+@register.filter
 def panel_label(value):
     """Human-readable inspection panel name: 'left_rear_door' -> 'Left Rear Door'."""
     return str(value or "").replace("_", " ").title()

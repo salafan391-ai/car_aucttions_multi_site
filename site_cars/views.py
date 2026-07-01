@@ -2290,7 +2290,9 @@ def telegram_send(request):
     if request.method != "POST":
         return JsonResponse({"error": "post"}, status=405)
     from tenants import telegram_bot as tg
-    from cars.templatetags.custom_filters import sar_price
+    from cars.templatetags.custom_filters import sar_price, share_car_title
+    from cars.models import ApiCar
+    import re as _re
     tenant = getattr(connection, "tenant", None)
     chat_id = getattr(tenant, "telegram_chat_id", "") if tenant else ""
     if not tg.is_configured():
@@ -2304,17 +2306,25 @@ def telegram_send(request):
     except Exception:
         cars = []
     cars = [c for c in cars if (c.get("url") or "").strip()]
+    # Always rebuild each title from the car record as "make model transmission
+    # fuel cc" — never trust/echo the raw title captured in the browser.
+    _slug_re = _re.compile(r"/cars/([^/?#]+)/?")
+    _slugs = [m.group(1) for m in (_slug_re.search(c.get("url") or "") for c in cars) if m]
+    _by_slug = {
+        c.slug: c for c in ApiCar.objects.filter(slug__in=_slugs)
+        .select_related("manufacturer", "model")
+    }
     sent = 0
     for c in cars[:60]:
         url = (c.get("url") or "").strip()
-        title = _html.escape((c.get("title") or "").strip())
-        sub = _html.escape((c.get("sub") or "").strip())
+        m = _slug_re.search(url)
+        car = _by_slug.get(m.group(1)) if m else None
+        title = _html.escape(share_car_title(car) if car else (c.get("title") or "").strip())
         img = (c.get("image") or "").strip()
         krw = c.get("priceKrw")
         price = f"{sar_price(krw):,} ﷼" if krw else (c.get("price") or "").strip()
         caption = "\n".join(p for p in [
             f"🚗 <b>{title}</b>" if title else "",
-            sub,
             f"💰 {price}" if price else "",
             url,
         ] if p)
