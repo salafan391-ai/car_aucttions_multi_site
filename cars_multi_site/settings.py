@@ -336,6 +336,12 @@ SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 # appears (and its button only renders) when its credentials are present.
 _GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "")
 _GOOGLE_SECRET = os.environ.get("GOOGLE_OAUTH_SECRET", "")
+
+# Single-callback OAuth relay (see tenants/oauth_relay.py). When set to a
+# domain that is registered as the ONE Google redirect URI
+# (https://<domain>/oauth/google/relay/), Google login works on every tenant
+# domain. When empty, login falls back to the normal per-domain allauth flow.
+OAUTH_RELAY_DOMAIN = os.environ.get("OAUTH_RELAY_DOMAIN", "").strip()
 _APPLE_CLIENT_ID = os.environ.get("APPLE_CLIENT_ID", "")        # Services ID, e.g. com.brand.signin
 _APPLE_KEY_ID = os.environ.get("APPLE_KEY_ID", "")
 _APPLE_TEAM_ID = os.environ.get("APPLE_TEAM_ID", "")

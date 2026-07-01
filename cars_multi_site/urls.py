@@ -27,6 +27,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from tenants.views import site_settings, set_dashboard_password
 from tenants.sso_views import launch as sso_launch, enter as sso_enter
+from tenants import oauth_relay
 from billing.views import stripe_webhook
 
 
@@ -212,6 +213,10 @@ urlpatterns = [
     path("billing/", include("billing.urls")),
     path("stripe/webhook/", stripe_webhook, name="stripe_webhook"),
     path("accounts/", include("allauth.urls")),
+    # Single-callback Google OAuth relay (works across all tenant domains).
+    path("oauth/google/start/", oauth_relay.google_start, name="google_oauth_start"),
+    path("oauth/google/relay/", oauth_relay.google_relay, name="google_oauth_relay"),
+    path("oauth/google/resume/", oauth_relay.google_resume, name="google_oauth_resume"),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
     path("", include("site_shop.urls")),
