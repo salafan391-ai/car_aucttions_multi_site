@@ -1,0 +1,142 @@
+{% comment %}
+Staff "share cart" — reusable across every theme's car_list.
+
+Include once near the end of a theme's car_list, passing the theme's grid +
+toolbar selectors, e.g.:
+
+    {% include "partials/share_cart.html" with grid_sel=".mod-car-grid" head_sel=".mod-results-head" name_sel=".mod-car-name" make_sel=".mod-car-make" %}
+
+Only grid_sel is required. Cards are the grid's <a href> links; the title
+falls back to the image alt and the price to [data-price-krw], so name_sel /
+make_sel are optional refinements. The cart lives in localStorage (shared with
+the general theme + the /share-cart page and the Telegram send) under the same
+key, so it follows staff across pages, filters and themes.
+{% endcomment %}
+{% if user.is_staff %}
+<style>
+    .sc-toggle {
+        padding: .55rem 1rem; border-radius: 999px; cursor: pointer; font-family: inherit;
+        font-size: .82rem; font-weight: 800; white-space: nowrap;
+        border: 1px solid rgba(148,163,184,.4); background: rgba(148,163,184,.12); color: inherit;
+        transition: all .18s ease;
+    }
+    .sc-toggle:hover { border-color: #4338ca; color: #4338ca; }
+    .sc-toggle.active { background: #4338ca; color: #fff; border-color: transparent; }
+    .sc-toggle-float { position: fixed; inset-block-start: auto; bottom: 78px; inset-inline-end: 14px; z-index: 56;
+        box-shadow: 0 10px 26px rgba(15,23,42,.22); background: #fff; color: #111827; }
+    /* Select mode: cards select instead of navigating */
+    .sc-select-mode a { cursor: copy; }
+    .sc-selected { outline: 3px solid #4338ca; outline-offset: 2px; position: relative; }
+    .sc-selected::after {
+        content: "✓"; position: absolute; top: .6rem; inset-inline-start: .6rem; z-index: 7;
+        width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        background: #4338ca; color: #fff; font-weight: 900; font-size: 16px;
+        box-shadow: 0 6px 16px rgba(42,37,100,.4);
+    }
+    .sc-share-bar {
+        position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 55;
+        display: none; align-items: center; gap: 8px; padding: 8px 8px 8px 15px; border-radius: 16px;
+        background: rgba(255,255,255,0.97); border: 1px solid #e5e7eb;
+        box-shadow: 0 18px 42px rgba(15,23,42,0.18);
+        backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px);
+        max-width: calc(100vw - 20px);
+    }
+    html.gc-dark .sc-share-bar { background: rgba(17,24,39,0.97); border-color: rgba(148,163,184,0.22); }
+    .sc-share-bar.show { display: flex; }
+    .sc-share-bar > span:first-child { font-size: .85rem; white-space: nowrap; color: #111827; }
+    html.gc-dark .sc-share-bar > span:first-child { color: #e5e7eb; }
+    .sc-share-bar b { color: #4338ca; font-size: 1.05rem; }
+    .sc-share-bar a, .sc-share-bar button { font-family: inherit; font-weight: 800; font-size: .82rem; border-radius: 11px; cursor: pointer; padding: .6rem 1rem; border: 0; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+    .sc-share-bar .b-export { background: linear-gradient(135deg, #2a2564, #3b37a4); color: #fff; }
+    .sc-share-bar .b-clear { background: transparent; color: #6b7280; padding: .6rem .7rem; }
+    .sc-share-bar .b-clear:hover { color: #dc2626; }
+    @media (max-width: 767px) {
+        .sc-share-bar { left: 10px; right: 10px; transform: none; max-width: none; bottom: calc(5.6rem + 16px); justify-content: space-between; }
+    }
+</style>
+
+<div class="sc-share-bar" id="sc-share-bar">
+    <span>🛒 <b id="sc-share-count">0</b> <span class="bilingual" data-lang-ar="في السلة" data-lang-en="in cart" data-lang-es="en lista" data-lang-ru="в корзине">في السلة</span></span>
+    <a href="{% url 'cart_page' %}" class="b-export"><span class="bilingual" data-lang-ar="فتح السلة" data-lang-en="Open cart" data-lang-es="Abrir" data-lang-ru="Открыть">فتح السلة</span></a>
+    <button type="button" class="b-clear" onclick="scShareClear()"><span class="bilingual" data-lang-ar="مسح" data-lang-en="Clear" data-lang-es="Limpiar" data-lang-ru="Очистить">مسح</span></button>
+</div>
+
+<script>
+(function () {
+    var CFG = {
+        grid: '{{ grid_sel|default:".car-results-grid" }}',
+        head: '{{ head_sel|default:"" }}',
+        name: '{{ name_sel|default:"" }}',
+        make: '{{ make_sel|default:"" }}'
+    };
+    var KEY = 'gl_share_cart_v2';   // shared with general theme + /share-cart page
+    var grid = document.querySelector(CFG.grid);
+    if (!grid) return;
+    var bar = document.getElementById('sc-share-bar');
+    if (bar) document.body.appendChild(bar);   // fixed relative to viewport
+    var mode = false;
+
+    var cart = [];  // [{url, title, sub, image, price, priceKrw}]
+    function load() { try { cart = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { cart = []; } }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(cart)); } catch (e) {} }
+    function idx(url) { for (var i = 0; i < cart.length; i++) { if (cart[i].url === url) return i; } return -1; }
+    function txt(el, sel) { if (!sel) return ''; var n = el.querySelector(sel); return n ? n.textContent.replace(/\s+/g, ' ').trim() : ''; }
+    function cardUrl(card) { var h = card.getAttribute('href'); return h ? new URL(h, location.origin).href : ''; }
+
+    function refresh() {
+        document.getElementById('sc-share-count').textContent = cart.length;
+        bar.classList.toggle('show', cart.length > 0);
+        if (window.glUpdateCartBadge) window.glUpdateCartBadge();
+    }
+    function markCards() {
+        grid.querySelectorAll('a[href]').forEach(function (c) {
+            var u = cardUrl(c); if (u) c.classList.toggle('sc-selected', idx(u) !== -1);
+        });
+    }
+
+    // Toggle button — injected into the theme's toolbar, or floated if absent.
+    var LABELS = { ar: '🔗 ضف روابط المشاركة', en: '🔗 Add share links', es: '🔗 Añadir enlaces', ru: '🔗 Добавить ссылки' };
+    var lang = (localStorage.getItem('site_lang') || 'ar');
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'sc-toggle bilingual';
+    Object.keys(LABELS).forEach(function (k) { toggle.setAttribute('data-lang-' + k, LABELS[k]); });
+    toggle.textContent = LABELS[lang] || LABELS.ar;
+    var head = CFG.head ? document.querySelector(CFG.head) : null;
+    if (head) head.appendChild(toggle); else { toggle.classList.add('sc-toggle-float'); document.body.appendChild(toggle); }
+    toggle.addEventListener('click', function () {
+        mode = !mode;
+        toggle.classList.toggle('active', mode);
+        grid.classList.toggle('sc-select-mode', mode);
+    });
+
+    // In select mode, clicking a card toggles it in the cart (no navigation).
+    grid.addEventListener('click', function (e) {
+        if (!mode) return;
+        var card = e.target.closest('a[href]');
+        if (!card || !grid.contains(card)) return;
+        e.preventDefault(); e.stopPropagation();
+        var url = cardUrl(card); if (!url) return;
+        var at = idx(url);
+        if (at !== -1) { cart.splice(at, 1); card.classList.remove('sc-selected'); }
+        else {
+            var img = card.querySelector('img');
+            var pe = card.querySelector('[data-price-krw]');
+            cart.push({
+                url: url,
+                title: txt(card, CFG.name) || (img ? img.getAttribute('alt') : '') || url,
+                sub: txt(card, CFG.make),
+                image: img ? img.src : '',
+                price: pe ? pe.textContent.replace(/\s+/g, ' ').trim() : '',
+                priceKrw: pe ? (pe.getAttribute('data-price-krw') || '') : ''
+            });
+            card.classList.add('sc-selected');
+        }
+        save(); refresh();
+    }, true);
+
+    window.scShareClear = function () { cart = []; save(); markCards(); refresh(); };
+    load(); markCards(); refresh();
+})();
+</script>
+{% endif %}
