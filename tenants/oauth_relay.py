@@ -31,7 +31,10 @@ Security
 * only relative ``next`` targets are honoured.
 """
 from urllib.parse import urlencode
+import logging
 import secrets
+
+logger = logging.getLogger("oauth_relay")
 
 from django.conf import settings
 from django.core import signing
@@ -137,12 +140,14 @@ def google_relay(request):
         return HttpResponseBadRequest("Invalid OAuth state.")
     origin = data.get("o", "")
     if not _is_known_domain(origin):
+        logger.warning("OAUTHRELAY relay: unknown origin=%s", origin)
         return HttpResponseBadRequest("Unknown OAuth origin.")
     q = {"state": state}
     if code:
         q["code"] = code
     if err:
         q["error"] = err
+    logger.warning("OAUTHRELAY relay: bounce -> origin=%s has_code=%s err=%s", origin, bool(code), err)
     return redirect(f"https://{origin}{RESUME_PATH}?{urlencode(q)}")
 
 
@@ -152,8 +157,10 @@ def google_resume(request):
     try:
         data = signing.loads(state, salt=STATE_SALT, max_age=STATE_MAX_AGE)
     except signing.BadSignature:
+        logger.warning("OAUTHRELAY resume: bad/expired state signature")
         return _login_error(request)
     if data.get("o", "") != request.get_host():
+        logger.warning("OAUTHRELAY resume: origin mismatch state_o=%s host=%s", data.get("o"), request.get_host())
         return _login_error(request)
     # Nonce (CSRF) may arrive via the session (same-domain) or the SameSite=None
     # cookie (cross-domain relay bounce) — accept either.
@@ -161,8 +168,11 @@ def google_resume(request):
     cookie_nonce = request.COOKIES.get("goauth_n")
     expected = data.get("n")
     if not expected or expected not in (sess_nonce, cookie_nonce):
+        logger.warning("OAUTHRELAY resume: nonce mismatch host=%s expected=%s sess=%s cookie=%s",
+                       request.get_host(), bool(expected), bool(sess_nonce), bool(cookie_nonce))
         return _login_error(request)
     if request.GET.get("error") or not request.GET.get("code"):
+        logger.warning("OAUTHRELAY resume: google error=%s has_code=%s", request.GET.get("error"), bool(request.GET.get("code")))
         return _login_error(request)
 
     from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -188,4 +198,5 @@ def google_resume(request):
             pass
         return resp
     except Exception:
+        logger.exception("OAUTHRELAY resume: token exchange / complete_login failed host=%s", request.get_host())
         return _login_error(request)
