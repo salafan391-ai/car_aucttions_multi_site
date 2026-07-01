@@ -117,7 +117,13 @@ def google_start(request):
         "access_type": "online",
         "prompt": "select_account",
     }
-    return redirect(f"{AUTHORIZE_URL}?{urlencode(params)}")
+    resp = redirect(f"{AUTHORIZE_URL}?{urlencode(params)}")
+    # The session cookie is SameSite=Lax and doesn't reliably survive the
+    # cross-domain relay bounce (relay domain -> a *different* tenant domain),
+    # so also carry the nonce in a SameSite=None cookie that does.
+    resp.set_cookie("goauth_n", nonce, max_age=STATE_MAX_AGE, secure=True,
+                    httponly=True, samesite="None")
+    return resp
 
 
 def google_relay(request):
@@ -149,8 +155,12 @@ def google_resume(request):
         return _login_error(request)
     if data.get("o", "") != request.get_host():
         return _login_error(request)
+    # Nonce (CSRF) may arrive via the session (same-domain) or the SameSite=None
+    # cookie (cross-domain relay bounce) — accept either.
     sess_nonce = request.session.pop("g_relay_nonce", None)
-    if not sess_nonce or sess_nonce != data.get("n"):
+    cookie_nonce = request.COOKIES.get("goauth_n")
+    expected = data.get("n")
+    if not expected or expected not in (sess_nonce, cookie_nonce):
         return _login_error(request)
     if request.GET.get("error") or not request.GET.get("code"):
         return _login_error(request)
@@ -171,6 +181,11 @@ def google_resume(request):
         login = adapter.complete_login(request, app, token, response=token_resp)
         login.token = token
         login.state = {"process": "login", "next": _safe_next(data.get("next", ""))}
-        return complete_social_login(request, login)
+        resp = complete_social_login(request, login)
+        try:
+            resp.delete_cookie("goauth_n")
+        except Exception:
+            pass
+        return resp
     except Exception:
         return _login_error(request)
