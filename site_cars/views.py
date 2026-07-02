@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Avg, Sum, Count, Q, F, Func, Value, CharField
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
