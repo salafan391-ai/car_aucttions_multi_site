@@ -234,7 +234,7 @@
                     <div class="slider-image active"><img src="{{ car.external_image_url }}" alt="{{ car.title }}" onclick="luxOpenLightbox(this)"></div>
                     {% endif %}
                     {% for img in all_images %}
-                    <div class="slider-image {% if not car.image and forloop.first %}active{% endif %}"><img src="{{ img.image.url }}" alt="{{ img.caption|default:car.title }}" onclick="luxOpenLightbox(this)"></div>
+                    <div class="slider-image {% if not car.image and forloop.first %}active{% endif %}"><img src="{{ img.display_url }}" alt="{{ img.caption|default:car.title }}" onclick="luxOpenLightbox(this)"></div>
                     {% endfor %}
                     {% endwith %}
 
@@ -267,9 +267,9 @@
                     {% endif %}
                     {% for img in car.gallery.all %}
                     {% if car.image %}
-                    <button type="button" class="lux-thumb" onclick="luxGoToSlide({{ forloop.counter }})"><img src="{{ img.image.url }}" alt="" loading="lazy"></button>
+                    <button type="button" class="lux-thumb" onclick="luxGoToSlide({{ forloop.counter }})"><img src="{{ img.display_url }}" alt="" loading="lazy"></button>
                     {% else %}
-                    <button type="button" class="lux-thumb" onclick="luxGoToSlide({{ forloop.counter0 }})"><img src="{{ img.image.url }}" alt="" loading="lazy"></button>
+                    <button type="button" class="lux-thumb" onclick="luxGoToSlide({{ forloop.counter0 }})"><img src="{{ img.display_url }}" alt="" loading="lazy"></button>
                     {% endif %}
                     {% endfor %}
                 </div>

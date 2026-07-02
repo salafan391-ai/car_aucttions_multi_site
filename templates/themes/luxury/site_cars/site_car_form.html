@@ -375,7 +375,7 @@
                     <div class="lux-gallery-current">
                         {% for img in car.gallery.all %}
                         <div class="lux-gallery-current-item">
-                            <img src="{{ img.image.url }}" alt="Gallery image">
+                            <img src="{{ img.display_url }}" alt="Gallery image">
                             <a href="{% url 'site_car_delete_image' car.pk img.pk %}"
                                onclick="return confirm('هل أنت متأكد من حذف هذه الصورة؟')"
                                class="lux-gallery-remove" aria-label="Remove">×</a>
