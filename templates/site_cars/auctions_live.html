@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}المزادات المباشرة — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    .la-wrap { max-width: 1150px; margin: 0 auto; padding: 24px 16px 90px; }
+    .la-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+    .la-title { font-size: 1.7rem; font-weight: 900; color: #0f172a; margin: 0; }
+    .la-app-cta { background: linear-gradient(135deg,#4338ca,#6366f1); color: #fff; font-weight: 800; font-size: .85rem;
+        padding: .6rem 1.15rem; border-radius: 12px; text-decoration: none; white-space: nowrap; }
+    .la-sub { color: #64748b; font-size: .9rem; margin: 4px 0 18px; }
+    .la-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .la-tab { border: 1px solid #e2e8f0; background: #fff; color: #334155; font-weight: 800; font-size: .82rem;
+        padding: .5rem 1rem; border-radius: 999px; cursor: pointer; }
+    .la-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+    .la-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); }
+    .la-card { background: #fff; border: 1px solid #eef1f5; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(15,23,42,.05); display: flex; flex-direction: column; }
+    .la-card-img { aspect-ratio: 4/3; background: #f1f5f9; position: relative; }
+    .la-card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .la-badge { position: absolute; top: 10px; inset-inline-start: 10px; font-size: .68rem; font-weight: 900; padding: 3px 9px; border-radius: 999px; color: #fff; }
+    .b-live { background: #dc2626; } .b-scheduled { background: #2563eb; } .b-completed { background: #6b7280; } .b-pending { background: #64748b; }
+    .la-card-body { padding: 11px 13px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .la-card-title { font-weight: 800; color: #0f172a; font-size: .98rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .la-card-meta { color: #64748b; font-size: .78rem; }
+    .la-card-price { margin-top: auto; padding-top: 6px; font-weight: 900; color: #4338ca; direction: ltr; text-align: start; }
+    .la-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 13px; border-top: 1px solid #f1f5f9; }
+    .la-bidbtn { background: #4338ca; color: #fff; font-weight: 800; font-size: .76rem; padding: 6px 12px; border-radius: 9px; text-decoration: none; }
+    .la-bids { font-size: .72rem; color: #64748b; }
+    .la-auction { border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .la-auction.open { border-color: #4338ca; }
+    .la-auction h3 { margin: 0; font-size: 1rem; font-weight: 800; color: #0f172a; }
+    .la-auction small { color: #64748b; }
+    .la-empty, .la-loading { text-align: center; color: #94a3b8; padding: 50px 20px; }
+    .la-lots { margin: 10px 0 20px; }
+</style>
+
+<section class="la-wrap">
+    <div class="la-head">
+        <h1 class="la-title">🔨 <span class="bilingual" data-lang-ar="المزادات المباشرة" data-lang-en="Live Auctions">المزادات المباشرة</span></h1>
+        <a class="la-app-cta" href="{{ auction_base }}/web/" target="_blank" rel="noopener">
+            <span class="bilingual" data-lang-ar="افتح تطبيق المزايدة" data-lang-en="Open bidding app">افتح تطبيق المزايدة</span> ↗</a>
+    </div>
+    <p class="la-sub bilingual" data-lang-ar="تصفّح المزادات والسيارات المعروضة مباشرة. للمزايدة اللحظية افتح تطبيق المزادات."
+       data-lang-en="Browse the live auctions and lots. To place live bids, open the auction app.">تصفّح المزادات والسيارات المعروضة مباشرة. للمزايدة اللحظية افتح تطبيق المزادات.</p>
+
+    <div class="la-tabs" id="la-tabs">
+        <button class="la-tab active" data-tab="auctions"><span class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions">المزادات</span></button>
+        <button class="la-tab" data-tab="direct"><span class="bilingual" data-lang-ar="بيع مباشر" data-lang-en="Direct sale">بيع مباشر</span></button>
+    </div>
+
+    <div id="la-auctions"></div>
+    <div id="la-direct" style="display:none"></div>
+</section>
+
+<script>
+(function () {
+    var BASE = "{{ auction_base }}";
+    var api = function (res, qs) { return "/live-auctions/api/" + res + "/" + (qs ? "?" + qs : ""); };
+    var elA = document.getElementById('la-auctions');
+    var elD = document.getElementById('la-direct');
+    function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+    function img(u){ if(!u) return ''; return /^https?:/.test(u) ? u : BASE + u; }
+    function money(v){ v=parseFloat(v); return isNaN(v)?'':v.toLocaleString()+' ﷼'; }
+    function statusBadge(s){
+        var map={live:['b-live','مباشر'],scheduled:['b-scheduled','مجدول'],completed:['b-completed','منتهي'],pending:['b-pending','قادم'],active:['b-live','نشط']};
+        var m=map[s]||['b-pending', s||'']; return '<span class="la-badge '+m[0]+'">'+esc(m[1])+'</span>';
+    }
+    function carCard(lot){
+        var c = lot.car || lot;
+        var im = (c.images && c.images.length) ? img(c.images[0].url || c.images[0]) : '';
+        var price = lot.current_price || c.starting_price || c.price;
+        return '<div class="la-card">'
+            + '<div class="la-card-img">' + statusBadge(lot.status || c.status)
+            + (im ? '<img src="'+esc(im)+'" alt="" loading="lazy">' : '') + '</div>'
+            + '<div class="la-card-body">'
+            + '<div class="la-card-title">' + esc(c.title || (c.make+' '+c.model)) + '</div>'
+            + '<div class="la-card-meta">' + esc([c.make,c.model,c.year].filter(Boolean).join(' · ')) + (c.mileage?(' · '+Number(c.mileage).toLocaleString()+' km'):'') + '</div>'
+            + '<div class="la-card-price">' + money(price) + '</div>'
+            + '</div>'
+            + '<div class="la-card-foot">'
+            + '<span class="la-bids">' + (lot.bid_count!=null?('🔨 '+lot.bid_count):'') + '</span>'
+            + '<a class="la-bidbtn" href="'+esc(BASE)+'/web/" target="_blank" rel="noopener"><span class="bilingual" data-lang-ar="زايد" data-lang-en="Bid">زايد</span></a>'
+            + '</div></div>';
+    }
+    function relang(root){ if(window.applyLang){var l=localStorage.getItem('site_lang')||'ar'; window.applyLang(l);} }
+
+    function loadAuctions(){
+        elA.innerHTML = '<div class="la-loading">…</div>';
+        fetch(api('auctions')).then(function(r){return r.json();}).then(function(list){
+            if(!list || !list.length){ elA.innerHTML = '<div class="la-empty bilingual" data-lang-ar="لا توجد مزادات حالياً" data-lang-en="No auctions right now">لا توجد مزادات حالياً</div>'; return; }
+            elA.innerHTML = list.map(function(a){
+                return '<div class="la-auction" data-id="'+esc(a.id)+'">'
+                    + '<div><h3>'+esc(a.title)+'</h3><small>'+esc((a.lot_count||0)+' سيارة')+' · '+esc(a.status)+'</small></div>'
+                    + statusBadge(a.status) + '</div>'
+                    + '<div class="la-lots" id="lots-'+esc(a.id)+'"></div>';
+            }).join('');
+            elA.querySelectorAll('.la-auction').forEach(function(node){
+                node.addEventListener('click', function(){ toggleLots(node); });
+            });
+            relang(elA);
+        }).catch(function(){ elA.innerHTML='<div class="la-empty">تعذّر التحميل</div>'; });
+    }
+    function toggleLots(node){
+        var id = node.dataset.id, box = document.getElementById('lots-'+id);
+        if(node.classList.contains('open')){ node.classList.remove('open'); box.innerHTML=''; return; }
+        elA.querySelectorAll('.la-auction.open').forEach(function(n){ n.classList.remove('open'); var b=document.getElementById('lots-'+n.dataset.id); if(b) b.innerHTML=''; });
+        node.classList.add('open'); box.innerHTML='<div class="la-loading">…</div>';
+        fetch(api('lots','auction='+encodeURIComponent(id))).then(function(r){return r.json();}).then(function(lots){
+            box.innerHTML = (lots&&lots.length) ? '<div class="la-grid">'+lots.map(carCard).join('')+'</div>'
+                : '<div class="la-empty bilingual" data-lang-ar="لا توجد سيارات في هذا المزاد" data-lang-en="No cars in this auction">لا توجد سيارات في هذا المزاد</div>';
+            relang(box);
+        }).catch(function(){ box.innerHTML='<div class="la-empty">تعذّر التحميل</div>'; });
+    }
+    function loadDirect(){
+        elD.innerHTML = '<div class="la-loading">…</div>';
+        fetch(api('direct-cars','status=available')).then(function(r){return r.json();}).then(function(list){
+            elD.innerHTML = (list&&list.length) ? '<div class="la-grid">'+list.map(carCard).join('')+'</div>'
+                : '<div class="la-empty bilingual" data-lang-ar="لا توجد سيارات للبيع المباشر" data-lang-en="No direct-sale cars">لا توجد سيارات للبيع المباشر</div>';
+            relang(elD);
+        }).catch(function(){ elD.innerHTML='<div class="la-empty">تعذّر التحميل</div>'; });
+    }
+
+    document.getElementById('la-tabs').addEventListener('click', function(e){
+        var b = e.target.closest('.la-tab'); if(!b) return;
+        this.querySelectorAll('.la-tab').forEach(function(t){t.classList.remove('active');}); b.classList.add('active');
+        var tab = b.dataset.tab;
+        elA.style.display = tab==='auctions'?'':'none';
+        elD.style.display = tab==='direct'?'':'none';
+        if(tab==='direct' && !elD.dataset.loaded){ elD.dataset.loaded='1'; loadDirect(); }
+    });
+    loadAuctions();
+})();
+</script>
+{% endblock %}

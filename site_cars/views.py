@@ -2295,6 +2295,47 @@ def cart_page(request):
     return render(request, "site_cars/cart.html", {})
 
 
+def auctions_live(request):
+    """Live-auctions page for a tenant whose auction backend is configured.
+    Reads the external auction API (kocar.store-style) via the proxy below."""
+    if _is_public_schema():
+        return redirect('home')
+    tenant = getattr(connection, 'tenant', None)
+    base = (getattr(tenant, 'auction_api_base', '') or '').rstrip('/')
+    if not base:
+        raise Http404
+    return render(request, 'site_cars/auctions_live.html', {'tenant': tenant, 'auction_base': base})
+
+
+# Public read-only endpoints of the external auction backend we re-expose.
+_AUCTION_PROXY_ALLOWED = {'auctions', 'lots', 'direct-cars', 'car-filters'}
+
+
+def auction_proxy(request, resource):
+    """Server-side proxy to the tenant's external auction API — avoids CORS and
+    keeps the backend URL server-side. Only whitelisted, read-only resources."""
+    if _is_public_schema():
+        raise Http404
+    tenant = getattr(connection, 'tenant', None)
+    base = (getattr(tenant, 'auction_api_base', '') or '').rstrip('/')
+    if not base or resource not in _AUCTION_PROXY_ALLOWED:
+        raise Http404
+    import requests
+    from urllib.parse import urlencode
+    from django.core.cache import cache
+    params = {k: v for k, v in request.GET.items() if k in ('status', 'auction', 'tab', 'make', 'model', 'year')}
+    ckey = f"auctionproxy:{getattr(tenant, 'schema_name', '')}:{resource}:{urlencode(sorted(params.items()))}"
+    cached = cache.get(ckey)
+    if cached is None:
+        try:
+            r = requests.get(f"{base}/api/{resource}/", params=params, timeout=10)
+            cached = {'status': r.status_code, 'body': r.text}
+        except Exception:
+            cached = {'status': 502, 'body': '[]'}
+        cache.set(ckey, cached, 20)  # short TTL: auctions move fast
+    return HttpResponse(cached['body'], status=cached['status'], content_type='application/json')
+
+
 @staff_member_required
 def telegram_status(request):
     """Whether this dealer's Telegram is connected + the one-time connect link."""

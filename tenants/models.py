@@ -257,6 +257,11 @@ class Tenant(TenantMixin):
     contract_email = models.CharField(max_length=120, blank=True, default="", verbose_name="بريد العقد")
     contract_stamp = models.ImageField(upload_to='tenant_contract/', blank=True, null=True, verbose_name="ختم العقد")
 
+    # ── Live auctions backend (external) ──
+    # When set (e.g. https://kocar.store), this tenant shows a "live auctions"
+    # page that reads that backend's public API (proxied server-side).
+    auction_api_base = models.URLField(max_length=255, blank=True, default="", verbose_name="رابط خادم المزادات المباشرة")
+
     # SMTP Email Settings
     email_host = models.CharField(max_length=255, blank=True, default='smtp.gmail.com', verbose_name="SMTP Host")
     email_port = models.IntegerField(default=587, verbose_name="SMTP Port")
