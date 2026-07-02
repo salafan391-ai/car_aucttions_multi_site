@@ -1,0 +1,86 @@
+{% load humanize %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>عقد رقم {{ bill.receipt_number }}</title>
+    <style>
+        @page { size: A4 portrait; margin: 1cm; }
+        * { box-sizing: border-box; }
+        body { font-family: "Noto Naskh Arabic", "Amiri", "Segoe UI", Tahoma, sans-serif;
+               direction: rtl; color: #111; line-height: 1.9; padding: 20px; }
+        .toolbar { max-width: 800px; margin: 0 auto 14px; display: flex; gap: 10px; justify-content: flex-end; }
+        .toolbar button, .toolbar a { font: inherit; font-weight: 700; border: 0; border-radius: 8px;
+               padding: .55rem 1.1rem; cursor: pointer; text-decoration: none; }
+        .btn-print { background: #2563eb; color: #fff; }
+        .btn-back { background: #f1f5f9; color: #334155; }
+        .container { max-width: 800px; margin: 0 auto; padding: 10px 24px 24px; }
+        .logo { display: block; margin: 0 auto 6px; max-height: 90px; }
+        .header { text-align: center; margin-bottom: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .header h2 { margin: 6px 0 2px; font-size: 1.5rem; }
+        .header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+        .para { margin: 8px 0; }
+        ul { margin: 6px 24px; }
+        .amount-title { font-weight: 800; margin-top: 12px; display: block; }
+        .written { font-weight: 800; display: block; margin-top: 14px; }
+        .stamp-contact { display: flex; justify-content: space-between; align-items: flex-end;
+               margin-top: 34px; page-break-inside: avoid; }
+        .stamp { max-width: 160px; max-height: 160px; }
+        .contact { text-align: left; }
+        .contact p { margin: 2px 0; }
+        @media print { .toolbar { display: none !important; } body { padding: 0; } }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <a class="btn-back" href="{% url 'invoice_view' car.pk bill.pk %}">→ رجوع للفاتورة</a>
+        <button class="btn-print" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+    </div>
+    <div class="container">
+        {% if tenant.logo %}<img class="logo" src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">{% endif %}
+        <div class="header">
+            <h2>عقد وساطة في استيراد مركبة</h2>
+            <h3>رقم العقد: {{ bill.receipt_number }}</h3>
+        </div>
+
+        <p class="para">الطرف الأول: {{ tenant.contract_party1|default:tenant.name }}</p>
+        <p class="para">الطرف الثاني: {{ buyer.name }}{% if buyer.id %} سجل رقم: {{ buyer.id }}{% endif %}{% if buyer.phone %} الجوال: {{ buyer.phone }}{% endif %}</p>
+
+        <p class="para">أقر أنا الطرف الأول بأني قد استلمت مبلغ {{ bill.price|floatformat:0|intcomma }} ريال فقط لا غير من الطرف الثاني
+            عن طريق الحوالة{% if tenant.contract_bank %} في حساب النشاط بمصرف {{ tenant.contract_bank }}{% endif %} وذلك مقابل الوساطة
+            لشراء سيارة {{ car.manufacturer|pretty_en }} {{ car.model|pretty_en }} موديل {{ car.year }}{% if car.color %} لون {{ car.color }}{% endif %}
+            {% if tenant.contract_default_region == 'korea' %}من مزادات في كوريا الجنوبية{% elif tenant.contract_default_region == 'china' %}من جمهورية الصين الشعبية{% elif tenant.contract_default_region == 'usa' %}من الولايات المتحدة الأمريكية{% endif %}{% if chassis %}
+            تحمل رقم هيكل {{ chassis }}{% endif %}{% if tenant.contract_default_region == 'korea' %} ومشاركة الطرف الثاني فحصها وتعميده للطرف الأول ومن ثم شرائها{% endif %}.</p>
+
+        <p class="para">- يتبقى على الطرف الثاني بقية الرسوم المتمثلة في ضريبة وجمرك السيارة وأتعاب التخليص عند وصولها إلى {{ tenant.contract_default_port|default:"جدة" }} بأمر الله.</p>
+        <p class="para">- يقوم الطرف الأول بشحن السيارة عن طريق أحد شركات الشحن المعتمدة وإرسال بوليصة الشحن للطرف الثاني.</p>
+        <p class="para">- بعد تسليم البوليصة واستمارة السيارة وفاتورة الشراء الخاصة بالجمارك للطرف الثاني يكون الطرف الأول قد أنهى التزاماته
+            نحو الطرف الثاني من وساطته (شراء/شحن/عمولة) ويبقى الطرف الأول مسؤول عن فحص السيارة كما زود بمقطع الفحص.</p>
+
+        <strong class="amount-title">المبلغ المحول شامل الآتي:</strong>
+        <ul>
+            <li>مبلغ الشراء</li>
+            <li>مبلغ الشحن</li>
+            <li>مبلغ الوساطة (شراء/شحن/عمولة){% if tenant.contract_commission %} {{ tenant.contract_commission }} ريال{% endif %}</li>
+        </ul>
+
+        {% if tenant.contract_clearance_org %}
+        <p class="para">في حال رغبة العميل تخليص السيارة عن طرفنا من خلال مؤسستنا ({{ tenant.contract_clearance_org }}){% if tenant.contract_clearance_license %}
+            رقم الترخيص {{ tenant.contract_clearance_license }}{% endif %} يقوم العميل بعمل التفويض وقت إشعاره وتحويل رسوم التخليص لحساب المؤسسة.
+            {% if tenant.contract_import_days %}مدة الاستيراد المتوقعة من {{ tenant.contract_import_days }} يوم.{% endif %}</p>
+        {% endif %}
+
+        <strong class="written">تم تحريره بتاريخ {{ bill.date|date:"Y/m/d" }}</strong>
+
+        <div class="stamp-contact">
+            {% if tenant.contract_stamp %}<img class="stamp" src="{{ tenant.contract_stamp.url }}" alt="ختم">{% else %}<span></span>{% endif %}
+            <div class="contact">
+                {% if tenant.contract_phone %}<p>{{ tenant.contract_phone }}</p>{% endif %}
+                {% if tenant.contract_email %}<p>{{ tenant.contract_email }}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

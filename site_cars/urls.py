@@ -24,6 +24,7 @@ urlpatterns = [
     path('auctions/browse/', views.auction_browse, name='auction_browse'),
     path('our-cars/<int:pk>/invoice/new/', views.invoice_new, name='invoice_new'),
     path('our-cars/<int:pk>/invoice/<int:bill_pk>/', views.invoice_view, name='invoice_view'),
+    path('our-cars/<int:pk>/invoice/<int:bill_pk>/contract/', views.contract_view, name='contract_view'),
     path('our-cars/<int:pk>/invoice/<int:bill_pk>/edit/', views.invoice_edit, name='invoice_edit'),
     path('our-cars/<int:pk>/invoice/<int:bill_pk>/shipment/', views.shipment_edit, name='shipment_edit'),
     path('sold-cars/', views.sold_cars, name='sold_cars'),

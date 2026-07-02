@@ -240,6 +240,23 @@ class Tenant(TenantMixin):
     # Chat id captured when the dealer connects ofleet0_bot (for pushing car links).
     telegram_chat_id = models.CharField(max_length=32, blank=True, default="", verbose_name="Telegram chat id (bot)")
 
+    # ── Buyer contract (per-tenant) ──
+    # When enabled, each invoice/bill can be printed as a "brokerage contract"
+    # (عقد وساطة). These fields fill the tenant-specific blanks in the contract.
+    REGION_CHOICES = [("korea", "كوريا الجنوبية"), ("china", "الصين"), ("usa", "الولايات المتحدة")]
+    contract_enabled = models.BooleanField(default=False, verbose_name="تفعيل عقد المشتري")
+    contract_party1 = models.CharField(max_length=200, blank=True, default="", verbose_name="الطرف الأول (اسم/جهة)")
+    contract_bank = models.CharField(max_length=100, blank=True, default="", verbose_name="المصرف")
+    contract_commission = models.CharField(max_length=60, blank=True, default="", verbose_name="مبلغ العمولة (نص)")
+    contract_clearance_org = models.CharField(max_length=200, blank=True, default="", verbose_name="مؤسسة التخليص الجمركي")
+    contract_clearance_license = models.CharField(max_length=60, blank=True, default="", verbose_name="رقم ترخيص التخليص")
+    contract_default_region = models.CharField(max_length=10, choices=REGION_CHOICES, default="korea", verbose_name="بلد المصدر (افتراضي)")
+    contract_default_port = models.CharField(max_length=100, blank=True, default="جدة", verbose_name="ميناء الوصول (افتراضي)")
+    contract_import_days = models.CharField(max_length=40, blank=True, default="45 إلى 60", verbose_name="مدة الاستيراد المتوقعة (أيام)")
+    contract_phone = models.CharField(max_length=30, blank=True, default="", verbose_name="هاتف العقد")
+    contract_email = models.CharField(max_length=120, blank=True, default="", verbose_name="بريد العقد")
+    contract_stamp = models.ImageField(upload_to='tenant_contract/', blank=True, null=True, verbose_name="ختم العقد")
+
     # SMTP Email Settings
     email_host = models.CharField(max_length=255, blank=True, default='smtp.gmail.com', verbose_name="SMTP Host")
     email_port = models.IntegerField(default=587, verbose_name="SMTP Port")

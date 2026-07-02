@@ -1898,7 +1898,33 @@ def invoice_view(request, pk, bill_pk):
     car = get_object_or_404(SiteCar, pk=pk)
     bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
     shipment = getattr(bill, 'shipment', None)
-    return render(request, 'site_cars/invoice.html', {'car': car, 'bill': bill, 'shipment': shipment})
+    return render(request, 'site_cars/invoice.html', {
+        'car': car, 'bill': bill, 'shipment': shipment,
+        'tenant': getattr(connection, 'tenant', None),
+    })
+
+
+@staff_member_required
+def contract_view(request, pk, bill_pk):
+    """Printable per-tenant 'buyer contract' (عقد وساطة) for a bill — the blanks
+    are filled from the tenant's contract settings + the bill's buyer/car."""
+    if _is_public_schema():
+        return redirect('home')
+    car = get_object_or_404(SiteCar, pk=pk)
+    bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
+    tenant = getattr(connection, 'tenant', None)
+    # Buyer identity: prefer the bill's own fields, else the linked user's profile.
+    bu = bill.buyer_user
+    prof = getattr(bu, 'profile', None) if bu else None
+    buyer = {
+        'name': bill.buyer_name or (bu.get_full_name() if bu else '') or (bu.username if bu else ''),
+        'id': bill.buyer_id_number or (getattr(prof, 'identity_number', '') if prof else ''),
+        'phone': bill.buyer_phone or (getattr(prof, 'phone', '') if prof else ''),
+    }
+    chassis = (car.external_id or '').replace('faqih_', '') or car.vin or car.registration_no or ''
+    return render(request, 'site_cars/contract.html', {
+        'car': car, 'bill': bill, 'tenant': tenant, 'buyer': buyer, 'chassis': chassis,
+    })
 
 
 def public_track(request, receipt_number):
