@@ -961,7 +961,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                 {% if car.image %}
                 <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.gallery.first %}
-                <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.gallery.first.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                <img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.gallery.first.display_url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% elif car.external_image_url %}
                 <img src="{{ car.external_image_url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.external_image_url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
                 {% else %}
@@ -1036,7 +1036,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                     {% if car.image %}
                     <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy">
                     {% elif car.gallery.first %}
-                    <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy">
+                    <img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy">
                     {% elif car.external_image_url %}
                     <img src="{{ car.external_image_url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy">
                     {% else %}

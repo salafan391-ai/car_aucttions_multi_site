@@ -407,7 +407,7 @@
                         {% if car.image %}
                         <img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">
                         {% elif car.gallery.first %}
-                        <img src="{{ car.gallery.first.image.url }}" alt="{{ car.title }}" loading="lazy">
+                        <img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" loading="lazy">
                         {% elif car.external_image_url %}
                         <img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">
                         {% else %}
