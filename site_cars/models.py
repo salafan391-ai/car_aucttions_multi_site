@@ -119,7 +119,10 @@ class SiteCar(models.Model):
 
 class SiteCarImage(models.Model):
     car = models.ForeignKey(SiteCar, on_delete=models.CASCADE, related_name='gallery', verbose_name="السيارة")
-    image = models.ImageField(upload_to='site_cars/', verbose_name="الصورة")
+    image = models.ImageField(upload_to='site_cars/', blank=True, null=True, verbose_name="الصورة")
+    # For imported cars whose photos live on an external host (e.g. the old
+    # alfaqihcars S3 bucket): reference the URL instead of re-storing the file.
+    image_url = models.URLField(max_length=500, blank=True, default="", verbose_name="رابط الصورة")
     caption = models.CharField(max_length=200, blank=True, verbose_name="وصف")
     order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -131,6 +134,16 @@ class SiteCarImage(models.Model):
 
     def __str__(self):
         return f"صورة - {self.car}"
+
+    @property
+    def display_url(self):
+        """Render URL: the external URL if set, else the stored file's URL."""
+        if self.image_url:
+            return self.image_url
+        try:
+            return self.image.url if self.image else ""
+        except Exception:
+            return ""
 
     def save(self, *args, **kwargs):
         if self.image and getattr(self.image, '_file', None) is not None:
@@ -454,7 +467,8 @@ class SharedCollection(models.Model):
 class UserProfile(models.Model):
     """Per-tenant profile for an end-user account (extends auth.User)."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    phone = models.CharField("رقم الجوال", max_length=30, blank=True, default="")
+    phone = models.CharField("رقم الجوال", max_length=30, blank=True, default="", db_index=True)
+    identity_number = models.CharField("رقم الهوية", max_length=20, blank=True, default="", db_index=True)
     avatar = models.ImageField("الصورة الشخصية", upload_to="avatars/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

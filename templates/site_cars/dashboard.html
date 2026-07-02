@@ -379,7 +379,7 @@
                                     {% if car.image %}
                                     <img src="{{ car.image.url }}" alt="" class="w-full h-full object-cover">
                                     {% elif car.gallery.first %}
-                                    <img src="{{ car.gallery.first.image.url }}" alt="" class="w-full h-full object-cover">
+                                    <img src="{{ car.gallery.first.display_url }}" alt="" class="w-full h-full object-cover">
                                     {% endif %}
                                 </div>
                                 <div>

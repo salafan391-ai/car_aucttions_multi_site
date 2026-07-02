@@ -34,7 +34,7 @@
                     {% endif %}
                     {% for img in all_images %}
                     <div class="slider-image {% if not car.image and forloop.first %}active{% endif %} w-full h-full {% if car.image or not forloop.first %}hidden{% endif %}">
-                        <img src="{{ img.image.url }}" alt="{{ img.caption|default:car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
+                        <img src="{{ img.display_url }}" alt="{{ img.caption|default:car.title }}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox(this)">
                     </div>
                     {% endfor %}
                     {% endwith %}
@@ -86,11 +86,11 @@
                 {% for img in car.gallery.all %}
                 {% if car.image %}
                 <button onclick="goToSlide({{ forloop.counter }})" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
-                    <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="w-full h-full object-cover" loading="lazy">
+                    <img src="{{ img.display_url }}" alt="{{ img.caption }}" class="w-full h-full object-cover" loading="lazy">
                 </button>
                 {% else %}
                 <button onclick="goToSlide({{ forloop.counter0 }})" class="thumbnail-btn shrink-0 aspect-square w-16 h-16 bg-gray-100 rounded-lg overflow-hidden hover:ring-2 hover:ring-brand transition">
-                    <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="w-full h-full object-cover" loading="lazy">
+                    <img src="{{ img.display_url }}" alt="{{ img.caption }}" class="w-full h-full object-cover" loading="lazy">
                 </button>
                 {% endif %}
                 {% endfor %}

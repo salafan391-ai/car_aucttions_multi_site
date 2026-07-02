@@ -319,6 +319,8 @@ LOGOUT_REDIRECT_URL = "home"
 # ── Authentication: keep model backend (email/password) + allauth (social) ──
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    # Lets migrated alfaqihcars users sign in with email / phone / national-ID.
+    "site_cars.auth_backends.MultiIdentifierBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 SITE_ID = 1
