@@ -111,7 +111,7 @@ class Command(BaseCommand):
             is_active, date_joined, last_login, full_name, phone_number, identity_number, city
             FROM core_customuser""")
         rows = cur.fetchall()
-        umap, created, updated = {}, 0, 0
+        umap, created, updated, protected = {}, 0, 0, 0
         seen = set()
         for r in rows:
             uname = (r["username"] or "").strip() or (r["email"] or "").strip() or f"faqih_{r['id']}"
@@ -121,6 +121,12 @@ class Command(BaseCommand):
                 uname = f"{uname[:140]}_{r['id']}"
             seen.add(uname)
             u, is_new = User.objects.get_or_create(username=uname)
+            # Never clobber an admin/staff account that already exists in the
+            # destination tenant (e.g. fic_admin) — keep its current credentials.
+            if not is_new and (u.is_staff or u.is_superuser):
+                umap[r["id"]] = u
+                protected += 1
+                continue
             u.email = (r["email"] or "")[:254]
             u.password = r["password"] or "!"      # copy hash verbatim -> same password works
             u.is_staff = bool(r["is_staff"])
@@ -142,6 +148,7 @@ class Command(BaseCommand):
             updated += (not is_new)
         self.stats["users_created"] = created
         self.stats["users_updated"] = updated
+        self.stats["users_protected_admin"] = protected
         return umap
 
     # ── sold cars ───────────────────────────────────────────────────────
