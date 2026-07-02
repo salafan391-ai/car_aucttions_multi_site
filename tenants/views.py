@@ -236,6 +236,26 @@ def site_settings(request):
                 })
             tenant.import_calc_countries = _countries
 
+        # ── Buyer contract (عقد وساطة) ──
+        tenant.contract_enabled = 'contract_enabled' in request.POST
+        tenant.contract_party1 = request.POST.get('contract_party1', tenant.contract_party1)
+        tenant.contract_bank = request.POST.get('contract_bank', tenant.contract_bank)
+        tenant.contract_commission = request.POST.get('contract_commission', tenant.contract_commission)
+        tenant.contract_clearance_org = request.POST.get('contract_clearance_org', tenant.contract_clearance_org)
+        tenant.contract_clearance_license = request.POST.get('contract_clearance_license', tenant.contract_clearance_license)
+        tenant.contract_default_region = request.POST.get('contract_default_region', tenant.contract_default_region)
+        tenant.contract_default_port = request.POST.get('contract_default_port', tenant.contract_default_port)
+        tenant.contract_import_days = request.POST.get('contract_import_days', tenant.contract_import_days)
+        tenant.contract_phone = request.POST.get('contract_phone', tenant.contract_phone)
+        tenant.contract_email = request.POST.get('contract_email', tenant.contract_email)
+        if request.POST.get('contract_stamp_clear') and tenant.contract_stamp:
+            tenant.contract_stamp.delete(save=False)
+            tenant.contract_stamp = None
+        if 'contract_stamp' in request.FILES:
+            if tenant.contract_stamp:
+                tenant.contract_stamp.delete(save=False)
+            tenant.contract_stamp = request.FILES['contract_stamp']
+
         tenant.save()
         
         # Handle multiple phone numbers

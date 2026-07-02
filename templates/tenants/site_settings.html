@@ -761,6 +761,78 @@
                 </script>
             </div>
 
+            <!-- Buyer contract (عقد وساطة) -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">عقد المشتري (عقد وساطة)</h2>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="contract_enabled" {% if tenant.contract_enabled %}checked{% endif %} class="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                        <span class="text-sm font-medium text-gray-700">تفعيل طباعة العقد من الفواتير</span>
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">تظهر هذه البيانات في عقد الوساطة الذي يُطبع من صفحة الفاتورة. اترك أي حقل فارغاً لإخفائه من العقد.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">الطرف الأول (الاسم/الجهة)</label>
+                        <input type="text" name="contract_party1" value="{{ tenant.contract_party1 }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">المصرف</label>
+                        <input type="text" name="contract_bank" value="{{ tenant.contract_bank }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">مبلغ العمولة (نص)</label>
+                        <input type="text" name="contract_commission" value="{{ tenant.contract_commission }}" placeholder="2250" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">مؤسسة التخليص الجمركي</label>
+                        <input type="text" name="contract_clearance_org" value="{{ tenant.contract_clearance_org }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">رقم ترخيص التخليص</label>
+                        <input type="text" name="contract_clearance_license" value="{{ tenant.contract_clearance_license }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">بلد المصدر (افتراضي)</label>
+                        <select name="contract_default_region" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                            <option value="korea" {% if tenant.contract_default_region == 'korea' %}selected{% endif %}>كوريا الجنوبية</option>
+                            <option value="china" {% if tenant.contract_default_region == 'china' %}selected{% endif %}>الصين</option>
+                            <option value="usa" {% if tenant.contract_default_region == 'usa' %}selected{% endif %}>الولايات المتحدة</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ميناء الوصول (افتراضي)</label>
+                        <input type="text" name="contract_default_port" value="{{ tenant.contract_default_port }}" placeholder="جدة" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">مدة الاستيراد المتوقعة (أيام)</label>
+                        <input type="text" name="contract_import_days" value="{{ tenant.contract_import_days }}" placeholder="45 إلى 60" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">هاتف العقد</label>
+                        <input type="text" name="contract_phone" value="{{ tenant.contract_phone }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">بريد العقد</label>
+                        <input type="text" name="contract_email" value="{{ tenant.contract_email }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <!-- Stamp -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">ختم العقد (صورة)</label>
+                        {% if tenant.contract_stamp %}
+                        <div class="mb-3 flex items-center gap-3">
+                            <img src="{{ tenant.contract_stamp.url }}" alt="الختم الحالي" class="h-24 object-contain border rounded p-2">
+                            <label class="inline-flex items-center gap-2 text-sm text-red-600">
+                                <input type="checkbox" name="contract_stamp_clear" class="rounded border-gray-300 text-red-600"> حذف الختم الحالي
+                            </label>
+                        </div>
+                        {% endif %}
+                        <input type="file" name="contract_stamp" accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                        <p class="text-xs text-gray-500 mt-1">يُفضل صورة PNG بخلفية شفافة. تظهر أسفل العقد.</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Submit Button -->
             <div class="flex justify-end gap-4">
                 <a href="{% url 'site_dashboard' %}" class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
