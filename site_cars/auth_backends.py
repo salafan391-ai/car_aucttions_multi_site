@@ -34,7 +34,12 @@ class MultiIdentifierBackend(ModelBackend):
             u = User.objects.filter(email__iexact=ident).first()
             if u:
                 return u
-        from .models import UserProfile
-        prof = (UserProfile.objects.filter(phone=ident).select_related("user").first()
-                or UserProfile.objects.filter(identity_number=ident).select_related("user").first())
-        return prof.user if prof else None
+        # UserProfile is a TENANT_APPS model — it doesn't exist in the public
+        # schema, so guard the lookup so a public-schema login never 500s.
+        try:
+            from .models import UserProfile
+            prof = (UserProfile.objects.filter(phone=ident).select_related("user").first()
+                    or UserProfile.objects.filter(identity_number=ident).select_related("user").first())
+            return prof.user if prof else None
+        except Exception:
+            return None
