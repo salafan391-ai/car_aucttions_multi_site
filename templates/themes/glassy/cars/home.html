@@ -367,6 +367,15 @@
                     <div class="gl-home-link-body"><h3><span class="bilingual" data-lang-ar="المزادات الكورية" data-lang-en="Korean Auctions" data-lang-es="Subastas coreanas" data-lang-ru="Корейские аукционы">المزادات الكورية</span><span class="gl-home-link-arrow">←</span></h3></div>
                 </a>
 
+                {% if auction_api_base %}
+                <a href="{% url 'auctions_live' %}" class="gl-home-link-card">
+                    <div class="gl-home-link-media">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 000 8.4M16.2 16.2a6 6 0 000-8.4M5 5a9.5 9.5 0 000 14M19 5a9.5 9.5 0 010 14"/></svg>
+                    </div>
+                    <div class="gl-home-link-body"><h3><span class="bilingual" data-lang-ar="المزادات المباشرة" data-lang-en="Live Auctions" data-lang-es="Subastas en vivo" data-lang-ru="Живые аукционы">المزادات المباشرة</span><span class="gl-home-link-arrow">←</span></h3></div>
+                </a>
+                {% endif %}
+
                 {% if show_parts %}
                 <a href="{% url 'parts_list' %}" class="gl-home-link-card">
                     <div class="gl-home-link-media">
