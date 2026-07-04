@@ -266,16 +266,18 @@ def site_settings(request):
             'rear_member', 'right_rear_quarter', 'center_floor', 'left_rear_quarter',
             'front_member', 'rear_floor', 'roof',
         }
-        tenant.catalog_filter = {
-            'year_min': _posint('catalog_year_min'),
-            'year_max': _posint('catalog_year_max'),
-            'price_min': _posint('catalog_price_min'),
-            'price_max': _posint('catalog_price_max'),
-            'makes': [int(x) for x in request.POST.getlist('catalog_makes') if x.isdigit()],
-            'models': [int(x) for x in request.POST.getlist('catalog_models') if x.isdigit()],
-            'exclude_types': [t for t in request.POST.getlist('catalog_exclude_types') if t in ('replaced', 'painted')],
-            'exclude_panels': [p for p in request.POST.getlist('catalog_exclude_panels') if p in _panel_set],
-        }
+        def _rules(prefix):
+            return {
+                'year_min': _posint(f'catalog_{prefix}_year_min'),
+                'year_max': _posint(f'catalog_{prefix}_year_max'),
+                'price_min': _posint(f'catalog_{prefix}_price_min'),
+                'price_max': _posint(f'catalog_{prefix}_price_max'),
+                'makes': [int(x) for x in request.POST.getlist(f'catalog_{prefix}_makes') if x.isdigit()],
+                'models': [int(x) for x in request.POST.getlist(f'catalog_{prefix}_models') if x.isdigit()],
+                'exclude_types': [t for t in request.POST.getlist(f'catalog_{prefix}_exclude_types') if t in ('replaced', 'painted')],
+                'exclude_panels': [p for p in request.POST.getlist(f'catalog_{prefix}_exclude_panels') if p in _panel_set],
+            }
+        tenant.catalog_filter = {'auction': _rules('auction'), 'encar': _rules('encar')}
         _catalog_changed = tenant.catalog_filter != (tenant.__class__.objects
                                                       .filter(pk=tenant.pk)
                                                       .values_list('catalog_filter', flat=True).first() or {})
@@ -472,6 +474,19 @@ def site_settings(request):
         ('front_member', 'شاصي أمامي'), ('rear_member', 'شاصي خلفي'),
         ('center_floor', 'أرضية وسطية'), ('rear_floor', 'أرضية خلفية'),
     ]
+    def _sel(prefix, label, show_panels):
+        r = _cf.get(prefix) or {}
+        return {
+            'prefix': prefix, 'label': label, 'show_panels': show_panels,
+            'makes': r.get('makes') or [], 'models': r.get('models') or [],
+            'types': r.get('exclude_types') or [], 'panels': r.get('exclude_panels') or [],
+            'year_min': r.get('year_min') or '', 'year_max': r.get('year_max') or '',
+            'price_min': r.get('price_min') or '', 'price_max': r.get('price_max') or '',
+        }
+    catalog_sections = [
+        _sel('auction', 'المزادات', True),
+        _sel('encar', 'Encar (السيارات العادية)', False),
+    ]
     context = {
         'tenant': tenant,
         'phone_numbers': tenant.phone_numbers.all(),
@@ -483,13 +498,6 @@ def site_settings(request):
         'page_links': friendly_page_links(),
         'catalog_makes': _catalog_makes,
         'catalog_panel_labels': _panel_labels,
-        'catalog_sel_makes': _cf.get('makes') or [],
-        'catalog_sel_models': _cf.get('models') or [],
-        'catalog_sel_types': _cf.get('exclude_types') or [],
-        'catalog_sel_panels': _cf.get('exclude_panels') or [],
-        'catalog_year_min': _cf.get('year_min') or '',
-        'catalog_year_max': _cf.get('year_max') or '',
-        'catalog_price_min': _cf.get('price_min') or '',
-        'catalog_price_max': _cf.get('price_max') or '',
+        'catalog_sections': catalog_sections,
     }
     return render(request, 'tenants/site_settings.html', context)

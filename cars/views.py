@@ -145,11 +145,63 @@ def _tenant_catalog_sig(tenant):
     return hashlib.md5(raw.encode('utf-8')).hexdigest()[:10]
 
 
+def _catalog_rate_factor():
+    """SAR per 1 KRW — matches the on-site display (global rate × markup)."""
+    try:
+        from tenants.models import GlobalExchangeRates
+        rate = float(GlobalExchangeRates.get_solo().rate_sar or 0.0025)
+    except Exception:
+        rate = 0.0025
+    return rate * 1.01
+
+
+def _catalog_whitelist_q(rules, factor):
+    """Positive Q for one rule set (year/price/make/model whitelist). Empty → Q()."""
+    q = Q()
+    try:
+        if rules.get('year_min'):
+            q &= Q(year__gte=int(rules['year_min']))
+        if rules.get('year_max'):
+            q &= Q(year__lte=int(rules['year_max']))
+        if rules.get('price_min') and factor > 0:
+            q &= Q(price__gte=int(float(rules['price_min']) / factor))
+        if rules.get('price_max') and factor > 0:
+            q &= Q(price__lte=int(float(rules['price_max']) / factor))
+    except (TypeError, ValueError):
+        pass
+    makes = [m for m in (rules.get('makes') or []) if m]
+    if makes:
+        q &= Q(manufacturer_id__in=makes)
+    models = [m for m in (rules.get('models') or []) if m]
+    if models:
+        q &= Q(model_id__in=models)
+    return q
+
+
+def _catalog_damage_subqueries(rules):
+    """pk subqueries of cars this rule set wants EXCLUDED by damage."""
+    subs = []
+    ex_types = [t for t in (rules.get('exclude_types') or []) if t in _CATALOG_DMG_TYPES]
+    if ex_types:
+        ph = ",".join("%s" for _ in ex_types)
+        subs.append(RawSQL(
+            f"SELECT id FROM cars_apicar WHERE car_dmg_types(extra_features, markers) && ARRAY[{ph}]::text[]",
+            ex_types))
+    ex_panels = [p for p in (rules.get('exclude_panels') or []) if p in _MARKER_PANEL_SET]
+    if ex_panels:
+        cond = Q()
+        for p in ex_panels:
+            cond |= Q(**{f'markers__{p}__status': 'replaced'})
+        subs.append(ApiCar.objects.filter(cond).values('pk'))
+    return subs
+
+
 def _apply_tenant_catalog(qs, tenant):
-    """Apply a tenant's visibility toggles + catalog filter to an ApiCar queryset.
-    Whitelist for make/model/year, exclude-list for damage — so the tenant's site
-    only surfaces the shared auction/encar cars it allows. Call this everywhere the
-    shared catalog is listed (list, home, facets, filter APIs, sitemap, detail)."""
+    """Toggles + per-category catalog filter. Auction cars obey the 'auction'
+    rule set and everything else (encar) obeys the 'encar' rule set — configured
+    independently. Whitelist for year/price/make/model; exclude-list for damage.
+    Call this everywhere the shared catalog is shown (list, home, facets, APIs,
+    sitemap, detail)."""
     if tenant is None:
         return qs
     if not getattr(tenant, 'show_auctions', True):
@@ -159,47 +211,21 @@ def _apply_tenant_catalog(qs, tenant):
     cf = getattr(tenant, 'catalog_filter', None) or {}
     if not cf:
         return qs
-    try:
-        if cf.get('year_min'):
-            qs = qs.filter(year__gte=int(cf['year_min']))
-        if cf.get('year_max'):
-            qs = qs.filter(year__lte=int(cf['year_max']))
-    except (TypeError, ValueError):
-        pass
-    # Price range — admin enters SAR; convert to the raw KRW ApiCar.price using
-    # the same global rate × markup the site displays with (see sar_price()).
-    if cf.get('price_min') or cf.get('price_max'):
-        try:
-            from tenants.models import GlobalExchangeRates
-            _rate = float(GlobalExchangeRates.get_solo().rate_sar or 0.0025)
-        except Exception:
-            _rate = 0.0025
-        _factor = _rate * 1.01  # SAR per 1 KRW
-        try:
-            if cf.get('price_min') and _factor > 0:
-                qs = qs.filter(price__gte=int(float(cf['price_min']) / _factor))
-            if cf.get('price_max') and _factor > 0:
-                qs = qs.filter(price__lte=int(float(cf['price_max']) / _factor))
-        except (TypeError, ValueError):
-            pass
-    makes = [m for m in (cf.get('makes') or []) if m]
-    if makes:
-        qs = qs.filter(manufacturer_id__in=makes)
-    models = [m for m in (cf.get('models') or []) if m]
-    if models:
-        qs = qs.filter(model_id__in=models)
-    ex_types = [t for t in (cf.get('exclude_types') or []) if t in _CATALOG_DMG_TYPES]
-    if ex_types:
-        ph = ",".join("%s" for _ in ex_types)
-        qs = qs.exclude(pk__in=RawSQL(
-            f"SELECT id FROM cars_apicar WHERE car_dmg_types(extra_features, markers) && ARRAY[{ph}]::text[]",
-            ex_types))
-    ex_panels = [p for p in (cf.get('exclude_panels') or []) if p in _MARKER_PANEL_SET]
-    if ex_panels:
-        cond = Q()
-        for p in ex_panels:
-            cond |= Q(**{f'markers__{p}__status': 'replaced'})
-        qs = qs.exclude(pk__in=ApiCar.objects.filter(cond).values('pk'))
+    # New shape: {"auction": {...}, "encar": {...}}. Old flat shape → both.
+    if 'auction' in cf or 'encar' in cf:
+        a_rules, e_rules = cf.get('auction') or {}, cf.get('encar') or {}
+    else:
+        a_rules = e_rules = cf
+    factor = _catalog_rate_factor()
+    a_is = Q(category__name='auction')
+    # Keep a car if it's an auction passing the auction whitelist, or a
+    # non-auction (encar) passing the encar whitelist.
+    qs = qs.filter((a_is & _catalog_whitelist_q(a_rules, factor))
+                   | (~a_is & _catalog_whitelist_q(e_rules, factor)))
+    for sub in _catalog_damage_subqueries(a_rules):
+        qs = qs.exclude(a_is & Q(pk__in=sub))
+    for sub in _catalog_damage_subqueries(e_rules):
+        qs = qs.exclude(~a_is & Q(pk__in=sub))
     return qs
 
 
