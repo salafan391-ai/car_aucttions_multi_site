@@ -1392,7 +1392,7 @@ def car_list(request):
     _count_hash = hashlib.md5(
         json.dumps(_count_params, sort_keys=True).encode()
     ).hexdigest()
-    _count_cache_key = f"car_list_v3:count:{schema}:{_count_hash}"
+    _count_cache_key = f"car_list_v3:count:{schema}:{_tenant_catalog_sig(_tenant)}:{_count_hash}"
     _cached_count = cache.get(_count_cache_key)
 
     class _CachedCountPaginator(Paginator):
