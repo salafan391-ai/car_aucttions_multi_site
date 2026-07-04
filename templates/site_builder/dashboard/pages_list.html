@@ -7,7 +7,7 @@
             <h1 class="text-3xl font-bold">منشئ الصفحات</h1>
             <p class="text-gray-500 mt-1">أنشئ صفحات مخصّصة (من نحن، خدماتنا…) من أقسام جاهزة بدون كود.</p>
         </div>
-        <a href="{% url 'site_builder:page_create' %}" class="bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl">+ صفحة جديدة</a>
+        <a href="{% url 'site_builder:page_create' %}" class="text-white text-sm font-bold px-5 py-2.5 rounded-xl" style="background:#4338ca">+ صفحة جديدة</a>
     </div>
 
     {% if messages %}{% for m in messages %}<div class="mb-3 px-4 py-2.5 rounded-lg text-sm {% if m.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">{{ m }}</div>{% endfor %}{% endif %}

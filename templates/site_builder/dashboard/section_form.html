@@ -64,7 +64,7 @@
         <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="is_visible" {% if form.is_visible.value %}checked{% endif %} class="rounded"> ظاهر</label>
 
         <div class="flex gap-3 pt-2">
-            <button class="bg-brand bg-brand-hover text-white font-bold px-5 py-2.5 rounded-xl">حفظ القسم</button>
+            <button class="text-white font-bold px-5 py-2.5 rounded-xl" style="background:#4338ca">حفظ القسم</button>
             <a href="{% url 'site_builder:page_edit' page.pk %}" class="border border-gray-200 text-gray-600 font-bold px-5 py-2.5 rounded-xl">إلغاء</a>
         </div>
     </form>
