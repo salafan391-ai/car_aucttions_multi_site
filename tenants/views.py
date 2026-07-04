@@ -474,8 +474,12 @@ def site_settings(request):
         ('front_member', 'شاصي أمامي'), ('rear_member', 'شاصي خلفي'),
         ('center_floor', 'أرضية وسطية'), ('rear_floor', 'أرضية خلفية'),
     ]
+    # A config saved before the auction/encar split is flat (no auction/encar
+    # keys) and applied to both — show it in both sections so it stays visible.
+    _is_split = ('auction' in _cf) or ('encar' in _cf)
+
     def _sel(prefix, label, show_panels):
-        r = _cf.get(prefix) or {}
+        r = (_cf.get(prefix) or {}) if _is_split else _cf
         return {
             'prefix': prefix, 'label': label, 'show_panels': show_panels,
             'makes': r.get('makes') or [], 'models': r.get('models') or [],
