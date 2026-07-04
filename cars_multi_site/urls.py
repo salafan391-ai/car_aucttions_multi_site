@@ -160,7 +160,8 @@ def sitemap_xml(request):
 
     schema = getattr(_conn, "schema_name", "public")
     host = request.get_host()
-    cache_key = f"sitemap_xml:{schema}:{host}"
+    from cars.views import _tenant_catalog_sig
+    cache_key = f"sitemap_xml:{schema}:{host}:{_tenant_catalog_sig(getattr(_conn, 'tenant', None))}"
     xml = cache.get(cache_key)
     if xml is None:
         base = f"{request.scheme}://{host}"
@@ -177,11 +178,9 @@ def sitemap_xml(request):
         # Expired auctions now 404 on their detail page — keep them out of the sitemap.
         from django.utils import timezone as _tz
         api_qs = api_qs.exclude(category__name="auction", auction_date__lt=_tz.now())
-        if tenant is not None:
-            if not getattr(tenant, "show_auctions", True):
-                api_qs = api_qs.exclude(category__name="auction")
-            if not getattr(tenant, "show_encar", True):
-                api_qs = api_qs.filter(category__name="auction")
+        # Respect the tenant's visibility toggles + catalog filter.
+        from cars.views import _apply_tenant_catalog
+        api_qs = _apply_tenant_catalog(api_qs, tenant)
         for slug, upd in api_qs.order_by("-updated_at").values_list("slug", "updated_at")[:30000]:
             urls.append({"loc": f"{base}/cars/{slug}/", "lastmod": upd, "changefreq": "weekly", "priority": "0.7"})
 

@@ -126,6 +126,67 @@ def _exclude_expired_auctions(qs):
     return qs.exclude(category__name='auction', auction_date__lt=now)
 
 
+_CATALOG_DMG_TYPES = ('replaced', 'painted')
+
+
+def _tenant_catalog_sig(tenant):
+    """Short, stable signature of a tenant's visibility+catalog-filter state, to
+    fold into cache keys so filtered/unfiltered variants never collide."""
+    if tenant is None:
+        return "0"
+    import hashlib
+    import json as _json
+    cf = getattr(tenant, 'catalog_filter', None) or {}
+    raw = _json.dumps([
+        int(getattr(tenant, 'show_auctions', True)),
+        int(getattr(tenant, 'show_encar', True)),
+        cf,
+    ], sort_keys=True, ensure_ascii=False)
+    return hashlib.md5(raw.encode('utf-8')).hexdigest()[:10]
+
+
+def _apply_tenant_catalog(qs, tenant):
+    """Apply a tenant's visibility toggles + catalog filter to an ApiCar queryset.
+    Whitelist for make/model/year, exclude-list for damage — so the tenant's site
+    only surfaces the shared auction/encar cars it allows. Call this everywhere the
+    shared catalog is listed (list, home, facets, filter APIs, sitemap, detail)."""
+    if tenant is None:
+        return qs
+    if not getattr(tenant, 'show_auctions', True):
+        qs = qs.exclude(category__name='auction')
+    if not getattr(tenant, 'show_encar', True):
+        qs = qs.filter(category__name='auction')
+    cf = getattr(tenant, 'catalog_filter', None) or {}
+    if not cf:
+        return qs
+    try:
+        if cf.get('year_min'):
+            qs = qs.filter(year__gte=int(cf['year_min']))
+        if cf.get('year_max'):
+            qs = qs.filter(year__lte=int(cf['year_max']))
+    except (TypeError, ValueError):
+        pass
+    makes = [m for m in (cf.get('makes') or []) if m]
+    if makes:
+        qs = qs.filter(manufacturer_id__in=makes)
+    models = [m for m in (cf.get('models') or []) if m]
+    if models:
+        qs = qs.filter(model_id__in=models)
+    ex_types = [t for t in (cf.get('exclude_types') or []) if t in _CATALOG_DMG_TYPES]
+    if ex_types:
+        ph = ",".join("%s" for _ in ex_types)
+        qs = qs.exclude(pk__in=RawSQL(
+            f"SELECT id FROM cars_apicar WHERE car_dmg_types(extra_features, markers) && ARRAY[{ph}]::text[]",
+            ex_types))
+    ex_panels = [p for p in (cf.get('exclude_panels') or []) if p in _MARKER_PANEL_SET]
+    if ex_panels:
+        cond = Q()
+        for p in ex_panels:
+            cond |= Q(**{f'markers__{p}__status': 'replaced'})
+        qs = qs.exclude(pk__in=ApiCar.objects.filter(cond).values('pk'))
+    return qs
+
+
 @cache_control(public=True, max_age=600)
 def landing(request):
     """Opening page – logo + CTA cards. When landing_is_active is False, serve the
@@ -143,20 +204,21 @@ def landing(request):
     schema = getattr(connection, 'schema_name', 'public')
 
     now = timezone.now()
-    agg = ApiCar.objects.exclude(
+    _lt = getattr(connection, 'tenant', None)
+    agg = _apply_tenant_catalog(ApiCar.objects.exclude(
         category__name='auction', auction_date__lt=now
-    ).aggregate(
+    ), _lt).aggregate(
         cars_count=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
         auction_count=Count('id', filter=Q(category__name='auction')),
         kb_count=Count('id', filter=Q(category__name='kbchachacha')),
     )
 
     next_auction = (
-        ApiCar.objects.filter(
+        _apply_tenant_catalog(ApiCar.objects.filter(
             category__name='auction',
             status='available',
             auction_date__gte=now,
-        )
+        ), _lt)
         .order_by('auction_date')
         .values_list('auction_date', flat=True)
         .first()
@@ -216,6 +278,7 @@ def landing(request):
         f"landing_html:{schema}:{landing_design}"
         f":sc{1 if site_cars_count else 0}"
         f":dc{1 if damaged_cars_count else 0}"
+        f":{_tenant_catalog_sig(_lt)}"
     )
     cached_html = cache.get(html_cache_key)
     if cached_html:
@@ -271,14 +334,15 @@ def home(request):
     # embeds auth-specific bits (nav links, account menu, username initial), so
     # sharing it across sessions would leak state between users.
     is_anon = not request.user.is_authenticated
-    html_cache_key = f"home_html_v9:{schema}"
+    _home_sig = _tenant_catalog_sig(getattr(connection, 'tenant', None))
+    html_cache_key = f"home_html_v9:{schema}:{_home_sig}"
     if is_anon:
         cached_html = cache.get(html_cache_key)
         if cached_html:
             return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
 
     # Cache the expensive DB context by tenant schema.
-    ctx_cache_key = f"home_ctx_v9:{schema}"
+    ctx_cache_key = f"home_ctx_v9:{schema}:{_home_sig}"
     context = cache.get(ctx_cache_key)
 
     if context is None:
@@ -286,6 +350,8 @@ def home(request):
         _base_qs = ApiCar.objects.select_related(
             'manufacturer', 'model', 'badge', 'category'
         ).exclude(category__name='auction', auction_date__lt=now)
+        # Respect the tenant's visibility toggles + catalog filter.
+        _base_qs = _apply_tenant_catalog(_base_qs, getattr(connection, 'tenant', None))
 
         # Latest cars (non-auction) – limited early. Ordered by manufacturer
         # appeal (premium → luxury → mainstream → other), then newest first.
@@ -323,9 +389,9 @@ def home(request):
 
         # ── Fast aggregation: use DB-side COUNT/DISTINCT instead of full table scan ──
         from django.db.models import Count as _Count
-        _base_filter = ApiCar.objects.exclude(
+        _base_filter = _apply_tenant_catalog(ApiCar.objects.exclude(
             category__name='auction', auction_date__lt=now
-        )
+        ), getattr(connection, 'tenant', None))
 
         _agg = _base_filter.aggregate(
             total=_Count('id'),
@@ -1049,11 +1115,7 @@ def _facet_counts_for(request, car_type):
     """
     facet_base = _exclude_expired_auctions(ApiCar.objects.all())
     ftn = getattr(connection, 'tenant', None)
-    if ftn is not None:
-        if not getattr(ftn, 'show_auctions', True):
-            facet_base = facet_base.exclude(category__name='auction')
-        if not getattr(ftn, 'show_encar', True):
-            facet_base = facet_base.filter(category__name='auction')
+    facet_base = _apply_tenant_catalog(facet_base, ftn)
     if car_type == 'auction':
         facet_base = facet_base.filter(category__name='auction')
     elif car_type == 'kbchachacha':
@@ -1065,9 +1127,7 @@ def _facet_counts_for(request, car_type):
     # Shared cache key: catalog is shared + only changes on the daily import.
     cp = {k: sorted(v) for k, v in request.GET.lists() if k not in ('sort', 'page')}
     ch = hashlib.md5(json.dumps(cp, sort_keys=True).encode()).hexdigest()
-    fa = int(bool(getattr(ftn, 'show_auctions', True))) if ftn is not None else 1
-    fe = int(bool(getattr(ftn, 'show_encar', True))) if ftn is not None else 1
-    key = f"car_facets_v2:{fa}{fe}:{car_type or 'all'}:{ch}"
+    key = f"car_facets_v2:{_tenant_catalog_sig(ftn)}:{car_type or 'all'}:{ch}"
     try:
         fc = cache.get(key)
         if fc is None:
@@ -1132,6 +1192,7 @@ def car_list(request):
             f"{int(getattr(_t, 'show_encar', True))}"
             f"{int(getattr(_t, 'show_auctions', True))}"
             f"{int(getattr(_t, 'show_site_cars', True))}"
+            f"{_tenant_catalog_sig(_t)}"
         ) if _t is not None else '111'
         cache_key = f"car_list_v7:{schema}:{_variant}:{_toggles}:{_params_hash}"
         cached_html = cache.get(cache_key)
@@ -1287,14 +1348,10 @@ def car_list(request):
         except ValueError:
             pass
 
-    # Per-tenant section toggles — drop categories the tenant has deactivated.
-    # Applied BEFORE the tab-count aggregate so disabled categories report 0.
+    # Per-tenant section toggles + catalog filter — drop categories/cars the
+    # tenant hides. Applied BEFORE the tab-count aggregate so they report 0.
     _tenant = getattr(connection, 'tenant', None)
-    if _tenant is not None:
-        if not getattr(_tenant, 'show_auctions', True):
-            qs = qs.exclude(category__name='auction')
-        if not getattr(_tenant, 'show_encar', True):
-            qs = qs.filter(category__name='auction')
+    qs = _apply_tenant_catalog(qs, _tenant)
 
     # Live tab counts — every filter so far (except car_type itself) has been
     # applied to qs, so `count_cars` and `count_auction` reflect what the user
@@ -1945,7 +2002,7 @@ def api_models_by_manufacturer(request):
     car_type = request.GET.get('car_type')
     lang = request.GET.get('lang') or getattr(request, 'LANGUAGE_CODE', '') or ''
     schema = getattr(connection, 'schema_name', 'public')
-    _cache_key = f"api_models_v4:{schema}:{manufacturer_id}:ct:{car_type or 'all'}:lang:{lang or 'en'}"
+    _cache_key = f"api_models_v4:{schema}:{_tenant_catalog_sig(getattr(connection, 'tenant', None))}:{manufacturer_id}:ct:{car_type or 'all'}:lang:{lang or 'en'}"
     cached = cache.get(_cache_key)
     if cached is not None:
         return JsonResponse(cached, safe=False)
@@ -1983,6 +2040,15 @@ def api_models_by_manufacturer(request):
     try:
         # Optionally scope models to car_type (auction or cars) and localize names
         now = timezone.now()
+
+        # Restrict to models the tenant's catalog filter allows (whitelist).
+        _ttn = getattr(connection, 'tenant', None)
+        _allowed_models = None
+        if _ttn is not None and (getattr(_ttn, 'catalog_filter', None)
+                or not getattr(_ttn, 'show_auctions', True) or not getattr(_ttn, 'show_encar', True)):
+            _allowed_models = set(_apply_tenant_catalog(
+                ApiCar.objects.filter(manufacturer_id=manufacturer_id), _ttn
+            ).values_list('model_id', flat=True))
 
         if car_type == 'auction':
             model_ids = list(
@@ -2029,6 +2095,8 @@ def api_models_by_manufacturer(request):
                 filter=~Q(apicar__category__name='kbchachacha') & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer_id),
             ))
 
+        if _allowed_models is not None:
+            qs = qs.filter(id__in=_allowed_models)
         qs = qs.order_by('-car_count')
 
         from cars.templatetags.custom_filters import pretty_en
@@ -2116,7 +2184,7 @@ def api_badges_by_model(request):
 def _car_type_base(car_type, now, **filters):
     """ApiCar queryset scoped to a car_type tab, with extra equality filters.
     Mirrors the car_type branching used by the model/badge API endpoints."""
-    qs = ApiCar.objects.filter(**filters)
+    qs = _apply_tenant_catalog(ApiCar.objects.filter(**filters), getattr(connection, 'tenant', None))
     if car_type == 'auction':
         return qs.filter(category__name='auction').exclude(auction_date__lt=now)
     if car_type == 'kbchachacha':
@@ -2217,7 +2285,7 @@ def _get_similar_cars(car, count=6):
       4. make only                          (fill remaining slots)
     """
     base_qs = (
-        ApiCar.objects
+        _apply_tenant_catalog(ApiCar.objects, getattr(connection, 'tenant', None))
         .filter(manufacturer=car.manufacturer, status='available')
         .exclude(pk=car.pk)
         .select_related('manufacturer', 'model', 'badge')
@@ -2379,6 +2447,13 @@ def car_detail(request, slug):
             and car.auction_date < timezone.now()
             and request.GET.get('archived') != '1' and not request.user.is_staff):
         raise Http404("auction ended")
+
+    # Respect the tenant's catalog filter — a car the tenant hides shouldn't be
+    # reachable by direct URL either (staff bypass so they can still manage it).
+    _ctf_tenant = getattr(connection, 'tenant', None)
+    if (_ctf_tenant is not None and not request.user.is_staff
+            and not _apply_tenant_catalog(ApiCar.objects.filter(pk=car.pk), _ctf_tenant).exists()):
+        raise Http404("not in catalog")
 
     ratings = []
     user_rating = None

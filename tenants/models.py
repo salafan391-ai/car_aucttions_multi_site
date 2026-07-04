@@ -51,6 +51,13 @@ class Tenant(TenantMixin):
         verbose_name="عرض ‘سياراتنا‘ والسماح بإضافتها",
         help_text="عند التعطيل تختفي ‘سياراتنا‘ (سيارات الموقع الخاصة بك) من الصفحة الرئيسية، وتُخفى أزرار الإضافة في لوحة التحكم.",
     )
+    # Per-tenant catalog filter for the SHARED ApiCar catalog (auctions + encar).
+    # Whitelist for make/model/year, exclude-list for damage. Shape:
+    #   {"year_min": int|null, "year_max": int|null,
+    #    "makes": [manufacturer_id,...], "models": [model_id,...],
+    #    "exclude_types": ["replaced","painted"], "exclude_panels": ["hood_front",...]}
+    # Empty/absent keys mean "no restriction". Applied via _apply_tenant_catalog().
+    catalog_filter = models.JSONField(default=dict, blank=True, verbose_name="فلترة الكتالوج")
     show_parts = models.BooleanField(
         default=True,
         verbose_name="عرض صفحة قطع الغيار",

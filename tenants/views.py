@@ -256,6 +256,28 @@ def site_settings(request):
                 tenant.contract_stamp.delete(save=False)
             tenant.contract_stamp = request.FILES['contract_stamp']
 
+        # ── Catalog filter (which shared auction/encar cars show on this site) ──
+        def _posint(name):
+            v = (request.POST.get(name) or '').strip()
+            return int(v) if v.isdigit() else None
+        _panel_set = {
+            'left_front_fender', 'right_front_fender', 'hood_front', 'trunk_lid',
+            'right_rear_door', 'right_front_door', 'left_front_door', 'left_rear_door',
+            'rear_member', 'right_rear_quarter', 'center_floor', 'left_rear_quarter',
+            'front_member', 'rear_floor', 'roof',
+        }
+        tenant.catalog_filter = {
+            'year_min': _posint('catalog_year_min'),
+            'year_max': _posint('catalog_year_max'),
+            'makes': [int(x) for x in request.POST.getlist('catalog_makes') if x.isdigit()],
+            'models': [int(x) for x in request.POST.getlist('catalog_models') if x.isdigit()],
+            'exclude_types': [t for t in request.POST.getlist('catalog_exclude_types') if t in ('replaced', 'painted')],
+            'exclude_panels': [p for p in request.POST.getlist('catalog_exclude_panels') if p in _panel_set],
+        }
+        # Cache keys for every catalog surface embed a signature of this filter
+        # (_tenant_catalog_sig), so a change here yields new keys automatically —
+        # no explicit invalidation needed; old variants just expire on TTL.
+
         tenant.save()
         
         # Handle multiple phone numbers
@@ -419,6 +441,23 @@ def site_settings(request):
         _cache.delete(f"home_ctx_v9:{_schema}")
         return redirect('site_settings')
     
+    # Catalog-filter options: manufacturers (shared) + the current selections so
+    # the admin can pick what shows on their site.
+    _cf = tenant.catalog_filter or {}
+    try:
+        from cars.models import Manufacturer
+        _catalog_makes = list(Manufacturer.objects.order_by('name').values('id', 'name', 'name_ar'))
+    except Exception:
+        _catalog_makes = []
+    _panel_labels = [
+        ('hood_front', 'غطاء المحرك'), ('roof', 'السقف'), ('trunk_lid', 'غطاء الصندوق'),
+        ('left_front_fender', 'رفرف أمامي أيسر'), ('right_front_fender', 'رفرف أمامي أيمن'),
+        ('left_front_door', 'باب أمامي أيسر'), ('right_front_door', 'باب أمامي أيمن'),
+        ('left_rear_door', 'باب خلفي أيسر'), ('right_rear_door', 'باب خلفي أيمن'),
+        ('left_rear_quarter', 'جانب خلفي أيسر'), ('right_rear_quarter', 'جانب خلفي أيمن'),
+        ('front_member', 'شاصي أمامي'), ('rear_member', 'شاصي خلفي'),
+        ('center_floor', 'أرضية وسطية'), ('rear_floor', 'أرضية خلفية'),
+    ]
     context = {
         'tenant': tenant,
         'phone_numbers': tenant.phone_numbers.all(),
@@ -428,5 +467,13 @@ def site_settings(request):
         'work_steps_admin': tenant.work_steps.all().order_by('order', 'id'),
         'site_font_choices': font_choices(),
         'page_links': friendly_page_links(),
+        'catalog_makes': _catalog_makes,
+        'catalog_panel_labels': _panel_labels,
+        'catalog_sel_makes': _cf.get('makes') or [],
+        'catalog_sel_models': _cf.get('models') or [],
+        'catalog_sel_types': _cf.get('exclude_types') or [],
+        'catalog_sel_panels': _cf.get('exclude_panels') or [],
+        'catalog_year_min': _cf.get('year_min') or '',
+        'catalog_year_max': _cf.get('year_max') or '',
     }
     return render(request, 'tenants/site_settings.html', context)
