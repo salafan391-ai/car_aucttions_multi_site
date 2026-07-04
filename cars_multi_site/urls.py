@@ -174,6 +174,9 @@ def sitemap_xml(request):
 
         tenant = getattr(_conn, "tenant", None)
         api_qs = ApiCar.objects.exclude(slug__isnull=True).exclude(slug="")
+        # Expired auctions now 404 on their detail page — keep them out of the sitemap.
+        from django.utils import timezone as _tz
+        api_qs = api_qs.exclude(category__name="auction", auction_date__lt=_tz.now())
         if tenant is not None:
             if not getattr(tenant, "show_auctions", True):
                 api_qs = api_qs.exclude(category__name="auction")

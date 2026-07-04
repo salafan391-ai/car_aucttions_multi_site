@@ -20,7 +20,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db.models import Count
 from django.utils import timezone
 
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from django.core.cache import cache
 from django.views.decorators.cache import cache_control
 from django.db import connection, ProgrammingError, OperationalError
@@ -2371,6 +2371,14 @@ def car_detail(request, slug):
         ),
         slug=slug,
     )
+
+    # Once an auction ends, hide its detail page (renders the site 404). It
+    # stays reachable from the /expired-auctions archive (links carry
+    # ?archived=1) and always for staff.
+    if (getattr(car.category, 'name', '') == 'auction' and car.auction_date
+            and car.auction_date < timezone.now()
+            and request.GET.get('archived') != '1' and not request.user.is_staff):
+        raise Http404("auction ended")
 
     ratings = []
     user_rating = None
