@@ -274,11 +274,23 @@ def site_settings(request):
             'exclude_types': [t for t in request.POST.getlist('catalog_exclude_types') if t in ('replaced', 'painted')],
             'exclude_panels': [p for p in request.POST.getlist('catalog_exclude_panels') if p in _panel_set],
         }
-        # Cache keys for every catalog surface embed a signature of this filter
-        # (_tenant_catalog_sig), so a change here yields new keys automatically —
-        # no explicit invalidation needed; old variants just expire on TTL.
+        _catalog_changed = tenant.catalog_filter != (tenant.__class__.objects
+                                                      .filter(pk=tenant.pk)
+                                                      .values_list('catalog_filter', flat=True).first() or {})
 
         tenant.save()
+
+        # Catalog-surface cache keys embed a filter signature, so brand-new filter
+        # values recompute automatically. Reverting to a *previously used* value
+        # would hit its old cached page until TTL — so on any change, drop this
+        # tenant's cached car pages (keys are namespaced by its schema name).
+        if _catalog_changed:
+            try:
+                from django.core.cache import cache as _cache
+                if hasattr(_cache, 'delete_pattern'):
+                    _cache.delete_pattern(f"*{tenant.schema_name}*")
+            except Exception:
+                pass
         
         # Handle multiple phone numbers
         # First, handle deletions
