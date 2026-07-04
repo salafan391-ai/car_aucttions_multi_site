@@ -166,6 +166,22 @@ def _apply_tenant_catalog(qs, tenant):
             qs = qs.filter(year__lte=int(cf['year_max']))
     except (TypeError, ValueError):
         pass
+    # Price range — admin enters SAR; convert to the raw KRW ApiCar.price using
+    # the same global rate × markup the site displays with (see sar_price()).
+    if cf.get('price_min') or cf.get('price_max'):
+        try:
+            from tenants.models import GlobalExchangeRates
+            _rate = float(GlobalExchangeRates.get_solo().rate_sar or 0.0025)
+        except Exception:
+            _rate = 0.0025
+        _factor = _rate * 1.01  # SAR per 1 KRW
+        try:
+            if cf.get('price_min') and _factor > 0:
+                qs = qs.filter(price__gte=int(float(cf['price_min']) / _factor))
+            if cf.get('price_max') and _factor > 0:
+                qs = qs.filter(price__lte=int(float(cf['price_max']) / _factor))
+        except (TypeError, ValueError):
+            pass
     makes = [m for m in (cf.get('makes') or []) if m]
     if makes:
         qs = qs.filter(manufacturer_id__in=makes)

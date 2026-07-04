@@ -269,6 +269,8 @@ def site_settings(request):
         tenant.catalog_filter = {
             'year_min': _posint('catalog_year_min'),
             'year_max': _posint('catalog_year_max'),
+            'price_min': _posint('catalog_price_min'),
+            'price_max': _posint('catalog_price_max'),
             'makes': [int(x) for x in request.POST.getlist('catalog_makes') if x.isdigit()],
             'models': [int(x) for x in request.POST.getlist('catalog_models') if x.isdigit()],
             'exclude_types': [t for t in request.POST.getlist('catalog_exclude_types') if t in ('replaced', 'painted')],
@@ -487,5 +489,7 @@ def site_settings(request):
         'catalog_sel_panels': _cf.get('exclude_panels') or [],
         'catalog_year_min': _cf.get('year_min') or '',
         'catalog_year_max': _cf.get('year_max') or '',
+        'catalog_price_min': _cf.get('price_min') or '',
+        'catalog_price_max': _cf.get('price_max') or '',
     }
     return render(request, 'tenants/site_settings.html', context)
