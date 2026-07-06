@@ -419,4 +419,19 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
             if (TRIGGER.indexOf(t.name) >= 0 || t.hasAttribute('data-price-filter')) refresh(t.form);
         });
     })();
+
+    // ── Fresh CSRF token for forms on cached pages ──
+    // The home page HTML is server-cached AND CDN-cacheable, so its rendered
+    // {% templatetag openblock %} csrf_token {% templatetag closeblock %} is stale for other
+    // anonymous visitors → 403 on submit (e.g. the site-rating form). Pull a live
+    // token from the never-cached /csrf/ endpoint and inject it into every form.
+    (function () {
+        if (!document.querySelector('input[name=csrfmiddlewaretoken]')) return;
+        fetch('/csrf/', { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d || !d.csrftoken) return;
+                document.querySelectorAll('input[name=csrfmiddlewaretoken]').forEach(function (i) { i.value = d.csrftoken; });
+            }).catch(function () {});
+    })();
 </script>

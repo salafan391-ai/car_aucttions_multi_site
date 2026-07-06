@@ -1871,5 +1871,18 @@
         });
     })();
     </script>
+    <script>
+    // Fresh CSRF token for forms on cached pages (home HTML is server- + CDN-
+    // cached, so its rendered token is stale for other anonymous visitors → 403).
+    (function () {
+        if (!document.querySelector('input[name=csrfmiddlewaretoken]')) return;
+        fetch('/csrf/', { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d || !d.csrftoken) return;
+                document.querySelectorAll('input[name=csrfmiddlewaretoken]').forEach(function (i) { i.value = d.csrftoken; });
+            }).catch(function () {});
+    })();
+    </script>
 </body>
 </html>

@@ -17,8 +17,22 @@ from django.db.models import Q, Max, F
 from django.db.models.expressions import RawSQL
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import never_cache
+from django.middleware.csrf import get_token
 from django.db.models import Count
 from django.utils import timezone
+
+
+@never_cache
+@ensure_csrf_cookie
+def csrf_token_view(request):
+    """Return a fresh CSRF token + set the cookie. Forms on heavily-cached pages
+    (the home page HTML is cached and CDN-cacheable) carry a stale token, so the
+    client fetches a live one from here before submitting."""
+    from django.http import JsonResponse
+    resp = JsonResponse({'csrftoken': get_token(request)})
+    resp['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return resp
 
 from django.http import JsonResponse, HttpResponse, Http404
 from django.core.cache import cache
