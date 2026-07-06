@@ -453,8 +453,17 @@ def site_settings(request):
         _cache.delete(f"tenant_branding:{_schema}")
         # Homepage chrome/sections (ticker, "how we work", etc.) are baked into
         # the cached home HTML/context — bust those too so edits show at once.
-        _cache.delete(f"home_html_v9:{_schema}")
-        _cache.delete(f"home_ctx_v9:{_schema}")
+        # Keys carry a catalog-filter signature suffix → clear all variants.
+        try:
+            if hasattr(_cache, 'delete_pattern'):
+                _cache.delete_pattern(f"home_html_v9:{_schema}*")
+                _cache.delete_pattern(f"home_ctx_v9:{_schema}*")
+                _cache.delete_pattern(f"landing_html:{_schema}*")
+            else:
+                _cache.delete(f"home_html_v9:{_schema}")
+                _cache.delete(f"home_ctx_v9:{_schema}")
+        except Exception:
+            pass
         return redirect('site_settings')
     
     # Catalog-filter options: manufacturers (shared) + the current selections so

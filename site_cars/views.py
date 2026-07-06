@@ -31,9 +31,17 @@ def _is_public_schema():
 
 
 def _bust_home_cache():
-    """Drop the cached home context + HTML so a just-approved rating (or other
-    homepage change) appears immediately for this tenant."""
+    """Drop the cached home + landing so a just-approved rating (or other
+    homepage change) appears immediately for this tenant. The keys carry a
+    catalog-filter signature suffix, so clear every variant by pattern."""
     schema = getattr(connection, 'schema_name', 'public')
+    try:
+        if hasattr(cache, 'delete_pattern'):
+            for _p in (f"home_html_v9:{schema}*", f"home_ctx_v9:{schema}*", f"landing_html:{schema}*"):
+                cache.delete_pattern(_p)
+            return
+    except Exception:
+        pass
     cache.delete(f"home_html_v9:{schema}")
     cache.delete(f"home_ctx_v9:{schema}")
 
