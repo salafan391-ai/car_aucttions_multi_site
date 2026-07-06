@@ -2579,6 +2579,17 @@ def car_detail(request, slug):
         ],
         'insp': insp,
     }
+    # Detail page shows HIGH-QUALITY images: upgrade R2 image URLs
+    # (image_N.jpg -> image_hq_N.jpg) in-memory only — not saved, so grid/list
+    # pages elsewhere keep the fast compressed variant. Only touches r2.dev URLs.
+    def _hq(u):
+        return (u.replace("/image_", "/image_hq_")
+                if isinstance(u, str) and "r2.dev" in u and "/image_" in u and "/image_hq_" not in u
+                else u)
+    if car.images:
+        car.images = [_hq(u) for u in car.images]
+    if isinstance(getattr(car, "image", None), str):
+        car.image = _hq(car.image)
     return render(request, 'cars/car_detail.html', context)
 
 
