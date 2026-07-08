@@ -10,9 +10,9 @@ Included near </body> in every base.
 <script>
 (function () {
     var OV = [
-        {das: ['المزادات', 'مزادات'], v: '{{ label_auctions|escapejs }}'},
+        {das: ['المزادات', 'مزادات', 'المزادات الكورية', 'مزادات كورية'], v: '{{ label_auctions|escapejs }}'},
         {das: ['سياراتنا'], v: '{{ label_sitecars|escapejs }}'},
-        {das: ['السيارات', 'سيارات'], v: '{{ label_encar|escapejs }}'}
+        {das: ['السيارات', 'سيارات', 'المعارض الكورية', 'معارض كورية'], v: '{{ label_encar|escapejs }}'}
     ].filter(function (o) { return o.v; });
     if (!OV.length) return;
     function apply() {
