@@ -1,35 +1,50 @@
 {% comment %}
 Per-tenant custom labels for the three car sections (Encar / Auctions / Our
-cars). These labels are hard-coded as bilingual data-lang-* strings in every
-theme's nav, mobile nav, bottom nav and home section titles — but they all
-share the same data-lang-ar value, so one script relabels them everywhere.
-When a custom label is set it replaces the label in ALL languages.
-Included near </body> in every base.
+cars). Two relabel passes, since themes/landings use different conventions:
+  1. Text pass: themed nav / mobile nav / bottom nav / home section titles use
+     `.bilingual` with data-lang-* — matched by their known data-lang-ar value.
+  2. Href pass: landing designs use section cards (e.g. `.card-label` with
+     data-ar/data-en, different text) — matched by the card link's href
+     (car_type=auction / car_type=cars / /our-cars) so wording doesn't matter.
+A set custom label replaces the label in ALL languages. Included near </body>.
 {% endcomment %}
 {% if label_encar or label_auctions or label_sitecars %}
 <script>
 (function () {
+    var AUC = '{{ label_auctions|escapejs }}', ENC = '{{ label_encar|escapejs }}', SC = '{{ label_sitecars|escapejs }}';
     var OV = [
-        {das: ['المزادات', 'مزادات', 'المزادات الكورية', 'مزادات كورية'], v: '{{ label_auctions|escapejs }}'},
-        {das: ['سياراتنا'], v: '{{ label_sitecars|escapejs }}'},
-        {das: ['السيارات', 'سيارات', 'المعارض الكورية', 'معارض كورية'], v: '{{ label_encar|escapejs }}'}
+        {das: ['المزادات', 'مزادات', 'المزادات الكورية', 'مزادات كورية'], v: AUC},
+        {das: ['سياراتنا'], v: SC},
+        {das: ['السيارات', 'سيارات', 'المعارض الكورية', 'معارض كورية'], v: ENC}
     ].filter(function (o) { return o.v; });
     if (!OV.length) return;
+
+    function setLabel(el, v) {
+        // Overwrite both lang conventions + the visible text so a language
+        // switch (either system) keeps the custom label.
+        ['data-lang-ar', 'data-lang-en', 'data-lang-es', 'data-lang-ru', 'data-ar', 'data-en'].forEach(function (a) {
+            if (el.hasAttribute(a)) el.setAttribute(a, v);
+        });
+        el.textContent = v;
+    }
+
     function apply() {
+        // 1) Text pass — themed nav + home titles (.bilingual / data-lang-ar).
         document.querySelectorAll('.bilingual').forEach(function (el) {
             var da = el.getAttribute('data-lang-ar');
             for (var i = 0; i < OV.length; i++) {
-                if (OV[i].das.indexOf(da) >= 0) {
-                    var v = OV[i].v;
-                    // Overwrite every language so switching keeps the custom label.
-                    el.setAttribute('data-lang-ar', v);
-                    el.setAttribute('data-lang-en', v);
-                    el.setAttribute('data-lang-es', v);
-                    el.setAttribute('data-lang-ru', v);
-                    el.textContent = v;
-                    break;
-                }
+                if (OV[i].das.indexOf(da) >= 0) { setLabel(el, OV[i].v); break; }
             }
+        });
+        // 2) Href pass — landing section cards (label element inside the link).
+        document.querySelectorAll('a[href]').forEach(function (a) {
+            var h = a.getAttribute('href') || '', v = null;
+            if (AUC && /[?&]car_type=auction/.test(h)) v = AUC;
+            else if (SC && /\/our-cars(\/|\?|$)/.test(h)) v = SC;
+            else if (ENC && /[?&]car_type=cars/.test(h)) v = ENC;
+            if (!v) return;
+            var lbl = a.querySelector('.card-label') || a.querySelector('.bilingual') || a.querySelector('[data-ar]');
+            if (lbl) setLabel(lbl, v);
         });
     }
     if (document.readyState !== 'loading') apply();
