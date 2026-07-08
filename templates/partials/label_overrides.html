@@ -10,16 +10,16 @@ Included near </body> in every base.
 <script>
 (function () {
     var OV = [
-        {da: 'المزادات', v: '{{ label_auctions|escapejs }}'},
-        {da: 'سياراتنا', v: '{{ label_sitecars|escapejs }}'},
-        {da: 'السيارات', v: '{{ label_encar|escapejs }}'}
+        {das: ['المزادات', 'مزادات'], v: '{{ label_auctions|escapejs }}'},
+        {das: ['سياراتنا'], v: '{{ label_sitecars|escapejs }}'},
+        {das: ['السيارات', 'سيارات'], v: '{{ label_encar|escapejs }}'}
     ].filter(function (o) { return o.v; });
     if (!OV.length) return;
     function apply() {
         document.querySelectorAll('.bilingual').forEach(function (el) {
             var da = el.getAttribute('data-lang-ar');
             for (var i = 0; i < OV.length; i++) {
-                if (da === OV[i].da) {
+                if (OV[i].das.indexOf(da) >= 0) {
                     var v = OV[i].v;
                     // Overwrite every language so switching keeps the custom label.
                     el.setAttribute('data-lang-ar', v);
