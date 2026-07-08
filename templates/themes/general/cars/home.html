@@ -375,6 +375,39 @@
         </div>
     </section>
 
+    <!-- Our cars (own SiteCars, incl. sold with a badge) -->
+    {% if site_cars and show_site_cars %}
+    <section class="gc-sec">
+        <div class="gc-wrap">
+            <div class="gc-sec-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;">
+                <div>
+                    <div class="gc-sec-eyebrow bilingual" data-lang-ar="من معرضنا" data-lang-en="From Our Showroom" data-lang-es="De nuestro showroom" data-lang-ru="Из нашего салона">من معرضنا</div>
+                    <h2 class="gc-sec-title bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</h2>
+                </div>
+                <a href="{% url 'site_car_list' %}" class="bilingual" style="font-weight:800;font-size:.85rem;padding:.55rem 1.1rem;border-radius:12px;background:var(--gc-navy-deep,#2a2564);color:#fff;text-decoration:none;white-space:nowrap;" data-lang-ar="عرض الكل" data-lang-en="View All" data-lang-es="Ver todo" data-lang-ru="Смотреть все">عرض الكل</a>
+            </div>
+            <div style="display:flex;gap:16px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory;">
+                {% for car in site_cars %}
+                <a href="{% url 'site_car_detail' car.id %}" style="flex:0 0 240px;scroll-snap-align:start;background:var(--gc-card,#fff);border:1px solid var(--gc-line,#e5e7eb);border-radius:18px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 8px 24px rgba(15,23,42,.06);">
+                    <div class="car-img-wm" style="position:relative;aspect-ratio:4/3;background:#f1f5f9;">
+                        {% if car.status == 'sold' %}<span class="bilingual" style="position:absolute;top:8px;inset-inline-start:8px;z-index:6;background:#dc2626;color:#fff;font-weight:800;font-size:.7rem;padding:2px 10px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.25)" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продан">تم البيع</span>{% endif %}
+                        {% if car.image %}<img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+                        {% elif car.gallery.first %}<img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
+                        {% elif car.external_image_url %}<img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">{% endif %}
+                    </div>
+                    <div style="padding:11px 13px;">
+                        <div style="font-size:.72rem;color:var(--gc-dim,#6b7280);font-weight:700;">{{ car.manufacturer|translate_manufacturer }}</div>
+                        <h3 style="font-size:.95rem;font-weight:800;margin:2px 0 0;color:var(--gc-ink,#111827);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ car.title|pretty_en }}</h3>
+                        {% if car.price %}<div style="font-weight:900;color:var(--gc-primary,#2a2564);direction:ltr;text-align:start;font-size:.9rem;margin-top:4px;"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>{% endif %}
+                        <div style="font-size:.72rem;color:var(--gc-dim,#6b7280);margin-top:4px;">{% if car.year %}{{ car.year }}{% endif %}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
     <!-- Services -->
     <section class="gc-sec gc-services-bg">
         <div class="gc-wrap">
