@@ -1222,10 +1222,11 @@
             setEl('mobile-currency-label', cfg.label);
 
             // Convert all prices: find elements with data-price-krw or price patterns
+            const PRICE_MARKUP = {{ site_price_markup|default:"1.01" }};
             document.querySelectorAll('[data-price-krw]').forEach(el => {
                 const krw = parseFloat(el.getAttribute('data-price-krw'));
                 if (isNaN(krw)) return;
-                const converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate);
+                const converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate * PRICE_MARKUP);
                 el.innerHTML = converted.toLocaleString() + ' <span class="text-[9px] sm:text-xs font-medium">' + cfg.symbol + '</span>';
             });
         }
