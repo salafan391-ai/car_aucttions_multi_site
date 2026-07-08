@@ -746,7 +746,7 @@ def panel_label(value):
 @register.filter
 def sar_price(krw):
     """KRW price -> whole-number SAR, for server-rendered meta/OG/schema tags
-    (there's no JS there to convert). Matches the on-site rate x 1.01 markup."""
+    (there's no JS there to convert). Matches the on-site rate × tenant markup."""
     try:
         krw = float(krw or 0)
     except (TypeError, ValueError):
@@ -758,4 +758,9 @@ def sar_price(krw):
         rate = float(GlobalExchangeRates.get_solo().rate_sar or 0.0025)
     except Exception:
         rate = 0.0025
-    return int(round(krw * rate * 1.01))
+    try:
+        from django.db import connection
+        markup = float(getattr(getattr(connection, 'tenant', None), 'price_markup_factor', 1.01))
+    except Exception:
+        markup = 1.01
+    return int(round(krw * rate * markup))

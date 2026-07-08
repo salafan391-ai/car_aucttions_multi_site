@@ -90,6 +90,16 @@
                 </div>
             </div>
 
+            <!-- Pricing markup -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-1 text-gray-900">نسبة الزيادة على السعر</h2>
+                <p class="text-xs text-gray-500 mb-4">نسبة تُضاف تلقائياً إلى كل الأسعار المعروضة على موقعك (فوق هامش 1% الأساسي). اتركها 0 لعرض السعر كما هو.</p>
+                <div class="flex items-center gap-2" style="max-width:12rem">
+                    <input type="number" step="0.5" min="0" max="100" name="price_markup_pct" value="{{ tenant.price_markup_pct }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <span class="text-lg font-bold text-gray-500">%</span>
+                </div>
+            </div>
+
             <!-- Branding Section -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">العلامة التجارية</h2>

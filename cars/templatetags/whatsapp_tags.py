@@ -26,7 +26,12 @@ def krw_to_sar(value, rate):
             return ""
         v = float(value)
         r = float(rate) if rate is not None else 0.00250
-        sar = v * r * PRICE_MARKUP
+        try:
+            from django.db import connection
+            markup = float(getattr(getattr(connection, 'tenant', None), 'price_markup_factor', PRICE_MARKUP))
+        except Exception:
+            markup = PRICE_MARKUP
+        sar = v * r * markup
         # Format with comma as thousands separator, no decimal places
         return "{:,.0f}".format(sar)
     except Exception:

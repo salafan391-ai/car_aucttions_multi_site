@@ -160,13 +160,14 @@ def _tenant_catalog_sig(tenant):
 
 
 def _catalog_rate_factor():
-    """SAR per 1 KRW — matches the on-site display (global rate × markup)."""
+    """SAR per 1 KRW — matches the on-site display (global rate × tenant markup)."""
     try:
         from tenants.models import GlobalExchangeRates
         rate = float(GlobalExchangeRates.get_solo().rate_sar or 0.0025)
     except Exception:
         rate = 0.0025
-    return rate * 1.01
+    markup = float(getattr(getattr(connection, 'tenant', None), 'price_markup_factor', 1.01))
+    return rate * markup
 
 
 def _catalog_whitelist_q(rules, factor):

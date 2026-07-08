@@ -48,7 +48,8 @@ def tenant_branding(request):
         # Always overlay live global rates + the chosen site font so those
         # edits apply immediately, without invalidating the branding cache.
         return {**cached, **_global_rates(), **font_ctx(tenant),
-                'auction_api_base': getattr(tenant, 'auction_api_base', '') or ''}
+                'auction_api_base': getattr(tenant, 'auction_api_base', '') or '',
+                'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01)}
 
     # Get all phone numbers for the tenant
     phone_numbers = []
@@ -218,4 +219,5 @@ def tenant_branding(request):
     cache.set(_cache_key, result, 60 * 30)
     # Font merged fresh (not cached) so a changed site_font applies immediately.
     return {**result, **_global_rates(), **font_ctx(tenant),
-            'auction_api_base': getattr(tenant, 'auction_api_base', '') or ''}
+            'auction_api_base': getattr(tenant, 'auction_api_base', '') or '',
+            'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01)}

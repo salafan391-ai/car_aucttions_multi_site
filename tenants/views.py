@@ -297,13 +297,26 @@ def site_settings(request):
             tenant.landing_design = _ld
         _landing_changed = (tenant.landing_is_active, tenant.landing_design) != _landing_before
 
+        # ── Price markup (%) added to displayed car prices ──
+        _markup_before = tenant.price_markup_pct
+        _mk = (request.POST.get('price_markup_pct', '') or '').strip()
+        if _mk != '':
+            try:
+                from decimal import Decimal
+                v = Decimal(_mk)
+                if 0 <= v <= 100:
+                    tenant.price_markup_pct = v
+            except Exception:
+                pass
+        _markup_changed = tenant.price_markup_pct != _markup_before
+
         tenant.save()
 
         # Catalog-surface cache keys embed a filter signature, so brand-new filter
         # values recompute automatically. Reverting to a *previously used* value
         # would hit its old cached page until TTL — so on any change, drop this
         # tenant's cached car pages (keys are namespaced by its schema name).
-        if _catalog_changed or _theme_changed or _landing_changed:
+        if _catalog_changed or _theme_changed or _landing_changed or _markup_changed:
             try:
                 from django.core.cache import cache as _cache
                 if hasattr(_cache, 'delete_pattern'):

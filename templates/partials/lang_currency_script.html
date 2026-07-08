@@ -159,8 +159,9 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
         EUR: { symbol: '€',   label: '€ EUR',   rate: {{ rate_eur|default:"0.00069" }} },
     };
     /* Markup applied when converting AWAY from the source KRW price. KRW
-       displays the original feed price; every other currency shows +1%. */
-    var PRICE_MARKUP = 1.01;
+       displays the original feed price; every other currency shows the tenant's
+       markup (base 1% × the admin's added %). */
+    var PRICE_MARKUP = {{ site_price_markup|default:"1.01" }};
     var CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
 
     function setCurrency(code) {

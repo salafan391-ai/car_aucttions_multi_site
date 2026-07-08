@@ -287,6 +287,12 @@ class Tenant(TenantMixin):
     rate_sar = models.DecimalField(max_digits=10, decimal_places=6, default=0.00250, verbose_name="سعر الريال SAR")
     rate_aed = models.DecimalField(max_digits=10, decimal_places=6, default=0.00272, verbose_name="سعر الدرهم AED")
     rate_eur = models.DecimalField(max_digits=10, decimal_places=6, default=0.00069, verbose_name="سعر اليورو EUR")
+    # Admin-set markup added to every displayed car price (on top of the base 1%).
+    price_markup_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0,
+        verbose_name="نسبة الزيادة على السعر (%)",
+        help_text="نسبة تُضاف إلى أسعار السيارات المعروضة على موقعك (مثال: 5 تعني +5%).",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     eid_is_active = models.BooleanField(default=False, verbose_name="تفعيل زينة العيد", help_text="عند التفعيل تظهر زينة العيد (بالونات ونصوص متحركة) في جميع صفحات الموقع.")
@@ -318,6 +324,16 @@ class Tenant(TenantMixin):
     )
 
     auto_create_schema = True
+
+    @property
+    def price_markup_factor(self):
+        """Total price multiplier: the base 1% import buffer × the admin's markup.
+        Used for on-site display, share messages, OG meta and the catalog price
+        filter so every price is consistent."""
+        try:
+            return round(1.01 * (1 + float(self.price_markup_pct or 0) / 100.0), 6)
+        except Exception:
+            return 1.01
 
     def __str__(self):
         return self.name
