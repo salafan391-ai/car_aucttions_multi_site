@@ -51,6 +51,24 @@
                 </div>
             </div>
             
+            <!-- Site theme -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-1 text-gray-900">ثيم الموقع</h2>
+                <p class="text-xs text-gray-500 mb-4">اختر شكل موقعك — يغيّر التصميم بالكامل. يُطبَّق فوراً بعد الحفظ.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {% for val, label, desc in theme_options %}
+                    <label class="relative flex flex-col gap-1 border-2 rounded-xl p-4 cursor-pointer transition {% if tenant.template_theme == val %}border-indigo-600 bg-indigo-50{% else %}border-gray-200 hover:border-gray-300{% endif %}">
+                        <input type="radio" name="template_theme" value="{{ val }}" class="absolute top-3 left-3 text-indigo-600" {% if tenant.template_theme == val %}checked{% endif %}>
+                        <span class="font-bold text-gray-900">{{ label }}</span>
+                        <span class="text-xs text-gray-500">{{ desc }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% if tenant.template_theme != 'default' and tenant.template_theme != 'glassy' and tenant.template_theme != 'modern' %}
+                <p class="text-xs text-amber-600 mt-3">ثيمك الحالي «{{ tenant.template_theme }}» — اختيار واحد من الخيارات أعلاه سيبدّله.</p>
+                {% endif %}
+            </div>
+
             <!-- Branding Section -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">العلامة التجارية</h2>

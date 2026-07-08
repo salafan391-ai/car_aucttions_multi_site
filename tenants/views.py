@@ -282,13 +282,20 @@ def site_settings(request):
                                                       .filter(pk=tenant.pk)
                                                       .values_list('catalog_filter', flat=True).first() or {})
 
+        # ── Site theme (admin-selectable subset) ──
+        _theme_before = tenant.template_theme
+        _chosen_theme = request.POST.get('template_theme', '')
+        if _chosen_theme in ('default', 'glassy', 'modern'):
+            tenant.template_theme = _chosen_theme
+        _theme_changed = tenant.template_theme != _theme_before
+
         tenant.save()
 
         # Catalog-surface cache keys embed a filter signature, so brand-new filter
         # values recompute automatically. Reverting to a *previously used* value
         # would hit its old cached page until TTL — so on any change, drop this
         # tenant's cached car pages (keys are namespaced by its schema name).
-        if _catalog_changed:
+        if _catalog_changed or _theme_changed:
             try:
                 from django.core.cache import cache as _cache
                 if hasattr(_cache, 'delete_pattern'):
@@ -512,5 +519,10 @@ def site_settings(request):
         'catalog_makes': _catalog_makes,
         'catalog_panel_labels': _panel_labels,
         'catalog_sections': catalog_sections,
+        'theme_options': [
+            ('default', 'الافتراضي', 'تصميم قياسي نظيف'),
+            ('glassy', 'زجاجي', 'داكن متوهّج وعصري'),
+            ('modern', 'عصري', 'كوري حديث وأنيق'),
+        ],
     }
     return render(request, 'tenants/site_settings.html', context)
