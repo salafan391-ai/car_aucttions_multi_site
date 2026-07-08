@@ -833,6 +833,8 @@
     </style>
     {% block extra_head %}{% endblock %}
     {% include "partials/site_font.html" %}
+    <script>/* tenant price markup (base 1% × admin %), for the calculator, cart and price conversions */
+    window.SITE_PRICE_MARKUP = {{ site_price_markup|default:"1.01" }};</script>
 </head>
 <body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}' class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
 {% include "partials/ticker.html" %}

@@ -1236,7 +1236,7 @@
                     var c = (sel && RATES[sel.value]) ? RATES[sel.value] : RATES.SA;
                     var cm = CURMAP[c.currency] || CURMAP.SAR;
                     var rate = cm.rate, sym = cm.symbol;
-                    var carCur = PRICE_KRW * rate;
+                    var carCur = PRICE_KRW * rate * (window.SITE_PRICE_MARKUP || 1);
                     var cif = carCur + c.shipping;
                     var duty = cif * (c.dutyPct / 100);
                     var extra = (YEAR && YEAR < c.preYear) ? c.preYearExtra : 0;
