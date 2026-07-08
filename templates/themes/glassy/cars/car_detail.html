@@ -867,6 +867,9 @@
                 var rows = [['car', carCur], ['shipping', shipping], ['duty', duty]];
                 if (extra) rows.push(['extra', extra]);
                 rows.push(['vat', vat], ['clearance', clearance], ['inspection', inspection], ['registration', registration], ['agent', agent]);
+                var _SH = {shipping:{{import_calc_show_shipping|yesno:"1,0"}},duty:{{import_calc_show_duty|yesno:"1,0"}},vat:{{import_calc_show_vat|yesno:"1,0"}},clearance:{{import_calc_show_clearance|yesno:"1,0"}},inspection:{{import_calc_show_inspection|yesno:"1,0"}},registration:{{import_calc_show_registration|yesno:"1,0"}},agent:{{import_calc_show_agent|yesno:"1,0"}},extra:{{import_calc_show_extra|yesno:"1,0"}}};
+                rows = rows.filter(function(r){ return _SH[r[0]] !== 0; });
+                total = rows.reduce(function(a,r){ return a + r[1]; }, 0);
 
                 document.getElementById('gl-calc-rows').innerHTML = rows.map(function (r) {
                     var name = lbl[r[0]];

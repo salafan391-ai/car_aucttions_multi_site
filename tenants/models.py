@@ -114,6 +114,15 @@ class Tenant(TenantMixin):
     import_calc_agent = models.PositiveIntegerField(default=2000, verbose_name="عمولة الوكيل (ر.س)")
     import_calc_preyear = models.PositiveIntegerField(default=2021, verbose_name="سنة الموديل للرسوم الإضافية")
     import_calc_preyear_extra = models.PositiveIntegerField(default=23000, verbose_name="رسوم جمركية إضافية للموديلات الأقدم (ر.س)")
+    # Per-row show/hide in the calculator. Hiding a row removes it from the total too.
+    import_calc_show_shipping = models.BooleanField(default=True, verbose_name="إظهار الشحن في الحاسبة")
+    import_calc_show_duty = models.BooleanField(default=True, verbose_name="إظهار الرسوم الجمركية في الحاسبة")
+    import_calc_show_vat = models.BooleanField(default=True, verbose_name="إظهار ضريبة القيمة المضافة في الحاسبة")
+    import_calc_show_clearance = models.BooleanField(default=True, verbose_name="إظهار التخليص الجمركي في الحاسبة")
+    import_calc_show_inspection = models.BooleanField(default=True, verbose_name="إظهار الفحص في الحاسبة")
+    import_calc_show_registration = models.BooleanField(default=True, verbose_name="إظهار اللوحات والاستمارة في الحاسبة")
+    import_calc_show_agent = models.BooleanField(default=True, verbose_name="إظهار عمولة الوكيل في الحاسبة")
+    import_calc_show_extra = models.BooleanField(default=True, verbose_name="إظهار الرسوم الإضافية (موديل أقدم) في الحاسبة")
     # Extra destination countries (Saudi = the fields above is the default). Each item:
     # {name_ar,name_en,flag,currency, shipping_small,shipping_medium,shipping_large,
     #  duty_pct,vat_pct, clearance,inspection,registration,agent, preyear,preyear_extra}

@@ -721,7 +721,7 @@
                         <p class="text-xs text-gray-400 mt-1">مثل: مدمجة، صغيرة، هاتشباك</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الشحن — حجم متوسط (ر.س)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>الشحن — حجم متوسط (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_shipping" {% if tenant.import_calc_show_shipping %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="1" name="import_calc_shipping" value="{{ tenant.import_calc_shipping }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <p class="text-xs text-gray-400 mt-1">مثل: سيدان، SUV، رياضية (الافتراضي)</p>
@@ -733,32 +733,32 @@
                         <p class="text-xs text-gray-400 mt-1">مثل: فان، شاحنة، RV، كامل الحجم</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الرسوم الجمركية (%)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>الرسوم الجمركية (%)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_duty" {% if tenant.import_calc_show_duty %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="0.01" name="import_calc_duty_pct" value="{{ tenant.import_calc_duty_pct }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">ضريبة القيمة المضافة (%)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>ضريبة القيمة المضافة (%)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_vat" {% if tenant.import_calc_show_vat %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="0.01" name="import_calc_vat_pct" value="{{ tenant.import_calc_vat_pct }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">التخليص الجمركي (ر.س)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>التخليص الجمركي (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_clearance" {% if tenant.import_calc_show_clearance %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="1" name="import_calc_clearance" value="{{ tenant.import_calc_clearance }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الفحص (ر.س)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>الفحص (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_inspection" {% if tenant.import_calc_show_inspection %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="1" name="import_calc_inspection" value="{{ tenant.import_calc_inspection }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">اللوحات والاستمارة (ر.س)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>اللوحات والاستمارة (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_registration" {% if tenant.import_calc_show_registration %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="1" name="import_calc_registration" value="{{ tenant.import_calc_registration }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">عمولة الوكيل (ر.س)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>عمولة الوكيل (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_agent" {% if tenant.import_calc_show_agent %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="1" name="import_calc_agent" value="{{ tenant.import_calc_agent }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
@@ -768,7 +768,7 @@
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">رسوم إضافية للموديلات الأقدم (ر.س)</label>
+                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>رسوم إضافية للموديلات الأقدم (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_extra" {% if tenant.import_calc_show_extra %}checked{% endif %} class="rounded"> إظهار</span></label>
                         <input type="number" min="0" step="1" name="import_calc_preyear_extra" value="{{ tenant.import_calc_preyear_extra }}"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
