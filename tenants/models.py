@@ -287,6 +287,11 @@ class Tenant(TenantMixin):
     rate_sar = models.DecimalField(max_digits=10, decimal_places=6, default=0.00250, verbose_name="سعر الريال SAR")
     rate_aed = models.DecimalField(max_digits=10, decimal_places=6, default=0.00272, verbose_name="سعر الدرهم AED")
     rate_eur = models.DecimalField(max_digits=10, decimal_places=6, default=0.00069, verbose_name="سعر اليورو EUR")
+    # Custom labels for the three car sections (nav + home titles + tabs). Blank
+    # keeps the default bilingual label; when set, it's shown in every language.
+    label_encar = models.CharField(max_length=40, blank=True, default="", verbose_name="تسمية «السيارات» (Encar)")
+    label_auctions = models.CharField(max_length=40, blank=True, default="", verbose_name="تسمية «المزادات»")
+    label_sitecars = models.CharField(max_length=40, blank=True, default="", verbose_name="تسمية «سياراتنا»")
     # Admin-set markup added to every displayed car price (on top of the base 1%).
     price_markup_pct = models.DecimalField(
         max_digits=5, decimal_places=2, default=0,

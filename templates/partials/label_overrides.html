@@ -1,0 +1,39 @@
+{% comment %}
+Per-tenant custom labels for the three car sections (Encar / Auctions / Our
+cars). These labels are hard-coded as bilingual data-lang-* strings in every
+theme's nav, mobile nav, bottom nav and home section titles — but they all
+share the same data-lang-ar value, so one script relabels them everywhere.
+When a custom label is set it replaces the label in ALL languages.
+Included near </body> in every base.
+{% endcomment %}
+{% if label_encar or label_auctions or label_sitecars %}
+<script>
+(function () {
+    var OV = [
+        {da: 'المزادات', v: '{{ label_auctions|escapejs }}'},
+        {da: 'سياراتنا', v: '{{ label_sitecars|escapejs }}'},
+        {da: 'السيارات', v: '{{ label_encar|escapejs }}'}
+    ].filter(function (o) { return o.v; });
+    if (!OV.length) return;
+    function apply() {
+        document.querySelectorAll('.bilingual').forEach(function (el) {
+            var da = el.getAttribute('data-lang-ar');
+            for (var i = 0; i < OV.length; i++) {
+                if (da === OV[i].da) {
+                    var v = OV[i].v;
+                    // Overwrite every language so switching keeps the custom label.
+                    el.setAttribute('data-lang-ar', v);
+                    el.setAttribute('data-lang-en', v);
+                    el.setAttribute('data-lang-es', v);
+                    el.setAttribute('data-lang-ru', v);
+                    el.textContent = v;
+                    break;
+                }
+            }
+        });
+    }
+    if (document.readyState !== 'loading') apply();
+    else document.addEventListener('DOMContentLoaded', apply);
+})();
+</script>
+{% endif %}

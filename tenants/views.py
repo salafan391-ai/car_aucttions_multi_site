@@ -310,13 +310,20 @@ def site_settings(request):
                 pass
         _markup_changed = tenant.price_markup_pct != _markup_before
 
+        # ── Custom section labels (Encar / Auctions / Our cars) ──
+        _labels_before = (tenant.label_encar, tenant.label_auctions, tenant.label_sitecars)
+        tenant.label_encar = (request.POST.get('label_encar', '') or '').strip()[:40]
+        tenant.label_auctions = (request.POST.get('label_auctions', '') or '').strip()[:40]
+        tenant.label_sitecars = (request.POST.get('label_sitecars', '') or '').strip()[:40]
+        _labels_changed = (tenant.label_encar, tenant.label_auctions, tenant.label_sitecars) != _labels_before
+
         tenant.save()
 
         # Catalog-surface cache keys embed a filter signature, so brand-new filter
         # values recompute automatically. Reverting to a *previously used* value
         # would hit its old cached page until TTL — so on any change, drop this
         # tenant's cached car pages (keys are namespaced by its schema name).
-        if _catalog_changed or _theme_changed or _landing_changed or _markup_changed:
+        if _catalog_changed or _theme_changed or _landing_changed or _markup_changed or _labels_changed:
             try:
                 from django.core.cache import cache as _cache
                 if hasattr(_cache, 'delete_pattern'):

@@ -90,6 +90,26 @@
                 </div>
             </div>
 
+            <!-- Section labels -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-1 text-gray-900">تسميات الأقسام</h2>
+                <p class="text-xs text-gray-500 mb-4">غيّر أسماء أقسام السيارات كما تظهر في القوائم والصفحة الرئيسية. اتركها فارغة للاسم الافتراضي. الاسم يظهر بجميع اللغات.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">«السيارات» (Encar)</label>
+                        <input type="text" name="label_encar" value="{{ tenant.label_encar }}" maxlength="40" placeholder="السيارات" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">«المزادات»</label>
+                        <input type="text" name="label_auctions" value="{{ tenant.label_auctions }}" maxlength="40" placeholder="المزادات" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">«سياراتنا»</label>
+                        <input type="text" name="label_sitecars" value="{{ tenant.label_sitecars }}" maxlength="40" placeholder="سياراتنا" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
             <!-- Pricing markup -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">نسبة الزيادة على السعر</h2>

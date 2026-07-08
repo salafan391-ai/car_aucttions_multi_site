@@ -49,7 +49,10 @@ def tenant_branding(request):
         # edits apply immediately, without invalidating the branding cache.
         return {**cached, **_global_rates(), **font_ctx(tenant),
                 'auction_api_base': getattr(tenant, 'auction_api_base', '') or '',
-                'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01)}
+                'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01),
+                'label_encar': getattr(tenant, 'label_encar', '') or '',
+                'label_auctions': getattr(tenant, 'label_auctions', '') or '',
+                'label_sitecars': getattr(tenant, 'label_sitecars', '') or ''}
 
     # Get all phone numbers for the tenant
     phone_numbers = []
@@ -220,4 +223,7 @@ def tenant_branding(request):
     # Font merged fresh (not cached) so a changed site_font applies immediately.
     return {**result, **_global_rates(), **font_ctx(tenant),
             'auction_api_base': getattr(tenant, 'auction_api_base', '') or '',
-            'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01)}
+            'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01),
+            'label_encar': getattr(tenant, 'label_encar', '') or '',
+            'label_auctions': getattr(tenant, 'label_auctions', '') or '',
+            'label_sitecars': getattr(tenant, 'label_sitecars', '') or ''}
