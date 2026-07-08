@@ -289,13 +289,21 @@ def site_settings(request):
             tenant.template_theme = _chosen_theme
         _theme_changed = tenant.template_theme != _theme_before
 
+        # ── Landing page (enable/disable + design) ──
+        _landing_before = (tenant.landing_is_active, tenant.landing_design)
+        tenant.landing_is_active = 'landing_is_active' in request.POST
+        _ld = request.POST.get('landing_design', '')
+        if _ld in dict(tenant.LANDING_DESIGN_CHOICES):
+            tenant.landing_design = _ld
+        _landing_changed = (tenant.landing_is_active, tenant.landing_design) != _landing_before
+
         tenant.save()
 
         # Catalog-surface cache keys embed a filter signature, so brand-new filter
         # values recompute automatically. Reverting to a *previously used* value
         # would hit its old cached page until TTL — so on any change, drop this
         # tenant's cached car pages (keys are namespaced by its schema name).
-        if _catalog_changed or _theme_changed:
+        if _catalog_changed or _theme_changed or _landing_changed:
             try:
                 from django.core.cache import cache as _cache
                 if hasattr(_cache, 'delete_pattern'):
@@ -524,5 +532,6 @@ def site_settings(request):
             ('glassy', 'زجاجي', 'داكن متوهّج وعصري'),
             ('modern', 'عصري', 'كوري حديث وأنيق'),
         ],
+        'landing_design_choices': tenant.LANDING_DESIGN_CHOICES,
     }
     return render(request, 'tenants/site_settings.html', context)

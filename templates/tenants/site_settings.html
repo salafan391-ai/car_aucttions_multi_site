@@ -69,6 +69,27 @@
                 {% endif %}
             </div>
 
+            <!-- Landing page -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-1 gap-3 flex-wrap">
+                    <h2 class="text-xl font-bold text-gray-900">صفحة الدخول (Landing)</h2>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="landing_is_active" {% if tenant.landing_is_active %}checked{% endif %} class="w-5 h-5 rounded border-gray-300 text-indigo-600">
+                        <span class="text-sm font-medium text-gray-700">تفعيل صفحة الدخول</span>
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">صفحة ترحيبية تظهر عند فتح الموقع. عند التعطيل يُفتح الموقع مباشرة على الصفحة الرئيسية.</p>
+                <label class="block text-sm font-bold text-gray-800 mb-2">تصميم صفحة الدخول</label>
+                <select name="landing_design" class="w-full sm:max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    {% for val, label in landing_design_choices %}
+                    <option value="{{ val }}" {% if tenant.landing_design == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="mt-3">
+                    <a href="/" target="_blank" rel="noopener" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">↗ معاينة صفحة الدخول</a>
+                </div>
+            </div>
+
             <!-- Branding Section -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">العلامة التجارية</h2>
