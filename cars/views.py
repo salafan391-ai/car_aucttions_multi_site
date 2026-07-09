@@ -1032,6 +1032,11 @@ def _marker_type_subq(types):
 # "Clean main parts" ignores damage recorded on these.
 _MARKER_NON_BODY_RE = r'(lamp|mirror|glass|windshield)'
 
+# Encar "no accidents" — MUST stay textually identical to the expression in
+# the cars_apicar_accident_cnt index (migration 0034) so Postgres uses it
+# instead of detoasting every extra_features blob (~5s -> ms).
+_NO_ACCIDENT_WHERE = "(extra_features -> 'record' ->> 'accidentCnt') = '0'"
+
 
 def _damaged_main_parts_subq():
     """RawSQL subquery: ids of auction cars with a damaged marker on any MAIN
@@ -1136,7 +1141,7 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
     if exclude != 'no_accident':
         if GET.get('no_accident'):
             # Encar insurance record: keep only cars with zero accidents.
-            qs = qs.filter(extra_features__record__accidentCnt=0)
+            qs = qs.extra(where=[_NO_ACCIDENT_WHERE])
     if exclude != 'status':
         v = GET.getlist('status')
         if v: qs = qs.filter(status__in=v)
@@ -1190,12 +1195,17 @@ def _compute_facet_counts(facet_base, GET):
         ).count()
         for t in _MARKER_TYPES
     }
-    # clean_main: cars remaining if "clean main parts" is ticked (auction markers).
-    out['clean_main'] = (_apply_sidebar_filters(facet_base, GET, exclude='clean_main')
-                         .exclude(pk__in=_damaged_main_parts_subq()).count())
-    # no_accident: encar cars whose insurance record shows zero accidents.
-    out['no_accident'] = (_apply_sidebar_filters(facet_base, GET, exclude='no_accident')
-                          .filter(extra_features__record__accidentCnt=0).count())
+    # Condition-checkbox counts — only on the tab where each checkbox shows,
+    # so other tabs don't pay for these heavier JSONB counts.
+    _ct = GET.get('car_type')
+    if _ct == 'auction':
+        # clean_main: cars remaining if "clean main parts" is ticked.
+        out['clean_main'] = (_apply_sidebar_filters(facet_base, GET, exclude='clean_main')
+                             .exclude(pk__in=_damaged_main_parts_subq()).count())
+    if _ct in ('cars', 'truck'):
+        # no_accident: encar cars whose insurance record shows zero accidents.
+        out['no_accident'] = (_apply_sidebar_filters(facet_base, GET, exclude='no_accident')
+                              .extra(where=[_NO_ACCIDENT_WHERE]).count())
     return out
 
 
@@ -1402,8 +1412,8 @@ def car_list(request):
 
     sel_no_accident = bool(request.GET.get('no_accident'))
     if sel_no_accident:
-        # Encar insurance record: zero registered accidents.
-        qs = qs.filter(extra_features__record__accidentCnt=0)
+        # Encar insurance record: zero registered accidents (indexed expression).
+        qs = qs.extra(where=[_NO_ACCIDENT_WHERE])
 
     sel_seat_counts = request.GET.getlist('seat_count')
     if sel_seat_counts:
