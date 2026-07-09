@@ -832,7 +832,7 @@
         {% endif %}
 
         /* ── MARKET THEME layer — tokens for the search-first homepage.
-           Chrome + all inner pages come from the proven default base;
+           Inner pages come from the proven default base machinery;
            the tenant's brand color drives the market green. ── */
         :root {
             --mk-green: var(--color-primary);
@@ -843,6 +843,18 @@
             --mk-card: #ffffff;
             --mk-amber: #b45309;
         }
+        /* Market chrome: green utility topbar + distinct sticky nav */
+        .mk-topbar { background: var(--mk-green-deep); color: #d9efe4; font-size: .74rem; }
+        .mk-topbar-in { max-width: 80rem; margin: 0 auto; padding: 0 1rem; height: 32px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        #main-nav { background: rgba(255,255,255,.94); backdrop-filter: blur(10px); border-bottom: 2px solid var(--mk-green); box-shadow: none; }
+        #main-nav.nav-scrolled { box-shadow: 0 8px 24px rgba(16,35,26,.10); }
+        #main-nav a.text-gray-600:hover { color: var(--mk-green-deep); }
+        #lang-dropdown, #currency-dropdown { border: 1px solid var(--mk-line); border-radius: 999px; padding: .3rem .7rem; background: #fff; }
+        #lang-dropdown:hover, #currency-dropdown:hover { border-color: var(--mk-green); }
+        .mk-auction-cta { background: color-mix(in srgb, var(--mk-green) 12%, transparent); color: var(--mk-green-deep);
+            font-weight: 800; font-size: .85rem; padding: .42rem .95rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--mk-green) 35%, transparent); }
+        .mk-auction-cta:hover { background: var(--mk-green); color: #fff; }
+        footer.bg-gray-900 { background-color: #0d1f17 !important; }
     </style>
     {% block extra_head %}{% endblock %}
     {% include "partials/site_font.html" %}
