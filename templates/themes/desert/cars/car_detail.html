@@ -1,0 +1,1664 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters whatsapp_tags %}
+
+{% block title %}{{ car.year }} {{ car.manufacturer.name }} {{ car.model.name }} — {{ site_name }}{% endblock %}
+
+{% block og_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
+{% block og_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|sar_price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% elif site_logo %}{% absolute_url site_logo %}{% else %}{% absolute_url '/static/images/og-car-default.jpg' %}{% endif %}{% endblock %}
+{% block twitter_title %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}{% endblock %}
+{% block twitter_description %}{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|sar_price|intcomma }} ريال. {% if car.category.name == 'auction' %}سيارة في المزاد{% else %}سيارة للبيع{% endif %} في {{ site_name|default:"سيارات" }}{% endblock %}
+{% block twitter_image %}{% if car.image %}{{ car.image|https_url }}{% elif car.images.0 %}{{ car.images.0|https_url }}{% elif site_logo %}{% absolute_url site_logo %}{% else %}{% absolute_url '/static/images/og-car-default.jpg' %}{% endif %}{% endblock %}
+
+{% block extra_head %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Car",
+    "name": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}",
+    "description": "{{ car.year }} - {{ car.manufacturer.name }} {{ car.model.name }}. السعر: {{ car.price|sar_price|intcomma }} ريال",
+    "brand": { "@type": "Brand", "name": "{{ car.manufacturer.name }}" },
+    "model": "{{ car.model.name }}",
+    "vehicleModelDate": "{{ car.year }}",
+    {% if car.mileage %}"mileageFromOdometer": { "@type": "QuantitativeValue", "value": {{ car.mileage }}, "unitCode": "KMT" },{% endif %}
+    {% if car.transmission %}"vehicleTransmission": "{{ car.transmission }}",{% endif %}
+    {% if car.fuel %}"fuelType": "{{ car.fuel }}",{% endif %}
+    {% if car.color and car.color.name %}"color": "{{ car.color.name }}",{% endif %}
+    {% if car.vin %}"vehicleIdentificationNumber": "{{ car.vin }}",{% endif %}
+    "itemCondition": "https://schema.org/UsedCondition",
+    "offers": {
+        "@type": "Offer",
+        "price": "{{ car.price|sar_price }}",
+        "priceCurrency": "SAR",
+        "availability": "{% if car.status == 'available' %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+        "itemCondition": "https://schema.org/UsedCondition",
+        "seller": { "@type": "AutoDealer", "name": "{{ site_name|default:'سيارات' }}" }
+    },
+    "image": [{% if car.image %}"{{ car.image|https_url }}"{% endif %}{% for img in car.images %}{% if car.image or not forloop.first %},{% endif %}"{{ img|https_url }}"{% endfor %}],
+    "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}",
+    "inLanguage": "ar"
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* ════════════════════════════════════════════════════════════
+       GENERAL — car detail. Reuses the proven token-driven glassy
+       layout + JS; the --gl-* tokens below remap it to the General
+       (GC) light navy/red palette, and the gl-* component classes
+       (normally from a theme base) are defined here for this page.
+       ════════════════════════════════════════════════════════════ */
+    .gl-detail {
+        --gl-brand:        #7c3f21;   /* navy */
+        --gl-brand-2:      #b45a2b;   /* red  */
+        --gl-accent:       #b45a2b;
+        --gl-bg-1:         #f3ead9;
+        --gl-bg-2:         #fffdf7;
+        --gl-bg-3:         #efe3cc;
+        --gl-ink:          #38291c;
+        --gl-muted:        #8a7358;
+        --gl-faint:        #b09a7e;
+        --gl-glass:        #fffdf7;
+        --gl-glass-2:      #fffdf7;
+        --gl-glass-3:      #fffdf7;
+        --gl-border:       #e6d7bb;
+        --gl-border-2:     #dbe3ee;
+        --gl-ok:           #15a34a;
+        --gl-warn:         #d97706;
+        --gl-danger:       #b45a2b;
+        --gl-radius:       22px;
+        --gl-radius-sm:    14px;
+        --gl-blur:         0px;
+        --gl-shadow:       0 16px 40px rgba(76,52,32, 0.07);
+        --gl-shadow-lg:    0 26px 58px rgba(76,52,32, 0.14);
+        --gl-glow:         0 0 0 1px rgba(42, 37, 100, 0.06);
+        --gl-grad:         linear-gradient(90deg, #b45a2b, #7c3f21);
+        --gl-grad-solid:   linear-gradient(135deg, #7c3f21, #a05a2c);
+        --gl-nav-h:        64px;
+    }
+    html.gc-dark .gl-detail {
+        --gl-bg-1: #0b1020; --gl-bg-2: #111827; --gl-bg-3: #38291c;
+        --gl-ink: #f7efdf; --gl-muted: #cbd5e1; --gl-faint: #b09a7e;
+        --gl-glass: #111827; --gl-glass-2: #111827; --gl-glass-3: #1e293b;
+        --gl-border: rgba(148,163,184,0.20); --gl-border-2: rgba(148,163,184,0.28);
+        --gl-shadow: 0 16px 40px rgba(0,0,0,0.4);
+        --gl-shadow-lg: 0 26px 58px rgba(0,0,0,0.5);
+    }
+
+    /* Shared component classes (normally provided by a theme base) */
+    .gl-shell { width: 100%; max-width: 1380px; margin: 0 auto; padding: 0 1.1rem; }
+    .gl-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+        padding: .85rem 1.4rem; border-radius: 999px; cursor: pointer;
+        font-family: inherit; font-size: .92rem; font-weight: 800; line-height: 1;
+        border: 1px solid var(--gl-border-2); background: var(--gl-glass-2); color: var(--gl-ink);
+        text-decoration: none; transition: transform .18s ease, box-shadow .25s ease, border-color .2s;
+    }
+    .gl-btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--gl-brand) 60%, var(--gl-border-2)); box-shadow: var(--gl-glow); }
+    .gl-btn svg { width: 1.1rem; height: 1.1rem; }
+    .gl-btn-solid { border: 0; color: #fff; background: var(--gl-grad-solid); box-shadow: 0 12px 28px -8px rgba(42,37,100,0.5); }
+    .gl-btn-solid:hover { filter: brightness(1.06); }
+    .gl-chip {
+        display: inline-flex; align-items: center; gap: .4rem;
+        padding: .3rem .8rem; border-radius: 999px; font-size: .72rem; font-weight: 700;
+        border: 1px solid var(--gl-border); background: var(--gl-bg-3); color: var(--gl-muted);
+    }
+    .gl-input, .gl-select, .gl-textarea {
+        width: 100%; padding: .75rem 1rem; border-radius: var(--gl-radius-sm);
+        background: #fff; color: var(--gl-ink);
+        border: 1px solid var(--gl-border); font-family: inherit; font-size: .95rem;
+    }
+    html.gc-dark .gl-input, html.gc-dark .gl-select, html.gc-dark .gl-textarea { background: #1e293b; }
+    .gl-input::placeholder, .gl-textarea::placeholder { color: var(--gl-faint); }
+    .gl-input:focus, .gl-select:focus, .gl-textarea:focus {
+        outline: none; border-color: var(--gl-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--gl-brand) 18%, transparent);
+    }
+    .gl-section-title { font-size: 1.5rem; font-weight: 900; letter-spacing: -.01em; margin: 0; color: var(--gl-ink); }
+
+    /* General flavour: solid navy price (instead of glow gradient) + red primary CTA */
+    .gl-detail-price, .gl-detail-hero-price {
+        background: none !important; color: var(--gl-brand) !important;
+        -webkit-text-fill-color: var(--gl-brand) !important; filter: none !important;
+    }
+    .gl-detail-cta[data-wa-krw] { background: linear-gradient(135deg, #1fab53, #25d366); box-shadow: 0 12px 28px -8px rgba(31,171,83,0.5); }
+
+    /* ════════════════════════════════════════════════════════════
+       Page-scoped detail styles (token-driven — adapt to the palette)
+       ════════════════════════════════════════════════════════════ */
+    .gl-detail { padding: 1.6rem 0 2.5rem; }
+
+    .gl-detail-back {
+        display: inline-flex; align-items: center; gap: .4rem;
+        color: var(--gl-muted); font-size: .82rem; font-weight: 700;
+        padding: .5rem 1.05rem; border-radius: 999px; margin-bottom: 1.25rem;
+        border: 1px solid var(--gl-border); background: var(--gl-glass);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        transition: color .2s, border-color .2s, transform .2s;
+    }
+    .gl-detail-back:hover { color: var(--gl-brand); border-color: var(--gl-border-2); transform: translateY(-1px); }
+
+    /* ── Hero header (mobile = identity, desktop = share only) ── */
+    .gl-detail-hero {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.1rem;
+    }
+    .gl-detail-hero-text { min-width: 0; }
+    .gl-detail-hero-make { color: var(--gl-brand); font-size: .8rem; font-weight: 700; margin-bottom: .3rem; }
+    .gl-detail-hero-name {
+        color: var(--gl-ink); font-size: 1.35rem; font-weight: 800; line-height: 1.25;
+        display: inline-flex; align-items: center; gap: .55rem; flex-wrap: wrap;
+    }
+    .gl-detail-hero-side { display: inline-flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-inline-start: auto; }
+    .gl-detail-hero-pricelbl { font-size: .72rem; font-weight: 700; color: var(--gl-muted); margin-bottom: .15rem; }
+    .gl-detail-hero-price { color: var(--gl-ink); font-size: 1.45rem; font-weight: 800; white-space: nowrap; }
+    @media (min-width: 901px) {
+        .gl-detail-hero-text { display: none; }
+        .gl-detail-hero-side > *:not(.gl-detail-share) { display: none; }
+        .gl-detail-hero { justify-content: flex-end; margin-bottom: .6rem; }
+    }
+    @media (max-width: 900px) {
+        .gl-detail-aside > .gl-detail-id { display: none; }
+    }
+
+    .gl-detail-share { display: inline-flex; align-items: center; gap: .45rem; }
+    .gl-detail-share-btn {
+        width: 2.5rem; height: 2.5rem; border-radius: 999px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--gl-border); background: var(--gl-glass-2);
+        color: var(--gl-muted); cursor: pointer; padding: 0; font-family: inherit;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        transition: all .2s ease; position: relative;
+    }
+    .gl-detail-share-btn:hover { color: var(--gl-brand); border-color: color-mix(in srgb, var(--gl-brand) 55%, var(--gl-border-2)); transform: translateY(-1px); box-shadow: var(--gl-glow); }
+    .gl-detail-share-btn.is-copied { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 55%, transparent); }
+    .gl-detail-share-btn svg { width: 1.05rem; height: 1.05rem; }
+    .gl-detail-share-btn[hidden] { display: none; }
+    .gl-detail-share-toast {
+        position: absolute; bottom: calc(100% + .4rem); left: 50%; transform: translateX(-50%);
+        padding: .3rem .6rem; font-size: .68rem; font-weight: 700; border-radius: 8px;
+        background: color-mix(in srgb, var(--gl-bg-2) 92%, transparent); border: 1px solid color-mix(in srgb, var(--gl-ok) 55%, transparent);
+        color: var(--gl-ok); white-space: nowrap; box-shadow: var(--gl-shadow);
+        opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    }
+    .gl-detail-share-btn.is-copied .gl-detail-share-toast { opacity: 1; }
+
+    /* ── Main grid: gallery + sticky aside ── */
+    .gl-detail-grid {
+        display: grid; gap: 1.6rem; align-items: start;
+        grid-template-columns: minmax(0, 1.65fr) minmax(290px, 1fr);
+    }
+    @media (max-width: 900px) { .gl-detail-grid { grid-template-columns: minmax(0, 1fr); } }
+    .gl-detail-grid > * { min-width: 0; }
+
+    /* Gallery */
+    .gl-detail-stage {
+        position: relative; aspect-ratio: 16/10; overflow: hidden;
+        border-radius: var(--gl-radius); margin-bottom: .85rem;
+        background: #05060f; border: 1px solid var(--gl-border-2);
+        box-shadow: var(--gl-shadow);
+    }
+    .gl-detail-stage::after {
+        content: ""; position: absolute; inset: 0; pointer-events: none;
+        border-radius: inherit; box-shadow: inset 0 0 60px -20px color-mix(in srgb, var(--gl-brand) 50%, transparent);
+    }
+    .gl-detail-stage img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
+    .gl-detail-thumbs {
+        display: flex; flex-wrap: nowrap; gap: .5rem; width: 100%; min-width: 0;
+        overflow-x: auto; overflow-y: hidden; padding: .15rem .15rem .6rem;
+        scrollbar-width: thin; scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch; touch-action: pan-x; overscroll-behavior-x: contain;
+    }
+    .gl-detail-thumbs::-webkit-scrollbar { height: 6px; }
+    .gl-detail-thumb {
+        flex: 0 0 5.25rem; width: 5.25rem; height: 4rem; aspect-ratio: 4/3;
+        background: #05060f; overflow: hidden; cursor: pointer;
+        border: 2px solid var(--gl-border); border-radius: var(--gl-radius-sm);
+        transition: border-color .2s, box-shadow .2s; scroll-snap-align: start;
+    }
+    .gl-detail-thumb:hover, .gl-detail-thumb.active { border-color: var(--gl-brand); }
+    .gl-detail-thumb.active { box-shadow: 0 0 0 3px color-mix(in srgb, var(--gl-brand) 28%, transparent); }
+    .gl-detail-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: .72; transition: opacity .2s; }
+    .gl-detail-thumb:hover img, .gl-detail-thumb.active img { opacity: 1; }
+
+    /* ── Sticky purchase aside ── */
+    .gl-detail-aside {
+        padding: 1.5rem; border-radius: var(--gl-radius);
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        border: 1px solid var(--gl-border);
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow); position: sticky; top: calc(var(--gl-nav-h) + 14px);
+    }
+    @media (max-width: 900px) { .gl-detail-aside { position: static; } }
+    .gl-detail-id .make { color: var(--gl-brand); font-size: .82rem; font-weight: 700; margin-bottom: .4rem; }
+    .gl-detail-id .model { font-size: 1.7rem; font-weight: 800; margin: 0 0 .35rem; line-height: 1.15; color: var(--gl-ink); }
+    .gl-detail-id .year { color: var(--gl-muted); font-size: .92rem; margin-bottom: 1.1rem; }
+    .gl-detail-lot { color: var(--gl-muted); font-size: .8rem; font-weight: 600; margin-bottom: 1rem; }
+
+    .gl-detail-price-block {
+        padding: 1.1rem 1.2rem; margin-bottom: 1.3rem; border-radius: var(--gl-radius-sm);
+        background: rgba(255,255,255,0.04);
+        border: 1px solid color-mix(in srgb, var(--gl-brand) 28%, var(--gl-border));
+        box-shadow: inset 0 0 30px -16px color-mix(in srgb, var(--gl-brand) 70%, transparent);
+    }
+    .gl-detail-price-lbl { color: var(--gl-muted); font-size: .74rem; font-weight: 700; margin-bottom: .35rem; }
+    .gl-detail-price {
+        font-size: 2rem; font-weight: 800; letter-spacing: -.02em; display: inline-block;
+        background: var(--gl-grad); -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent; color: transparent;
+        filter: drop-shadow(0 0 18px color-mix(in srgb, var(--gl-brand) 45%, transparent));
+    }
+    .gl-detail-note-warn {
+        margin-top: .7rem; padding: .6rem .8rem; border-radius: var(--gl-radius-sm);
+        border: 1px solid color-mix(in srgb, var(--gl-warn) 45%, transparent);
+        background: color-mix(in srgb, var(--gl-warn) 12%, transparent);
+        font-size: .78rem; color: var(--gl-ink); line-height: 1.55;
+    }
+    .gl-detail-price-change {
+        display: none; align-items: center; gap: .55rem; margin-top: .85rem;
+        padding: .5rem .85rem; border-radius: 999px; font-size: .73rem; font-weight: 700;
+        border: 1px solid var(--gl-border); background: var(--gl-glass-2);
+    }
+    .gl-detail-price-change.is-visible { display: inline-flex; }
+    .gl-detail-price-change.is-up { border-color: color-mix(in srgb, var(--gl-danger) 50%, transparent); background: color-mix(in srgb, var(--gl-danger) 14%, transparent); color: var(--gl-danger); }
+    .gl-detail-price-change.is-down { border-color: color-mix(in srgb, var(--gl-ok) 50%, transparent); background: color-mix(in srgb, var(--gl-ok) 14%, transparent); color: var(--gl-ok); }
+    .gl-detail-price-change .arrow { font-weight: 800; font-size: .95rem; line-height: 1; }
+    .gl-detail-price-change .old { opacity: .7; text-decoration: line-through; }
+    .gl-detail-price-change .new { font-weight: 800; }
+
+    .gl-detail-auction-cd { margin-bottom: 1.3rem; }
+    .gl-detail-auction-cd-lbl { color: var(--gl-muted); font-size: .74rem; font-weight: 700; margin-bottom: .5rem; }
+
+    .gl-detail-aspecs { list-style: none; padding: 0; margin: 0 0 1.3rem; }
+    .gl-detail-aspecs li { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--gl-border); font-size: .88rem; }
+    .gl-detail-aspecs li:last-child { border-bottom: 0; }
+    .gl-detail-aspecs li span:first-child { color: var(--gl-muted); font-weight: 600; font-size: .8rem; }
+    .gl-detail-aspecs li span:last-child { color: var(--gl-ink); font-weight: 700; }
+
+    /* CTA — reuse .gl-btn primitives but ensure block + spacing */
+    .gl-detail-cta { width: 100%; margin-bottom: .65rem; }
+    .gl-detail-cta svg { width: 1rem; height: 1rem; }
+    .gl-detail-save-form { margin: 0 0 .65rem; }
+
+    /* Status / encar pills */
+    .gl-detail-status {
+        display: inline-flex; align-items: center; padding: .32rem .85rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 700; border: 1px solid var(--gl-border); margin-bottom: .6rem;
+    }
+    .gl-detail-status.sold { background: color-mix(in srgb, var(--gl-danger) 14%, transparent); color: var(--gl-danger); border-color: color-mix(in srgb, var(--gl-danger) 45%, transparent); }
+    .gl-detail-status.pending { background: color-mix(in srgb, var(--gl-warn) 14%, transparent); color: var(--gl-warn); border-color: color-mix(in srgb, var(--gl-warn) 50%, transparent); }
+
+    .gl-detail-encar {
+        display: inline-flex; align-items: center; gap: .5rem; padding: .32rem .85rem; margin-bottom: .6rem;
+        border-radius: 999px; font-size: .74rem; font-weight: 700;
+        border: 1px solid var(--gl-border); background: var(--gl-glass-2); color: var(--gl-muted);
+    }
+    .gl-detail-encar[hidden] { display: none; }
+    .gl-detail-encar-skel {
+        display: inline-block; width: 8rem; height: .7rem; border-radius: 999px;
+        background: linear-gradient(90deg, color-mix(in srgb, var(--gl-brand) 12%, transparent) 0%, color-mix(in srgb, var(--gl-brand) 30%, transparent) 50%, color-mix(in srgb, var(--gl-brand) 12%, transparent) 100%);
+        background-size: 200% 100%; animation: glShimmer 1.4s ease-in-out infinite;
+    }
+    @keyframes glShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .gl-detail-encar.available { color: var(--gl-ok); border-color: color-mix(in srgb, var(--gl-ok) 50%, transparent); background: color-mix(in srgb, var(--gl-ok) 12%, transparent); }
+    .gl-detail-encar-dot { position: relative; display: inline-flex; width: .5rem; height: .5rem; }
+    .gl-detail-encar-dot::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--gl-ok); opacity: .6; animation: glPing 1.6s cubic-bezier(0,0,.2,1) infinite; }
+    .gl-detail-encar-dot::after { content: ''; position: relative; width: 100%; height: 100%; border-radius: 50%; background: var(--gl-ok); }
+    @keyframes glPing { 75%, 100% { transform: scale(2); opacity: 0; } }
+    .gl-detail-encar.unavailable { color: var(--gl-danger); border-color: color-mix(in srgb, var(--gl-danger) 45%, transparent); background: color-mix(in srgb, var(--gl-danger) 12%, transparent); }
+    .gl-detail-encar-x { width: .7rem; height: .7rem; }
+
+    /* Contact person */
+    .gl-detail-contact {
+        display: flex; align-items: center; gap: .8rem; margin: .5rem 0 1.1rem;
+        padding-top: 1.1rem; border-top: 1px solid var(--gl-border);
+    }
+    .gl-detail-contact-photo { width: 3rem; height: 3rem; border-radius: 50%; object-fit: cover; border: 2px solid color-mix(in srgb, var(--gl-brand) 50%, transparent); flex-shrink: 0; }
+    .gl-detail-contact-fallback {
+        width: 3rem; height: 3rem; border-radius: 50%; flex-shrink: 0;
+        background: color-mix(in srgb, var(--gl-brand) 18%, transparent); color: var(--gl-brand);
+        align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem;
+    }
+    .gl-detail-contact-name { color: var(--gl-ink); font-weight: 700; font-size: .92rem; }
+    .gl-detail-contact-role { color: var(--gl-muted); font-size: .72rem; font-weight: 600; margin-top: .15rem; }
+
+    /* ── Quick-nav pill bar ── */
+    .gl-detail-secnav {
+        position: sticky; top: var(--gl-nav-h); z-index: 40;
+        display: flex; gap: .5rem; overflow-x: auto; padding: .65rem .1rem;
+        margin: 1rem 0 .25rem; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        background: color-mix(in srgb, var(--gl-bg-1) 55%, transparent);
+        backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    }
+    .gl-detail-secnav::-webkit-scrollbar { display: none; }
+    .gl-detail-secnav:empty { display: none; }
+    .gl-detail-secnav-pill {
+        flex: 0 0 auto; white-space: nowrap; cursor: pointer;
+        padding: .45rem 1rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
+        color: var(--gl-muted); border: 1px solid var(--gl-border); background: var(--gl-glass-2);
+        transition: background .2s, color .2s, border-color .2s;
+    }
+    .gl-detail-secnav-pill:hover { color: var(--gl-ink); border-color: var(--gl-border-2); }
+    .gl-detail-secnav-pill.active { background: var(--gl-grad-solid); color: #fff; border-color: transparent; font-weight: 800; }
+
+    /* ── Section blocks ── */
+    .gl-detail-section {
+        margin-top: 1.4rem; padding: 1.5rem 1.6rem; border-radius: var(--gl-radius);
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        border: 1px solid var(--gl-border);
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow); scroll-margin-top: calc(var(--gl-nav-h) + 12px);
+    }
+    .gl-detail-section h2 {
+        font-size: 1.35rem; margin: 0 0 1rem; padding-bottom: .7rem;
+        border-bottom: 1px solid var(--gl-border); color: var(--gl-ink); font-weight: 800;
+    }
+    .gl-detail-section h2 small { display: block; color: var(--gl-brand); font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; margin-bottom: .35rem; }
+
+    /* Specs grid */
+    .gl-detail-specs { display: grid; gap: .65rem; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .gl-detail-spec {
+        padding: .8rem .95rem; border-radius: var(--gl-radius-sm);
+        background: rgba(255,255,255,0.04); border: 1px solid var(--gl-border);
+        transition: border-color .2s, background .2s;
+    }
+    .gl-detail-spec:hover { border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border)); background: rgba(255,255,255,0.06); }
+    .gl-detail-spec-head { display: flex; align-items: center; gap: .45rem; margin-bottom: .3rem; }
+    .gl-detail-spec-ico { flex-shrink: 0; width: 1rem; height: 1rem; color: var(--gl-brand); display: inline-flex; }
+    .gl-detail-spec-ico svg { width: 100%; height: 100%; display: block; }
+    .gl-detail-spec .label { color: var(--gl-muted); font-size: .74rem; font-weight: 700; }
+    .gl-detail-spec .value { color: var(--gl-ink); font-size: .98rem; font-weight: 700; }
+
+    .gl-detail-desc { color: var(--gl-ink); line-height: 1.8; white-space: pre-line; font-size: .95rem; margin: 0; }
+
+    /* Features */
+    .gl-detail-feats { display: grid; gap: .65rem; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+    .gl-detail-feat {
+        display: inline-flex; align-items: center; gap: .6rem; padding: .55rem .95rem; border-radius: 999px;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--gl-border); color: var(--gl-ink);
+        font-size: .84rem; font-weight: 600; text-align: start;
+    }
+    .gl-detail-feat-ico { flex-shrink: 0; width: 1.1rem; height: 1.1rem; color: var(--gl-brand); display: inline-flex; }
+    .gl-detail-feat-ico svg { width: 100%; height: 100%; display: block; }
+    .gl-detail-feat-text { flex: 1; min-width: 0; line-height: 1.3; }
+    .gl-detail-feats-icons { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .gl-detail-feat-card {
+        padding: 1rem; border-radius: var(--gl-radius-sm); text-align: center;
+        background: rgba(255,255,255,0.04); border: 1px solid var(--gl-border);
+        display: flex; flex-direction: column; align-items: center; gap: .5rem;
+    }
+    .gl-detail-feat-card img { width: 48px; height: 48px; object-fit: contain; }
+    .gl-detail-feat-card span { color: var(--gl-ink); font-size: .85rem; font-weight: 600; }
+
+    /* optionsChoice */
+    .gl-detail-oc-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid var(--gl-border); }
+    .gl-detail-oc-row:last-child { border-bottom: 0; }
+    .gl-detail-oc-main { min-width: 0; }
+    .gl-detail-oc-name { font-weight: 700; color: var(--gl-ink); }
+    .gl-detail-oc-desc { font-size: .85rem; color: var(--gl-muted); margin-top: .25rem; white-space: pre-line; }
+    .gl-detail-oc-price {
+        flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: baseline; gap: .25rem;
+        padding: .28rem .75rem; border-radius: 999px;
+        background: color-mix(in srgb, var(--gl-brand) 14%, transparent);
+        border: 1px solid color-mix(in srgb, var(--gl-brand) 35%, transparent);
+        color: var(--gl-brand); font-weight: 700; font-size: .88rem;
+    }
+    .gl-detail-oc-price .cur { font-size: .7rem; opacity: .75; }
+
+    /* Inspection */
+    .gl-detail-tag-ok {
+        display: inline-flex; align-items: center; gap: .5rem; padding: .45rem .9rem; margin-bottom: 1.25rem;
+        border-radius: 999px; border: 1px solid color-mix(in srgb, var(--gl-ok) 50%, transparent);
+        background: color-mix(in srgb, var(--gl-ok) 12%, transparent); color: var(--gl-ok);
+        font-size: .82rem; font-weight: 700;
+    }
+    .insp-diagram { position: relative; width: 100%; user-select: none; background: #fff; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); overflow: hidden; }
+    .insp-diagram img { width: 100%; display: block; }
+    .gl-detail-markers { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .5rem; margin-top: 1rem; }
+    .gl-detail-marker { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .55rem .8rem; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); background: rgba(255,255,255,0.04); font-size: .85rem; }
+    .gl-detail-marker .mk { color: var(--gl-muted); }
+    .gl-detail-marker .mv { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; }
+    .gl-marker-code { font-weight: 800; color: var(--gl-brand); background: color-mix(in srgb, var(--gl-brand) 12%, transparent); border-radius: 5px; padding: .05rem .4rem; min-width: 1.7rem; text-align: center; }
+    .gl-marker-st { font-size: .72rem; font-weight: 700; border-radius: 5px; padding: .1rem .45rem; }
+    .gl-marker-st.replaced { color: #dc2626; background: rgba(220,38,38,.13); }
+    .gl-marker-st.repaired { color: #d97706; background: rgba(217,119,6,.13); }
+    .gl-marker-st.good { color: #16a34a; background: rgba(22,163,74,.13); }
+    .insp-badge {
+        position: absolute; width: 5.5%; aspect-ratio: 1/1; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: clamp(8px, 1.4vw, 13px); font-weight: 800; color: #fff;
+        transform: translate(-50%, -50%); box-shadow: 0 2px 6px #0004; cursor: default; transition: transform .15s;
+    }
+    .insp-badge:hover { transform: translate(-50%, -50%) scale(1.3); }
+    .insp-badge::after {
+        content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+        background: #222; color: #fff; font-size: 11px; white-space: nowrap; padding: 4px 8px; border-radius: 4px;
+        pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 10;
+    }
+    .insp-badge:hover::after { opacity: 1; }
+    .insp-badge.X { background: #e53935; } .insp-badge.W { background: #1e88e5; }
+    .insp-badge.C { background: #fb8c00; } .insp-badge.A { background: #7cb9e8; }
+    .insp-badge.U { background: #6d7c47; } .insp-badge.T { background: #9e9e9e; }
+    .insp-lb { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .insp-lb.X { background: #e53935; } .insp-lb.W { background: #1e88e5; }
+    .insp-lb.C { background: #fb8c00; } .insp-lb.A { background: #7cb9e8; }
+    .insp-lb.U { background: #6d7c47; } .insp-lb.T { background: #9e9e9e; }
+    .insp-rank { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+    .insp-rank-1 { background: rgba(229,57,53,.18); color: #e53935; }
+    .insp-rank-2 { background: rgba(251,140,0,.18); color: #fb8c00; }
+
+    .gl-detail-insp-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 700px) { .gl-detail-insp-grid { grid-template-columns: 1fr; } }
+    .gl-detail-insp-title { color: var(--gl-muted); font-size: .82rem; font-weight: 700; margin-bottom: .6rem; }
+    .gl-detail-insp-legend { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem 0 0; border-top: 1px solid var(--gl-border); margin-top: 1.5rem; color: var(--gl-muted); font-size: .8rem; }
+    .gl-detail-insp-legend > span { display: inline-flex; align-items: center; gap: .4rem; }
+    .gl-detail-insp-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: .85rem; }
+    .gl-detail-insp-table thead th { text-align: left; padding: .6rem .85rem; color: var(--gl-muted); font-size: .74rem; font-weight: 700; border-bottom: 1px solid var(--gl-border); }
+    .gl-detail-insp-table tbody td { padding: .6rem .85rem; border-bottom: 1px solid var(--gl-border); color: var(--gl-ink); }
+    .gl-detail-insp-table-wrap table tr,
+    .gl-detail-insp-table-wrap table td,
+    .gl-detail-insp-table-wrap table th { background: transparent !important; color: var(--gl-ink) !important; border-color: var(--gl-border) !important; }
+
+    /* Inspection sheet image */
+    .gl-detail-insp-img { width: 100%; max-height: 600px; object-fit: contain; background: #fff; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); margin-bottom: 1rem; }
+    .gl-detail-insp-sheet-legend { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); padding: 1rem; margin-top: .5rem; border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); background: rgba(255,255,255,0.04); }
+    .gl-detail-insp-sheet-item { display: inline-flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--gl-ink); }
+    .gl-detail-insp-code { display: inline-flex; align-items: center; justify-content: center; min-width: 2rem; padding: .15rem .45rem; border-radius: 7px; border: 1px solid color-mix(in srgb, var(--gl-brand) 45%, transparent); color: var(--gl-brand); font-weight: 700; font-size: .7rem; background: color-mix(in srgb, var(--gl-brand) 14%, transparent); }
+
+    /* Insurance history */
+    .gl-detail-hist-stats { display: grid; gap: .85rem; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 1.5rem; }
+    .gl-detail-hist-stat { padding: 1.15rem; border-radius: var(--gl-radius-sm); text-align: center; background: rgba(255,255,255,0.04); border: 1px solid var(--gl-border); }
+    .gl-detail-hist-stat .label { color: var(--gl-muted); font-size: .74rem; font-weight: 700; margin-bottom: .45rem; }
+    .gl-detail-hist-stat .value { font-size: 1.7rem; font-weight: 800; color: var(--gl-ink); }
+    .gl-detail-hist-stat.alert .value { color: var(--gl-danger); }
+    .gl-detail-hist-stat.warn .value { color: var(--gl-warn); }
+    .gl-detail-hist-tags { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+    .gl-detail-hist-tag { padding: .38rem .85rem; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--gl-border); color: var(--gl-ink); font-size: .8rem; font-weight: 600; }
+    .gl-detail-hist-tag.alert { background: color-mix(in srgb, var(--gl-danger) 12%, transparent); border-color: color-mix(in srgb, var(--gl-danger) 45%, transparent); color: var(--gl-danger); }
+    .gl-detail-hist-list { border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); overflow: hidden; }
+    .gl-detail-hist-item { display: flex; justify-content: space-between; gap: 1rem; padding: .85rem 1.25rem; border-bottom: 1px solid var(--gl-border); font-size: .85rem; }
+    .gl-detail-hist-item:last-child { border-bottom: 0; }
+    .gl-detail-hist-item:nth-child(odd) { background: rgba(255,255,255,0.03); }
+    .gl-detail-hist-item .date { color: var(--gl-muted); margin-inline-end: 1rem; min-width: 6rem; }
+    .gl-detail-hist-item .cost { color: var(--gl-danger); font-weight: 700; }
+
+    /* ── Calculator / price-comparison modal ── */
+    .gl-detail-calc-field { display: flex; flex-direction: column; gap: .45rem; margin-bottom: 1.5rem; }
+    .gl-detail-calc-field > span { color: var(--gl-muted); font-size: .78rem; font-weight: 700; }
+    .gl-detail-calc-field select {
+        background: rgba(255,255,255,0.05); color: var(--gl-ink); border: 1px solid var(--gl-border);
+        padding: .75rem .9rem; font-family: inherit; font-size: .95rem; border-radius: var(--gl-radius-sm);
+    }
+    .gl-detail-calc-field select option { background: var(--gl-bg-2); color: var(--gl-ink); }
+    .gl-detail-calc-field select:focus { outline: none; border-color: var(--gl-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gl-brand) 22%, transparent); }
+    .gl-detail-calc-rows { border: 1px solid var(--gl-border); border-radius: var(--gl-radius-sm); overflow: hidden; }
+    .gl-detail-calc-row { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 1rem; border-bottom: 1px solid var(--gl-border); font-size: .88rem; }
+    .gl-detail-calc-row:last-child { border-bottom: 0; }
+    .gl-detail-calc-row:nth-child(odd) { background: rgba(255,255,255,0.03); }
+    .gl-detail-calc-row .k { color: var(--gl-muted); }
+    .gl-detail-calc-row .v { color: var(--gl-ink); font-weight: 600; white-space: nowrap; }
+    .gl-detail-calc-total {
+        display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-top: 1rem;
+        padding: .95rem 1.1rem; border-radius: var(--gl-radius-sm);
+        border: 1px solid color-mix(in srgb, var(--gl-brand) 45%, transparent);
+        background: color-mix(in srgb, var(--gl-brand) 12%, transparent);
+    }
+    .gl-detail-calc-total .k { color: var(--gl-ink); font-size: .95rem; font-weight: 700; }
+    .gl-detail-calc-total .v { color: var(--gl-brand); font-weight: 800; font-size: 1.25rem; white-space: nowrap; }
+    .gl-detail-calc-note { color: var(--gl-muted); font-size: .72rem; line-height: 1.65; margin-top: .9rem; }
+    .gl-detail-modal {
+        position: fixed; inset: 0; z-index: 90; display: none; align-items: center; justify-content: center; padding: 1rem;
+        background: rgba(5, 7, 18, 0.6); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+    }
+    .gl-detail-modal-inner {
+        width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 1.75rem;
+        border-radius: var(--gl-radius);
+        background: linear-gradient(160deg, color-mix(in srgb, var(--gl-bg-2) 92%, transparent), color-mix(in srgb, var(--gl-bg-1) 92%, transparent));
+        border: 1px solid var(--gl-border-2);
+        backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%);
+        box-shadow: var(--gl-shadow-lg);
+    }
+    .gl-detail-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .gl-detail-modal-head h3 { margin: 0; font-size: 1.1rem; color: var(--gl-ink); font-weight: 800; }
+    .gl-detail-modal-close { background: transparent; border: 0; color: var(--gl-muted); font-size: 1.7rem; line-height: 1; cursor: pointer; }
+    .gl-detail-modal-close:hover { color: var(--gl-brand); }
+
+    /* ── Similar cars ── */
+    .gl-detail-similar { margin-top: 3rem; padding-top: 2.5rem; border-top: 1px solid var(--gl-border); }
+    .gl-detail-similar h2 { font-size: 1.5rem; margin: 0 0 1.5rem; color: var(--gl-ink); font-weight: 800; }
+    .gl-detail-similar h2 small { display: block; color: var(--gl-brand); font-size: .72rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; margin-bottom: .35rem; }
+    .gl-detail-similar-grid {
+        display: flex; gap: 1.1rem; overflow-x: auto; overflow-y: hidden; padding: .25rem .25rem 1rem;
+        scrollbar-width: thin; scroll-snap-type: x proximity; scroll-padding-left: .25rem;
+    }
+    .gl-detail-similar-grid::-webkit-scrollbar { height: 6px; }
+    .gl-detail-similar-card {
+        flex: 0 0 250px; display: block; color: inherit; overflow: hidden; border-radius: var(--gl-radius);
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass)); border: 1px solid var(--gl-border);
+        backdrop-filter: blur(var(--gl-blur)); -webkit-backdrop-filter: blur(var(--gl-blur));
+        box-shadow: var(--gl-shadow); scroll-snap-align: start;
+        transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s, border-color .22s;
+    }
+    @media (max-width: 600px) { .gl-detail-similar-card { flex-basis: 70vw; } }
+    .gl-detail-similar-card:hover { transform: translateY(-3px); box-shadow: var(--gl-shadow-lg); border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border)); }
+    .gl-detail-similar-img { aspect-ratio: 4/3; background: #05060f; overflow: hidden; }
+    .gl-detail-similar-img img { width: 100%; height: 100%; object-fit: cover; }
+    .gl-detail-similar-body { padding: 1rem 1.15rem 1.15rem; }
+    .gl-detail-similar-make { color: var(--gl-brand); font-size: .72rem; font-weight: 700; margin-bottom: .35rem; }
+    .gl-detail-similar-name { font-size: .98rem; font-weight: 700; margin: 0 0 .35rem; color: var(--gl-ink); }
+    .gl-detail-similar-trim { display: inline-block; margin-bottom: .5rem; padding: .12rem .55rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--gl-brand) 35%, transparent); color: var(--gl-brand); font-size: .66rem; font-weight: 700; background: color-mix(in srgb, var(--gl-brand) 12%, transparent); }
+    .gl-detail-similar-price { color: var(--gl-ink); font-size: 1.02rem; font-weight: 800; }
+
+    /* ── Lightbox ── */
+    .gl-detail-lightbox {
+        position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 2rem;
+        background: rgba(4, 6, 14, 0.95); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .gl-detail-lightbox.open { display: flex; }
+    .gl-detail-lightbox-img { max-width: 92vw; max-height: 88vh; object-fit: contain; border-radius: var(--gl-radius-sm); box-shadow: 0 30px 60px rgba(0,0,0,.6); }
+    .gl-detail-lightbox-close,
+    .gl-detail-lightbox-prev,
+    .gl-detail-lightbox-next {
+        position: absolute; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22);
+        color: #fff; cursor: pointer; border-radius: 999px; width: 3rem; height: 3rem;
+        display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-family: inherit;
+        transition: all .2s; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .gl-detail-lightbox-close:hover,
+    .gl-detail-lightbox-prev:hover,
+    .gl-detail-lightbox-next:hover { background: rgba(255,255,255,0.2); }
+    .gl-detail-lightbox-close { top: 1.5rem; right: 1.5rem; }
+    .gl-detail-lightbox-prev { left: 1.5rem; top: 50%; transform: translateY(-50%); }
+    .gl-detail-lightbox-next { right: 1.5rem; top: 50%; transform: translateY(-50%); }
+    .gl-detail-lightbox-counter { position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.7); font-size: .8rem; font-weight: 600; }
+    .gl-detail-lightbox-counter span { color: #fff; }
+    @media (max-width: 600px) {
+        .gl-detail-lightbox { padding: .5rem; }
+        .gl-detail-lightbox-img { max-width: 100vw; max-height: 88vh; border-radius: 0; }
+        .gl-detail-lightbox-prev, .gl-detail-lightbox-next { width: 2.5rem; height: 2.5rem; font-size: 1.1rem; }
+        .gl-detail-lightbox-prev { left: .5rem; }
+        .gl-detail-lightbox-next { right: .5rem; }
+    }
+
+    /* ── Phone tweaks ── */
+    @media (max-width: 700px) {
+        .gl-detail { padding: 1.1rem 0 2.5rem; }
+        .gl-detail-hero-name { font-size: 1.05rem; }
+        .gl-detail-hero-price { font-size: 1.1rem; }
+        .gl-detail-stage { aspect-ratio: auto; max-height: 50vh; }
+        .gl-detail-stage img { height: auto; max-height: 50vh; object-fit: contain; }
+        .gl-detail-thumb { flex: 0 0 4.25rem; width: 4.25rem; height: 3.25rem; }
+        .gl-detail-aside { padding: 1.25rem; }
+        .gl-detail-id .model { font-size: 1.4rem; }
+        .gl-detail-price { font-size: 1.7rem; }
+        .gl-detail-section { margin-top: 1.1rem; padding: 1.1rem 1rem; }
+        .gl-detail-section h2 { font-size: 1.2rem; }
+        .gl-detail-specs { grid-template-columns: 1fr 1fr; gap: .55rem; }
+        .gl-detail-feats { grid-template-columns: 1fr 1fr; gap: .5rem; }
+        .gl-detail-feats-icons { grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+        .gl-detail-hist-stats { grid-template-columns: 1fr 1fr; gap: .6rem; }
+        .gl-detail-insp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .gl-detail-insp-table { min-width: 32rem; font-size: .78rem; }
+        .gl-detail-similar { margin-top: 2rem; padding-top: 1.75rem; }
+        .gl-detail-similar h2 { font-size: 1.2rem; }
+    }
+</style>
+
+<div class="gl-detail">
+    <div class="gl-shell">
+        <a href="{% url 'car_list' %}" class="gl-detail-back bilingual" data-lang-ar="← المجموعة" data-lang-en="← Collection" data-lang-es="← Colección" data-lang-ru="← Коллекция">← المجموعة</a>
+
+        <div class="gl-detail-hero">
+            <div class="gl-detail-hero-text">
+                <div class="gl-detail-hero-make">
+                    {% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'en' }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}
+                    {% if car.year %} · {{ car.year }}{% endif %}
+                </div>
+                <div class="gl-detail-hero-name">
+                    {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}" data-lang-es="{{ car.model|translate_model:'en' }}" data-lang-ru="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
+                    {% with bn=car|car_trim %}{% if bn %}<span class="gl-chip brand"><bdi>{{ bn }}</bdi></span>{% endif %}{% endwith %}
+                </div>
+            </div>
+            <div class="gl-detail-hero-side">
+                {% if car.price %}
+                {% if car.category.name == 'auction' %}
+                <div class="gl-detail-hero-pricelbl bilingual" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</div>
+                {% endif %}
+                <div class="gl-detail-hero-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                {% endif %}
+                <div class="gl-detail-share" id="gl-share" data-share-url="{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}" data-share-title="{{ car.year }} {{ car.manufacturer.name }} {{ car.model.name }}">
+                    {% whatsapp_car_message car site_name as gl_wa_share_msg %}
+                    <a href="https://wa.me/?text={{ gl_wa_share_msg }}" data-wa-krw="{{ car.price }}" target="_blank" rel="noopener" class="gl-detail-share-btn" title="WhatsApp" aria-label="Share on WhatsApp">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    </a>
+                    <button type="button" class="gl-detail-share-btn" id="gl-share-copy" aria-label="Copy link" title="Copy link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span class="gl-detail-share-toast bilingual" data-lang-ar="تم النسخ" data-lang-en="Copied" data-lang-es="Copiado" data-lang-ru="Скопировано">تم النسخ</span>
+                    </button>
+                    <button type="button" class="gl-detail-share-btn" id="gl-share-native" aria-label="Share" title="Share" hidden>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="gl-detail-grid">
+            <div>
+                <div class="gl-detail-stage car-img-wm">
+                    {% if car.image %}<img id="gl-main-img" src="{{ car.image|https_url }}" alt="{{ car.title }}" onclick="glOpenLightbox(0)">{% elif car.images and car.images|length > 0 %}<img id="gl-main-img" src="{{ car.images.0|https_url }}" alt="{{ car.title }}" onclick="glOpenLightbox(0)">{% endif %}
+                </div>
+                {% if car.images %}
+                <div class="gl-detail-thumbs">
+                    {% if car.image %}
+                    <div class="gl-detail-thumb active" data-gl-idx="0" onclick="glSelectThumb(this); document.getElementById('gl-main-img').src='{{ car.image|https_url|escapejs }}'; glOpenLightbox(0);"><img src="{{ car.image|https_url }}" alt=""></div>
+                    {% endif %}
+                    {% for img in car.images %}
+                    <div class="gl-detail-thumb{% if not car.image and forloop.first %} active{% endif %}" data-gl-idx="{% if car.image %}{{ forloop.counter }}{% else %}{{ forloop.counter0 }}{% endif %}" onclick="glSelectThumb(this); document.getElementById('gl-main-img').src='{{ img|https_url|escapejs }}'; glOpenLightbox(this.dataset.glIdx);"><img src="{{ img|https_url }}" alt=""></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <aside class="gl-detail-aside">
+                {% if car.status == 'sold' %}
+                <div class="gl-detail-status sold bilingual" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продано">تم البيع</div>
+                {% elif car.status == 'pending' %}
+                <div class="gl-detail-status pending bilingual" data-lang-ar="قيد الانتظار" data-lang-en="Pending" data-lang-es="Pendiente" data-lang-ru="В ожидании">قيد الانتظار</div>
+                {% endif %}
+                {% if car.lot_number %}
+                <div id="encar-badge-loading" class="gl-detail-encar"><span class="gl-detail-encar-skel"></span></div>
+                <div id="encar-badge-available" class="gl-detail-encar available" hidden>
+                    <span class="gl-detail-encar-dot"></span>
+                    <span class="bilingual" data-lang-ar="متاح على إنكار" data-lang-ru="Доступно на Inkar" data-lang-es="Disponible en Inkar" data-lang-en="Available on Encar">متاح على إنكار</span>
+                </div>
+                <div id="encar-badge-sold" class="gl-detail-encar unavailable" hidden>
+                    <svg class="gl-detail-encar-x" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <span class="bilingual" data-lang-ar="غير متاح على إنكار" data-lang-ru="Недоступно при отказе" data-lang-es="No disponible en caso de denegación" data-lang-en="Not available on Encar">غير متاح على إنكار</span>
+                </div>
+                {% endif %}
+                <div class="gl-detail-id">
+                    <div class="make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
+                    <h1 class="model">{% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}</h1>
+                    <div class="year">{{ car.year }}{% with bn=car|car_trim %}{% if bn %} · <bdi>{{ bn }}</bdi>{% endif %}{% endwith %}</div>
+                </div>
+                {% if car.lot_number %}
+                <div class="gl-detail-lot"><span class="bilingual" data-lang-ar="رقم القطعة" data-lang-en="Lot #" data-lang-es="Lote #" data-lang-ru="Лот #">رقم القطعة</span>: {{ car.lot_number }}</div>
+                {% elif car.entry %}
+                <div class="gl-detail-lot"><span class="bilingual" data-lang-ar="رقم الإعلان" data-lang-en="Listing #" data-lang-es="Anuncio #" data-lang-ru="Объявление #">رقم الإعلان</span>: {{ car.entry }}</div>
+                {% endif %}
+
+                {% if car.price %}
+                <div class="gl-detail-price-block">
+                    {% if car.category.name == 'auction' %}
+                    <div class="gl-detail-price-lbl bilingual" data-lang-ar="سعر بداية المزاد" data-lang-en="Starting auction price" data-lang-es="Precio inicial de subasta" data-lang-ru="Стартовая цена аукциона">سعر بداية المزاد</div>
+                    {% else %}
+                    <div class="gl-detail-price-lbl bilingual" data-lang-ar="السعر" data-lang-en="Price" data-lang-es="Precio" data-lang-ru="Цена">السعر</div>
+                    {% endif %}
+                    <div class="gl-detail-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>
+                    {% if car.year and car.year < 2021 %}
+                    <div class="gl-detail-note-warn bilingual" data-lang-ar="رسوم جمركية إضافية 23,000 ر.س عند التصدير إلى السعودية (موديل أقدم من 2021)" data-lang-en="+23,000 SAR extra customs fee for Saudi Arabia (pre-2021 model)" data-lang-es="+23,000 SAR de aduana adicional para Arabia Saudita (anterior a 2021)" data-lang-ru="+23 000 SAR доп. пошлина для Саудовской Аравии (модель до 2021 г.)">رسوم جمركية إضافية 23,000 ر.س عند التصدير إلى السعودية (موديل أقدم من 2021)</div>
+                    {% endif %}
+                    <div id="price-change-banner" class="gl-detail-price-change">
+                        <span data-arrow class="arrow">↓</span>
+                        <span class="bilingual" data-lang-ar="تم تحديث السعر" data-lang-ru="Цена обновлена" data-lang-es="Precio actualizado" data-lang-en="Price updated">تم تحديث السعر</span>
+                        <span class="old" data-old-price data-price-krw="0">—</span>
+                        <span>→</span>
+                        <span class="new" data-new-price data-price-krw="0">—</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if car.category.name == 'auction' and car.auction_date %}
+                <div class="gl-detail-auction-cd">
+                    <div class="gl-detail-auction-cd-lbl bilingual" data-lang-ar="ينتهي المزاد خلال" data-lang-en="Auction ends in" data-lang-es="La subasta termina en" data-lang-ru="Аукцион заканчивается через">ينتهي المزاد خلال</div>
+                    <span class="auction-countdown cd-lg" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y-m-d H:i" }}</span>
+                </div>
+                {% endif %}
+
+                {% if car.lot_number %}
+                <script>
+                (function () {
+                    var url = "{% url 'car_availability_check' car.lot_number %}";
+                    var loadingEl = document.getElementById('encar-badge-loading');
+                    fetch(url, { method: 'GET' })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (loadingEl) loadingEl.hidden = true;
+                            if (data.available === true) {
+                                var availEl = document.getElementById('encar-badge-available');
+                                if (availEl) availEl.hidden = false;
+                            } else if (data.available === false) {
+                                var soldEl = document.getElementById('encar-badge-sold');
+                                if (soldEl) soldEl.hidden = false;
+                            }
+                            if (data.price_changed && typeof data.price === 'number' && data.price > 0) {
+                                document.querySelectorAll('[data-price-krw]').forEach(function (el) {
+                                    el.setAttribute('data-price-krw', data.price);
+                                });
+                                var currency = (window.localStorage && localStorage.getItem('site_currency')) || 'SAR';
+                                if (typeof window.applyCurrency === 'function') {
+                                    window.applyCurrency(currency);
+                                }
+                                var banner = document.getElementById('price-change-banner');
+                                if (banner && typeof data.old_price === 'number' && data.old_price > 0) {
+                                    var oldEl = banner.querySelector('[data-old-price]');
+                                    var newEl = banner.querySelector('[data-new-price]');
+                                    if (oldEl) oldEl.setAttribute('data-price-krw', data.old_price);
+                                    if (newEl) newEl.setAttribute('data-price-krw', data.price);
+                                    var direction = data.price > data.old_price ? 'up' : 'down';
+                                    banner.classList.add('is-visible');
+                                    banner.classList.toggle('is-up', direction === 'up');
+                                    banner.classList.toggle('is-down', direction === 'down');
+                                    var arrow = banner.querySelector('[data-arrow]');
+                                    if (arrow) arrow.textContent = direction === 'up' ? '↑' : '↓';
+                                    if (typeof window.applyCurrency === 'function') {
+                                        window.applyCurrency(currency);
+                                    }
+                                }
+                            }
+                        })
+                        .catch(function() {
+                            if (loadingEl) loadingEl.hidden = true;
+                        });
+                })();
+                </script>
+                {% endif %}
+
+                <ul class="gl-detail-aspecs">
+                    {% if car.mileage %}<li><span class="bilingual" data-lang-ar="المسافة" data-lang-en="Mileage" data-lang-es="Kilometraje" data-lang-ru="Пробег">المسافة</span><span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span></li>{% endif %}
+                    {% if car.transmission %}<li><span class="bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">ناقل الحركة</span><span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span></li>{% endif %}
+                    {% if car.fuel %}<li><span class="bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</span><span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span></li>{% endif %}
+                    {% if car.color %}<li><span class="bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</span><span class="bilingual" data-lang-ar="{{ car.color|translate_color }}" data-lang-en="{{ car.color|translate_color:'en' }}" data-lang-es="{{ car.color|translate_color:'es' }}" data-lang-ru="{{ car.color|translate_color:'ru' }}">{{ car.color|translate_color }}</span></li>{% endif %}
+                    {% if car.body_type %}<li><span class="bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body" data-lang-es="Carrocería" data-lang-ru="Кузов">نوع الهيكل</span><span class="bilingual" data-lang-ar="{{ car.body_type|translate_body }}" data-lang-en="{{ car.body_type|translate_body:'en' }}" data-lang-es="{{ car.body_type|translate_body:'es' }}" data-lang-ru="{{ car.body_type|translate_body:'ru' }}">{{ car.body_type|translate_body }}</span></li>{% endif %}
+                    {% if car.address %}<li><span class="bilingual" data-lang-ar="الموقع" data-lang-en="Location" data-lang-es="Ubicación" data-lang-ru="Расположение">الموقع</span><span class="bilingual" data-lang-ar="{{ car.address|ar_address }}" data-lang-en="{{ car.address|en_address }}" data-lang-es="{{ car.address|translate_address:'es' }}" data-lang-ru="{{ car.address|translate_address:'ru' }}">{{ car.address|ar_address }}</span></li>{% endif %}
+                </ul>
+
+                {% if request.user.is_staff and site_name %}
+                <form method="post" action="{% url 'save_public_car' car.pk %}" class="gl-detail-save-form">
+                    {% csrf_token %}
+                    <button type="submit" class="gl-btn gl-detail-cta">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3-7 3V5z"/></svg>
+                        <span class="bilingual" data-lang-ar="احفظ إلى سياراتي" data-lang-ru="Сохранить в мои машины" data-lang-es="Guardar en mis coches" data-lang-en="Save to my cars">احفظ إلى سياراتي</span>
+                    </button>
+                </form>
+                {% endif %}
+
+                {% include "cars/_sales_people.html" %}
+
+                {% if site_whatsapp %}
+                {% whatsapp_order_message car site_name as gl_wa_msg %}
+                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ gl_wa_msg }}" data-wa-krw="{{ car.price }}" target="_blank" rel="noopener" class="gl-btn gl-btn-solid gl-detail-cta gl-detail-cta-wa bilingual" data-lang-ar="استفسار عبر واتساب" data-lang-en="Inquire via WhatsApp" data-lang-es="Consultar por WhatsApp" data-lang-ru="Спросить через WhatsApp">استفسار عبر واتساب</a>
+                {% endif %}
+                {% if car.price and import_calc_enabled %}
+                <button type="button" onclick="glCalcOpen()" class="gl-btn gl-detail-cta bilingual" data-lang-ar="احسب التكلفة التقديرية" data-lang-en="Estimate import cost" data-lang-es="Calcular costo estimado" data-lang-ru="Рассчитать стоимость">احسب التكلفة التقديرية</button>
+                {% endif %}
+                {% if price_comparison or pc_pending %}
+                <button type="button" id="gl-pc-btn" onclick="glPcOpen()" class="gl-btn gl-detail-cta bilingual"{% if pc_pending %} style="display:none"{% endif %} data-lang-ar="مقارنة بسعر الجديد" data-lang-en="Compare to new price" data-lang-es="Comparar con nuevo" data-lang-ru="Сравнить с новым">مقارنة بسعر الجديد</button>
+                {% endif %}
+                {% if site_phone %}
+                <a href="tel:{{ site_phone }}" class="gl-btn gl-detail-cta bilingual" data-lang-ar="اتصل {{ site_phone }}" data-lang-en="Call {{ site_phone }}" data-lang-es="Llamar {{ site_phone }}" data-lang-ru="Позвонить {{ site_phone }}">اتصل {{ site_phone }}</a>
+                {% endif %}
+                {% include "cars/_encar_link.html" %}
+            </aside>
+        </div>
+
+        <nav id="gl-secnav" class="gl-detail-secnav" aria-label="Sections"></nav>
+
+        {% if insp.has_inspection %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="موثوق" data-lang-en="Verified" data-lang-es="Verificado" data-lang-ru="Проверено">موثوق</small>
+                <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-en="Inspection Report" data-lang-es="Informe de inspección" data-lang-ru="Отчет об инспекции">تقرير الفحص</span>
+            </h2>
+            {% if not insp.has_outer %}
+            <div class="gl-detail-tag-ok">
+                <span class="bilingual" data-lang-ar="لا توجد أضرار مُسجَّلة على هيكل هذه السيارة" data-lang-en="No damage recorded on this vehicle's body" data-lang-es="No se han registrado daños en la carrocería" data-lang-ru="Повреждений кузова не зафиксировано">لا توجد أضرار مُسجَّلة على هيكل هذه السيارة</span>
+            </div>
+            {% endif %}
+            <div class="gl-detail-insp-grid" dir="ltr">
+                <div>
+                    <div class="gl-detail-insp-title bilingual" data-lang-ar="الهيكل الخارجي{% if insp.has_outer %} — {% if insp.damage_count == 1 %}ضرر واحد{% else %}{{ insp.damage_count }} أضرار{% endif %}{% endif %}" data-lang-en="Outer Panel{% if insp.has_outer %} — {{ insp.damage_count }} item{{ insp.damage_count|pluralize }}{% endif %}" data-lang-es="Panel exterior{% if insp.has_outer %} — {{ insp.damage_count }}{% endif %}" data-lang-ru="Кузовные панели{% if insp.has_outer %} — {{ insp.damage_count }}{% endif %}">الهيكل الخارجي{% if insp.has_outer %} — {% if insp.damage_count == 1 %}ضرر واحد{% else %}{{ insp.damage_count }} أضرار{% endif %}{% endif %}</div>
+                    <div class="insp-diagram">
+                        <img src="{{ insp.sedan_img }}" alt="Outer panel">
+                        {{ insp.outer_badges_html|safe }}
+                    </div>
+                </div>
+                <div>
+                    <div class="gl-detail-insp-title bilingual" data-lang-ar="الهيكل الأساسي" data-lang-en="Structural" data-lang-es="Estructura" data-lang-ru="Силовая структура">الهيكل الأساسي</div>
+                    <div class="insp-diagram">
+                        <img src="{{ insp.truck_img }}" alt="Structural">
+                        {{ insp.structural_badges_html|safe }}
+                    </div>
+                </div>
+            </div>
+            {% if insp.has_outer %}
+            <div class="gl-detail-insp-legend">
+                <span><span class="insp-lb X">X</span><span class="bilingual" data-lang-ar="تغيير" data-lang-en="Replaced" data-lang-es="Cambio" data-lang-ru="Замена">تغيير</span></span>
+                <span><span class="insp-lb W">W</span><span class="bilingual" data-lang-ar="رش" data-lang-en="Paint" data-lang-es="Pintura" data-lang-ru="Покраска">رش</span></span>
+                <span><span class="insp-lb C">C</span><span class="bilingual" data-lang-ar="صدأ" data-lang-en="Rust" data-lang-es="Óxido" data-lang-ru="Ржавчина">صدأ</span></span>
+                <span><span class="insp-lb A">A</span><span class="bilingual" data-lang-ar="خدش" data-lang-en="Scratch" data-lang-es="Rasguño" data-lang-ru="Царапина">خدش</span></span>
+                <span><span class="insp-lb U">U</span><span class="bilingual" data-lang-ar="انبعاج" data-lang-en="Dent" data-lang-es="Bulto" data-lang-ru="Вмятина">انبعاج</span></span>
+                <span><span class="insp-lb T">T</span><span class="bilingual" data-lang-ar="تلف" data-lang-en="Damage" data-lang-es="Daño" data-lang-ru="Повреждение">تلف</span></span>
+            </div>
+            <div class="gl-detail-insp-table-wrap">
+                <table class="gl-detail-insp-table">
+                    <thead><tr>
+                        <th class="bilingual" data-lang-ar="القطعة" data-lang-en="Part" data-lang-es="Parte" data-lang-ru="Деталь">القطعة</th>
+                        <th class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition" data-lang-es="Condición" data-lang-ru="Состояние">الحالة</th>
+                        <th class="bilingual" data-lang-ar="الدرجة" data-lang-en="Rank" data-lang-es="Grado" data-lang-ru="Степень">الدرجة</th>
+                    </tr></thead>
+                    <tbody>{{ insp.table_rows_html|safe }}</tbody>
+                </table>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if car.price and import_calc_enabled %}
+        <div class="gl-detail-modal" id="gl-calc-modal" onclick="if(event.target===this)glCalcClose()">
+            <div class="gl-detail-modal-inner" dir="rtl">
+                <div class="gl-detail-modal-head">
+                    <h3 class="bilingual" data-lang-ar="حاسبة تكلفة الاستيراد" data-lang-en="Import Cost Calculator" data-lang-es="Calculadora de importación" data-lang-ru="Калькулятор импорта">حاسبة تكلفة الاستيراد</h3>
+                    <button type="button" class="gl-detail-modal-close" onclick="glCalcClose()">&times;</button>
+                </div>
+                <div>
+                    <label class="gl-detail-calc-field">
+                        <span class="bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
+                        <select id="gl-calc-country">
+                            {% if import_calc_show_sa %}<option value="SA" selected>🇸🇦 السعودية</option>{% endif %}
+                            {% for co in import_calc_countries %}<option value="{{ forloop.counter }}"{% if not import_calc_show_sa and forloop.first %} selected{% endif %}>{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
+                        </select>
+                    </label>
+                    <div class="gl-detail-calc-rows" id="gl-calc-rows"></div>
+                    <div class="gl-detail-calc-total">
+                        <span class="k bilingual" data-lang-ar="الإجمالي التقديري" data-lang-en="Estimated total" data-lang-es="Total estimado" data-lang-ru="Итого (оценка)">الإجمالي التقديري</span>
+                        <span class="v" id="gl-calc-total">—</span>
+                    </div>
+                    <p class="gl-detail-calc-note bilingual"
+                       data-lang-ar="آلية الاحتساب: تُحتسب الرسوم الجمركية (٥٪) على قيمة السيارة + الشحن، ثم تُحتسب ضريبة القيمة المضافة (١٥٪) على الإجمالي شاملًا الرسوم الجمركية — وفق نظام الجمارك السعودي."
+                       data-lang-en="How it's calculated: customs duty (5%) applies to the car price + shipping, then VAT (15%) applies to that total including the duty — per Saudi customs rules."
+                       data-lang-es="Cómo se calcula: el arancel (5%) se aplica al precio del coche + envío, y luego el IVA (15%) a ese total incluido el arancel — según la aduana saudí."
+                       data-lang-ru="Как рассчитывается: пошлина (5%) начисляется на цену авто + доставку, затем НДС (15%) — на эту сумму с учётом пошлины — по таможенным правилам Саудовской Аравии.">آلية الاحتساب: تُحتسب الرسوم الجمركية (٥٪) على قيمة السيارة + الشحن، ثم تُحتسب ضريبة القيمة المضافة (١٥٪) على الإجمالي شاملًا الرسوم الجمركية — وفق نظام الجمارك السعودي.</p>
+                    <p class="gl-detail-calc-note bilingual"
+                       data-lang-ar="* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم."
+                       data-lang-en="* Figures are estimates and may vary with exchange rate, weight, shipping line and customs rules. Not a binding quote."
+                       data-lang-es="* Las cifras son estimaciones y pueden variar. No es una cotización vinculante."
+                       data-lang-ru="* Цифры являются ориентировочными и могут меняться. Не является обязательной офертой.">* القيم تقديرية وقد تختلف حسب سعر الصرف والوزن وشركة الشحن واللوائح الجمركية. ليست عرض سعر ملزم.</p>
+                </div>
+            </div>
+        </div>
+        <script>
+        (function () {
+            var PRICE_KRW = {{ car.price|default:0 }};
+            var YEAR = {{ car.year|default:0 }};
+            if (!PRICE_KRW) return;
+
+            var SIZE_TIER = '{{ import_calc_size_tier|default:"medium" }}';
+            function shipFor(s, m, l) { return SIZE_TIER === 'small' ? s : (SIZE_TIER === 'large' ? l : m); }
+            var CURMAP = {
+                SAR: { symbol: '﷼', rate: {{ rate_sar|default:"0.0025" }} }, AED: { symbol: 'د.إ', rate: {{ rate_aed|default:"0.00272" }} },
+                USD: { symbol: '$', rate: {{ rate_usd|default:"0.00067" }} }, EUR: { symbol: '€', rate: {{ rate_eur|default:"0.00069" }} }, KRW: { symbol: '₩', rate: 1 }
+            };
+            var RATES = {
+                {% if import_calc_show_sa %}SA: {
+                    nameAr: 'السعودية', currency: 'SAR',
+                    shipping: shipFor({{ import_calc_shipping_small }}, {{ import_calc_shipping }}, {{ import_calc_shipping_large }}),
+                    dutyPct: {{ import_calc_duty_pct|floatformat:"-2" }}, vatPct: {{ import_calc_vat_pct|floatformat:"-2" }},
+                    clearance: {{ import_calc_clearance }}, inspection: {{ import_calc_inspection }}, registration: {{ import_calc_registration }}, agent: {{ import_calc_agent }},
+                    preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }}
+                }{% endif %}{% for co in import_calc_countries %}{% if not forloop.first or import_calc_show_sa %},{% endif %}
+                "{{ forloop.counter }}": {
+                    nameAr: '{{ co.name_ar|escapejs }}', currency: '{{ co.currency|default:"SAR"|escapejs }}',
+                    shipping: shipFor({{ co.shipping_small|default:0 }}, {{ co.shipping_medium|default:0 }}, {{ co.shipping_large|default:0 }}),
+                    dutyPct: {{ co.duty_pct|default:0 }}, vatPct: {{ co.vat_pct|default:0 }},
+                    clearance: {{ co.clearance|default:0 }}, inspection: {{ co.inspection|default:0 }}, registration: {{ co.registration|default:0 }}, agent: {{ co.agent|default:0 }},
+                    preYear: {{ co.preyear|default:0 }}, preYearExtra: {{ co.preyear_extra|default:0 }}
+                }{% endfor %}
+            };
+
+            var LABELS = {
+                ar: { car:'سعر السيارة', shipping:'الشحن (كوريا ← الوجهة)', duty:'الرسوم الجمركية', extra:'رسوم جمركية إضافية (موديل أقدم)', vat:'ضريبة القيمة المضافة', clearance:'التخليص الجمركي', inspection:'الفحص', registration:'اللوحات والاستمارة', agent:'عمولة الوكيل' },
+                en: { car:'Car price', shipping:'Shipping (Korea → destination)', duty:'Customs duty', extra:'Extra customs (older model)', vat:'VAT', clearance:'Customs clearance', inspection:'Inspection', registration:'Plates & registration', agent:'Agent fee' },
+                es: { car:'Precio del coche', shipping:'Envío (Corea → destino)', duty:'Aranceles', extra:'Aduana adicional (modelo antiguo)', vat:'IVA', clearance:'Despacho de aduana', inspection:'Inspección', registration:'Placas y registro', agent:'Comisión del agente' },
+                ru: { car:'Цена автомобиля', shipping:'Доставка (Корея → страна)', duty:'Пошлина', extra:'Доп. пошлина (старая модель)', vat:'НДС', clearance:'Таможенное оформление', inspection:'Осмотр', registration:'Номера и регистрация', agent:'Комиссия агента' }
+            };
+
+            function lang() {
+                try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
+            }
+
+            var FREE = { ar: 'مجاني', en: 'Free', es: 'Gratis', ru: 'Бесплатно' };
+            function fmt(n, sym, L) {
+                return Math.round(n) <= 0 ? (FREE[L] || FREE.en) : Math.round(n).toLocaleString('en-US') + ' ' + sym;
+            }
+
+            function render() {
+                var L = lang();
+                var lbl = LABELS[L] || LABELS.en;
+                var sel = document.getElementById('gl-calc-country');
+                var c = (sel && RATES[sel.value]) ? RATES[sel.value] : (RATES.SA || RATES[Object.keys(RATES)[0]]);
+                if (!c) return;
+                var cm = CURMAP[c.currency] || CURMAP.SAR;
+                var rate = cm.rate, sym = cm.symbol;
+                function carAmt() { return PRICE_KRW * rate * (window.SITE_PRICE_MARKUP || 1); }
+                function feeAmt(v) { return v; }   // fees are already in the country's currency
+
+                var carCur = carAmt();
+                var shipping = feeAmt(c.shipping);
+                var cif = carCur + shipping;
+                var duty = cif * (c.dutyPct / 100);
+                var extra = (YEAR && YEAR < c.preYear) ? feeAmt(c.preYearExtra) : 0;
+                var vat = (cif + duty + extra) * (c.vatPct / 100);
+                var clearance = feeAmt(c.clearance), inspection = feeAmt(c.inspection), registration = feeAmt(c.registration), agent = feeAmt(c.agent);
+                var total = carCur + shipping + duty + extra + vat + clearance + inspection + registration + agent;
+
+                var rows = [['car', carCur], ['shipping', shipping], ['duty', duty]];
+                if (extra) rows.push(['extra', extra]);
+                rows.push(['vat', vat], ['clearance', clearance], ['inspection', inspection], ['registration', registration], ['agent', agent]);
+                var _SH = {shipping:{{import_calc_show_shipping|yesno:"1,0"}},duty:{{import_calc_show_duty|yesno:"1,0"}},vat:{{import_calc_show_vat|yesno:"1,0"}},clearance:{{import_calc_show_clearance|yesno:"1,0"}},inspection:{{import_calc_show_inspection|yesno:"1,0"}},registration:{{import_calc_show_registration|yesno:"1,0"}},agent:{{import_calc_show_agent|yesno:"1,0"}},extra:{{import_calc_show_extra|yesno:"1,0"}}};
+                rows = rows.filter(function(r){ return _SH[r[0]] !== 0; });
+                total = rows.reduce(function(a,r){ return a + r[1]; }, 0);
+
+                document.getElementById('gl-calc-rows').innerHTML = rows.map(function (r) {
+                    var name = lbl[r[0]];
+                    if (r[0] === 'duty') name += ' (' + c.dutyPct + '%)';
+                    if (r[0] === 'vat') name += ' (' + c.vatPct + '%)';
+                    return '<div class="gl-detail-calc-row"><span class="k">' + name + '</span><span class="v">' + fmt(r[1], sym, L) + '</span></div>';
+                }).join('');
+                document.getElementById('gl-calc-total').textContent = fmt(total, sym, L);
+            }
+
+            render();
+            document.addEventListener('langchange', render);
+            document.addEventListener('currencychange', render);
+            var sel = document.getElementById('gl-calc-country');
+            if (sel) sel.addEventListener('change', render);
+
+            window.glCalcOpen = function () {
+                var m = document.getElementById('gl-calc-modal');
+                if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+                render();
+            };
+            window.glCalcClose = function () {
+                var m = document.getElementById('gl-calc-modal');
+                if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+            };
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') window.glCalcClose();
+            });
+        })();
+        </script>
+        {% endif %}
+
+        {% if car.inspection_report_url %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="فحص رسمي" data-lang-en="Official Inspection" data-lang-es="Inspección oficial" data-lang-ru="Официальная проверка">فحص رسمي</small>
+                <span class="bilingual" data-lang-ar="تقرير فحص أداء المركبة" data-lang-en="Vehicle Inspection Report">تقرير فحص أداء المركبة</span>
+            </h2>
+            <a href="{{ car.inspection_report_url }}" target="_blank" rel="noopener noreferrer" class="gl-btn gl-btn-solid gl-detail-cta">
+                <span class="bilingual" data-lang-ar="عرض التقرير الأصلي" data-lang-en="View original report">عرض التقرير الأصلي</span>
+            </a>
+            <p style="color: var(--gl-muted); font-size: .72rem; margin: .7rem 0 0;" class="bilingual" data-lang-ar="التقرير الرسمي لفحص أداء المركبة (بالكورية). نسخة مترجمة قريبًا." data-lang-en="Official Korean vehicle performance-inspection report. Translated view coming soon.">التقرير الرسمي لفحص أداء المركبة (بالكورية). نسخة مترجمة قريبًا.</p>
+        </section>
+        {% endif %}
+
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="التفاصيل الكاملة" data-lang-en="Full Details" data-lang-es="Detalles completos" data-lang-ru="Полные данные">التفاصيل الكاملة</small>
+                <span class="bilingual" data-lang-ar="المواصفات" data-lang-en="Specifications" data-lang-es="Especificaciones" data-lang-ru="Технические характеристики">المواصفات</span>
+            </h2>
+            <div class="gl-detail-specs">
+                {% if car.manufacturer %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l5-3v3l5-3v3l5-3v15"/><path d="M3 21h18"/><path d="M7 13h2M7 17h2M12 13h2M12 17h2M17 13h1M17 17h1"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">الشركة المصنعة</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</div>
+                </div>
+                {% endif %}
+                {% if car.model %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L3 12.99V5a2 2 0 012-2h7.99l7.6 7.6a2 2 0 010 2.81z"/><circle cx="7" cy="7" r="1.4"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الموديل" data-lang-en="Model" data-lang-es="Modelo" data-lang-ru="Модель">الموديل</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</div>
+                </div>
+                {% endif %}
+                {% with bn=car.badge.name|real_badge %}{% if bn %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="تفاصيل الموديل" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">تفاصيل الموديل</div>
+                    </div>
+                    <div class="value"><bdi>{{ bn }}</bdi></div>
+                </div>
+                {% endif %}{% endwith %}
+                {% if car.year %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="سنة الصنع" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">سنة الصنع</div>
+                    </div>
+                    <div class="value">{{ car.year }}</div>
+                </div>
+                {% endif %}
+                {% if car.mileage %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="المسافة المقطوعة" data-lang-en="Mileage" data-lang-es="Kilometraje" data-lang-ru="Пробег">المسافة المقطوعة</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</div>
+                </div>
+                {% endif %}
+                {% if car.transmission %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">ناقل الحركة</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</div>
+                </div>
+                {% endif %}
+                {% if car.fuel %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</div>
+                </div>
+                {% endif %}
+                {% if car.model_version %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الجيل" data-lang-en="Model Version" data-lang-es="Versión" data-lang-ru="Поколение">الجيل</div>
+                    </div>
+                    <div class="value">{{ car.model_version }}</div>
+                </div>
+                {% endif %}
+                {% if car.model_year_range %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="سنوات الجيل" data-lang-en="Year Range" data-lang-es="Años" data-lang-ru="Годы">سنوات الجيل</div>
+                    </div>
+                    <div class="value"><bdi dir="ltr">{{ car.model_year_range }}</bdi></div>
+                </div>
+                {% endif %}
+                {% if car.engine_group %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="فئة المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">فئة المحرك</div>
+                    </div>
+                    <div class="value">{{ car.engine_group|capfirst }}</div>
+                </div>
+                {% endif %}
+                {% if car.trim_detail %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الفئة" data-lang-en="Trim" data-lang-es="Acabado" data-lang-ru="Комплектация">الفئة</div>
+                    </div>
+                    <div class="value">{{ car.trim_detail|capfirst }}</div>
+                </div>
+                {% endif %}
+                {% if car.first_registration %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="تاريخ أول تسجيل" data-lang-en="First Registration" data-lang-es="Primer registro" data-lang-ru="Первая регистрация">تاريخ أول تسجيل</div>
+                    </div>
+                    <div class="value"><bdi dir="ltr">{{ car.first_registration }}</bdi></div>
+                </div>
+                {% endif %}
+                {% if car.usage_type %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="نوع الاستخدام" data-lang-en="Prior Use" data-lang-es="Uso" data-lang-ru="Использование">نوع الاستخدام</div>
+                    </div>
+                    <div class="value">{{ car.usage_type }}</div>
+                </div>
+                {% endif %}
+                {% if car.features %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7L12 3z"/><path d="M19 16l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="المميزات" data-lang-en="Features" data-lang-es="Características" data-lang-ru="Особенности">المميزات</div>
+                    </div>
+                    <div class="value">{{ car.features }}</div>
+                </div>
+                {% endif %}
+                {% if car.color %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="7.5" cy="10.5" r="1.4"/><circle cx="12" cy="7.5" r="1.4"/><circle cx="16.5" cy="10.5" r="1.4"/><circle cx="14.5" cy="15" r="1.4"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">اللون</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.color.name|translate_color }}" data-lang-en="{{ car.color.name|translate_color:'en' }}" data-lang-es="{{ car.color.name|translate_color:'es' }}" data-lang-ru="{{ car.color.name|translate_color:'ru' }}">{{ car.color.name|translate_color }}</div>
+                </div>
+                {% endif %}
+                {% if car.seat_color %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h6a3 3 0 013 3v6h-6a3 3 0 01-3-3V4z"/><path d="M5 13h11v4a3 3 0 01-3 3H8a3 3 0 01-3-3v-4z"/><path d="M16 9h2a2 2 0 012 2v3"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="لون المقاعد" data-lang-en="Seat Color" data-lang-es="Color del asiento" data-lang-ru="Цвет сиденья">لون المقاعد</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.seat_color.name|translate_color }}" data-lang-en="{{ car.seat_color.name|translate_color:'en' }}" data-lang-es="{{ car.seat_color.name|translate_color:'es' }}" data-lang-ru="{{ car.seat_color.name|translate_color:'ru' }}">{{ car.seat_color.name|translate_color }}</div>
+                </div>
+                {% endif %}
+                {% if car.seat_count and car.seat_count != '0' %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M14 20c0-2.5 2-4.5 4.5-4.5s4.5 2 4.5 4.5"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="عدد المقاعد" data-lang-en="Seats" data-lang-es="Asientos" data-lang-ru="Сидений">عدد المقاعد</div>
+                    </div>
+                    <div class="value">{{ car.seat_count|floatformat:0 }}</div>
+                </div>
+                {% endif %}
+                {% if car.body %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l1-3a2 2 0 011.7-1.4L8 9l1.5-3a2 2 0 011.7-1H15a2 2 0 011.7 1L18 9l2.3.6A2 2 0 0122 11.6V14"/><path d="M2 14h20v3a1 1 0 01-1 1h-1a2 2 0 01-4 0H8a2 2 0 01-4 0H3a1 1 0 01-1-1v-3z"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Кузов">نوع الهيكل</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.body|translate_body }}" data-lang-en="{{ car.body|translate_body:'en' }}" data-lang-es="{{ car.body|translate_body:'es' }}" data-lang-ru="{{ car.body|translate_body:'ru' }}">{{ car.body|translate_body }}</div>
+                </div>
+                {% endif %}
+                {% if car.power %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</div>
+                    </div>
+                    <div class="value"><bdi dir="ltr">{{ car.power }} cc</bdi></div>
+                </div>
+                {% elif car.points %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="المحرك" data-lang-en="Engine" data-lang-es="Motor" data-lang-ru="Двигатель">المحرك</div>
+                    </div>
+                    <div class="value">{{ car.points }}</div>
+                </div>
+                {% endif %}
+                {% if car.engine %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h2V8h3l1-2h3l1 2h3v4h2v3h-2v3h-4v-2H10v2H6v-3H4v-3h1z"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="نوع المحرك" data-lang-en="Engine Type" data-lang-es="Tipo de motor" data-lang-ru="Тип двигателя">نوع المحرك</div>
+                    </div>
+                    <div class="value">{{ car.engine }}</div>
+                </div>
+                {% endif %}
+                {% if car.drive_wheel %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><path d="M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="نظام الدفع" data-lang-en="Drive" data-lang-es="Tracción" data-lang-ru="Привод">نظام الدفع</div>
+                    </div>
+                    <div class="value">{{ car.drive_wheel }}</div>
+                </div>
+                {% endif %}
+                {% if car.address %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-7-7-12a7 7 0 0114 0c0 5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="الموقع" data-lang-en="Location" data-lang-es="Ubicación" data-lang-ru="Расположение">الموقع</div>
+                    </div>
+                    <div class="value bilingual" data-lang-ar="{{ car.address|ar_address }}" data-lang-en="{{ car.address|en_address }}" data-lang-es="{{ car.address|translate_address:'es' }}" data-lang-ru="{{ car.address|translate_address:'ru' }}">{{ car.address|ar_address }}</div>
+                </div>
+                {% endif %}
+                {% if car.lot_number %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 15h16M9 4l-2 16M17 4l-2 16"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="رقم القطعة" data-lang-en="Lot #" data-lang-es="Lote #" data-lang-ru="Лот #">رقم القطعة</div>
+                    </div>
+                    <div class="value">{{ car.lot_number }}</div>
+                </div>
+                {% endif %}
+                {% if car.entry %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="رقم الإعلان" data-lang-en="Listing #" data-lang-es="Anuncio #" data-lang-ru="Объявление #">رقم الإعلان</div>
+                    </div>
+                    <div class="value">{{ car.entry }}</div>
+                </div>
+                {% endif %}
+                {% if car.vin|length == 17 %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10v4M11 10v4M15 10l2 4M17 10l-2 4"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="رقم الهيكل (VIN)" data-lang-en="VIN" data-lang-es="VIN" data-lang-ru="VIN">رقم الهيكل (VIN)</div>
+                    </div>
+                    <div class="value"><bdi dir="ltr">{{ car.vin }}</bdi></div>
+                </div>
+                {% endif %}
+                {% if car.auction_date %}
+                <div class="gl-detail-spec">
+                    <div class="gl-detail-spec-head">
+                        <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/><path d="M12 13v3l2 1"/></svg></span>
+                        <div class="label bilingual" data-lang-ar="موعد المزاد" data-lang-en="Auction Date" data-lang-es="Fecha de subasta" data-lang-ru="Дата аукциона">موعد المزاد</div>
+                    </div>
+                    <div class="value"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y-m-d H:i" }}</span></div>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if car.description %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="عن السيارة" data-lang-en="About this vehicle" data-lang-es="Sobre el vehículo" data-lang-ru="Об автомобиле">عن السيارة</small>
+                <span class="bilingual" data-lang-ar="الوصف" data-lang-en="Description" data-lang-es="Descripción" data-lang-ru="Описание">الوصف</span>
+            </h2>
+            <p class="gl-detail-desc">{{ car.description }}</p>
+        </section>
+        {% endif %}
+
+        {% if price_comparison or pc_pending %}
+        <style>
+          #gl-pc-body > div { margin:0 !important; padding:0 !important; box-shadow:none !important; border-radius:0 !important; background:transparent !important; }
+          #gl-pc-body > div > h2 { display:none; }
+        </style>
+        <div class="gl-detail-modal" id="gl-pc-modal" onclick="if(event.target===this)glPcClose()">
+            <div class="gl-detail-modal-inner" dir="rtl">
+                <div class="gl-detail-modal-head">
+                    <h3 class="bilingual" data-lang-ar="مقارنة بسعر السيارة الجديدة" data-lang-en="Compared to New" data-lang-es="Comparado con uno nuevo" data-lang-ru="Сравнение с новым">مقارنة بسعر السيارة الجديدة</h3>
+                    <button type="button" class="gl-detail-modal-close" onclick="glPcClose()">&times;</button>
+                </div>
+                <div id="gl-pc-body"{% if pc_pending %} data-pc-url="{% url 'car_price_comparison' car.slug %}"{% endif %}>
+                    {% if price_comparison %}{% include 'cars/_price_comparison.html' %}{% endif %}
+                </div>
+            </div>
+        </div>
+        <script>
+        window.glPcOpen = function () { var m = document.getElementById('gl-pc-modal'); if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; } };
+        window.glPcClose = function () { var m = document.getElementById('gl-pc-modal'); if (m) { m.style.display = 'none'; document.body.style.overflow = ''; } };
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') window.glPcClose(); });
+        (function () {
+          var body = document.getElementById('gl-pc-body');
+          var btn = document.getElementById('gl-pc-btn');
+          if (!body || !body.dataset.pcUrl) return;
+          fetch(body.dataset.pcUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.ok ? r.text() : ''; })
+            .then(function (html) {
+              if (!html || !html.trim()) { if (btn) btn.remove(); return; }
+              body.innerHTML = html;
+              if (btn) btn.style.display = '';
+              var lang = (window.localStorage && localStorage.getItem('site_lang')) || 'ar';
+              var cur = (window.localStorage && localStorage.getItem('site_currency')) || 'SAR';
+              if (lang !== 'ar' && typeof applyLang === 'function') applyLang(lang);
+              if (typeof applyCurrency === 'function') applyCurrency(cur);
+            })
+            .catch(function () { if (btn) btn.remove(); });
+        })();
+        </script>
+        {% endif %}
+
+        {% with rec=car.extra_features.record autohub_opts=car.autohub_options opts_choice=car.extra_features.optionsChoice|only_chosen:car.options %}
+
+        {% if car.options.standard or autohub_opts %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="مزايا السيارة" data-lang-en="What's Included" data-lang-es="Lo incluido" data-lang-ru="Что включено">مزايا السيارة</small>
+                <span class="bilingual" data-lang-ar="المميزات" data-lang-en="Features" data-lang-es="Características" data-lang-ru="Функции">المميزات</span>
+            </h2>
+            {% if car.options.standard %}
+            <div class="gl-detail-feats">
+                {% for opt in car.options.standard %}
+                <span class="gl-detail-feat">
+                    <span class="gl-detail-feat-ico" aria-hidden="true">{{ opt|option_icon|safe }}</span>
+                    <span class="gl-detail-feat-text bilingual"
+                          data-lang-ar="{{ opt|translate_option }}"
+                          data-lang-en="{{ opt|translate_option_en }}"
+                          data-lang-es="{{ opt|translate_option:'es' }}"
+                          data-lang-ru="{{ opt|translate_option:'ru' }}">{{ opt|translate_option }}</span>
+                </span>
+                {% endfor %}
+            </div>
+            {% elif autohub_opts %}
+            <div class="gl-detail-feats-icons">
+                {% for opt in autohub_opts %}
+                {% with fallback=opt.name_ar|default:opt.ctDtlNm %}
+                <div class="gl-detail-feat-card">
+                    {% if opt.url %}<img src="{{ opt.url }}" alt="{{ fallback }}" loading="lazy">{% endif %}
+                    <span class="bilingual"
+                          data-lang-ar="{{ opt.name_ar|default:fallback }}"
+                          data-lang-en="{{ opt.name_en|default:fallback }}"
+                          data-lang-es="{{ opt.name_es|default:fallback }}"
+                          data-lang-ru="{{ opt.name_ru|default:fallback }}">{{ fallback }}</span>
+                </div>
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if opts_choice %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="مختارة من المصنع" data-lang-en="Factory-selected" data-lang-es="Seleccionado de fábrica" data-lang-ru="Заводская комплектация">مختارة من المصنع</small>
+                <span class="bilingual" data-lang-ar="الخيارات الإضافية" data-lang-en="Optional Extras" data-lang-es="Opciones adicionales" data-lang-ru="Дополнительные опции">الخيارات الإضافية</span>
+            </h2>
+            <div>
+                {% for opt in opts_choice %}
+                <div class="gl-detail-oc-row">
+                    <div class="gl-detail-oc-main">
+                        <div class="gl-detail-oc-name bilingual"
+                             data-lang-ar="{{ opt.optionName|oc:'ar' }}"
+                             data-lang-en="{{ opt.optionName|oc:'en' }}"
+                             data-lang-es="{{ opt.optionName|oc:'es' }}"
+                             data-lang-ru="{{ opt.optionName|oc:'ru' }}">{{ opt.optionName|oc:'ar' }}</div>
+                        {% if opt.description %}
+                        <div class="gl-detail-oc-desc bilingual"
+                             data-lang-ar="{{ opt.description|oc:'ar' }}"
+                             data-lang-en="{{ opt.description|oc:'en' }}"
+                             data-lang-es="{{ opt.description|oc:'es' }}"
+                             data-lang-ru="{{ opt.description|oc:'ru' }}">{{ opt.description|oc:'ar' }}</div>
+                        {% endif %}
+                    </div>
+                    {% if opt.price %}
+                    <span class="gl-detail-oc-price" data-price-krw="{{ opt.price|manwon_krw }}">{{ opt.price|manwon_krw|intcomma }} <span class="cur">₩</span></span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if car.inspection_image %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="مرفق" data-lang-en="Attached" data-lang-es="Adjunto" data-lang-ru="Приложено">مرفق</small>
+                <span class="bilingual" data-lang-ar="صورة الفحص" data-lang-en="Inspection Sheet" data-lang-es="Hoja de inspección" data-lang-ru="Лист осмотра">صورة الفحص</span>
+            </h2>
+            <img src="{{ car.inspection_image|https_url }}" alt="Inspection sheet" class="gl-detail-insp-img" loading="lazy">
+            {% if car.markers %}
+            <div class="gl-detail-insp-title bilingual" data-lang-ar="نقاط الفحص" data-lang-en="Inspection Markers" data-lang-es="Marcas de inspección" data-lang-ru="Отметки осмотра" style="margin-top:1.1rem;">نقاط الفحص</div>
+            <div class="gl-detail-markers" dir="rtl">
+                {% for panel, m in car.markers.items %}
+                <div class="gl-detail-marker">
+                    <span class="mk">{{ panel|panel_label }}</span>
+                    <span class="mv">
+                        {% if m.code %}<span class="gl-marker-code" dir="ltr">{{ m.code }}</span>{% endif %}
+                        {% if m.status == "replaced" %}<span class="gl-marker-st replaced bilingual" data-lang-ar="تبديل" data-lang-en="Replaced" data-lang-es="Cambiado" data-lang-ru="Замена">تبديل</span>
+                        {% elif m.status == "repaired" %}<span class="gl-marker-st repaired bilingual" data-lang-ar="تصليح" data-lang-en="Repaired" data-lang-es="Reparado" data-lang-ru="Ремонт">تصليح</span>
+                        {% else %}<span class="gl-marker-st good bilingual" data-lang-ar="سليم" data-lang-en="Good" data-lang-es="Bien" data-lang-ru="Хорошо">سليم</span>{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% if inspection_legend %}
+            <div class="gl-detail-insp-sheet-legend">
+                {% for code, label_ar, label_en in inspection_legend %}
+                <div class="gl-detail-insp-sheet-item">
+                    <span class="gl-detail-insp-code">{{ code }}</span>
+                    <span class="bilingual" data-lang-ar="{{ label_ar }}" data-lang-en="{{ label_en }}">{{ label_ar }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if car.inspection_notes and car.category.name != 'auction' %}{# auction notes hidden for now #}
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl shadow-sm p-6 mt-6">
+            <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-amber-900">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                <span class="bilingual" data-lang-ar="ملاحظات فحص المزاد / العيوب المُعلنة" data-lang-en="Auction Inspection Notes / Disclosed Defects">ملاحظات فحص المزاد / العيوب المُعلنة</span>
+            </h2>
+            <div class="flex flex-wrap gap-2">
+                {% for note in car.inspection_notes|split:" • " %}
+                <span class="inline-flex items-center gap-1.5 bg-white border border-amber-200 text-amber-800 text-sm rounded-lg px-3 py-1.5"><span class="text-amber-500 font-bold">⚠</span>{{ note }}</span>
+                {% endfor %}
+            </div>
+            <p class="text-[11px] text-amber-700 opacity-70 mt-3 bilingual" data-lang-ar="مأخوذة من تقرير فحص المزاد؛ قد لا تكون شاملة." data-lang-en="From the auction inspection report; may not be exhaustive.">مأخوذة من تقرير فحص المزاد؛ قد لا تكون شاملة.</p>
+        </div>
+        {% endif %}
+
+        {% if rec.openData %}
+        <section class="gl-detail-section">
+            <h2>
+                <small class="bilingual" data-lang-ar="السجل الرسمي" data-lang-en="Official Record" data-lang-es="Registro oficial" data-lang-ru="Официальная запись">السجل الرسمي</small>
+                <span class="bilingual" data-lang-ar="سجل التأمين" data-lang-en="Insurance History" data-lang-es="Historial de seguros" data-lang-ru="Страховая история">سجل التأمين</span>
+            </h2>
+            <div class="gl-detail-hist-stats">
+                <div class="gl-detail-hist-stat {% if rec.accidentCnt %}alert{% endif %}">
+                    <div class="label bilingual" data-lang-ar="إجمالي الحوادث" data-lang-en="Total Accidents" data-lang-es="Accidentes" data-lang-ru="Аварий">إجمالي الحوادث</div>
+                    <div class="value">{{ rec.accidentCnt|default:"0" }}</div>
+                </div>
+                <div class="gl-detail-hist-stat">
+                    <div class="label bilingual" data-lang-ar="حوادث من جانبي" data-lang-en="My-Side" data-lang-es="De mi parte" data-lang-ru="С моей стороны">حوادث من جانبي</div>
+                    <div class="value">{{ rec.myAccidentCnt|default:"0" }}</div>
+                </div>
+                <div class="gl-detail-hist-stat">
+                    <div class="label bilingual" data-lang-ar="حوادث الطرف الآخر" data-lang-en="Other-Party" data-lang-es="Otra parte" data-lang-ru="Другой стороны">حوادث الطرف الآخر</div>
+                    <div class="value">{{ rec.otherAccidentCnt|default:"0" }}</div>
+                </div>
+                <div class="gl-detail-hist-stat {% if rec.ownerChangeCnt and rec.ownerChangeCnt > 1 %}warn{% endif %}">
+                    <div class="label bilingual" data-lang-ar="تغييرات الملكية" data-lang-en="Owner Changes" data-lang-es="Cambios de dueño" data-lang-ru="Смена владельца">تغييرات الملكية</div>
+                    <div class="value">{{ rec.ownerChangeCnt|default:"0" }}</div>
+                </div>
+            </div>
+
+            {% if rec.totalLossCnt or rec.floodTotalLossCnt or rec.floodDate or rec.robberCnt or rec.carNoChangeCnt or rec.loan %}
+            <div class="gl-detail-hist-tags">
+                {% if rec.totalLossCnt %}<span class="gl-detail-hist-tag alert"><span class="bilingual" data-lang-ar="خسارة كلية" data-lang-en="Total loss" data-lang-es="Pérdida total" data-lang-ru="Полная гибель">خسارة كلية</span>: {{ rec.totalLossCnt }}</span>{% endif %}
+                {% if rec.floodTotalLossCnt %}<span class="gl-detail-hist-tag alert"><span class="bilingual" data-lang-ar="فيضان (خسارة كلية)" data-lang-en="Flood loss" data-lang-es="Inundación" data-lang-ru="Наводнение">فيضان (خسارة كلية)</span>: {{ rec.floodTotalLossCnt }}</span>{% endif %}
+                {% if rec.floodDate %}<span class="gl-detail-hist-tag"><span class="bilingual" data-lang-ar="تاريخ الفيضان" data-lang-en="Flood date" data-lang-es="Fecha inundación" data-lang-ru="Дата наводнения">تاريخ الفيضان</span>: {{ rec.floodDate }}</span>{% endif %}
+                {% if rec.robberCnt %}<span class="gl-detail-hist-tag"><span class="bilingual" data-lang-ar="سرقة" data-lang-en="Theft" data-lang-es="Robo" data-lang-ru="Кража">سرقة</span>: {{ rec.robberCnt }}</span>{% endif %}
+                {% if rec.carNoChangeCnt %}<span class="gl-detail-hist-tag"><span class="bilingual" data-lang-ar="تغيير اللوحة" data-lang-en="Plate changes" data-lang-es="Cambios de placa" data-lang-ru="Смена номера">تغيير اللوحة</span>: {{ rec.carNoChangeCnt }}</span>{% endif %}
+                {% if rec.loan %}<span class="gl-detail-hist-tag bilingual" data-lang-ar="يوجد رهن/قرض" data-lang-en="Has lien/loan" data-lang-es="Tiene gravamen" data-lang-ru="Есть залог/кредит">يوجد رهن/قرض</span>{% endif %}
+            </div>
+            {% endif %}
+
+            {% if rec.accidents %}
+            <div class="gl-detail-insp-title bilingual" data-lang-ar="سجل الحوادث" data-lang-en="Accident History" data-lang-es="Historial de accidentes" data-lang-ru="История аварий" style="margin-top:1.25rem;">سجل الحوادث</div>
+            <div class="gl-detail-hist-list">
+                {% for a in rec.accidents %}
+                <div class="gl-detail-hist-item">
+                    <div>
+                        <span class="date">{{ a.date }}</span>
+                        {% if a.type == "1" %}<span class="bilingual" data-lang-ar="حادث (تحمّلت التكلفة)" data-lang-en="Accident (my cost)" data-lang-es="Accidente (yo pagué)" data-lang-ru="Авария (мой расход)">حادث (تحمّلت التكلفة)</span>
+                        {% elif a.type == "2" %}<span class="bilingual" data-lang-ar="حادث (الطرف الآخر تحمّل)" data-lang-en="Accident (other-party cost)" data-lang-es="Accidente (otra parte)" data-lang-ru="Авария (другая сторона)">حادث (الطرف الآخر تحمّل)</span>
+                        {% else %}<span class="bilingual" data-lang-ar="حادث آخر" data-lang-en="Other accident" data-lang-es="Otro accidente" data-lang-ru="Другая авария">حادث آخر</span>{% endif %}
+                    </div>
+                    {% if a.insuranceBenefit %}<span class="cost" data-price-krw="{{ a.insuranceBenefit }}">{{ a.insuranceBenefit|intcomma }} ₩</span>{% else %}<span class="cost">—</span>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if rec.ownerChanges %}
+            <div class="gl-detail-insp-title bilingual" data-lang-ar="تاريخ تغيير الملكية" data-lang-en="Ownership Change History" data-lang-es="Historial de propietarios" data-lang-ru="История смены владельца" style="margin-top:1.5rem;">تاريخ تغيير الملكية</div>
+            <div class="gl-detail-hist-tags">
+                {% for d in rec.ownerChanges %}
+                <span class="gl-detail-hist-tag">{{ d }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% endwith %}
+
+        {% if similar_cars %}
+        <section class="gl-detail-similar">
+            <h2><small class="bilingual" data-lang-ar="قد يعجبك أيضاً" data-lang-en="You May Also Consider" data-lang-es="También te puede interesar" data-lang-ru="Возможно, вам понравится">قد يعجبك أيضاً</small><span class="bilingual" data-lang-ar="سيارات مشابهة" data-lang-en="Similar Vehicles" data-lang-es="Vehículos similares" data-lang-ru="Похожие автомобили">سيارات مشابهة</span></h2>
+            <div class="gl-detail-similar-grid">
+                {% for s in similar_cars %}
+                <a href="{% url 'car_detail' s.slug %}" class="gl-detail-similar-card">
+                    <div class="gl-detail-similar-img car-img-wm">
+                        {% if s.image %}<img src="{{ s.image|img_small }}" alt="{{ s.title }}" loading="lazy">{% elif s.images and s.images|length > 0 %}<img src="{{ s.images.0|img_small }}" alt="{{ s.title }}" loading="lazy">{% endif %}
+                    </div>
+                    <div class="gl-detail-similar-body">
+                        <div class="gl-detail-similar-make">
+                            {% if s.manufacturer %}<span class="bilingual" data-lang-ar="{{ s.manufacturer|translate_manufacturer }}" data-lang-en="{{ s.manufacturer|translate_manufacturer:'en' }}">{{ s.manufacturer|translate_manufacturer }}</span>{% endif %}
+                            · {{ s.year }}
+                        </div>
+                        <h3 class="gl-detail-similar-name">{% if s.model %}<span class="bilingual" data-lang-ar="{{ s.model|translate_model }}" data-lang-en="{{ s.model|translate_model:'en' }}">{{ s.model|translate_model }}</span>{% else %}{{ s.title }}{% endif %}</h3>
+                        {% if s|car_trim %}<div class="gl-detail-similar-trim"><bdi>{{ s|car_trim }}</bdi></div>{% endif %}
+                        {% if s.price %}<div class="gl-detail-similar-price" data-price-krw="{{ s.price }}">{{ s.price|intcomma }} ₩</div>{% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </div>
+</div>
+
+<div id="gl-lightbox" class="gl-detail-lightbox" onclick="if (event.target === this) glCloseLightbox()">
+    <button type="button" class="gl-detail-lightbox-close" onclick="glCloseLightbox()" aria-label="Close">×</button>
+    <button type="button" class="gl-detail-lightbox-prev" onclick="glLightboxNav(-1)" aria-label="Previous">‹</button>
+    <img id="gl-lightbox-img" class="gl-detail-lightbox-img" src="" alt="">
+    <button type="button" class="gl-detail-lightbox-next" onclick="glLightboxNav(1)" aria-label="Next">›</button>
+    <div class="gl-detail-lightbox-counter"><span id="gl-lightbox-current">1</span> / <span id="gl-lightbox-total">1</span></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var glImages = [
+        {% if car.image %}"{{ car.image|https_url|escapejs }}"{% if car.images %},{% endif %}{% endif %}
+        {% for img in car.images %}"{{ img|https_url|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+    var glIdx = 0;
+    var lb = document.getElementById('gl-lightbox');
+    var lbImg = document.getElementById('gl-lightbox-img');
+    var lbCur = document.getElementById('gl-lightbox-current');
+    var lbTot = document.getElementById('gl-lightbox-total');
+
+    window.glOpenLightbox = function(i) {
+        if (!glImages.length) return;
+        glIdx = (parseInt(i, 10) || 0) % glImages.length;
+        if (glIdx < 0) glIdx = glImages.length - 1;
+        lbImg.src = glImages[glIdx];
+        lbCur.textContent = glIdx + 1;
+        lbTot.textContent = glImages.length;
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    };
+    window.glCloseLightbox = function() {
+        lb.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+    window.glLightboxNav = function(dir) {
+        glIdx = (glIdx + dir + glImages.length) % glImages.length;
+        lbImg.src = glImages[glIdx];
+        lbCur.textContent = glIdx + 1;
+    };
+    window.glSelectThumb = function(el) {
+        document.querySelectorAll('.gl-detail-thumb').forEach(function(t) { t.classList.remove('active'); });
+        el.classList.add('active');
+        if (typeof el.scrollIntoView === 'function') {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (!lb.classList.contains('open')) return;
+        if (e.key === 'Escape') glCloseLightbox();
+        else if (e.key === 'ArrowLeft') glLightboxNav(-1);
+        else if (e.key === 'ArrowRight') glLightboxNav(1);
+    });
+})();
+
+(function() {
+    var share = document.getElementById('gl-share');
+    if (!share) return;
+    var url = share.dataset.shareUrl;
+    var title = share.dataset.shareTitle;
+
+    var copyBtn = document.getElementById('gl-share-copy');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+            var done = function() {
+                copyBtn.classList.add('is-copied');
+                setTimeout(function() { copyBtn.classList.remove('is-copied'); }, 2000);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(done, function() {
+                    window.prompt('Copy link:', url);
+                });
+            } else {
+                window.prompt('Copy link:', url);
+            }
+        });
+    }
+
+    var nativeBtn = document.getElementById('gl-share-native');
+    if (nativeBtn && navigator.share) {
+        nativeBtn.hidden = false;
+        nativeBtn.addEventListener('click', function() {
+            navigator.share({ title: title, url: url }).catch(function() {});
+        });
+    }
+})();
+</script>
+
+<!-- Sticky in-page section navigation (built from the sections present) -->
+<script>
+(function () {
+    function buildSecNav() {
+        var nav = document.getElementById('gl-secnav');
+        if (!nav) return;
+        var secs = document.querySelectorAll('.gl-detail-section');
+        if (secs.length < 2) { nav.style.display = 'none'; return; }
+        var lang = (function () { try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; } })();
+        var pills = [];
+        secs.forEach(function (sec, i) {
+            if (!sec.id) sec.id = 'gl-sec-' + i;
+            var h2 = sec.querySelector('h2');
+            var spans = h2 ? h2.querySelectorAll('span.bilingual') : [];
+            var span = spans.length ? spans[spans.length - 1] : null;
+            var pill = document.createElement('a');
+            pill.href = '#' + sec.id;
+            pill.className = 'gl-detail-secnav-pill';
+            if (span) {
+                ['ar', 'en', 'es', 'ru'].forEach(function (l) {
+                    var v = span.getAttribute('data-lang-' + l);
+                    if (v) pill.setAttribute('data-lang-' + l, v);
+                });
+                pill.classList.add('bilingual');
+                pill.textContent = (span.getAttribute('data-lang-' + lang) || span.textContent || '').trim();
+            } else {
+                pill.textContent = (h2 ? h2.textContent : '').trim() || ('#' + (i + 1));
+            }
+            pill.addEventListener('click', function (e) {
+                e.preventDefault();
+                sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            nav.appendChild(pill);
+            pills.push({ pill: pill, sec: sec });
+        });
+        if (typeof applyLang === 'function') applyLang(lang);
+        if ('IntersectionObserver' in window) {
+            var obs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (en) {
+                    if (!en.isIntersecting) return;
+                    pills.forEach(function (p) { p.pill.classList.toggle('active', p.sec === en.target); });
+                });
+            }, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+            pills.forEach(function (p) { obs.observe(p.sec); });
+        }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildSecNav);
+    else buildSecNav();
+})();
+</script>
+{% endblock %}
