@@ -1005,6 +1005,82 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 </section>
 {% endif %}
 
+    {% if sold_cars and show_site_cars %}
+<section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
+    <div class="flex justify-between items-center mb-3 sm:mb-5">
+        <div>
+            <h2 class="bilingual text-lg sm:text-xl md:text-2xl font-bold" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</h2>
+            <p class="bilingual text-gray-500 text-xs sm:text-sm mt-1" data-lang-ar="سيارات مختارة ومعروضة من {{ site_name|default:'موقعنا' }}" data-lang-en="Hand-picked cars displayed by {{ site_name|default:'our site' }}">سيارات مختارة ومعروضة من {{ site_name|default:"موقعنا" }}</p>
+        </div>
+        <a href="{% url 'site_car_list' %}?status=sold" class="bilingual text-brand text-brand-hover font-medium text-xs sm:text-sm" data-lang-ar="عرض الكل ←" data-lang-ru="Посмотреть все ←" data-lang-es="Ver todo ←" data-lang-en="View All ←">عرض الكل &larr;</a>
+    </div>
+
+    <div class="relative group">
+        <!-- Left Arrow -->
+        <button onclick="scrollElement('site-cars-scroll', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        
+        <!-- Right Arrow -->
+        <button onclick="scrollElement('site-cars-scroll', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+        
+        <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="site-cars-scroll">
+        {% for car in sold_cars %}
+        <a href="{% url 'site_car_detail' car.id %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block border-2 border-transparent hover:border-brand/20">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative car-img-wm">
+                {% if car.image %}
+                <img src="{{ car.image.url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.image.url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                {% elif car.gallery.first %}
+                <img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.gallery.first.display_url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                {% elif car.external_image_url %}
+                <img src="{{ car.external_image_url }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="280" height="210" loading="lazy" onclick="openLightbox('{{ car.external_image_url }}', '{{ car.manufacturer }} {{ car.model }}', '{{ car.price|floatformat:0 }} ₩'); event.stopPropagation();">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                {% if car.is_featured %}
+                <div class="bilingual absolute top-2 sm:top-3 right-2 sm:right-3 bg-yellow-400 text-yellow-900 text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full" data-lang-ar="مميزة" data-lang-ru="отличительный" data-lang-es="distintivo" data-lang-en="Featured">مميزة</div>
+                {% endif %}
+                {% if car.status == 'sold' %}
+                <div class="bilingual absolute top-2 sm:top-3 left-2 sm:left-3 bg-red-500 text-white text-[9px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full" data-lang-ar="تم البيع" data-lang-ru="Продал" data-lang-es="Vendido" data-lang-en="Sold">تم البيع</div>
+                {% endif %}
+            </div>
+            <div class="p-2.5 sm:p-4">
+                <h3 class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer }}" data-lang-en="{{ car.manufacturer }}">{{ car.manufacturer }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model }}">{{ car.model|translate_model }}</span>
+                </h3>
+                <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
+                    <span>{{ car.year }}</span>
+                    <span>&bull;</span>
+                    <span>{{ car.manufacturer }}</span>
+                    {% if car.mileage %}
+                    <span class="hidden sm:inline">&bull;</span>
+                    <span class="hidden sm:inline">{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-ru="сколько?" data-lang-es="cuánto" data-lang-en="km">كم</span></span>
+                    {% endif %}
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-brand font-extrabold text-sm sm:text-lg"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">{{ car.currency }}</span>{% else %} data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span>{% endif %}</span>
+                    {% if car.transmission %}
+                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Damaged Cars (own section, separate from Our Cars) -->
 {% if damaged_cars %}
 <section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">

@@ -498,6 +498,7 @@ def home(request):
         # Tenant site cars — keep damaged (external_id starts with `hc_`)
         # out of the "Our Cars" rail and surface them in their own section.
         site_cars = []
+        sold_cars = []
         damaged_cars = []
         site_cars_count = 0
         damaged_cars_count = 0
@@ -514,6 +515,10 @@ def home(request):
             _damaged_qs = SiteCar.objects.filter(external_id__startswith='hc_')
             site_cars = list(
                 _own_qs.only(*_site_only).prefetch_related('gallery').order_by('-created_at')[:8]
+            )
+            # Recently sold own cars — homepage social-proof section.
+            sold_cars = list(
+                _own_qs.filter(status='sold').only(*_site_only).prefetch_related('gallery').order_by('-updated_at')[:8]
             )
             damaged_cars = list(
                 _damaged_qs.only(*_site_only).prefetch_related('gallery').order_by('-created_at')[:8]
@@ -596,6 +601,7 @@ def home(request):
             'latest_cars': latest_cars,
             'latest_auctions': latest_auctions,
             'site_cars': site_cars,
+            'sold_cars': sold_cars,
             'damaged_cars': damaged_cars,
             'home_sections_order': home_sections_order,
             'site_rating_avg': site_rating_avg,
