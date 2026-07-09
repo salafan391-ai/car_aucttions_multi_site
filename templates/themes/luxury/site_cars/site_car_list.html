@@ -431,7 +431,7 @@
                         {% if car.manufacturer %}
                         <div class="lux-card-make bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
                         {% endif %}
-                        <div class="lux-card-name">{{ car.title|pretty_en }}</div>
+                        <div class="lux-card-name">{{ car|card_car_title }}</div>
                         {% if car.registration_no %}<div class="lux-card-reg">#{{ car.registration_no }}</div>{% endif %}
                         <div class="lux-card-meta">
                             {% if car.year %}<span class="lux-card-tag">{{ car.year }}</span>{% endif %}

@@ -447,7 +447,7 @@
                 </div>
                 <div class="lux-card-body">
                     <div class="lux-card-make">{% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}</div>
-                    <h3 class="lux-card-name">{{ car.title|pretty_en }}</h3>
+                    <h3 class="lux-card-name">{{ car|card_car_title }}</h3>
                     {% if car.price %}
                     <div class="lux-card-price"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>
                     {% endif %}

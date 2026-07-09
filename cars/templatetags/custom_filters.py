@@ -719,6 +719,25 @@ def car_trim(car):
 
 
 @register.filter
+def card_car_title(car):
+    """Card/display title: manufacturer + model + points + drive wheel — never
+    the raw feed title. Works for ApiCar (FK manufacturer/model, points grade)
+    and SiteCar (plain-text manufacturer/model, no points). Missing pieces are
+    dropped; falls back to the prettified title only if everything is empty."""
+    if not car:
+        return ""
+    def _name(v):
+        n = getattr(v, 'name', None)
+        return n if n is not None else (v or "")
+    mk = pretty_en(str(_name(getattr(car, 'manufacturer', '')) or '').strip())
+    md = pretty_en(str(_name(getattr(car, 'model', '')) or '').strip())
+    pts = str(getattr(car, 'points', '') or '').strip()
+    dw = str(getattr(car, 'drive_wheel', '') or '').strip().upper()
+    out = " ".join(x for x in (mk, md, pts, dw) if x).strip()
+    return out or pretty_en(str(getattr(car, 'title', '') or ''))
+
+
+@register.filter
 def share_car_title(car):
     """Title used when sharing/sending a car (cart, Telegram): always rebuilt as
     'Make Model Transmission Fuel CC' from structured fields — never the raw

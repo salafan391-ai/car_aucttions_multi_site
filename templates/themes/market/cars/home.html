@@ -169,7 +169,7 @@
                 {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
             </div>
             <div class="mkh-car-bd">
-                <div class="mkh-car-nm">{{ car.title|pretty_en }}</div>
+                <div class="mkh-car-nm">{{ car|card_car_title }}</div>
                 <div class="mkh-car-mt">{{ car.year }}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}{% if car.auction_date %} · ⏱ {{ car.auction_date|date:"m/d" }}{% endif %}</div>
                 {% if car.price %}<div class="mkh-car-pr" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
             </div>
@@ -193,7 +193,7 @@
                 {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
             </div>
             <div class="mkh-car-bd">
-                <div class="mkh-car-nm">{{ car.title|pretty_en }}</div>
+                <div class="mkh-car-nm">{{ car|card_car_title }}</div>
                 <div class="mkh-car-mt">{{ car.year }}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}</div>
                 {% if car.price %}<div class="mkh-car-pr" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
             </div>
@@ -218,7 +218,7 @@
                 {% if car.image %}<img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">{% elif car.gallery.first %}<img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" loading="lazy">{% elif car.external_image_url %}<img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">{% endif %}
             </div>
             <div class="mkh-car-bd">
-                <div class="mkh-car-nm">{{ car.title|pretty_en }}</div>
+                <div class="mkh-car-nm">{{ car|card_car_title }}</div>
                 <div class="mkh-car-mt">{% if car.year %}{{ car.year }}{% endif %}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}</div>
                 {% if car.price %}<div class="mkh-car-pr"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>{% endif %}
             </div>
