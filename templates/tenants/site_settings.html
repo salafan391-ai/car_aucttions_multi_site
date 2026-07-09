@@ -707,10 +707,15 @@
                 <h2 class="text-xl font-bold mb-1 text-gray-900">حاسبة تكلفة الاستيراد</h2>
                 <p class="text-sm text-gray-500 mb-4">القيم المعروضة في صفحة تفاصيل السيارة (السعودية). المبالغ بالريال السعودي والنِسب بالمئة. القيم تقديرية.</p>
 
-                <label class="flex items-center gap-3 mb-5 cursor-pointer">
+                <label class="flex items-center gap-3 mb-3 cursor-pointer">
                     <input type="checkbox" name="import_calc_enabled" {% if tenant.import_calc_enabled %}checked{% endif %}
                            class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                     <span class="text-sm font-medium text-gray-800">عرض الحاسبة في صفحة تفاصيل السيارة</span>
+                </label>
+                <label class="flex items-center gap-3 mb-5 cursor-pointer">
+                    <input type="checkbox" name="import_calc_show_sa" {% if tenant.import_calc_show_sa %}checked{% endif %}
+                           class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-sm font-medium text-gray-800">إظهار «السعودية 🇸🇦» كوجهة في الحاسبة (ألغِ التحديد لإزالتها)</span>
                 </label>
 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">

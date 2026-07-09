@@ -1172,8 +1172,8 @@
                     <label class="block mb-4">
                         <span class="block text-xs text-gray-500 mb-1 bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
                         <select id="imp-calc-country" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand focus:border-transparent">
-                            <option value="SA" selected>🇸🇦 السعودية</option>
-                            {% for co in import_calc_countries %}<option value="{{ forloop.counter }}">{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
+                            {% if import_calc_show_sa %}<option value="SA" selected>🇸🇦 السعودية</option>{% endif %}
+                            {% for co in import_calc_countries %}<option value="{{ forloop.counter }}"{% if not import_calc_show_sa and forloop.first %} selected{% endif %}>{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
                         </select>
                     </label>
                     <div id="imp-calc-rows" class="border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-100 text-sm"></div>
@@ -1206,13 +1206,13 @@
                     KRW: { symbol: '₩',   rate: 1 }
                 };
                 var RATES = {
-                    SA: {
+                    {% if import_calc_show_sa %}SA: {
                         nameAr: 'السعودية', nameEn: 'Saudi Arabia', flag: '🇸🇦', currency: 'SAR',
                         shipping: shipFor({{ import_calc_shipping_small }}, {{ import_calc_shipping }}, {{ import_calc_shipping_large }}),
                         dutyPct: {{ import_calc_duty_pct|floatformat:"-2" }}, vatPct: {{ import_calc_vat_pct|floatformat:"-2" }},
                         clearance: {{ import_calc_clearance }}, inspection: {{ import_calc_inspection }}, registration: {{ import_calc_registration }}, agent: {{ import_calc_agent }},
                         preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }}
-                    }{% for co in import_calc_countries %},
+                    }{% endif %}{% for co in import_calc_countries %}{% if not forloop.first or import_calc_show_sa %},{% endif %}
                     "{{ forloop.counter }}": {
                         nameAr: '{{ co.name_ar|escapejs }}', nameEn: '{{ co.name_en|default:co.name_ar|escapejs }}', flag: '{{ co.flag|escapejs }}', currency: '{{ co.currency|default:"SAR"|escapejs }}',
                         shipping: shipFor({{ co.shipping_small|default:0 }}, {{ co.shipping_medium|default:0 }}, {{ co.shipping_large|default:0 }}),
@@ -1233,7 +1233,8 @@
                 function render() {
                     var L = lang(), lbl = LABELS[L] || LABELS.en;
                     var sel = document.getElementById('imp-calc-country');
-                    var c = (sel && RATES[sel.value]) ? RATES[sel.value] : RATES.SA;
+                    var c = (sel && RATES[sel.value]) ? RATES[sel.value] : (RATES.SA || RATES[Object.keys(RATES)[0]]);
+                    if (!c) return;
                     var cm = CURMAP[c.currency] || CURMAP.SAR;
                     var rate = cm.rate, sym = cm.symbol;
                     var carCur = PRICE_KRW * rate * (window.SITE_PRICE_MARKUP || 1);

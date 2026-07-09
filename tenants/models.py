@@ -123,6 +123,7 @@ class Tenant(TenantMixin):
     import_calc_show_registration = models.BooleanField(default=True, verbose_name="إظهار اللوحات والاستمارة في الحاسبة")
     import_calc_show_agent = models.BooleanField(default=True, verbose_name="إظهار عمولة الوكيل في الحاسبة")
     import_calc_show_extra = models.BooleanField(default=True, verbose_name="إظهار الرسوم الإضافية (موديل أقدم) في الحاسبة")
+    import_calc_show_sa = models.BooleanField(default=True, verbose_name="إظهار السعودية كوجهة في الحاسبة")
     # Extra destination countries (Saudi = the fields above is the default). Each item:
     # {name_ar,name_en,flag,currency, shipping_small,shipping_medium,shipping_large,
     #  duty_pct,vat_pct, clearance,inspection,registration,agent, preyear,preyear_extra}

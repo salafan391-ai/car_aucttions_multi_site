@@ -220,6 +220,7 @@ def tenant_branding(request):
     "import_calc_show_registration": bool(getattr(tenant, 'import_calc_show_registration', True)),
     "import_calc_show_agent": bool(getattr(tenant, 'import_calc_show_agent', True)),
     "import_calc_show_extra": bool(getattr(tenant, 'import_calc_show_extra', True)),
+    "import_calc_show_sa": bool(getattr(tenant, 'import_calc_show_sa', True)),
     "import_calc_shipping_small": int(getattr(tenant, 'import_calc_shipping_small', 6500) or 0),
     "import_calc_shipping_large": int(getattr(tenant, 'import_calc_shipping_large', 9200) or 0),
     "import_calc_countries": getattr(tenant, 'import_calc_countries', None) or [],

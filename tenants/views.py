@@ -197,8 +197,8 @@ def site_settings(request):
         tenant.import_calc_agent = _num('import_calc_agent', tenant.import_calc_agent, int)
         tenant.import_calc_preyear = _num('import_calc_preyear', tenant.import_calc_preyear, int)
         tenant.import_calc_preyear_extra = _num('import_calc_preyear_extra', tenant.import_calc_preyear_extra, int)
-        # Per-row show/hide checkboxes.
-        for _f in ('shipping', 'duty', 'vat', 'clearance', 'inspection', 'registration', 'agent', 'extra'):
+        # Per-row show/hide checkboxes (+ Saudi Arabia destination).
+        for _f in ('shipping', 'duty', 'vat', 'clearance', 'inspection', 'registration', 'agent', 'extra', 'sa'):
             setattr(tenant, 'import_calc_show_' + _f, ('import_calc_show_' + _f) in request.POST)
 
         # Extra destination countries (repeatable rows -> JSON list)

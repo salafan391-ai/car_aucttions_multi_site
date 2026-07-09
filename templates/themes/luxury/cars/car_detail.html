@@ -906,8 +906,8 @@
                     <label class="lux-calc-field">
                         <span class="bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
                         <select id="lux-calc-country">
-                            <option value="SA" selected>🇸🇦 السعودية</option>
-                            {% for co in import_calc_countries %}<option value="{{ forloop.counter }}">{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
+                            {% if import_calc_show_sa %}<option value="SA" selected>🇸🇦 السعودية</option>{% endif %}
+                            {% for co in import_calc_countries %}<option value="{{ forloop.counter }}"{% if not import_calc_show_sa and forloop.first %} selected{% endif %}>{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
                         </select>
                     </label>
                     <div class="lux-calc-rows" id="lux-calc-rows"></div>
@@ -947,14 +947,14 @@
                 KRW: { symbol: '₩',   rate: 1 }
             };
             var RATES = {
-                SA: {
+                {% if import_calc_show_sa %}SA: {
                     nameAr: 'السعودية', nameEn: 'Saudi Arabia', flag: '🇸🇦', currency: 'SAR',
                     shipping: shipFor({{ import_calc_shipping_small }}, {{ import_calc_shipping }}, {{ import_calc_shipping_large }}),
                     dutyPct: {{ import_calc_duty_pct|floatformat:"-2" }}, vatPct: {{ import_calc_vat_pct|floatformat:"-2" }},
                     clearance: {{ import_calc_clearance }}, inspection: {{ import_calc_inspection }},
                     registration: {{ import_calc_registration }}, agent: {{ import_calc_agent }},
                     preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }}
-                }{% for co in import_calc_countries %},
+                }{% endif %}{% for co in import_calc_countries %}{% if not forloop.first or import_calc_show_sa %},{% endif %}
                 "{{ forloop.counter }}": {
                     nameAr: '{{ co.name_ar|escapejs }}', nameEn: '{{ co.name_en|default:co.name_ar|escapejs }}', flag: '{{ co.flag|escapejs }}', currency: '{{ co.currency|default:"SAR"|escapejs }}',
                     shipping: shipFor({{ co.shipping_small|default:0 }}, {{ co.shipping_medium|default:0 }}, {{ co.shipping_large|default:0 }}),
@@ -984,7 +984,8 @@
             function render() {
                 var L = lang(), lbl = LABELS[L] || LABELS.en;
                 var sel = document.getElementById('lux-calc-country');
-                var c = (sel && RATES[sel.value]) ? RATES[sel.value] : RATES.SA;
+                var c = (sel && RATES[sel.value]) ? RATES[sel.value] : (RATES.SA || RATES[Object.keys(RATES)[0]]);
+                if (!c) return;
                 var cm = CURMAP[c.currency] || CURMAP.SAR;
                 var rate = cm.rate, sym = cm.symbol;
 
