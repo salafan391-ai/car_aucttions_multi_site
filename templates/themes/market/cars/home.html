@@ -39,18 +39,22 @@
     .mkh-all { color: var(--mk-green-deep); font-weight: 800; font-size: .82rem; white-space: nowrap; }
     .mkh-all:hover { text-decoration: underline; }
 
-    /* Brand rail — scrollable circular icons on the primary color */
+    /* Brand rail — full-width primary-color band, scrollable white circles */
+    .mkh-brandband { background: linear-gradient(135deg, var(--mk-green-deep), var(--mk-green)); padding: 1.7rem 0 .9rem; margin-top: 2.6rem; }
+    .mkh-brandband .mkh-sec-head { margin-bottom: 1.1rem; }
+    .mkh-brandband .mkh-sec-head h2 { color: #fff; }
+    .mkh-brandband .mkh-all { color: #eafff4; }
     .mkh-brands { display: flex; gap: 1rem; overflow-x: auto; padding: .2rem .2rem 1rem; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
     .mkh-brand { flex: 0 0 auto; width: 92px; text-align: center; scroll-snap-align: start; }
-    .mkh-brand .ic { width: 76px; height: 76px; border-radius: 50%; background: var(--mk-green);
+    .mkh-brand .ic { width: 76px; height: 76px; border-radius: 50%; background: #fff;
         display: flex; align-items: center; justify-content: center; margin: 0 auto .45rem;
-        box-shadow: 0 8px 20px color-mix(in srgb, var(--mk-green) 30%, transparent);
-        transition: transform .15s, background .15s; }
-    .mkh-brand:hover .ic { transform: translateY(-3px) scale(1.05); background: var(--mk-green-deep); }
-    .mkh-brand .ic img { width: 44px; height: 44px; object-fit: contain; border-radius: 50%; background: #fff; padding: 5px; }
-    .mkh-brand .ic .ltr { color: #fff; font-weight: 900; font-size: 1.5rem; }
-    .mkh-brand .nm { font-size: .78rem; font-weight: 800; color: var(--mk-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mkh-brand .ct { font-size: .68rem; color: var(--mk-dim); font-weight: 700; }
+        box-shadow: 0 8px 22px rgba(0,0,0,.18);
+        transition: transform .15s; }
+    .mkh-brand:hover .ic { transform: translateY(-3px) scale(1.06); }
+    .mkh-brand .ic img { width: 48px; height: 48px; object-fit: contain; }
+    .mkh-brand .ic .ltr { color: var(--mk-green-deep); font-weight: 900; font-size: 1.5rem; }
+    .mkh-brand .nm { font-size: .78rem; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mkh-brand .ct { font-size: .68rem; color: rgba(255,255,255,.75); font-weight: 700; }
 
     /* Car rails */
     .mkh-rail { display: flex; gap: .85rem; overflow-x: auto; padding: .2rem .2rem 1rem; scroll-snap-type: x mandatory; }
@@ -129,7 +133,8 @@
 
 <!-- ── Brand grid ── -->
 {% if manufacturers %}
-<section class="mkh-wrap mkh-sec">
+<section class="mkh-brandband mkh-sec">
+    <div class="mkh-wrap">
     <div class="mkh-sec-head">
         <h2 class="bilingual" data-lang-ar="تصفّح حسب الماركة" data-lang-en="Browse by make" data-lang-es="Por marca" data-lang-ru="По маркам">تصفّح حسب الماركة</h2>
         <a href="{% url 'car_list' %}" class="mkh-all bilingual" data-lang-ar="كل السيارات ←" data-lang-en="All cars →" data-lang-es="Todos →" data-lang-ru="Все →">كل السيارات ←</a>
@@ -144,6 +149,7 @@
             <div class="ct">{{ m.car_count|intcomma }}</div>
         </a>
         {% endfor %}
+    </div>
     </div>
 </section>
 {% endif %}
