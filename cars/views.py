@@ -513,8 +513,10 @@ def home(request):
             )
             _own_qs = SiteCar.objects.exclude(external_id__startswith='hc_')
             _damaged_qs = SiteCar.objects.filter(external_id__startswith='hc_')
+            # Our-cars rail shows available stock only — sold cars have their
+            # own dedicated homepage section.
             site_cars = list(
-                _own_qs.only(*_site_only).prefetch_related('gallery').order_by('-created_at')[:8]
+                _own_qs.exclude(status='sold').only(*_site_only).prefetch_related('gallery').order_by('-created_at')[:8]
             )
             # Recently sold own cars — homepage social-proof section.
             sold_cars = list(
