@@ -280,11 +280,15 @@
         html.gc-dark .gc-social a { background: #1e293b; border-color: rgba(148,163,184,0.2); color: #e5e7eb; }
 
         /* ════════════════════════════════════════════════════════════
-           EDITORIAL THEME — car-magazine look layered on the general
-           skeleton: paper white, ink black, one crimson accent, serif
-           display headlines (Playfair latin / Amiri arabic), hairline
-           rules instead of shadows, near-square corners.
+           EDITORIAL THEME — car-magazine layout layered on the general
+           skeleton. Not just a retoken: the grids become press-style
+           rows, the section cards become a front-page index, the nav a
+           masthead. Paper white, ink black, one crimson accent, serif
+           display headlines (Playfair latin / Amiri arabic).
            ════════════════════════════════════════════════════════════ */
+        body { border-top: 6px solid #111; }                 /* classic print rule */
+        .gc-nav { background: #fff !important; border-bottom: 2px solid #111 !important; box-shadow: none !important; }
+
         h1, h2, h3, h4,
         .gc-sec-title, .gc-hero-title, .gc-link-card h3,
         .gl-section-title, .gl-list-card-name, .gl-home-car-name,
@@ -292,26 +296,55 @@
             font-family: 'Playfair Display', 'Amiri', Georgia, serif !important;
             letter-spacing: -0.01em;
         }
+        .gc-hero-title { font-size: clamp(2.6rem, 6vw, 4.6rem) !important; line-height: 1.08 !important; }
         .gc-sec-eyebrow, .gl-home-kicker {
             letter-spacing: .28em !important; text-transform: uppercase;
             font-size: .68rem !important; color: #c1121f !important;
             font-family: 'Tajawal', sans-serif !important;
         }
-        /* Hairline cards — no floating shadows, thin rules, square-ish. */
-        .gc-link-card, .gc-service, .gc-stat, .gc-review, .gc-contact-card,
-        .gl-list-card, .gl-home-car, .gl-detail-panel {
-            border-radius: 4px !important;
-            box-shadow: none !important;
-            border: 1px solid #e4e4e4 !important;
-        }
-        .gc-link-card::after, .gc-link-card::before { display: none !important; } /* no animated borders */
-        .gc-link-card:hover, .gl-list-card:hover, .gl-home-car:hover {
-            transform: none !important;
-            border-color: #111 !important;
-            box-shadow: none !important;
-        }
-        /* Section titles get a magazine hairline underneath. */
         .gc-sec-head, .gl-home-head-row { border-bottom: 1px solid #111; padding-bottom: .9rem; }
+
+        /* ── Front-page index: the section cards become headline rows ── */
+        .gc-links-grid { display: block !important; border-top: 3px double #111; }
+        .gc-link-card {
+            display: flex !important; align-items: center; justify-content: space-between; gap: 1rem;
+            border: 0 !important; border-bottom: 1px solid #ddd !important; border-radius: 0 !important;
+            box-shadow: none !important; background: transparent !important;
+            padding: 1.4rem .3rem !important; transform: none !important;
+        }
+        .gc-link-card::after, .gc-link-card::before { display: none !important; }
+        .gc-link-media { display: none !important; }          /* drop the icon tiles */
+        .gc-link-card h3 { display: flex; width: 100%; align-items: center; justify-content: space-between; font-size: clamp(1.4rem, 3vw, 2rem) !important; margin: 0 !important; }
+        .gc-link-card:hover { background: #faf9f7 !important; }
+        .gc-link-card:hover h3 { color: #c1121f; }
+        .gc-link-arrow { background: transparent !important; color: #111 !important; font-size: 1.4rem; }
+
+        /* ── Car list: grid cards become horizontal press rows ── */
+        .gl-list-grid { display: flex !important; flex-direction: column; gap: 0 !important; border-top: 3px double #111; }
+        .gl-list-card {
+            display: grid !important; grid-template-columns: 320px 1fr; gap: 1.6rem; align-items: center;
+            border: 0 !important; border-bottom: 1px solid #ddd !important; border-radius: 0 !important;
+            background: transparent !important; box-shadow: none !important;
+            padding: 1.4rem .2rem; transform: none !important;
+        }
+        .gl-list-card:hover { background: #faf9f7 !important; }
+        .gl-list-card-img { border-radius: 2px !important; }
+        .gl-list-card-body { padding: .2rem 0 !important; }
+        .gl-list-card-make { text-transform: uppercase; letter-spacing: .22em; font-size: .68rem !important; color: #c1121f !important; font-weight: 700; }
+        .gl-list-card-name { font-size: clamp(1.2rem, 2.4vw, 1.7rem) !important; line-height: 1.25 !important; }
+        .gl-list-card-price { font-family: 'Playfair Display', 'Amiri', Georgia, serif !important; font-size: 1.3rem !important; color: #111 !important; }
+        @media (max-width: 768px) {
+            .gl-list-card { grid-template-columns: 132px 1fr; gap: .9rem; padding: 1rem 0; }
+            .gl-list-card-name { font-size: 1.05rem !important; }
+            .gl-list-card-price { font-size: 1rem !important; }
+        }
+
+        /* ── Remaining cards: flat, hairline, square-ish ── */
+        .gc-service, .gc-stat, .gc-review, .gc-contact-card, .gl-home-car, .gl-detail-panel {
+            border-radius: 4px !important; box-shadow: none !important; border: 1px solid #e4e4e4 !important;
+        }
+        .gl-home-car:hover { transform: none !important; border-color: #111 !important; box-shadow: none !important; }
+        .gc-hero-media { border-radius: 2px !important; box-shadow: none !important; border: 1px solid #e4e4e4; }
     </style>
     {% block extra_head %}{% endblock %}
     {% include "partials/site_font.html" %}
