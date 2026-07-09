@@ -694,6 +694,25 @@
                     </div>
                     {% endif %}
 
+                    {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' %}
+                    <div class="lux-field">
+                        <label class="lux-label bilingual" data-lang-ar="حالة السيارة" data-lang-en="Car condition" data-lang-es="Estado del coche" data-lang-ru="Состояние">حالة السيارة</label>
+                        <div class="lux-chips">
+                            {% if request.GET.car_type == 'auction' %}
+                            <label>
+                                <input type="checkbox" name="clean_main" value="1" {% if sel_clean_main %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip bilingual" data-lang-ar="القطع الأساسية سليمة" data-lang-en="Clean main parts" data-lang-es="Piezas principales intactas" data-lang-ru="Основные детали целы">القطع الأساسية سليمة{% with fc=facet_counts|get_item:'clean_main' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% else %}
+                            <label>
+                                <input type="checkbox" name="no_accident" value="1" {% if sel_no_accident %}checked{% endif %} class="lux-chip-input">
+                                <span class="lux-chip bilingual" data-lang-ar="بدون حوادث" data-lang-en="No accidents" data-lang-es="Sin accidentes" data-lang-ru="Без ДТП">بدون حوادث{% with fc=facet_counts|get_item:'no_accident' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     {% if request.GET.car_type == 'auction' and marker_panels %}
                     <div class="lux-field lux-field-toggle{% if not sel_marker_panels %} is-collapsed{% endif %}">
                         <label class="lux-label bilingual" data-lang-ar="استبعاد قطع مستبدلة" data-lang-en="Exclude replaced parts" data-lang-es="Excluir piezas reemplazadas" data-lang-ru="Исключить заменённые детали">

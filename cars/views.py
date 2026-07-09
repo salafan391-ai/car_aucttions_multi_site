@@ -1028,6 +1028,26 @@ def _marker_type_subq(types):
         types)
 
 
+# Marker keys that are fittings, not body panels: lamps, mirrors, glass.
+# "Clean main parts" ignores damage recorded on these.
+_MARKER_NON_BODY_RE = r'(lamp|mirror|glass|windshield)'
+
+
+def _damaged_main_parts_subq():
+    """RawSQL subquery: ids of auction cars with a damaged marker on any MAIN
+    body part (lamps/mirrors/glass don't count). Marker keys are free-form
+    across feeds, so we iterate the JSONB instead of enumerating panels."""
+    return RawSQL(
+        "SELECT id FROM cars_apicar WHERE markers IS NOT NULL "
+        "AND jsonb_typeof(markers) = 'object' AND EXISTS ("
+        "  SELECT 1 FROM jsonb_each(markers) AS kv"
+        "  WHERE jsonb_typeof(kv.value) = 'object'"
+        "  AND COALESCE(lower(kv.value->>'status'), '') NOT IN ('', 'good')"
+        "  AND lower(kv.key) !~ %s"
+        ")",
+        [_MARKER_NON_BODY_RE])
+
+
 def _apply_sidebar_filters(qs, GET, exclude=None):
     """Apply every sidebar filter to qs EXCEPT the one named `exclude`.
 
@@ -1108,6 +1128,15 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
         sub = _marker_type_subq(v)
         if sub is not None:
             qs = qs.exclude(pk__in=sub)
+    if exclude != 'clean_main':
+        if GET.get('clean_main'):
+            # Show only auction cars whose MAIN body parts carry no damage
+            # markers (lamps/mirrors/glass ignored).
+            qs = qs.exclude(pk__in=_damaged_main_parts_subq())
+    if exclude != 'no_accident':
+        if GET.get('no_accident'):
+            # Encar insurance record: keep only cars with zero accidents.
+            qs = qs.filter(extra_features__record__accidentCnt=0)
     if exclude != 'status':
         v = GET.getlist('status')
         if v: qs = qs.filter(status__in=v)
@@ -1161,6 +1190,12 @@ def _compute_facet_counts(facet_base, GET):
         ).count()
         for t in _MARKER_TYPES
     }
+    # clean_main: cars remaining if "clean main parts" is ticked (auction markers).
+    out['clean_main'] = (_apply_sidebar_filters(facet_base, GET, exclude='clean_main')
+                         .exclude(pk__in=_damaged_main_parts_subq()).count())
+    # no_accident: encar cars whose insurance record shows zero accidents.
+    out['no_accident'] = (_apply_sidebar_filters(facet_base, GET, exclude='no_accident')
+                          .filter(extra_features__record__accidentCnt=0).count())
     return out
 
 
@@ -1358,6 +1393,17 @@ def car_list(request):
     _mt_sub = _marker_type_subq(sel_marker_types)
     if _mt_sub is not None:
         qs = qs.exclude(pk__in=_mt_sub)
+
+    sel_clean_main = bool(request.GET.get('clean_main'))
+    if sel_clean_main:
+        # Only auction cars with no damage markers on MAIN body parts
+        # (lamps/mirrors/glass don't count as damage).
+        qs = qs.exclude(pk__in=_damaged_main_parts_subq())
+
+    sel_no_accident = bool(request.GET.get('no_accident'))
+    if sel_no_accident:
+        # Encar insurance record: zero registered accidents.
+        qs = qs.filter(extra_features__record__accidentCnt=0)
 
     sel_seat_counts = request.GET.getlist('seat_count')
     if sel_seat_counts:
@@ -1991,6 +2037,8 @@ def car_list(request):
         'sel_marker_panels':     sel_marker_panels,
         'marker_types':          [(k, ar, en) for k, (ar, en) in _MARKER_TYPE_LABELS.items()],
         'sel_marker_types':      sel_marker_types,
+        'sel_clean_main':        sel_clean_main,
+        'sel_no_accident':       sel_no_accident,
     }
     # HTMX partial request — return only the car grid fragment
     if request.htmx:
