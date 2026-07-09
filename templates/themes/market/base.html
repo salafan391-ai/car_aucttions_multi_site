@@ -849,8 +849,13 @@
         #main-nav { background: rgba(255,255,255,.94); backdrop-filter: blur(10px); border-bottom: 2px solid var(--mk-green); box-shadow: none; }
         #main-nav.nav-scrolled { box-shadow: 0 8px 24px rgba(16,35,26,.10); }
         #main-nav a.text-gray-600:hover { color: var(--mk-green-deep); }
-        #lang-dropdown, #currency-dropdown { border: 1px solid var(--mk-line); border-radius: 999px; padding: .3rem .7rem; background: #fff; }
-        #lang-dropdown:hover, #currency-dropdown:hover { border-color: var(--mk-green); }
+        /* The dropdown ids sit on wrapper divs; the buttons inside carry their
+           own Tailwind border — style those (single border, pill shape). */
+        #lang-dropdown > button, #currency-dropdown > button {
+            border-radius: 999px; border-width: 1px; border-color: var(--mk-line);
+            background: #fff; box-shadow: none;
+        }
+        #lang-dropdown > button:hover, #currency-dropdown > button:hover { border-color: var(--mk-green); color: var(--mk-green-deep); }
         .mk-auction-cta { background: color-mix(in srgb, var(--mk-green) 12%, transparent); color: var(--mk-green-deep);
             font-weight: 800; font-size: .85rem; padding: .42rem .95rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--mk-green) 35%, transparent); }
         .mk-auction-cta:hover { background: var(--mk-green); color: #fff; }
