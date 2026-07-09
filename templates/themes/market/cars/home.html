@@ -39,11 +39,16 @@
     .mkh-all { color: var(--mk-green-deep); font-weight: 800; font-size: .82rem; white-space: nowrap; }
     .mkh-all:hover { text-decoration: underline; }
 
-    /* Brand grid */
-    .mkh-brands { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: .7rem; }
-    .mkh-brand { background: #fff; border: 1px solid var(--mk-line); border-radius: 13px; padding: .85rem .5rem; text-align: center; transition: border-color .15s, box-shadow .15s; }
-    .mkh-brand:hover { border-color: var(--mk-green); box-shadow: 0 8px 20px rgba(16,35,26,.08); }
-    .mkh-brand img { height: 34px; width: auto; max-width: 72px; object-fit: contain; margin: 0 auto .35rem; display: block; }
+    /* Brand rail — scrollable circular icons on the primary color */
+    .mkh-brands { display: flex; gap: 1rem; overflow-x: auto; padding: .2rem .2rem 1rem; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .mkh-brand { flex: 0 0 auto; width: 92px; text-align: center; scroll-snap-align: start; }
+    .mkh-brand .ic { width: 76px; height: 76px; border-radius: 50%; background: var(--mk-green);
+        display: flex; align-items: center; justify-content: center; margin: 0 auto .45rem;
+        box-shadow: 0 8px 20px color-mix(in srgb, var(--mk-green) 30%, transparent);
+        transition: transform .15s, background .15s; }
+    .mkh-brand:hover .ic { transform: translateY(-3px) scale(1.05); background: var(--mk-green-deep); }
+    .mkh-brand .ic img { width: 44px; height: 44px; object-fit: contain; border-radius: 50%; background: #fff; padding: 5px; }
+    .mkh-brand .ic .ltr { color: #fff; font-weight: 900; font-size: 1.5rem; }
     .mkh-brand .nm { font-size: .78rem; font-weight: 800; color: var(--mk-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mkh-brand .ct { font-size: .68rem; color: var(--mk-dim); font-weight: 700; }
 
@@ -130,9 +135,11 @@
         <a href="{% url 'car_list' %}" class="mkh-all bilingual" data-lang-ar="كل السيارات ←" data-lang-en="All cars →" data-lang-es="Todos →" data-lang-ru="Все →">كل السيارات ←</a>
     </div>
     <div class="mkh-brands">
-        {% for m in manufacturers|slice:":16" %}
+        {% for m in manufacturers %}
         <a href="{% url 'car_list' %}?manufacturer={{ m.id }}" class="mkh-brand">
-            {% if m.logo %}<img src="{{ m.logo }}" alt="{{ m.name }}" loading="lazy">{% endif %}
+            <div class="ic">
+                {% if m.logo %}<img src="{{ m.logo }}" alt="{{ m.name }}" loading="lazy">{% else %}<span class="ltr">{{ m.name|first|upper }}</span>{% endif %}
+            </div>
             <div class="nm">{{ m.name_ar|default:m.name|pretty_en }}</div>
             <div class="ct">{{ m.car_count|intcomma }}</div>
         </a>
