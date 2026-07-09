@@ -1,0 +1,57 @@
+{% comment %}
+Global navigation loading bar — the themes navigate with full page loads, so
+without this the old page sits frozen (no feedback) until the server responds.
+A slim brand-colored bar slides across the top the moment the visitor clicks an
+internal link or submits a filter/search form, and disappears when the new page
+renders (or the page is restored from the back/forward cache).
+Included near </body> in every base.
+{% endcomment %}
+<style>
+    #nav-loading-bar {
+        position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+        background: var(--color-primary, var(--gl-brand, #4338ca));
+        box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary, #4338ca) 70%, transparent);
+        z-index: 99999; pointer-events: none; opacity: 0;
+        transition: width .4s ease, opacity .3s ease;
+    }
+    #nav-loading-bar.active { opacity: 1; animation: navbar-crawl 8s cubic-bezier(.15,.6,.3,1) forwards; }
+    @keyframes navbar-crawl {
+        0% { width: 0%; } 15% { width: 45%; } 45% { width: 72%; }
+        80% { width: 88%; } 100% { width: 94%; }
+    }
+</style>
+<div id="nav-loading-bar" aria-hidden="true"></div>
+<script>
+(function () {
+    var bar = document.getElementById('nav-loading-bar');
+    if (!bar) return;
+    var timer = null;
+    function start() {
+        if (timer) return;
+        // Tiny delay so instant (cached) navigations never flash the bar.
+        timer = setTimeout(function () { bar.classList.add('active'); }, 120);
+    }
+    function stop() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        bar.classList.remove('active');
+        bar.style.width = '0%';
+    }
+    // Internal link clicks (new-tab / modified / anchor / js links excluded).
+    document.addEventListener('click', function (e) {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var a = e.target.closest && e.target.closest('a[href]');
+        if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+        var h = a.getAttribute('href') || '';
+        if (!h || h.charAt(0) === '#' || /^(javascript:|mailto:|tel:|whatsapp:)/i.test(h)) return;
+        if (a.origin && a.origin !== location.origin) return;
+        start();
+    });
+    // Filter/search form submits (skip htmx/ajax forms — they prevent default).
+    document.addEventListener('submit', function (e) {
+        if (!e.defaultPrevented) start();
+    });
+    // Safety net: any real unload shows it; bfcache restore hides it.
+    window.addEventListener('beforeunload', function () { bar.classList.add('active'); });
+    window.addEventListener('pageshow', stop);
+})();
+</script>
