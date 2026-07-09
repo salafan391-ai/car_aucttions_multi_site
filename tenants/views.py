@@ -288,7 +288,7 @@ def site_settings(request):
         # ── Site theme (admin-selectable subset) ──
         _theme_before = tenant.template_theme
         _chosen_theme = request.POST.get('template_theme', '')
-        if _chosen_theme in ('default', 'glassy', 'modern'):
+        if _chosen_theme in ('default', 'glassy', 'modern', 'market'):
             tenant.template_theme = _chosen_theme
         _theme_changed = tenant.template_theme != _theme_before
 
@@ -554,6 +554,7 @@ def site_settings(request):
             ('default', 'الافتراضي', 'تصميم قياسي نظيف'),
             ('glassy', 'زجاجي', 'داكن متوهّج وعصري'),
             ('modern', 'عصري', 'كوري حديث وأنيق'),
+            ('market', 'سوق', 'واجهة بحث أولاً بطابع سوق السيارات — أخضر'),
         ],
         'landing_design_choices': tenant.LANDING_DESIGN_CHOICES,
     }

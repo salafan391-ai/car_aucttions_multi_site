@@ -161,6 +161,7 @@ class Tenant(TenantMixin):
         ('general', '🚗 General (جنرال — أبيض كحلي/أحمر)'),
         ('editorial', '📰 Editorial (مجلة — أبيض/أسود/قرمزي)'),
         ('desert', '🏜️ Desert (صحراوي — رملي دافئ)'),
+        ('market', '🛒 Market (سوق — بحث أولاً، أخضر)'),
     ]
     template_theme = models.CharField(
         max_length=20,

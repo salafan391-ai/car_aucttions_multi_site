@@ -1,0 +1,227 @@
+{% load static tailwind_tags django_htmx custom_filters %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root" data-theme="market">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
+    {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+
+    <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{% if seo_keywords %}{{ seo_keywords }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+
+    <meta property="og:title" content="{% block og_title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoDealer",
+      "name": "{{ site_name|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
+      {% if site_logo %}"logo": "{{ site_logo }}",{% endif %}
+      "description": "{{ seo_description|escapejs }}",
+      {% if site_phone %}"telephone": "{{ site_phone|escapejs }}",{% endif %}
+      "areaServed": {"@type": "Country", "name": "SA"}
+    }
+    </script>
+
+    {% tailwind_css %}
+    {% htmx_script %}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ════════════════════════════════════════════════════════════
+           MARKET THEME — search-first marketplace.
+           Emerald chrome (tenant brand drives it), cool gray canvas,
+           white rounded cards, everything built around finding a car
+           fast: search panel hero, brand grid, horizontal car rails.
+           ════════════════════════════════════════════════════════════ */
+        :root {
+            --color-primary: {{ primary_color|default:'#0b7a4b' }};
+            --color-secondary: {{ secondary_color|default:'#075e38' }};
+            --color-accent: {{ accent_color|default:'#16a34a' }};
+            --color-body-bg: #f3f5f4;
+            --mk-green: var(--color-primary);
+            --mk-green-deep: var(--color-secondary);
+            --mk-ink: #10231a;
+            --mk-dim: #5b6b63;
+            --mk-line: #e2e8e4;
+            --mk-card: #ffffff;
+            --mk-amber: #b45309;
+        }
+        body { font-family: 'Tajawal', 'Inter', Arial, sans-serif; background-color: var(--color-body-bg); color: var(--mk-ink); margin: 0; }
+        a { text-decoration: none; color: inherit; }
+
+        /* Brand helpers used by the shared (default) inner pages */
+        .bg-brand { background-color: var(--color-primary); }
+        .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .bg-brand\/20 { background-color: color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        .bg-brand\/50 { background-color: color-mix(in srgb, var(--color-primary) 80%, transparent); }
+        .hover\:bg-brand\/10:hover { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .hover\:bg-brand\/20:hover { background-color: color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        .bg-brand-hover:hover { background-color: var(--color-secondary); }
+        .text-brand { color: var(--color-primary); }
+        .text-brand-hover:hover { color: var(--color-primary); }
+        .border-brand { border-color: var(--color-primary); }
+        .ring-brand:focus { --tw-ring-color: var(--color-accent); }
+        .bg-brand-light { background-color: color-mix(in srgb, var(--color-primary) 10%, white); }
+        .text-brand-on-light { color: var(--color-primary); }
+        .hero-gradient { background: linear-gradient(135deg, var(--mk-green-deep) 0%, var(--mk-green) 100%); }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+        .car-img-wm { position: relative; }
+        .car-img-wm::after {
+            content: ""; position: absolute; inset: 0;
+            background-image: var(--site-logo-url);
+            background-repeat: no-repeat; background-position: center center;
+            background-size: 50% auto; opacity: 0.4; pointer-events: none;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); z-index: 5;
+        }
+        {% if site_logo and show_watermark %}:root { --site-logo-url: url('{{ site_logo }}'); }{% else %}.car-img-wm::after { display: none; }{% endif %}
+
+        /* ── Chrome ── */
+        .mk-head { position: sticky; top: 0; z-index: 60; background: #fff; border-bottom: 1px solid var(--mk-line); }
+        .mk-head-top { background: var(--mk-green-deep); color: #d9efe4; font-size: .74rem; }
+        .mk-head-top .wrap, .mk-head-main { max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: 1rem; }
+        .mk-head-top .wrap { height: 32px; justify-content: space-between; }
+        .mk-head-main { height: 62px; }
+        .mk-logo { display: flex; align-items: center; gap: .55rem; font-weight: 900; font-size: 1.15rem; color: var(--mk-ink); }
+        .mk-logo img { height: 38px; width: auto; object-fit: contain; }
+        .mk-links { display: none; align-items: center; gap: .2rem; margin-inline-start: .6rem; }
+        @media (min-width: 900px) { .mk-links { display: flex; } }
+        .mk-link { padding: .5rem .8rem; border-radius: 9px; font-weight: 700; font-size: .88rem; color: #3b4a42; }
+        .mk-link:hover { background: color-mix(in srgb, var(--mk-green) 9%, transparent); color: var(--mk-green-deep); }
+        .mk-link.active { color: var(--mk-green-deep); background: color-mix(in srgb, var(--mk-green) 12%, transparent); }
+        .mk-actions { margin-inline-start: auto; display: flex; align-items: center; gap: .4rem; }
+        .mk-chip-btn { display: inline-flex; align-items: center; gap: .35rem; border: 1px solid var(--mk-line); background: #fff;
+            border-radius: 999px; padding: .38rem .7rem; font-size: .8rem; font-weight: 700; cursor: pointer; color: #3b4a42; font-family: inherit; }
+        .mk-chip-btn:hover { border-color: var(--mk-green); color: var(--mk-green-deep); }
+        .mk-cta { background: var(--mk-green); color: #fff !important; border-radius: 999px; padding: .45rem 1rem; font-weight: 800; font-size: .82rem; }
+        .mk-cta:hover { background: var(--mk-green-deep); }
+        .mk-menu-panel { position: absolute; top: calc(100% + 6px); inset-inline-end: 0; background: #fff; border: 1px solid var(--mk-line);
+            border-radius: 12px; box-shadow: 0 16px 38px rgba(16,35,26,.14); min-width: 150px; overflow: hidden; z-index: 70; }
+        .mk-menu-panel button { display: flex; width: 100%; align-items: center; gap: .5rem; padding: .55rem .8rem; font-size: .84rem;
+            font-weight: 600; background: #fff; border: 0; cursor: pointer; font-family: inherit; color: var(--mk-ink); }
+        .mk-menu-panel button:hover { background: #f0f6f2; }
+        .hidden { display: none !important; }
+        .mk-burger { display: inline-flex; border: 1px solid var(--mk-line); background: #fff; border-radius: 9px; padding: .4rem .55rem; cursor: pointer; }
+        @media (min-width: 900px) { .mk-burger { display: none; } }
+        .mk-mmenu { border-top: 1px solid var(--mk-line); background: #fff; padding: .6rem 1rem 1rem; display: grid; gap: .15rem; }
+        .mk-mmenu a { padding: .6rem .6rem; border-radius: 9px; font-weight: 700; color: #3b4a42; }
+        .mk-mmenu a:hover { background: #f0f6f2; }
+
+        .mk-footer { background: #0d1f17; color: #b9cfc3; margin-top: 3.5rem; }
+        .mk-footer .wrap { max-width: 1200px; margin: 0 auto; padding: 2.4rem 1rem 1.4rem; display: grid; gap: 1.6rem; grid-template-columns: 1fr; }
+        @media (min-width: 768px) { .mk-footer .wrap { grid-template-columns: 2fr 1fr 1fr; } }
+        .mk-footer h4 { color: #fff; font-size: .95rem; margin: 0 0 .7rem; }
+        .mk-footer a { display: block; padding: .18rem 0; font-size: .86rem; color: #b9cfc3; }
+        .mk-footer a:hover { color: #fff; }
+        .mk-footer .copy { border-top: 1px solid rgba(255,255,255,.08); text-align: center; padding: .9rem; font-size: .78rem; color: #7f978a; }
+    </style>
+    {% block extra_head %}{% endblock %}
+    {% include "partials/site_font.html" %}
+</head>
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+
+    <header class="mk-head">
+        <div class="mk-head-top">
+            <div class="wrap">
+                <span>{% if site_phone %}📞 <span dir="ltr">{{ site_phone }}</span>{% endif %}</span>
+                <span class="bilingual" data-lang-ar="استيراد سيارات من كوريا حتى باب بيتك" data-lang-en="Korean cars imported to your door" data-lang-es="Coches coreanos hasta tu puerta" data-lang-ru="Авто из Кореи до вашей двери">استيراد سيارات من كوريا حتى باب بيتك</span>
+            </div>
+        </div>
+        <div class="mk-head-main">
+            <a href="{% url 'home' %}" class="mk-logo">
+                {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% else %}🚘{% endif %}
+                <span>{{ site_name|default:"سيارات" }}</span>
+            </a>
+            <nav class="mk-links">
+                <a href="{% url 'home' %}" class="mk-link bilingual {% if request.resolver_match.url_name == 'home' %}active{% endif %}" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+                <a href="{% url 'car_list' %}" class="mk-link bilingual {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</a>
+                <a href="{% url 'car_list' %}?car_type=auction" class="mk-link bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+                {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="mk-link bilingual {% if request.resolver_match.url_name == 'site_car_list' %}active{% endif %}" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</a>{% endif %}
+                <a href="{% url 'contact' %}" class="mk-link bilingual" data-lang-ar="تواصل" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل</a>
+            </nav>
+            <div class="mk-actions">
+                <div style="position:relative;">
+                    <button type="button" id="lang-dropdown" class="mk-chip-btn"><span id="lang-flag">🇸🇦</span><span id="lang-label">العربية</span> ▾</button>
+                    <div id="lang-menu" class="mk-menu-panel hidden">
+                        <button type="button" class="lang-menu-item" data-lang-code="ar">🇸🇦 العربية <span class="lang-check-icon"></span></button>
+                        <button type="button" class="lang-menu-item" data-lang-code="en">🇬🇧 English <span class="lang-check-icon"></span></button>
+                        <button type="button" class="lang-menu-item" data-lang-code="es">🇪🇸 Español <span class="lang-check-icon"></span></button>
+                        <button type="button" class="lang-menu-item" data-lang-code="ru">🇷🇺 Русский <span class="lang-check-icon"></span></button>
+                    </div>
+                </div>
+                <div style="position:relative;">
+                    <button type="button" id="currency-dropdown" class="mk-chip-btn"><span id="currency-label">ر.س</span> ▾</button>
+                    <div id="currency-menu" class="mk-menu-panel hidden">
+                        <button type="button" class="currency-menu-item" data-currency-code="SAR">﷼ ريال <span class="currency-check-icon"></span></button>
+                        <button type="button" class="currency-menu-item" data-currency-code="USD">$ دولار <span class="currency-check-icon"></span></button>
+                        <button type="button" class="currency-menu-item" data-currency-code="AED">د.إ درهم <span class="currency-check-icon"></span></button>
+                        <button type="button" class="currency-menu-item" data-currency-code="EUR">€ يورو <span class="currency-check-icon"></span></button>
+                        <button type="button" class="currency-menu-item" data-currency-code="KRW">₩ وون <span class="currency-check-icon"></span></button>
+                    </div>
+                </div>
+                <a href="{% url 'wishlist' %}" class="mk-chip-btn" title="المفضلة">♡</a>
+                {% if user.is_staff %}<a href="{% url 'site_dashboard' %}" class="mk-cta bilingual" data-lang-ar="لوحة التحكم" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة التحكم</a>
+                {% else %}<a href="{% url 'account' %}" class="mk-cta bilingual" data-lang-ar="حسابي" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">حسابي</a>{% endif %}
+                <button type="button" class="mk-burger" onclick="document.getElementById('mk-mmenu').classList.toggle('hidden')">☰</button>
+            </div>
+        </div>
+        <div id="mk-mmenu" class="mk-mmenu hidden">
+            <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</a>
+            <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+            {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</a>{% endif %}
+            <a href="{% url 'wishlist' %}" class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
+            <a href="{% url 'account' %}" class="bilingual" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Аккаунт">حسابي</a>
+            <a href="{% url 'contact' %}" class="bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل معنا</a>
+        </div>
+    </header>
+
+    {% block content %}{% endblock %}
+
+    <footer class="mk-footer">
+        <div class="wrap">
+            <div>
+                <h4>{{ site_name|default:"سيارات" }}</h4>
+                <p style="font-size:.86rem; line-height:1.8; margin:0;">{{ footer_text|default:"استيراد وبيع سيارات كورية مفحوصة — مزادات وبيع مباشر مع الشحن والتخليص حتى الاستلام." }}</p>
+            </div>
+            <div>
+                <h4 class="bilingual" data-lang-ar="روابط سريعة" data-lang-en="Quick links" data-lang-es="Enlaces" data-lang-ru="Ссылки">روابط سريعة</h4>
+                <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</a>
+                <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+                {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</a>{% endif %}
+                <a href="{% url 'faq' %}" class="bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="FAQ" data-lang-es="FAQ" data-lang-ru="FAQ">الأسئلة الشائعة</a>
+            </div>
+            <div>
+                <h4 class="bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل معنا</h4>
+                {% if site_phone %}<a href="tel:{{ site_phone }}" dir="ltr" style="text-align:end;">{{ site_phone }}</a>{% endif %}
+                {% if site_email %}<a href="mailto:{{ site_email }}" dir="ltr" style="text-align:end;">{{ site_email }}</a>{% endif %}
+                {% if site_address %}<a href="#">{{ site_address }}</a>{% endif %}
+            </div>
+        </div>
+        <div class="copy">© {{ site_name|default:"سيارات" }} {% now "Y" %}</div>
+    </footer>
+
+    {% include "partials/lang_currency_script.html" %}
+    {% include "partials/label_overrides.html" %}
+    {% include "partials/loading_bar.html" %}
+</body>
+</html>
