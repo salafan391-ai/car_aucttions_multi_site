@@ -1,0 +1,1444 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters %}
+
+{% block title %}{% if request.GET.car_type == 'auction' %}المزادات{% else %}السيارات{% endif %} — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<style>
+    /* ════════════════════════════════════════════════════════════
+       GENERAL car list — light navy/red theme. Reuses the proven
+       token-driven markup + JS from the glassy list; the --gl-* tokens
+       below remap the whole page to the General (GC) palette, and the
+       gl-* component classes (normally from a theme base) are defined
+       here for this page only.
+       ════════════════════════════════════════════════════════════ */
+    .gl-list-page {
+        --gl-brand:        #111111;   /* navy */
+        --gl-brand-2:      #c1121f;   /* red  */
+        --gl-accent:       #c1121f;
+        --gl-bg-1:         #ffffff;
+        --gl-bg-2:         #ffffff;
+        --gl-bg-3:         #f5f5f4;
+        --gl-ink:          #0f172a;
+        --gl-muted:        #64748b;
+        --gl-faint:        #94a3b8;
+        --gl-glass:        #ffffff;
+        --gl-glass-2:      #ffffff;
+        --gl-glass-3:      #ffffff;
+        --gl-border:       #e4e4e4;
+        --gl-border-2:     #dbe3ee;
+        --gl-danger:       #c1121f;
+        --gl-radius:       4px;
+        --gl-radius-sm:    2px;
+        --gl-blur:         0px;
+        --gl-shadow:       0 1px 2px rgba(0,0,0,0.05);
+        --gl-shadow-lg:    0 2px 8px rgba(0,0,0,0.08);
+        --gl-glow:         0 0 0 1px rgba(42, 37, 100, 0.06);
+        --gl-grad:         linear-gradient(90deg, #c1121f, #111111);
+        --gl-grad-solid:   linear-gradient(135deg, #111111, #333333);
+        --gl-nav-h:        64px;
+    }
+    html.gc-dark .gl-list-page {
+        --gl-bg-1: #0b1020; --gl-bg-2: #111827; --gl-bg-3: #0f172a;
+        --gl-ink: #faf9f7; --gl-muted: #cbd5e1; --gl-faint: #94a3b8;
+        --gl-glass: #111827; --gl-glass-2: #111827; --gl-glass-3: #1e293b;
+        --gl-border: rgba(148,163,184,0.20); --gl-border-2: rgba(148,163,184,0.28);
+        --gl-shadow: 0 16px 40px rgba(0,0,0,0.4);
+        --gl-shadow-lg: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* Shared component classes (normally provided by a theme base) */
+    .gl-shell { width: 100%; max-width: 1380px; margin: 0 auto; padding: 0 1.1rem; }
+    .gl-btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+        padding: .8rem 1.4rem; border-radius: 999px; cursor: pointer;
+        font-family: inherit; font-size: .9rem; font-weight: 800; line-height: 1;
+        border: 1px solid var(--gl-border-2); background: var(--gl-glass-2); color: var(--gl-ink);
+        text-decoration: none; transition: transform .18s ease, box-shadow .25s ease, border-color .2s;
+    }
+    .gl-btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--gl-brand) 60%, var(--gl-border-2)); box-shadow: var(--gl-glow); }
+    .gl-btn svg { width: 1.1rem; height: 1.1rem; }
+    .gl-btn-solid { border: 0; color: #fff; background: var(--gl-grad-solid); box-shadow: 0 12px 28px -8px rgba(42,37,100,0.5); }
+    .gl-btn-solid:hover { filter: brightness(1.06); }
+    .gl-chip {
+        display: inline-flex; align-items: center; gap: .4rem;
+        padding: .3rem .8rem; border-radius: 999px; font-size: .72rem; font-weight: 700;
+        border: 1px solid var(--gl-border); background: var(--gl-bg-3); color: var(--gl-muted);
+    }
+    .gl-input, .gl-select, .gl-textarea {
+        width: 100%; padding: .75rem 1rem; border-radius: var(--gl-radius-sm);
+        background: #fff; color: var(--gl-ink);
+        border: 1px solid var(--gl-border); font-family: inherit; font-size: .95rem;
+    }
+    html.gc-dark .gl-input, html.gc-dark .gl-select, html.gc-dark .gl-textarea { background: #1e293b; }
+    .gl-input::placeholder, .gl-textarea::placeholder { color: var(--gl-faint); }
+    .gl-input:focus, .gl-select:focus, .gl-textarea:focus {
+        outline: none; border-color: var(--gl-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--gl-brand) 18%, transparent);
+    }
+    .gl-select option { background: var(--gl-bg-2); color: var(--gl-ink); }
+    .gl-section-title { font-size: 1.7rem; font-weight: 900; letter-spacing: -.01em; margin: 0; color: var(--gl-ink); }
+    .gl-section-title small { display:block; color: var(--gl-brand-2); font-size:.72rem; font-weight:800; letter-spacing:.18em; text-transform:uppercase; margin-bottom:.4rem; }
+
+    /* General flavour: gradient top-bar on cards + solid navy price */
+    .gl-list-card { border-radius: 24px; overflow: hidden; }
+    .gl-list-card::before {
+        content: ""; position: absolute; top: 0; left: 18px; right: 18px; height: 4px; border-radius: 999px;
+        background: var(--gl-grad); z-index: 6;
+    }
+    .gl-list-card-img::after { display: none; }
+    .gl-list-card-price { background: none !important; color: var(--gl-brand) !important; -webkit-text-fill-color: var(--gl-brand) !important; }
+    .gl-list-seg a.active { background: var(--gl-brand-2); }
+
+    /* ════════════════════════════════════════════════════════════
+       Page-scoped list styles (token-driven — adapt to the palette above)
+       ════════════════════════════════════════════════════════════ */
+    .gl-list-page { padding: 2.25rem 0 4rem; }
+
+    /* ── Listing header ── */
+    .gl-list-head {
+        display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+    .gl-list-head .gl-section-title { flex: 1; min-width: 240px; }
+    .gl-list-head .gl-section-title span.q { color: var(--gl-brand); }
+
+    /* Segmented type switcher */
+    .gl-list-seg {
+        display: inline-flex; gap: .25rem; padding: .35rem;
+        border-radius: 999px;
+        background: var(--gl-glass); border: 1px solid var(--gl-border);
+        backdrop-filter: blur(var(--gl-blur)); -webkit-backdrop-filter: blur(var(--gl-blur));
+    }
+    .gl-list-seg a {
+        padding: .5rem 1rem; border-radius: 999px;
+        color: var(--gl-muted); font-size: .82rem; font-weight: 700; white-space: nowrap;
+        transition: color .2s, background .2s;
+    }
+    .gl-list-seg a:hover { color: var(--gl-ink); background: var(--gl-glass-2); }
+    .gl-list-seg a.active { color: #fff; background: var(--gl-grad-solid); }
+
+    /* ── Hero strip (auction / encar) ── */
+    .gl-list-hero {
+        display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+        padding: 1.4rem 1.6rem; margin-bottom: 1.6rem;
+        border-radius: var(--gl-radius);
+        background: linear-gradient(135deg, color-mix(in srgb, var(--gl-brand) 16%, var(--gl-glass-2)), color-mix(in srgb, var(--gl-brand-2) 14%, var(--gl-glass)));
+        border: 1px solid color-mix(in srgb, var(--gl-brand) 35%, var(--gl-border));
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow);
+    }
+    .gl-list-hero-imgs { display: flex; flex-shrink: 0; }
+    .gl-list-hero-imgs img {
+        width: 7rem; height: 5rem; object-fit: cover; border-radius: 14px;
+        border: 2px solid rgba(255,255,255,.18); box-shadow: var(--gl-shadow);
+    }
+    .gl-list-hero-imgs img + img { margin-inline-start: -1.4rem; }
+    .gl-list-hero-body { flex: 1; min-width: 0; }
+    .gl-list-hero-eyebrow { color: var(--gl-brand); font-size: .76rem; font-weight: 800; letter-spacing: .04em; }
+    .gl-list-hero-timer { font-size: 2rem; font-weight: 800; color: var(--gl-ink); font-variant-numeric: tabular-nums; margin-top: .3rem; letter-spacing: -.01em; }
+    .gl-list-hero-title { font-size: 1.45rem; font-weight: 800; color: var(--gl-ink); margin: .1rem 0 0; }
+    .gl-list-hero-sub { color: var(--gl-muted); font-size: .88rem; line-height: 1.65; margin-top: .5rem; max-width: 46rem; }
+    .gl-list-hero-chips, .gl-list-hero-stats { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+    .gl-list-hero-stat b { color: var(--gl-brand); font-size: 1rem; font-weight: 800; }
+
+    /* ── Layout: filter dock + results ── */
+    .gl-list-layout { display: grid; gap: 1.6rem; grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+    @media (max-width: 920px) { .gl-list-layout { grid-template-columns: 1fr; } }
+
+    /* Filter dock */
+    .gl-list-dock {
+        position: sticky; top: calc(var(--gl-nav-h) + .9rem);
+        padding: 1.3rem; border-radius: var(--gl-radius);
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        border: 1px solid var(--gl-border);
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow);
+    }
+    .gl-list-dock-title { font-size: 1rem; font-weight: 800; color: var(--gl-ink); margin: 0 0 1.1rem; display: flex; align-items: center; gap: .5rem; }
+    .gl-list-dock-title svg { width: 1.05rem; height: 1.05rem; color: var(--gl-brand); }
+
+    .gl-list-field { margin-bottom: 1.1rem; }
+    .gl-list-flabel { display: block; color: var(--gl-ink); font-size: .8rem; font-weight: 700; margin-bottom: .45rem; }
+    .gl-list-range { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+
+    /* Collapsible section */
+    .gl-list-field-toggle .gl-list-flabel {
+        display: flex; align-items: center; justify-content: space-between;
+        cursor: pointer; user-select: none; gap: .5rem; transition: color .2s;
+    }
+    .gl-list-field-toggle .gl-list-flabel:hover { color: var(--gl-brand); }
+    .gl-list-toggle-icon { width: .8rem; height: .8rem; flex-shrink: 0; color: var(--gl-muted); transition: transform .25s ease; }
+    .gl-list-field-toggle.is-collapsed .gl-list-toggle-icon { transform: rotate(-90deg); }
+    [dir="rtl"] .gl-list-field-toggle.is-collapsed .gl-list-toggle-icon { transform: rotate(90deg); }
+    .gl-list-field-toggle.is-collapsed > .gl-list-chips,
+    .gl-list-field-toggle.is-collapsed > .gl-list-tree,
+    .gl-list-field-toggle.is-collapsed > .gl-list-range { display: none; }
+
+    /* Chip checkboxes */
+    .gl-list-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: .4rem; }
+    .gl-list-chips > label { display: flex; position: relative; }
+    .gl-list-chip-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; clip: rect(0 0 0 0); }
+    .gl-list-chip {
+        flex: 1; display: inline-flex; align-items: center; justify-content: space-between; gap: .4rem; text-align: start;
+        padding: .5rem .7rem; border-radius: 999px;
+        border: 1px solid var(--gl-border); background: var(--gl-glass);
+        color: var(--gl-muted); cursor: pointer; user-select: none;
+        font-size: .76rem; font-weight: 600; transition: all .15s ease;
+    }
+    .gl-list-chip:hover { border-color: color-mix(in srgb, var(--gl-brand) 55%, var(--gl-border)); color: var(--gl-ink); }
+    .gl-list-chip-input:checked + .gl-list-chip {
+        background: color-mix(in srgb, var(--gl-brand) 18%, transparent);
+        border-color: var(--gl-brand); color: var(--gl-brand); font-weight: 700;
+    }
+    .gl-list-chip-input:focus-visible + .gl-list-chip { outline: 2px solid var(--gl-brand); outline-offset: 2px; }
+
+    /* Hierarchical tree: make → model → badge */
+    .gl-list-tree { display: flex; flex-direction: column; gap: .3rem; max-height: 360px; overflow-y: auto; padding-inline-end: .15rem; }
+    .gl-list-tree::-webkit-scrollbar { width: 6px; }
+    .gl-list-tree::-webkit-scrollbar-thumb { background: var(--gl-border-2); border-radius: 3px; }
+    .gl-list-tree-node { display: flex; flex-direction: column; }
+    .gl-list-tree-row {
+        display: flex; align-items: center; gap: .5rem;
+        padding: .45rem .6rem; border-radius: 11px;
+        border: 1px solid var(--gl-border); background: var(--gl-glass);
+        color: var(--gl-muted); transition: all .15s ease;
+    }
+    .gl-list-tree-row:hover { border-color: color-mix(in srgb, var(--gl-brand) 50%, var(--gl-border)); color: var(--gl-ink); }
+    .gl-list-tree-label { flex: 1; display: flex; align-items: center; gap: .4rem; cursor: pointer; user-select: none; min-width: 0; margin: 0; position: relative; }
+    .gl-list-tree-cb { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; clip: rect(0 0 0 0); }
+    .gl-list-tree-name { font-size: .82rem; font-weight: 600; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.25; }
+    .gl-list-tree-row:has(.gl-list-tree-cb:checked) {
+        background: color-mix(in srgb, var(--gl-brand) 16%, transparent);
+        border-color: var(--gl-brand); color: var(--gl-brand);
+    }
+    .gl-list-tree-toggle {
+        width: 1.5rem; height: 1.5rem; flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 999px; border: 1px solid var(--gl-border);
+        background: var(--gl-glass-2); color: var(--gl-muted); cursor: pointer;
+        padding: 0; font-family: inherit; transition: all .2s ease;
+    }
+    .gl-list-tree-toggle:hover { border-color: var(--gl-brand); color: var(--gl-brand); }
+    .gl-list-tree-toggle svg { width: .7rem; height: .7rem; transition: transform .25s ease; pointer-events: none; }
+    .gl-list-tree-node.is-open > .gl-list-tree-row .gl-list-tree-toggle { background: var(--gl-grad-solid); color: #fff; border-color: transparent; }
+    .gl-list-tree-node.is-open > .gl-list-tree-row .gl-list-tree-toggle svg { transform: rotate(45deg); }
+    .gl-list-tree-children {
+        display: none; flex-direction: column; gap: .3rem;
+        padding: .3rem 0 .1rem; padding-inline-start: .6rem;
+        border-inline-start: 1px dashed var(--gl-border-2);
+        margin-inline-start: .45rem; margin-top: .25rem;
+    }
+    .gl-list-tree-node.is-open > .gl-list-tree-children { display: flex; }
+    .gl-list-tree-hint { color: var(--gl-faint); font-size: .72rem; padding: .35rem .55rem; }
+
+    .gl-list-dock-actions { display: flex; gap: .55rem; margin-top: .4rem; }
+    .gl-list-dock-actions .gl-btn { flex: 1; padding: .7rem 1rem; font-size: .85rem; }
+
+    /* Active filter chips */
+    .gl-list-active { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: 1.2rem; }
+    .gl-list-active-chip {
+        display: inline-flex; align-items: center; gap: .4rem;
+        padding: .4rem .8rem; border-radius: 999px;
+        background: color-mix(in srgb, var(--gl-brand) 14%, transparent);
+        border: 1px solid color-mix(in srgb, var(--gl-brand) 38%, transparent);
+        color: var(--gl-brand); font-size: .78rem; font-weight: 600; transition: all .15s ease;
+    }
+    .gl-list-active-chip:hover { background: color-mix(in srgb, var(--gl-brand) 22%, transparent); }
+    .gl-list-active-chip .x { opacity: .8; font-size: .95rem; line-height: 1; }
+    .gl-list-active-clear {
+        padding: .4rem .85rem; border-radius: 999px;
+        background: var(--gl-glass); border: 1px solid var(--gl-border);
+        color: var(--gl-muted); font-size: .75rem; font-weight: 700; transition: all .15s ease;
+        display: inline-flex; align-items: center;
+    }
+    .gl-list-active-clear:hover { border-color: var(--gl-brand); color: var(--gl-brand); }
+
+    /* Results head + sort */
+    .gl-list-results-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .gl-list-results-info { display: flex; gap: .25rem; flex-direction: column; color: var(--gl-muted); font-size: .8rem; }
+    .gl-list-results-info > span:first-child { color: var(--gl-ink); font-weight: 700; font-size: .92rem; }
+    .gl-list-sort { display: inline-flex; align-items: center; gap: .55rem; }
+    .gl-list-sort-label { color: var(--gl-faint); font-size: .76rem; font-weight: 700; }
+    .gl-list-sort select {
+        width: auto; padding: .55rem .9rem; font-size: .82rem; font-weight: 600;
+        border-radius: 999px; cursor: pointer;
+    }
+
+    /* ── Car grid + cards ── */
+    .gl-list-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); }
+    .gl-list-card {
+        position: relative; display: flex; flex-direction: column; overflow: hidden;
+        border-radius: var(--gl-radius); color: inherit;
+        background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        border: 1px solid var(--gl-border);
+        backdrop-filter: blur(var(--gl-blur)) saturate(150%); -webkit-backdrop-filter: blur(var(--gl-blur)) saturate(150%);
+        box-shadow: var(--gl-shadow);
+        transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease, border-color .25s ease;
+    }
+    .gl-list-card:hover {
+        transform: translateY(-4px);
+        border-color: color-mix(in srgb, var(--gl-brand) 45%, var(--gl-border));
+        box-shadow: var(--gl-shadow-lg), var(--gl-glow);
+    }
+    .gl-list-card-img { aspect-ratio: 4/3; position: relative; overflow: hidden; background: rgba(255,255,255,.04); }
+    .gl-list-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+    .gl-list-card:hover .gl-list-card-img img { transform: scale(1.05); }
+    .gl-list-card-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(7,7,19,.55), transparent 45%); pointer-events: none; }
+
+    .gl-list-wish {
+        position: absolute; top: .7rem; inset-inline-end: .7rem; z-index: 5;
+        width: 38px; height: 38px; border-radius: 999px;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        background: color-mix(in srgb, var(--gl-bg-1) 55%, transparent);
+        border: 1px solid var(--gl-border-2);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        transition: all .25s ease;
+    }
+    .gl-list-wish:hover { border-color: var(--gl-brand); transform: scale(1.07); box-shadow: var(--gl-glow); }
+    .gl-list-wish svg { width: 17px; height: 17px; color: var(--gl-ink); transition: color .25s ease; }
+    .gl-list-wish:hover svg { color: var(--gl-brand); }
+    .gl-list-wish.active svg { color: var(--gl-danger); fill: var(--gl-danger); }
+
+    .gl-list-card-cd { position: absolute; bottom: .65rem; inset-inline-start: .65rem; z-index: 4; }
+
+    .gl-list-card-body { padding: 1rem 1.1rem 1.15rem; display: flex; flex-direction: column; flex: 1; }
+    .gl-list-card-make { color: var(--gl-muted); font-size: .76rem; font-weight: 700; margin-bottom: .25rem; }
+    .gl-list-card-name { color: var(--gl-ink); font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; margin: 0 0 .4rem; }
+    .gl-list-card-trim {
+        display: inline-flex; align-self: flex-start; margin-bottom: .55rem;
+        padding: .2rem .6rem; border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--gl-brand) 35%, transparent);
+        background: color-mix(in srgb, var(--gl-brand) 12%, transparent);
+        color: var(--gl-brand); font-size: .7rem; font-weight: 700;
+    }
+    .gl-list-card-price {
+        font-size: 1.3rem; font-weight: 800; margin-bottom: .6rem; width: fit-content;
+        background: var(--gl-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .gl-list-card-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: auto; padding-top: .7rem; border-top: 1px solid var(--gl-border); }
+    .gl-list-card-meta .gl-chip { font-size: .7rem; }
+    .gl-list-meta-ico { width: .82rem; height: .82rem; color: var(--gl-brand); display: inline-flex; flex-shrink: 0; }
+    .gl-list-meta-ico svg { width: 100%; height: 100%; display: block; }
+
+    .gl-list-empty { grid-column: 1/-1; text-align: center; color: var(--gl-muted); padding: 4rem 1rem; }
+
+    /* Pagination */
+    .gl-list-pager { display: flex; justify-content: center; flex-wrap: wrap; gap: .5rem; margin-top: 2.6rem; }
+    .gl-list-pager a, .gl-list-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 .85rem; border-radius: 999px;
+        background: var(--gl-glass); border: 1px solid var(--gl-border);
+        color: var(--gl-muted); font-size: .86rem; font-weight: 700; transition: all .18s ease;
+    }
+    .gl-list-pager a:hover { border-color: var(--gl-brand); color: var(--gl-brand); transform: translateY(-1px); }
+    .gl-list-pager .current { background: var(--gl-grad-solid); color: #fff; border-color: transparent; }
+
+    /* Mobile filter drawer trigger */
+    .gl-list-trigger {
+        display: none; align-items: center; gap: .6rem; width: 100%;
+        padding: .85rem 1.1rem; margin-bottom: 1.2rem; border-radius: 999px;
+        background: var(--gl-glass-2); border: 1px solid var(--gl-border);
+        color: var(--gl-ink); cursor: pointer; font-family: inherit; font-size: .85rem; font-weight: 700;
+        backdrop-filter: blur(var(--gl-blur)); -webkit-backdrop-filter: blur(var(--gl-blur));
+    }
+    .gl-list-trigger:hover { border-color: var(--gl-brand); color: var(--gl-brand); }
+    .gl-list-trigger svg { width: 1rem; height: 1rem; }
+    .gl-list-trigger .dot { margin-inline-start: auto; width: .55rem; height: .55rem; border-radius: 999px; background: var(--gl-grad); }
+    .gl-list-backdrop { position: fixed; inset: 0; background: rgba(3,3,12,.6); z-index: 90; opacity: 0; pointer-events: none; transition: opacity .25s ease; backdrop-filter: blur(2px); }
+    .gl-list-backdrop.open { opacity: 1; pointer-events: auto; }
+    .gl-list-dock-close {
+        display: none; position: absolute; top: 1rem; inset-inline-end: 1rem;
+        width: 2.4rem; height: 2.4rem; border-radius: 999px;
+        border: 1px solid var(--gl-border); background: var(--gl-glass-2);
+        color: var(--gl-muted); cursor: pointer; font-size: 1.3rem; font-family: inherit;
+        align-items: center; justify-content: center;
+    }
+    .gl-list-dock-close:hover { border-color: var(--gl-brand); color: var(--gl-brand); }
+    body.gl-list-modal-open { position: fixed; left: 0; right: 0; width: 100%; }
+
+    @media (max-width: 920px) {
+        .gl-list-trigger { display: flex; }
+        .gl-list-dock-close { display: flex; }
+        .gl-list-dock {
+            position: fixed; left: 0; right: 0; top: 0; height: 100vh; height: 100dvh;
+            margin: 0; border-radius: 0; transform: translateY(100%); transition: transform .3s ease;
+            display: flex; flex-direction: column; overflow: hidden; z-index: 100; padding: 0;
+            border: 0; border-top: 1px solid var(--gl-border);
+            background: color-mix(in srgb, var(--gl-bg-2) 94%, transparent);
+            box-shadow: var(--gl-shadow-lg);
+        }
+        .gl-list-dock.open { transform: translateY(0); }
+        .gl-list-dock-title { margin: 0; padding: 1.25rem 1.1rem .85rem; flex-shrink: 0; }
+        .gl-list-dock-scroll { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 0 1.1rem 1rem; }
+        .gl-list-dock-actions { flex-shrink: 0; margin: 0; padding: .85rem 1.1rem calc(.85rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--gl-border); background: color-mix(in srgb, var(--gl-bg-2) 96%, transparent); }
+        .gl-list-tree { max-height: none; overflow-y: visible; }
+    }
+
+    /* Desktop: pin the Apply/Reset actions bar as a footer, scroll only the filter list */
+    @media (min-width: 921px) {
+        .gl-list-dock {
+            display: flex; flex-direction: column;
+            max-height: calc(100vh - var(--gl-nav-h) - 1.8rem);
+        }
+        .gl-list-dock-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+        .gl-list-dock-actions {
+            flex: 0 0 auto;
+            margin-top: .85rem; padding-top: .85rem;
+            border-top: 1px solid var(--gl-border);
+            background: linear-gradient(160deg, var(--gl-glass-2), var(--gl-glass));
+        }
+    }
+
+    @media (max-width: 700px) {
+        .gl-list-page { padding: 1.4rem 0 2.5rem; }
+        .gl-list-seg { width: 100%; }
+        .gl-list-seg a { flex: 1; text-align: center; padding: .5rem .4rem; font-size: .74rem; }
+        .gl-list-hero { flex-direction: column; align-items: center; text-align: center; padding: 1.1rem 1rem; gap: .85rem; }
+        .gl-list-hero-imgs img { width: 4.4rem; height: 3.3rem; }
+        .gl-list-hero-imgs img + img { margin-inline-start: -1rem; }
+        .gl-list-hero-body { width: 100%; }
+        .gl-list-hero-timer { font-size: 1.5rem; }
+        .gl-list-hero-chips, .gl-list-hero-stats { justify-content: center; }
+        .gl-list-grid { grid-template-columns: 1fr; gap: 1rem; }
+        .gl-list-results-info { flex-direction: row; align-items: baseline; gap: .6rem; }
+    }
+</style>
+
+<div class="gl-list-page">
+    <div class="gl-shell">
+
+        {% if hero %}
+        {% if request.GET.car_type == 'auction' %}
+        <!-- ═══ AUCTION HERO ═══ -->
+        <div class="gl-list-hero">
+            {% if hero.auction_imgs %}
+            <div class="gl-list-hero-imgs">
+                {% for img in hero.auction_imgs|slice:":4" %}<img src="{{ img|img_small }}" alt="" loading="lazy">{% endfor %}
+            </div>
+            {% endif %}
+            <div class="gl-list-hero-body">
+                <div class="gl-list-hero-eyebrow">{% if hero.next_auction_name %}{{ hero.next_auction_name }} · {% endif %}<span class="bilingual" data-lang-ar="مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}" data-lang-en="{% if hero.next_auction_day_en %}{{ hero.next_auction_day_en }} {% endif %}Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}</span>{% if hero.next_auction_date %} · {{ hero.next_auction_date|date:"Y/m/d" }}{% endif %}</div>
+                {% if hero.next_auction_date %}
+                <div class="gl-list-hero-timer" data-auction-hero-timer data-date="{{ hero.next_auction_date|date:'c' }}">—</div>
+                {% else %}
+                <h2 class="gl-list-hero-title bilingual" data-lang-ar="مزادات السيارات" data-lang-en="Car Auctions" data-lang-es="Subastas" data-lang-ru="Автоаукционы">مزادات السيارات</h2>
+                {% endif %}
+                <p class="gl-list-hero-sub bilingual" data-lang-ar="نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة." data-lang-en="Auction cars are refreshed daily. Add an amount on top of the listed price to raise your bid and win the car." data-lang-es="Los coches de subasta se actualizan a diario. Añade una cantidad para ganar la puja." data-lang-ru="Автомобили аукциона обновляются ежедневно. Добавьте сумму к цене, чтобы выиграть торги.">نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة.</p>
+                {% if hero.upcoming_auctions|length > 1 %}
+                <div class="gl-list-hero-chips">
+                    {% for a in hero.upcoming_auctions %}<span class="gl-chip">{{ a.auction_name }} <span class="bilingual" style="color:var(--gl-faint);" data-lang-ar="{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}" data-lang-en="{{ a.day_en }} {{ a.auction_date|date:'Y/m/d' }}">{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}</span></span>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- ═══ ENCAR HERO ═══ -->
+        <div class="gl-list-hero">
+            {% if hero.encar_imgs %}
+            <div class="gl-list-hero-imgs">
+                {% for img in hero.encar_imgs|slice:":4" %}<img src="{{ img|img_small }}" alt="" loading="lazy">{% endfor %}
+            </div>
+            {% endif %}
+            <div class="gl-list-hero-body">
+                <h2 class="gl-list-hero-title bilingual" data-lang-ar="سيارات كورية مستوردة" data-lang-en="Imported Korean cars" data-lang-es="Coches coreanos importados" data-lang-ru="Импортные авто из Кореи">سيارات كورية مستوردة</h2>
+                <p class="gl-list-hero-sub bilingual" data-lang-ar="الأسعار المعروضة هي السعر الفعلي للسيارة، وتبقى رسوم إضافية (شحن وجمارك). استخدم حاسبة الاستيراد لمعرفة التكلفة الكاملة." data-lang-en="Prices shown are the car's actual price; additional costs (shipping & customs) still apply. Use the import calculator for the full landed cost." data-lang-es="Los precios son el precio real del coche; aún hay costos adicionales (envío y aduana)." data-lang-ru="Указанные цены — реальная цена авто; остаются доп. расходы (доставка и таможня).">الأسعار المعروضة هي السعر الفعلي للسيارة، وتبقى رسوم إضافية (شحن وجمارك). استخدم حاسبة الاستيراد لمعرفة التكلفة الكاملة.</p>
+                <div class="gl-list-hero-stats">
+                    <div class="gl-chip gl-list-hero-stat"><b>{{ hero.added_today|intcomma }}</b> <span class="bilingual" data-lang-ar="أُضيفت اليوم" data-lang-en="added today" data-lang-es="añadidos hoy" data-lang-ru="добавлено сегодня">أُضيفت اليوم</span></div>
+                    {% if hero.updated_today %}<div class="gl-chip gl-list-hero-stat"><b>{{ hero.updated_today|intcomma }}</b> <span class="bilingual" data-lang-ar="حُدّثت اليوم" data-lang-en="updated today" data-lang-es="actualizados hoy" data-lang-ru="обновлено сегодня">حُدّثت اليوم</span></div>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="gl-list-head">
+            <h1 class="gl-section-title">
+                <small class="bilingual" data-lang-ar="المجموعة" data-lang-en="The Collection" data-lang-es="La colección" data-lang-ru="Коллекция">المجموعة</small>
+                {% if request.GET.q %}<span class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</span> · <span class="q">"{{ request.GET.q }}"</span>{% else %}<span class="bilingual" data-lang-ar="جميع السيارات" data-lang-en="All Vehicles" data-lang-es="Todos los vehículos" data-lang-ru="Все автомобили">جميع السيارات</span>{% endif %}
+            </h1>
+            <div class="gl-list-seg">
+                <a href="?{% if request.GET.q %}q={{ request.GET.q }}{% endif %}" class="bilingual {% if not request.GET.car_type %}active{% endif %}" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todo" data-lang-ru="Все">الكل</a>
+                <a href="?car_type=cars{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="bilingual {% if request.GET.car_type == 'cars' %}active{% endif %}" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</a>
+                <a href="?car_type=auction{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="bilingual {% if request.GET.car_type == 'auction' %}active{% endif %}" data-lang-ar="مزادات" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزادات</a>
+                <a href="{% if ours_url %}{{ ours_url }}{% else %}{% url 'site_car_list' %}{% endif %}" class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</a>
+            </div>
+        </div>
+
+        <button type="button" class="gl-list-trigger" onclick="glOpenFilters()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 12h12M10 20h4"/></svg>
+            <span class="bilingual" data-lang-ar="ابحث عن سيارتك المثالية" data-lang-en="Find Your Perfect Car" data-lang-es="Encuentra tu coche ideal" data-lang-ru="Найдите свой идеальный авто">ابحث عن سيارتك المثالية</span>
+            {% if sel_manufacturers or sel_models or sel_badges or sel_marker_panels or sel_marker_types or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+            <span class="dot"></span>
+            {% endif %}
+        </button>
+
+        <div class="gl-list-backdrop" id="gl-filter-backdrop" onclick="glCloseFilters()"></div>
+
+        <div class="gl-list-layout">
+            <aside class="gl-list-dock" id="gl-side">
+                <button type="button" class="gl-list-dock-close" onclick="glCloseFilters()" aria-label="Close">×</button>
+                <h3 class="gl-list-dock-title">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 12h12M10 20h4"/></svg>
+                    <span class="bilingual" data-lang-ar="تصفية" data-lang-en="Refine" data-lang-es="Refinar" data-lang-ru="Фильтр">تصفية</span>
+                </h3>
+                <form method="get" id="gl-filter-form" class="gl-list-dock-scroll">
+                    {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+                    {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+
+                    <div class="gl-list-field">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>
+                        <input type="search" name="q" value="{{ request.GET.q|default:'' }}" data-placeholder-ar="الماركة، الموديل…" data-placeholder-en="Make, model…" data-placeholder-es="Marca, modelo…" data-placeholder-ru="Марка, модель…" placeholder="الماركة، الموديل…" class="gl-input">
+                    </div>
+
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_manufacturers and not sel_models and not sel_badges %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">
+                            <span>الشركة المصنعة</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-tree" id="gl-tree-root" data-car-type="{{ request.GET.car_type|default:'' }}">
+                            {% for m in manufacturers %}{% with mfr_id_str=m.id|stringformat:"d" %}
+                            <div class="gl-list-tree-node gl-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
+                                <div class="gl-list-tree-row">
+                                    <label class="gl-list-tree-label">
+                                        <input type="checkbox" name="manufacturer" value="{{ m.id }}" {% if mfr_id_str in sel_manufacturers %}checked{% endif %} class="gl-list-tree-cb gl-mfr-cb">
+                                        <span class="gl-list-tree-name bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
+                                    </label>
+                                    <button type="button" class="gl-list-tree-toggle" aria-label="Toggle">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    </button>
+                                </div>
+                                <div class="gl-list-tree-children">
+                                    {% for mod in models %}{% if mod.manufacturer_id == m.id %}{% with mod_id_str=mod.id|stringformat:"d" %}
+                                    <div class="gl-list-tree-node gl-model-node" data-model-id="{{ mod.id }}" data-loaded="false">
+                                        <div class="gl-list-tree-row">
+                                            <label class="gl-list-tree-label">
+                                                <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="gl-list-tree-cb gl-model-cb">
+                                                <span class="gl-list-tree-name bilingual" data-lang-ar="{{ mod|translate_model }}" data-lang-en="{{ mod|translate_model:'en' }}" data-lang-es="{{ mod|translate_model:'en' }}" data-lang-ru="{{ mod|translate_model:'en' }}">{{ mod|translate_model }}</span>
+                                            </label>
+                                            <button type="button" class="gl-list-tree-toggle" aria-label="Toggle">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                            </button>
+                                        </div>
+                                        <div class="gl-list-tree-children"></div>
+                                    </div>
+                                    {% endwith %}{% endif %}{% endfor %}
+                                </div>
+                            </div>
+                            {% endwith %}{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="gl-list-field gl-list-field-toggle{% if not request.GET.year_from and not request.GET.year_to %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="السنة" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">
+                            <span>السنة</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-range">
+                            <input type="number" name="year_from" value="{{ request.GET.year_from|default:'' }}" data-placeholder-ar="من" data-placeholder-en="From" data-placeholder-es="Desde" data-placeholder-ru="От" placeholder="من" class="gl-input">
+                            <input type="number" name="year_to" value="{{ request.GET.year_to|default:'' }}" data-placeholder-ar="إلى" data-placeholder-en="To" data-placeholder-es="Hasta" data-placeholder-ru="До" placeholder="إلى" class="gl-input">
+                        </div>
+                    </div>
+
+                    <div class="gl-list-field gl-list-field-toggle{% if not request.GET.price_min and not request.GET.price_max %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="السعر (بعملتك)" data-lang-en="Price (your currency)" data-lang-es="Precio (tu moneda)" data-lang-ru="Цена (в вашей валюте)">
+                            <span>السعر (بعملتك)</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-range">
+                            <input type="number" inputmode="numeric" data-price-filter="min" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="gl-input">
+                            <input type="hidden" name="price_min" value="{{ request.GET.price_min|default:'' }}">
+                            <input type="number" inputmode="numeric" data-price-filter="max" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="gl-input">
+                            <input type="hidden" name="price_max" value="{{ request.GET.price_max|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="gl-list-field gl-list-field-toggle{% if not request.GET.mileage_min and not request.GET.mileage_max %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="المسافة (كم)" data-lang-en="Mileage (km)" data-lang-es="Kilometraje (km)" data-lang-ru="Пробег (км)">
+                            <span>المسافة (كم)</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-range">
+                            <input type="number" name="mileage_min" value="{{ request.GET.mileage_min|default:'' }}" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="gl-input">
+                            <input type="number" name="mileage_max" value="{{ request.GET.mileage_max|default:'' }}" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="gl-input">
+                        </div>
+                    </div>
+
+                    {% if transmissions %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_transmissions %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">
+                            <span>ناقل الحركة</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for t in transmissions %}
+                            <label>
+                                <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}{% with fc=facet_counts|get_item:'transmission'|get_item:t %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if marker_types and request.GET.car_type != 'kbchachacha' %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_marker_types %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="استبعاد حسب نوع الضرر" data-lang-en="Exclude by damage type" data-lang-es="Excluir por tipo de daño" data-lang-ru="Исключить по типу повреждения">
+                            <span>استبعاد حسب نوع الضرر</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <p class="bilingual" style="margin:.1rem 0 .55rem; font-size:.72rem; line-height:1.5; color:var(--gl-muted);" data-lang-ar="إخفاء المزادات التي بها قطع من النوع المختار (الرقم = عدد المخفية)" data-lang-en="Hides auctions that have any part of the chosen type (number = how many are hidden)" data-lang-es="Oculta subastas con piezas del tipo elegido" data-lang-ru="Скрывает аукционы с деталями выбранного типа">إخفاء المزادات التي بها قطع من النوع المختار (الرقم = عدد المخفية)</p>
+                        <div class="gl-list-chips">
+                            {% for key, ar, en in marker_types %}
+                            <label>
+                                <input type="checkbox" name="marker_type" value="{{ key }}" {% if key in sel_marker_types %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_type'|get_item:key %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' %}
+                    <div class="gl-list-field">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="حالة السيارة" data-lang-en="Car condition" data-lang-es="Estado del coche" data-lang-ru="Состояние">حالة السيارة</label>
+                        <div class="gl-list-chips">
+                            {% if request.GET.car_type == 'auction' %}
+                            <label>
+                                <input type="checkbox" name="clean_main" value="1" {% if sel_clean_main %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="القطع الأساسية سليمة" data-lang-en="Clean main parts" data-lang-es="Piezas principales intactas" data-lang-ru="Основные детали целы">القطع الأساسية سليمة{% with fc=facet_counts|get_item:'clean_main' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% else %}
+                            <label>
+                                <input type="checkbox" name="no_accident" value="1" {% if sel_no_accident %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="بدون حوادث" data-lang-en="No accidents" data-lang-es="Sin accidentes" data-lang-ru="Без ДТП">بدون حوادث{% with fc=facet_counts|get_item:'no_accident' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.GET.car_type == 'auction' and marker_panels %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_marker_panels %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="استبعاد قطع مستبدلة" data-lang-en="Exclude replaced parts" data-lang-es="Excluir piezas reemplazadas" data-lang-ru="Исключить заменённые детали">
+                            <span>استبعاد قطع مستبدلة</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <p class="bilingual" style="margin:.1rem 0 .55rem; font-size:.72rem; line-height:1.5; color:var(--gl-muted);" data-lang-ar="تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)" data-lang-en="Hides auctions where the chosen panel was replaced (number = how many are hidden)" data-lang-es="Oculta subastas donde el panel fue reemplazado" data-lang-ru="Скрывает аукционы с заменённой деталью">تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)</p>
+                        <div class="gl-list-chips">
+                            {% for key, ar, en in marker_panels %}
+                            <label>
+                                <input type="checkbox" name="marker_panel" value="{{ key }}" {% if key in sel_marker_panels %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_panel'|get_item:key %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if fuels %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_fuels %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">
+                            <span>الوقود</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for f in fuels %}
+                            <label>
+                                <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}{% with fc=facet_counts|get_item:'fuel'|get_item:f %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if colors %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_colors %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">
+                            <span>اللون</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for c in colors %}
+                            <label>
+                                <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}{% with fc=facet_counts|get_item:'color'|get_item:c.id %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if seat_counts %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_seat_counts %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="عدد المقاعد" data-lang-en="Seats" data-lang-es="Asientos" data-lang-ru="Места">
+                            <span>عدد المقاعد</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for s in seat_counts %}
+                            <label>
+                                <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip">{{ s|floatformat:"0" }}{% with fc=facet_counts|get_item:'seat_count'|get_item:s %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if seat_colors %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_seat_colors %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="لون المقاعد" data-lang-en="Seat color" data-lang-es="Color de asientos" data-lang-ru="Цвет сидений">
+                            <span>لون المقاعد</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for sc in seat_colors %}
+                            <label>
+                                <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip"><span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;flex-shrink:0;border:1px solid var(--gl-border);background:{{ sc.name|color_to_css }};"></span><span class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}" data-lang-es="{{ sc.name|translate_color:'es' }}" data-lang-ru="{{ sc.name|translate_color:'ru' }}">{{ sc.name|translate_color }}</span>{% with fc=facet_counts|get_item:'seat_color'|get_item:sc.id %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if auction_names %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_auction_names %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="اسم المزاد" data-lang-en="Auction house" data-lang-es="Subasta" data-lang-ru="Аукцион">
+                            <span>اسم المزاد</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for an in auction_names %}
+                            <label>
+                                <input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip">{{ an }}{% with fc=facet_counts|get_item:'auction_name'|get_item:an %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if body_types %}
+                    <div class="gl-list-field gl-list-field-toggle{% if not sel_body_types %} is-collapsed{% endif %}">
+                        <label class="gl-list-flabel bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Кузов">
+                            <span>نوع الهيكل</span>
+                            <svg class="gl-list-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="gl-list-chips">
+                            {% for b in body_types %}
+                            <label>
+                                <input type="checkbox" name="body_type" value="{{ b }}" {% if b in sel_body_types %}checked{% endif %} class="gl-list-chip-input">
+                                <span class="gl-list-chip bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}{% with fc=facet_counts|get_item:'body_type'|get_item:b %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </form>
+                <div class="gl-list-dock-actions">
+                    <button type="submit" form="gl-filter-form" class="gl-btn gl-btn-solid bilingual" data-lang-ar="تطبيق" data-lang-en="Apply" data-lang-es="Aplicar" data-lang-ru="Применить">تطبيق</button>
+                    <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="gl-btn bilingual" data-lang-ar="مسح" data-lang-en="Reset" data-lang-es="Restablecer" data-lang-ru="Сброс">مسح</a>
+                </div>
+            </aside>
+
+            <div>
+                {% if sel_manufacturers or sel_models or sel_badges or sel_model_versions or sel_engine_groups or sel_marker_panels or sel_marker_types or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
+                <div class="gl-list-active">
+                    {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'manufacturer' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for f in sel_fuels %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'fuel' or v != f %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% for t in sel_transmissions %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'transmission' or v != t %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% for m in models %}{% if m.id|stringformat:"d" in sel_models %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'model' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m|translate_model:'en' }}">{{ m|translate_model }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for b in badges %}{% if b.id|stringformat:"d" in sel_badges %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'badge' or v != b.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">{{ b.name }} <span class="x">×</span></a>
+                    {% endif %}{% endfor %}
+                    {% for mv in sel_model_versions %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'model_version' or v != mv %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ mv|pretty_en }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for eg in sel_engine_groups %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'engine_group' or v != eg %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi>{{ eg|pretty_en }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for mp in sel_marker_panels %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_panel' or v != mp %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi class="bilingual" data-lang-ar="بدون {{ mp|panel_label }}" data-lang-en="No {{ mp|panel_label }}" data-lang-es="Sin {{ mp|panel_label }}" data-lang-ru="Без {{ mp|panel_label }}">بدون {{ mp|panel_label }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for key, ar, en in marker_types %}{% if key in sel_marker_types %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_type' or v != key %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip"><bdi class="bilingual" data-lang-ar="بدون {{ ar }}" data-lang-en="No {{ en }}" data-lang-es="Sin {{ en }}" data-lang-ru="Без {{ en }}">بدون {{ ar }}</bdi> <span class="x">×</span></a>
+                    {% endif %}{% endfor %}
+                    {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'color' or v != c.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for b in sel_body_types %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'body_type' or v != b %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% if request.GET.year_from %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_from' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="من {{ request.GET.year_from }}" data-lang-en="from {{ request.GET.year_from }}">من {{ request.GET.year_from }}</span> <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.year_to %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_to' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="gl-list-active-chip">
+                        <span class="bilingual" data-lang-ar="إلى {{ request.GET.year_to }}" data-lang-en="to {{ request.GET.year_to }}">إلى {{ request.GET.year_to }}</span> <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.price_min %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_min' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="gl-list-active-chip">
+                        ≥ {{ request.GET.price_min }}₩ <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.price_max %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="gl-list-active-chip">
+                        ≤ {{ request.GET.price_max }}₩ <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.mileage_min %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_min' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="gl-list-active-chip">
+                        ≥ {{ request.GET.mileage_min }}km <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.mileage_max %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="gl-list-active-chip">
+                        ≤ {{ request.GET.mileage_max }}km <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.q %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'q' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="gl-list-active-chip">
+                        "{{ request.GET.q }}" <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="gl-list-active-clear bilingual" data-lang-ar="مسح الكل" data-lang-en="Clear All" data-lang-es="Limpiar todo" data-lang-ru="Очистить все">مسح الكل</a>
+                </div>
+                {% endif %}
+
+                <div class="gl-list-results-head">
+                    <div class="gl-list-results-info">
+                        <span class="bilingual" data-lang-ar="{{ page_obj.paginator.count|intcomma }} نتيجة" data-lang-en="{{ page_obj.paginator.count|intcomma }} vehicles" data-lang-es="{{ page_obj.paginator.count|intcomma }} vehículos" data-lang-ru="{{ page_obj.paginator.count|intcomma }} автомобилей">{{ page_obj.paginator.count|intcomma }} نتيجة</span>
+                        {% if page_obj.paginator.num_pages > 1 %}
+                        <span class="bilingual" data-lang-ar="صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}" data-lang-en="Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}" data-lang-es="Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}" data-lang-ru="Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+                        {% endif %}
+                    </div>
+                    {% if user.is_staff %}
+                    <button type="button" id="gl-share-toggle" class="gl-share-toggle bilingual" onclick="glToggleShareMode()" data-lang-ar="🔗 ضف روابط المشاركة" data-lang-en="🔗 Add share links" data-lang-es="🔗 Añadir enlaces" data-lang-ru="🔗 Добавить ссылки">🔗 ضف روابط المشاركة</button>
+                    {% endif %}
+                    <label class="gl-list-sort">
+                        <span class="gl-list-sort-label bilingual" data-lang-ar="الترتيب" data-lang-en="Sort" data-lang-es="Ordenar" data-lang-ru="Сортировка">الترتيب</span>
+                        <select class="gl-select" onchange="glApplySort(this.value)">
+                            <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %} class="bilingual" data-lang-ar="الأحدث" data-lang-en="Newest" data-lang-es="Más reciente" data-lang-ru="Новейшие">الأحدث</option>
+                            <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %} class="bilingual" data-lang-ar="السعر · الأرخص" data-lang-en="Price · Low to High" data-lang-es="Precio · Asc" data-lang-ru="Цена · по возр.">السعر · الأرخص</option>
+                            <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %} class="bilingual" data-lang-ar="السعر · الأغلى" data-lang-en="Price · High to Low" data-lang-es="Precio · Desc" data-lang-ru="Цена · по убыв.">السعر · الأغلى</option>
+                            <option value="-year" {% if request.GET.sort == '-year' %}selected{% endif %} class="bilingual" data-lang-ar="السنة · الأحدث" data-lang-en="Year · Newest" data-lang-es="Año · Reciente" data-lang-ru="Год · новые">السنة · الأحدث</option>
+                            <option value="mileage" {% if request.GET.sort == 'mileage' %}selected{% endif %} class="bilingual" data-lang-ar="المسافة · الأقل" data-lang-en="Mileage · Low to High" data-lang-es="Km · Asc" data-lang-ru="Пробег · по возр.">المسافة · الأقل</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="gl-list-grid">
+                    {% for car in page_obj %}
+                    <a href="{% url 'car_detail' car.slug %}" class="gl-list-card">
+                        <div class="gl-list-card-img car-img-wm">
+                            {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                            <button type="button"
+                                    onclick="event.preventDefault(); event.stopPropagation(); toggleGlWishlist({{ car.id }});"
+                                    class="gl-list-wish wishlist-btn"
+                                    data-car-id="{{ car.id }}"
+                                    aria-label="Wishlist">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                            </button>
+                            {% if car.inspection_report_url %}<span title="تقرير فحص أداء المركبة متوفر" class="absolute {% if car.status == 'sold' %}top-9{% else %}top-2{% endif %} left-2 w-6 h-6 rounded-full flex items-center justify-center shadow z-10" style="background:rgba(255,255,255,.92)"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m1 7H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V17a2 2 0 01-2 2z"/></svg></span>{% endif %}
+                            {% if car.auction_date %}<div class="gl-list-card-cd"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span></div>{% endif %}
+                        </div>
+                        <div class="gl-list-card-body">
+                            <div class="gl-list-card-make">
+                                {% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}
+                                {% if car.year %} · {{ car.year }}{% endif %}
+                                {% if car.fuel %} · <span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                            </div>
+                            <h3 class="gl-list-card-name">
+                                {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
+                            </h3>
+                            {% if car|car_trim %}<div class="gl-list-card-trim"><bdi>{{ car|car_trim }}</bdi></div>{% endif %}
+                            {% if car.price %}<div class="gl-list-card-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
+                            <div class="gl-list-card-meta">
+                                {% if car.mileage %}
+                                <span class="gl-chip">
+                                    <span class="gl-list-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                                </span>
+                                {% endif %}
+                                {% if car.transmission %}
+                                <span class="gl-chip">
+                                    <span class="gl-list-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
+                                </span>
+                                {% endif %}
+                                {% with cc=car.engine_group|displacement_cc %}{% if cc %}
+                                <span class="gl-chip">
+                                    <span class="gl-list-meta-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="13" height="9" rx="1"/><path d="M16 11h2l3 3v0M7 8V5h4v3M9 17v2M13 17v2"/></svg></span>
+                                    <span dir="ltr">{{ cc }}</span>
+                                </span>
+                                {% endif %}{% endwith %}
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <div class="gl-list-empty bilingual" data-lang-ar="لا توجد سيارات تطابق بحثك." data-lang-en="No vehicles match your search." data-lang-es="No hay vehículos que coincidan." data-lang-ru="Нет автомобилей по вашему запросу.">لا توجد سيارات تطابق بحثك.</div>
+                    {% endfor %}
+                </div>
+
+                {% if page_obj.has_other_pages %}
+                {% spaceless %}
+                <nav class="gl-list-pager">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% for k, vlist in request.GET.lists %}{% if k != 'page' %}{% for v in vlist %}&{{ k }}={{ v }}{% endfor %}{% endif %}{% endfor %}">‹ Prev</a>
+                    {% endif %}
+                    {% for n in page_obj.paginator.page_range %}
+                        {% if n == page_obj.number %}
+                        <span class="current">{{ n }}</span>
+                        {% elif n >= page_obj.number|add:'-2' and n <= page_obj.number|add:'2' %}
+                        <a href="?page={{ n }}{% for k, vlist in request.GET.lists %}{% if k != 'page' %}{% for v in vlist %}&{{ k }}={{ v }}{% endfor %}{% endif %}{% endfor %}">{{ n }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for k, vlist in request.GET.lists %}{% if k != 'page' %}{% for v in vlist %}&{{ k }}={{ v }}{% endfor %}{% endif %}{% endfor %}">Next ›</a>
+                    {% endif %}
+                </nav>
+                {% endspaceless %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_staff %}
+<style>
+    .gl-share-toggle {
+        padding: .55rem 1rem; border-radius: 999px; cursor: pointer; font-family: inherit;
+        font-size: .82rem; font-weight: 800; white-space: nowrap;
+        border: 1px solid var(--gl-border-2); background: var(--gl-glass-2); color: var(--gl-ink);
+        transition: all .18s ease;
+    }
+    .gl-share-toggle:hover { border-color: var(--gl-brand); color: var(--gl-brand); }
+    .gl-share-toggle.active { background: var(--gl-grad-solid); color: #fff; border-color: transparent; }
+    /* Select mode: cards become selectable instead of navigating */
+    .gl-select-mode .gl-list-card { cursor: copy; }
+    .gl-select-mode .gl-list-wish { display: none !important; }
+    .gl-list-card.gl-selected { outline: 3px solid var(--gl-brand); outline-offset: 2px; }
+    .gl-list-card.gl-selected::after {
+        content: "✓"; position: absolute; top: .6rem; inset-inline-start: .6rem; z-index: 7;
+        width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        background: var(--gl-grad-solid); color: #fff; font-weight: 900; font-size: 16px;
+        box-shadow: 0 6px 16px rgba(42,37,100,.4);
+    }
+    .gl-share-bar {
+        /* z below the filter drawer (z-90/100) so an open drawer covers it. */
+        position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 55;
+        display: none; align-items: center; gap: 8px; padding: 8px 8px 8px 15px; border-radius: 16px;
+        background: rgba(255,255,255,0.97); border: 1px solid var(--gc-line, #e5e7eb);
+        box-shadow: 0 18px 42px rgba(15,23,42,0.18);
+        backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px);
+        max-width: calc(100vw - 20px);
+    }
+    html.gc-dark .gl-share-bar { background: rgba(17,24,39,0.97); border-color: rgba(148,163,184,0.22); }
+    .gl-share-bar.show { display: flex; }
+    .gl-share-bar > span:first-child { font-size: .85rem; white-space: nowrap; color: var(--gc-ink, #111827); }
+    html.gc-dark .gl-share-bar > span:first-child { color: #e5e7eb; }
+    .gl-share-bar b { color: var(--gc-primary, #4338ca); font-size: 1.05rem; }
+    .gl-share-bar a, .gl-share-bar button { font-family: inherit; font-weight: 800; font-size: .82rem; border-radius: 11px; cursor: pointer; padding: .6rem 1rem; border: 0; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+    .gl-share-bar .b-export { background: linear-gradient(135deg, var(--gc-navy-deep, #111111), #333333); color: #fff; }
+    .gl-share-bar .b-export::after { content: "←"; font-size: 1rem; }
+    .gl-share-bar .b-clear { background: transparent; color: var(--gc-dim, #6b7280); padding: .6rem .7rem; }
+    .gl-share-bar .b-clear:hover { color: var(--gc-red, #dc2626); }
+    /* On phones the bottom nav already sits at the very bottom — float this
+       above it (full-width pill) so the two bars don't stack/overlap. */
+    @media (max-width: 767px) {
+        .gl-share-bar { left: 10px; right: 10px; transform: none; max-width: none; bottom: calc(5.6rem + 16px); justify-content: space-between; }
+    }
+</style>
+
+<div class="gl-share-bar" id="gl-share-bar">
+    <span>🛒 <b id="gl-share-count">0</b> <span class="bilingual" data-lang-ar="في السلة" data-lang-en="in cart" data-lang-es="en lista" data-lang-ru="в корзине">في السلة</span></span>
+    <a href="{% url 'cart_page' %}" class="b-export"><span class="bilingual" data-lang-ar="فتح السلة" data-lang-en="Open cart" data-lang-es="Abrir" data-lang-ru="Открыть">فتح السلة</span></a>
+    <button type="button" class="b-clear" onclick="glShareClear()"><span class="bilingual" data-lang-ar="مسح" data-lang-en="Clear" data-lang-es="Limpiar" data-lang-ru="Очистить">مسح</span></button>
+</div>
+
+<script>
+(function () {
+    var KEY = 'gl_share_cart_v2';
+    var grid = document.querySelector('.gl-list-grid');
+    var toggle = document.getElementById('gl-share-toggle');
+    var bar = document.getElementById('gl-share-bar');
+    // Re-parent to <body> so position:fixed is relative to the viewport even if
+    // an ancestor (transform/overflow) would otherwise clip it.
+    if (bar) document.body.appendChild(bar);
+    var mode = false;
+
+    // Cart persists across pages/filters (localStorage) so staff can collect
+    // cars while browsing, then open the cart page to copy each link. Each
+    // entry carries enough to render a card on the cart page.
+    var cart = [];  // [{url, title, sub, image, price}]
+    function load() { try { cart = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { cart = []; } }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(cart)); } catch (e) {} }
+    function idx(url) { for (var i = 0; i < cart.length; i++) { if (cart[i].url === url) return i; } return -1; }
+
+    function refresh() {
+        document.getElementById('gl-share-count').textContent = cart.length;
+        bar.classList.toggle('show', cart.length > 0);  // persistent indicator, not tied to mode
+        if (window.glUpdateCartBadge) window.glUpdateCartBadge();  // live header/nav badge
+    }
+    function markCards() {
+        document.querySelectorAll('.gl-list-card').forEach(function (c) {
+            var u = new URL(c.getAttribute('href'), location.origin).href;
+            c.classList.toggle('gl-selected', idx(u) !== -1);
+        });
+    }
+    function txt(el, sel) { var n = el.querySelector(sel); return n ? n.textContent.replace(/\s+/g, ' ').trim() : ''; }
+
+    window.glToggleShareMode = function () {
+        mode = !mode;
+        toggle.classList.toggle('active', mode);
+        if (grid) grid.classList.toggle('gl-select-mode', mode);
+    };
+    // In select mode, clicking a card adds/removes it from the cart (no navigation).
+    if (grid) grid.addEventListener('click', function (e) {
+        if (!mode) return;
+        var card = e.target.closest('.gl-list-card');
+        if (!card) return;
+        e.preventDefault(); e.stopPropagation();
+        var url = new URL(card.getAttribute('href'), location.origin).href;
+        var at = idx(url);
+        if (at !== -1) { cart.splice(at, 1); card.classList.remove('gl-selected'); }
+        else {
+            var img = card.querySelector('.gl-list-card-img img');
+            var pe = card.querySelector('.gl-list-card-price');
+            cart.push({
+                url: url,
+                title: txt(card, '.gl-list-card-name') || url,
+                sub: txt(card, '.gl-list-card-make'),
+                image: img ? img.src : '',
+                price: txt(card, '.gl-list-card-price'),
+                priceKrw: pe ? (pe.getAttribute('data-price-krw') || '') : ''
+            });
+            card.classList.add('gl-selected');
+        }
+        save(); refresh();
+    }, true);
+
+    window.glShareClear = function () { cart = []; save(); markCards(); refresh(); };
+
+    load(); markCards(); refresh();  // restore cart on every page load
+})();
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var lockedScroll = 0;
+    window.glOpenFilters = function() {
+        document.getElementById('gl-side').classList.add('open');
+        document.getElementById('gl-filter-backdrop').classList.add('open');
+        lockedScroll = window.scrollY || window.pageYOffset || 0;
+        document.body.classList.add('gl-list-modal-open');
+        document.body.style.top = '-' + lockedScroll + 'px';
+    };
+    window.glCloseFilters = function() {
+        document.getElementById('gl-side').classList.remove('open');
+        document.getElementById('gl-filter-backdrop').classList.remove('open');
+        document.body.classList.remove('gl-list-modal-open');
+        document.body.style.top = '';
+        if (lockedScroll) window.scrollTo(0, lockedScroll);
+    };
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('gl-side')?.classList.contains('open')) {
+            glCloseFilters();
+        }
+    });
+})();
+</script>
+
+<script>
+(function() {
+    document.querySelectorAll('.gl-list-field-toggle > .gl-list-flabel').forEach(function(label) {
+        label.addEventListener('click', function(e) {
+            if (e.target.closest('input, select, textarea, button, a')) return;
+            label.closest('.gl-list-field-toggle').classList.toggle('is-collapsed');
+        });
+    });
+})();
+
+window.glApplySort = function(value) {
+    var params = new URLSearchParams(window.location.search);
+    if (value) { params.set('sort', value); } else { params.delete('sort'); }
+    params.delete('page');
+    window.location.search = params.toString();
+};
+</script>
+
+<script>
+(function() {
+    var root = document.getElementById('gl-tree-root');
+    if (!root) return;
+    var carType = root.dataset.carType || '';
+    var qsCarType = carType ? '&car_type=' + encodeURIComponent(carType) : '';
+
+    function fetchJSON(url) {
+        return fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : []; })
+            .catch(function() { return []; });
+    }
+
+    function curLang() {
+        try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
+    }
+
+    // Current multi-select values for a filter param, from the URL.
+    function selectedSet(name) {
+        return new Set(new URLSearchParams(window.location.search).getAll(name));
+    }
+
+    function makeToggleSvg() {
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2.5');
+        var l1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        l1.setAttribute('x1', '12'); l1.setAttribute('y1', '5'); l1.setAttribute('x2', '12'); l1.setAttribute('y2', '19');
+        var l2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        l2.setAttribute('x1', '5'); l2.setAttribute('y1', '12'); l2.setAttribute('x2', '19'); l2.setAttribute('y2', '12');
+        svg.appendChild(l1); svg.appendChild(l2);
+        return svg;
+    }
+
+    function buildNode(opts) {
+        // opts: { kind:'model'|'version'|'engine'|'badge', id, value, dataKey,
+        //         inputName, name, langs, leaf, checked }
+        var val = (opts.value != null ? opts.value : opts.id);
+        var node = document.createElement('div');
+        node.className = 'gl-list-tree-node gl-' + opts.kind + '-node';
+        node.dataset[opts.dataKey || (opts.kind + 'Id')] = val;
+        if (!opts.leaf) node.dataset.loaded = 'false';
+
+        var row = document.createElement('div');
+        row.className = 'gl-list-tree-row';
+
+        var label = document.createElement('label');
+        label.className = 'gl-list-tree-label';
+
+        var input = document.createElement('input');
+        input.type = 'checkbox';
+        input.name = opts.inputName || opts.kind;
+        input.value = val;
+        input.className = 'gl-list-tree-cb gl-' + opts.kind + '-cb';
+        if (opts.checked) input.checked = true;
+
+        var name = document.createElement('span');
+        name.className = 'gl-list-tree-name';
+        if (opts.langs) {
+            name.classList.add('bilingual');
+            if (opts.langs.ar) name.setAttribute('data-lang-ar', opts.langs.ar);
+            if (opts.langs.en) name.setAttribute('data-lang-en', opts.langs.en);
+            if (opts.langs.es) name.setAttribute('data-lang-es', opts.langs.es);
+            if (opts.langs.ru) name.setAttribute('data-lang-ru', opts.langs.ru);
+        }
+        var lang = curLang();
+        name.textContent = (opts.langs && opts.langs[lang]) || opts.name;
+
+        label.appendChild(input); label.appendChild(name);
+        row.appendChild(label);
+
+        if (!opts.leaf) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'gl-list-tree-toggle';
+            btn.setAttribute('aria-label', 'Toggle');
+            btn.appendChild(makeToggleSvg());
+            row.appendChild(btn);
+
+            var children = document.createElement('div');
+            children.className = 'gl-list-tree-children';
+            node.appendChild(row);
+            node.appendChild(children);
+        } else {
+            node.appendChild(row);
+        }
+        return node;
+    }
+
+    function loadModels(mfrNode) {
+        var mid = mfrNode.dataset.mfrId;
+        var children = mfrNode.querySelector(':scope > .gl-list-tree-children');
+        if (!children) return Promise.resolve();
+        var existingSelected = new Map();
+        children.querySelectorAll(':scope > .gl-model-node').forEach(function(n) {
+            existingSelected.set(n.dataset.modelId, n);
+        });
+
+        var hint = document.createElement('div');
+        hint.className = 'gl-list-tree-hint bilingual';
+        hint.setAttribute('data-lang-ar', 'جارٍ التحميل…');
+        hint.setAttribute('data-lang-en', 'Loading…');
+        hint.setAttribute('data-lang-es', 'Cargando…');
+        hint.setAttribute('data-lang-ru', 'Загрузка…');
+        hint.textContent = 'جارٍ التحميل…';
+        children.appendChild(hint);
+
+        return fetchJSON('/api/models/?manufacturer_id=' + encodeURIComponent(mid) + qsCarType + '&lang=' + curLang())
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(m) {
+                    var idStr = String(m.id);
+                    if (existingSelected.has(idStr)) return;
+                    var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
+                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: selectedSet('model').has(String(m.id)) }));
+                });
+                if (!children.children.length) {
+                    var empty = document.createElement('div');
+                    empty.className = 'gl-list-tree-hint bilingual';
+                    empty.setAttribute('data-lang-ar', 'لا توجد موديلات');
+                    empty.setAttribute('data-lang-en', 'No models');
+                    empty.setAttribute('data-lang-es', 'Sin modelos');
+                    empty.setAttribute('data-lang-ru', 'Нет моделей');
+                    empty.textContent = 'لا توجد موديلات';
+                    children.appendChild(empty);
+                }
+                mfrNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
+
+    function _treeHint(children) {
+        var h = document.createElement('div');
+        h.className = 'gl-list-tree-hint bilingual';
+        h.setAttribute('data-lang-ar', 'جارٍ التحميل…');
+        h.setAttribute('data-lang-en', 'Loading…');
+        h.setAttribute('data-lang-es', 'Cargando…');
+        h.setAttribute('data-lang-ru', 'Загрузка…');
+        h.textContent = 'جارٍ التحميل…';
+        children.appendChild(h);
+        return h;
+    }
+    function _treeEmptyIfNone(children) {
+        if (!children.children.length) {
+            var e = document.createElement('div');
+            e.className = 'gl-list-tree-hint';
+            e.textContent = '—';
+            children.appendChild(e);
+        }
+    }
+
+    // model → model versions (with year-range suffix)
+    function loadVersions(modelNode) {
+        var mid = modelNode.dataset.modelId;
+        var children = modelNode.querySelector(':scope > .gl-list-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/model-versions/?model_id=' + encodeURIComponent(mid) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(v) {
+                    var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
+                    children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, leaf: false, checked: selectedSet('model_version').has(v.value) }));
+                });
+                _treeEmptyIfNone(children);
+                modelNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
+
+    // model version → engine groups
+    function loadEngines(versionNode) {
+        var modelNode = versionNode.closest('.gl-model-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode.dataset.version || '';
+        var children = versionNode.querySelector(':scope > .gl-list-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/engine-groups/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(en) {
+                    children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, leaf: false, checked: selectedSet('engine_group').has(en.value) }));
+                });
+                _treeEmptyIfNone(children);
+                versionNode.dataset.loaded = 'true';
+            });
+    }
+
+    // engine group → badges (trims)
+    function loadBadges(engineNode) {
+        var modelNode = engineNode.closest('.gl-model-node');
+        var versionNode = engineNode.closest('.gl-version-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode ? (versionNode.dataset.version || '') : '';
+        var eg = engineNode.dataset.engine || '';
+        var children = engineNode.querySelector(':scope > .gl-list-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/badges-by-engine/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + '&engine_group=' + encodeURIComponent(eg) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(b) {
+                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, leaf: true, checked: selectedSet('badge').has(String(b.id)) }));
+                });
+                _treeEmptyIfNone(children);
+                engineNode.dataset.loaded = 'true';
+            });
+    }
+
+    function toggleNode(node) {
+        var willOpen = !node.classList.contains('is-open');
+        if (willOpen && node.dataset.loaded === 'false') {
+            if (node.classList.contains('gl-mfr-node')) {
+                loadModels(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('gl-model-node')) {
+                loadVersions(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('gl-version-node')) {
+                loadEngines(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('gl-engine-node')) {
+                loadBadges(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+        }
+        node.classList.toggle('is-open');
+    }
+
+    // When a manufacturer is selected, focus on it — hide the other
+    // manufacturers until it's deselected (any other checked ones stay shown).
+    function updateMfrVisibility() {
+        var nodes = root.querySelectorAll('.gl-mfr-node');
+        var anyChecked = false;
+        nodes.forEach(function(n) {
+            var cb = n.querySelector('.gl-mfr-cb');
+            if (cb && cb.checked) anyChecked = true;
+        });
+        nodes.forEach(function(n) {
+            var cb = n.querySelector('.gl-mfr-cb');
+            n.style.display = (anyChecked && !(cb && cb.checked)) ? 'none' : '';
+        });
+    }
+    updateMfrVisibility();  // honor any pre-selected manufacturer on load
+
+    root.addEventListener('click', function(e) {
+        var btn = e.target.closest('.gl-list-tree-toggle');
+        if (!btn) return;
+        e.preventDefault();
+        var node = btn.closest('.gl-list-tree-node');
+        if (node) toggleNode(node);
+    });
+
+    root.addEventListener('change', function(e) {
+        var cb = e.target;
+        if (!cb.classList || !cb.classList.contains('gl-list-tree-cb')) return;
+        if (!cb.checked) {
+            var node = cb.closest('.gl-list-tree-node');
+            if (!node) return;
+            node.querySelectorAll('.gl-list-tree-cb').forEach(function(c) {
+                if (c !== cb) c.checked = false;
+            });
+        } else if (cb.classList.contains('gl-mfr-cb')) {
+            var node = cb.closest('.gl-mfr-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('gl-model-cb')) {
+            var node = cb.closest('.gl-model-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('gl-version-cb')) {
+            var node = cb.closest('.gl-version-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('gl-engine-cb')) {
+            var node = cb.closest('.gl-engine-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        }
+        if (cb.classList.contains('gl-mfr-cb')) updateMfrVisibility();
+    });
+})();
+</script>
+
+<script>
+function toggleGlWishlist(carId) {
+    var btn = document.querySelector('.gl-list-wish[data-car-id="' + carId + '"]');
+    if (!btn) return;
+    fetch('/wishlist/toggle/' + carId + '/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) {
+            window.location.href = data.redirect || ('/login/?next=' + encodeURIComponent(window.location.pathname));
+            return;
+        }
+        if (data.in_wishlist) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+        if (window.updateWishlistCount) window.updateWishlistCount();
+    })
+    .catch(function(err) { console.error('Wishlist error:', err); });
+}
+</script>
+
+<script>
+// Auction hero countdown
+(function () {
+    var el = document.querySelector('[data-auction-hero-timer]');
+    if (!el || !el.dataset.date) return;
+    var target = new Date(el.dataset.date).getTime();
+    if (isNaN(target)) { el.textContent = ''; return; }
+    function pad(n) { return ('0' + n).slice(-2); }
+    function tick() {
+        var diff = target - Date.now();
+        if (diff <= 0) { el.textContent = '—'; return; }
+        var days = Math.floor(diff / 864e5),
+            h = Math.floor(diff % 864e5 / 36e5),
+            m = Math.floor(diff % 36e5 / 6e4),
+            s = Math.floor(diff % 6e4 / 1e3);
+        el.textContent = (days > 0 ? days + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
+{% endblock %}
