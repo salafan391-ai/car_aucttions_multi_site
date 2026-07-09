@@ -325,7 +325,7 @@
                         {% if car.image %}<img src="{{ car.image|img_thumb }}" alt="{{ car.title }}" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}">
                         {% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_thumb }}" alt="{{ car.title }}" loading="lazy">{% endif %}
                         <div class="gc-hero-slide-cap">
-                            <span class="gc-hero-slide-name">{{ car|card_car_title }}</span>
+                            <span class="gc-hero-slide-name">{% card_title car %}</span>
                             {% if car.price %}<span class="gc-hero-slide-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</span>{% endif %}
                         </div>
                     </a>
@@ -397,7 +397,7 @@
                     </div>
                     <div style="padding:11px 13px;">
                         <div style="font-size:.72rem;color:var(--gc-dim,#6b7280);font-weight:700;">{{ car.manufacturer|translate_manufacturer }}</div>
-                        <h3 style="font-size:.95rem;font-weight:800;margin:2px 0 0;color:var(--gc-ink,#111827);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ car|card_car_title }}</h3>
+                        <h3 style="font-size:.95rem;font-weight:800;margin:2px 0 0;color:var(--gc-ink,#111827);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{% card_title car %}</h3>
                         {% if car.price %}<div style="font-weight:900;color:var(--gc-primary,#2a2564);direction:ltr;text-align:start;font-size:.9rem;margin-top:4px;"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>{% endif %}
                         <div style="font-size:.72rem;color:var(--gc-dim,#6b7280);margin-top:4px;">{% if car.year %}{{ car.year }}{% endif %}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}</div>
                     </div>

@@ -719,22 +719,36 @@ def car_trim(car):
 
 
 @register.filter
-def card_car_title(car):
-    """Card/display title: manufacturer + model + points + drive wheel — never
-    the raw feed title. Works for ApiCar (FK manufacturer/model, points grade)
-    and SiteCar (plain-text manufacturer/model, no points). Missing pieces are
-    dropped; falls back to the prettified title only if everything is empty."""
+def card_car_title(car, lang='en'):
+    """Card/display title in ONE language: manufacturer + model + points +
+    drive wheel — never the raw feed title. Works for ApiCar (FK fields,
+    points grade) and SiteCar (plain-text fields, no points). Missing pieces
+    are dropped; falls back to the prettified title only if all are empty."""
     if not car:
         return ""
-    def _name(v):
-        n = getattr(v, 'name', None)
-        return n if n is not None else (v or "")
-    mk = pretty_en(str(_name(getattr(car, 'manufacturer', '')) or '').strip())
-    md = pretty_en(str(_name(getattr(car, 'model', '')) or '').strip())
+    mk = str(translate_manufacturer(getattr(car, 'manufacturer', None) or '', lang) or '').strip()
+    md = str(translate_model(getattr(car, 'model', None) or '', lang) or '').strip()
     pts = str(getattr(car, 'points', '') or '').strip()
     dw = str(getattr(car, 'drive_wheel', '') or '').strip().upper()
     out = " ".join(x for x in (mk, md, pts, dw) if x).strip()
     return out or pretty_en(str(getattr(car, 'title', '') or ''))
+
+
+@register.simple_tag
+def card_title(car):
+    """Bilingual card title span — follows the site language switcher: the
+    composed manufacturer/model/points/drive-wheel title in Arabic, English,
+    Spanish and Russian (never the raw title)."""
+    from django.utils.html import format_html
+    if not car:
+        return ""
+    ar = card_car_title(car, 'ar')
+    en = card_car_title(car, 'en')
+    es = card_car_title(car, 'es')
+    ru = card_car_title(car, 'ru')
+    return format_html(
+        '<span class="bilingual" data-lang-ar="{}" data-lang-en="{}" data-lang-es="{}" data-lang-ru="{}">{}</span>',
+        ar, en or ar, es or en or ar, ru or en or ar, ar)
 
 
 @register.filter

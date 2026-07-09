@@ -18,7 +18,7 @@
               {% endif %}
             </div>
             <div class="p-4">
-              <h3 class="font-semibold text-gray-900 line-clamp-1">{{ car|card_car_title }}</h3>
+              <h3 class="font-semibold text-gray-900 line-clamp-1">{% card_title car %}</h3>
               <div class="text-sm text-gray-500 mt-1">{{ car.manufacturer }} · {{ car.model }} · {{ car.year }}</div>
               {% if car.price %}<div class="mt-2 text-brand font-bold">{{ car.price|floatformat:0 }}</div>{% endif %}
             </div>

@@ -12,7 +12,7 @@
         <span>/</span>
         <a href="{% url 'site_car_list' %}" class="bilingual text-brand-hover transition" data-lang-ar="سياراتنا" data-lang-en="our cars" data-lang-es="nuestros coches" data-lang-ru="наши авто">سياراتنا</a>
         <span>/</span>
-        <span class="text-gray-800">{{ car|card_car_title }}</span>
+        <span class="text-gray-800">{% card_title car %}</span>
     </nav>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -213,7 +213,7 @@
         <!-- Sidebar -->
         <div class="lg:col-span-1">
             <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
-                <h1 class="text-xl font-bold text-gray-900 mb-2">{{ car|card_car_title }}</h1>
+                <h1 class="text-xl font-bold text-gray-900 mb-2">{% card_title car %}</h1>
 
                 {% if car.is_featured %}
                 <span class="bilingual inline-block bg-yellow-100 text-yellow-700 text-sm font-bold px-3 py-1 rounded-full mb-2" data-lang-ar="مميزة" data-lang-en="featured" data-lang-es="destacada" data-lang-ru="избранное">مميزة</span>

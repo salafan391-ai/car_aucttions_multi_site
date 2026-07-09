@@ -199,7 +199,7 @@
                     {% if car.manufacturer %}
                     <div class="text-xs text-gray-500 mb-1 bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
                     {% endif %}
-                    <h3 class="font-bold text-gray-900 truncate">{{ car|card_car_title }}</h3>
+                    <h3 class="font-bold text-gray-900 truncate">{% card_title car %}</h3>
                     {% if car.registration_no %}
                     <div class="text-xs text-gray-400 mb-3">#{{ car.registration_no }}</div>
                     {% else %}

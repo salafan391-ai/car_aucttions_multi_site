@@ -443,7 +443,7 @@
                         {% if car.manufacturer %}
                         <div class="mod-card-make bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
                         {% endif %}
-                        <div class="mod-card-name">{{ car|card_car_title }}</div>
+                        <div class="mod-card-name">{% card_title car %}</div>
                         {% if car.registration_no %}<div class="mod-card-reg">#{{ car.registration_no }}</div>{% endif %}
                         <div class="mod-card-meta">
                             {% if car.year %}<span class="mod-chip">{{ car.year }}</span>{% endif %}
