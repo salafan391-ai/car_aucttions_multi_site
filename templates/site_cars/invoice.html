@@ -117,13 +117,13 @@
                         <td class="text-gray-600">
                             {% if item.site_car %}{{ item.site_car.manufacturer }} {{ item.site_car.model }} · {{ item.site_car.year }}{% if item.site_car.color %} · {{ item.site_car.color }}{% endif %}{% if item.site_car.mileage %} · {{ item.site_car.mileage|floatformat:0 }} km{% endif %}{% endif %}
                         </td>
-                        <td class="text-end font-mono">{{ item.price|floatformat:0 }}</td>
+                        <td class="text-end font-mono">{{ item.price|floatformat:0|intcomma }} {{ currency_name }}</td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td class="font-medium">{{ car.title|pretty_en }}</td>
                         <td class="text-gray-600">{{ car.manufacturer }} {{ car.model }} · {{ car.year }}</td>
-                        <td class="text-end font-mono">{{ bill.price|floatformat:0 }}</td>
+                        <td class="text-end font-mono">{{ bill.price|floatformat:0|intcomma }} {{ currency_name }}</td>
                     </tr>
                     {% endfor %}
                     {% if bill.description %}
@@ -135,7 +135,7 @@
                 <tfoot>
                     <tr>
                         <td colspan="2" class="text-end font-bold bilingual" data-lang-ar="الإجمالي" data-lang-ru="Общий" data-lang-es="Total" data-lang-en="Total">الإجمالي</td>
-                        <td class="text-end font-bold font-mono text-lg">{{ bill.total|floatformat:0 }}</td>
+                        <td class="text-end font-bold font-mono text-lg">{{ bill.total|floatformat:0|intcomma }} {{ currency_name }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -224,9 +224,9 @@
         <div class="flex items-center justify-between mb-1">
             <h2 class="text-lg font-bold text-gray-900">سندات القبض</h2>
             <div class="flex gap-2 text-xs">
-                <span class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700">الإجمالي: <b>{{ bill.total|floatformat:0|intcomma }}</b> ر.س</span>
-                <span class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700">المستلم: <b>{{ bill.paid_total|floatformat:0|intcomma }}</b> ر.س</span>
-                <span class="px-3 py-1.5 rounded-lg bg-red-50 text-red-700">المتبقي: <b>{{ bill.remaining|floatformat:0|intcomma }}</b> ر.س</span>
+                <span class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700">الإجمالي: <b>{{ bill.total|floatformat:0|intcomma }}</b> {{ currency_name }}</span>
+                <span class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700">المستلم: <b>{{ bill.paid_total|floatformat:0|intcomma }}</b> {{ currency_name }}</span>
+                <span class="px-3 py-1.5 rounded-lg bg-red-50 text-red-700">المتبقي: <b>{{ bill.remaining|floatformat:0|intcomma }}</b> {{ currency_name }}</span>
             </div>
         </div>
         <p class="text-xs text-gray-400 mb-4">عند استلام عربون أو دفعة من المشتري سجّلها هنا — يُنشأ سند قبض مرقّم قابل للطباعة ويُخصم من المتبقي تلقائياً.</p>
@@ -243,7 +243,7 @@
                     <tr class="border-b border-gray-100">
                         <td class="py-2 pe-3 font-mono text-xs">{{ r.receipt_number }}</td>
                         <td class="py-2 pe-3">{{ r.date|date:"Y/m/d" }}</td>
-                        <td class="py-2 pe-3 font-bold">{{ r.amount|floatformat:0|intcomma }} ر.س</td>
+                        <td class="py-2 pe-3 font-bold">{{ r.amount|floatformat:0|intcomma }} {{ currency_name }}</td>
                         <td class="py-2 pe-3">{{ r.get_purpose_display }}</td>
                         <td class="py-2 pe-3">{{ r.get_method_display }}</td>
                         <td class="py-2 text-left whitespace-nowrap">
@@ -264,7 +264,7 @@
         <form method="post" action="{% url 'receipt_add' car.pk bill.pk %}" class="grid grid-cols-2 md:grid-cols-6 gap-3 items-end">
             {% csrf_token %}
             <div>
-                <label class="block text-[11px] text-gray-500 mb-1">المبلغ (ر.س)</label>
+                <label class="block text-[11px] text-gray-500 mb-1">المبلغ ({{ currency_name }})</label>
                 <input type="number" name="amount" step="any" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" dir="ltr">
             </div>
             <div>

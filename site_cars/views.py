@@ -1928,6 +1928,7 @@ def invoice_view(request, pk, bill_pk):
     return render(request, 'site_cars/invoice.html', {
         'car': car, 'bill': bill, 'shipment': shipment,
         'tenant': getattr(connection, 'tenant', None),
+        'currency_name': _car_currency_name(car),
     })
 
 
@@ -1999,6 +2000,15 @@ def _tafqit(n):
     return ' و'.join(parts)
 
 
+_CURRENCY_AR = {'SAR': 'ريال', 'USD': 'دولار', 'AED': 'درهم', 'EUR': 'يورو', 'KRW': 'وون'}
+
+
+def _car_currency_name(car):
+    """Arabic currency name for a site car's price currency (bills/receipts
+    are denominated in the car's own currency, not always SAR)."""
+    return _CURRENCY_AR.get((getattr(car, 'currency', '') or 'SAR').upper(), 'ريال')
+
+
 def _bill_buyer(bill):
     """Buyer identity for printable documents: the bill's own fields, else the
     linked user's profile (same resolution as the buyer contract)."""
@@ -2059,6 +2069,7 @@ def receipt_view(request, pk, bill_pk, receipt_pk):
         'buyer': _bill_buyer(bill),
         'chassis': chassis,
         'amount_words': _tafqit(receipt.amount),
+        'currency_name': _car_currency_name(car),
     })
 
 

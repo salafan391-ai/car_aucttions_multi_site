@@ -70,9 +70,9 @@
 
         <div class="amount-box">
             <span>المبلغ المستلم</span>
-            <span class="num">{{ receipt.amount|floatformat:0|intcomma }} ريال</span>
+            <span class="num">{{ receipt.amount|floatformat:0|intcomma }} {{ currency_name }}</span>
         </div>
-        {% if amount_words %}<p class="words">فقط {{ amount_words }} ريال لا غير.</p>{% endif %}
+        {% if amount_words %}<p class="words">فقط {{ amount_words }} {{ currency_name }} لا غير.</p>{% endif %}
 
         <div class="row"><span class="lbl">استلمنا من السيد/ة</span><span>{{ buyer.name|default:"—" }}{% if buyer.id %} — هوية/سجل رقم: {{ buyer.id }}{% endif %}{% if buyer.phone %} — جوال: {{ buyer.phone }}{% endif %}</span></div>
         <div class="row"><span class="lbl">وذلك عن</span><span>{{ receipt.get_purpose_display }} — سيارة {{ car.manufacturer|pretty_en }} {{ car.model|pretty_en }} موديل {{ car.year }}{% if chassis %} (هيكل: {{ chassis }}){% endif %}</span></div>
@@ -81,9 +81,9 @@
         {% if receipt.note %}<div class="row"><span class="lbl">ملاحظة</span><span>{{ receipt.note }}</span></div>{% endif %}
 
         <div class="totals">
-            <div><span>إجمالي الفاتورة</span><b>{{ bill.total|floatformat:0|intcomma }} ريال</b></div>
-            <div><span>إجمالي المستلم</span><b>{{ bill.paid_total|floatformat:0|intcomma }} ريال</b></div>
-            <div class="rem"><span>المتبقي</span><b>{{ bill.remaining|floatformat:0|intcomma }} ريال</b></div>
+            <div><span>إجمالي الفاتورة</span><b>{{ bill.total|floatformat:0|intcomma }} {{ currency_name }}</b></div>
+            <div><span>إجمالي المستلم</span><b>{{ bill.paid_total|floatformat:0|intcomma }} {{ currency_name }}</b></div>
+            <div class="rem"><span>المتبقي</span><b>{{ bill.remaining|floatformat:0|intcomma }} {{ currency_name }}</b></div>
         </div>
 
         <p style="font-size:.8rem;color:#64748b;">هذا السند إثبات باستلام الدفعة الموضحة أعلاه ولا يُعد نقلاً لملكية السيارة. تُستكمل الإجراءات وفق العقد/الفاتورة المرتبطة.</p>
