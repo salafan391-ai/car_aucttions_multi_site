@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -46,9 +47,35 @@ class TenantWorkStepInline(admin.TabularInline):
     ordering = ['order']
 
 
+class TenantAdminForm(forms.ModelForm):
+    """Checkbox picker for which themes a tenant's admins may choose in their
+    dashboard. Stored in the dashboard_themes JSON list; empty = default set
+    (default/glassy/modern/market/export)."""
+    dashboard_themes = forms.MultipleChoiceField(
+        required=False,
+        choices=[(k, f"{l} — {d}") for k, l, d in Tenant.THEME_CATALOG],
+        widget=forms.CheckboxSelectMultiple,
+        label="الثيمات المتاحة في لوحة التحكم",
+        help_text="حدد الثيمات التي تظهر لأدمن هذا الموقع في صفحة الإعدادات. اتركها كلها بدون تحديد لاستخدام المجموعة الافتراضية.",
+    )
+
+    class Meta:
+        model = Tenant
+        fields = "__all__"
+
+    def clean_dashboard_themes(self):
+        return list(self.cleaned_data.get("dashboard_themes") or [])
+
+
 @admin.register(Tenant)
 class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
-    list_display = ("name", "schema_name", "is_active", "create_superuser_button", "primary_color", "created_at")
+    form = TenantAdminForm
+    list_display = ("name", "schema_name", "is_active", "create_superuser_button", "primary_color", "dashboard_themes_display", "created_at")
+
+    @admin.display(description="ثيمات اللوحة")
+    def dashboard_themes_display(self, obj):
+        return "، ".join(obj.dashboard_themes) if obj.dashboard_themes else "(الافتراضية)"
+
     list_editable = ("is_active",)
     list_filter = ("is_active",)
     inlines = [TenantPhoneNumberInline, TenantSalesPersonInline, TenantHeroImageInline, TenantWorkStepInline]

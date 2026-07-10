@@ -278,10 +278,12 @@ def site_settings(request):
                                                       .filter(pk=tenant.pk)
                                                       .values_list('catalog_filter', flat=True).first() or {})
 
-        # ── Site theme (admin-selectable subset) ──
+        # ── Site theme (per-tenant subset chosen by the super admin) ──
         _theme_before = tenant.template_theme
         _chosen_theme = request.POST.get('template_theme', '')
-        if _chosen_theme in ('default', 'glassy', 'modern', 'market', 'export'):
+        _theme_keys = {k for k, _, _ in Tenant.THEME_CATALOG}
+        _allowed_themes = [t for t in (tenant.dashboard_themes or Tenant.DEFAULT_DASHBOARD_THEMES) if t in _theme_keys]
+        if _chosen_theme in _allowed_themes:
             tenant.template_theme = _chosen_theme
         _theme_changed = tenant.template_theme != _theme_before
 
@@ -573,12 +575,10 @@ def site_settings(request):
         'catalog_panel_labels': _panel_labels,
         'catalog_sections': catalog_sections,
         'theme_options': [
-            ('default', 'الافتراضي', 'تصميم قياسي نظيف'),
-            ('glassy', 'زجاجي', 'داكن متوهّج وعصري'),
-            ('modern', 'عصري', 'كوري حديث وأنيق'),
-            ('market', 'سوق', 'واجهة بحث أولاً بطابع سوق السيارات — أخضر'),
-            ('export', 'تصدير', 'ليلي محيطي بطابع رحلة الشحن من بوسان — ذهبي وتركوازي'),
+            (k, l, d) for k, l, d in Tenant.THEME_CATALOG
+            if k in (tenant.dashboard_themes or Tenant.DEFAULT_DASHBOARD_THEMES)
         ],
+        'theme_not_listed': tenant.template_theme not in (tenant.dashboard_themes or Tenant.DEFAULT_DASHBOARD_THEMES),
         'landing_design_choices': tenant.LANDING_DESIGN_CHOICES,
     }
     return render(request, 'tenants/site_settings.html', context)

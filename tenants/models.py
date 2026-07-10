@@ -180,6 +180,24 @@ class Tenant(TenantMixin):
         ('market', '🛒 Market (سوق — بحث أولاً، أخضر)'),
         ('export', '🚢 Export (تصدير — ليلي محيطي، ذهبي/تركوازي)'),
     ]
+    # Full theme catalog for the dashboard picker (key, label, description).
+    # The super admin chooses per tenant which of these their admins see.
+    THEME_CATALOG = [
+        ('default',   'الافتراضي', 'تصميم قياسي نظيف'),
+        ('glassy',    'زجاجي', 'داكن متوهّج وعصري'),
+        ('modern',    'عصري', 'كوري حديث وأنيق'),
+        ('market',    'سوق', 'واجهة بحث أولاً بطابع سوق السيارات — أخضر'),
+        ('export',    'تصدير', 'ليلي محيطي بطابع رحلة الشحن من بوسان — ذهبي وتركوازي'),
+        ('luxury',    'فخم', 'ذهبي/أسود بطابع راقٍ'),
+        ('general',   'جنرال', 'أبيض كحلي/أحمر'),
+        ('editorial', 'مجلة', 'أبيض/أسود/قرمزي بطابع صحفي'),
+        ('desert',    'صحراوي', 'رملي دافئ'),
+    ]
+    # Picker set for tenants whose dashboard_themes is empty.
+    DEFAULT_DASHBOARD_THEMES = ['default', 'glassy', 'modern', 'market', 'export']
+    # Which themes this tenant's admins may pick in their dashboard. Managed
+    # by the platform super admin (Django admin); empty list = default set.
+    dashboard_themes = models.JSONField(default=list, blank=True, verbose_name="الثيمات المتاحة في لوحة التحكم")
     template_theme = models.CharField(
         max_length=20,
         choices=TEMPLATE_THEME_CHOICES,

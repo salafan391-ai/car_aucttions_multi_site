@@ -64,8 +64,8 @@
                     </label>
                     {% endfor %}
                 </div>
-                {% if tenant.template_theme != 'default' and tenant.template_theme != 'glassy' and tenant.template_theme != 'modern' and tenant.template_theme != 'market' %}
-                <p class="text-xs text-amber-600 mt-3">ثيمك الحالي «{{ tenant.template_theme }}» — اختيار واحد من الخيارات أعلاه سيبدّله.</p>
+                {% if theme_not_listed %}
+                <p class="text-xs text-amber-600 mt-3">ثيمك الحالي «{{ tenant.get_template_theme_display }}» — اختيار واحد من الخيارات أعلاه سيبدّله.</p>
                 {% endif %}
             </div>
 
