@@ -15,6 +15,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql=[
+                # the app's connections carry a 30s statement_timeout — far too
+                # short for the table rewrite; lift it for this transaction only
+                "SET LOCAL statement_timeout = 0;",
                 "ALTER TABLE cars_apicar ADD COLUMN IF NOT EXISTS accident_cnt text "
                 "GENERATED ALWAYS AS ((extra_features -> 'record' ->> 'accidentCnt')) STORED;",
                 # replace the old expression index with one on the real column
