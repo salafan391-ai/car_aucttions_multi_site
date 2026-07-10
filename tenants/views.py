@@ -335,6 +335,15 @@ def site_settings(request):
 
         tenant.save()
 
+        # The branding context (incl. the dynamic calculator config and other
+        # tenant fields) is cached 30 min — bust it on every settings save so
+        # edits take effect immediately for visitors.
+        try:
+            from django.core.cache import cache as _cache
+            _cache.delete(f"tenant_branding:{tenant.schema_name}")
+        except Exception:
+            pass
+
         # Catalog-surface cache keys embed a filter signature, so brand-new filter
         # values recompute automatically. Reverting to a *previously used* value
         # would hit its old cached page until TTL — so on any change, drop this
