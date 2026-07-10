@@ -1,0 +1,103 @@
+{% load humanize %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>سند قبض {{ receipt.receipt_number }}</title>
+    <style>
+        @page { size: A4 portrait; margin: 0.9cm; }
+        * { box-sizing: border-box; }
+        body { font-family: "Noto Naskh Arabic", "Amiri", "Segoe UI", Tahoma, sans-serif;
+               direction: rtl; color: #111; line-height: 1.7; padding: 20px; background: #f8fafc; }
+        .toolbar { max-width: 760px; margin: 0 auto 14px; display: flex; gap: 10px; justify-content: flex-end; }
+        .toolbar button, .toolbar a { font: inherit; font-weight: 700; border: 0; border-radius: 8px;
+               padding: .55rem 1.1rem; cursor: pointer; text-decoration: none; }
+        .btn-print { background: #2563eb; color: #fff; }
+        .btn-back { background: #e2e8f0; color: #334155; }
+        .sheet { max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid #e2e8f0;
+                 border-radius: 14px; padding: 26px 30px; }
+        .logo { display: block; margin: 0 auto 4px; max-height: 70px; }
+        .header { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .header h2 { margin: 4px 0 2px; font-size: 1.4rem; }
+        .meta { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 14px; }
+        .row { display: flex; gap: 10px; padding: 9px 4px; border-bottom: 1px dashed #cbd5e1; }
+        .row .lbl { min-width: 150px; color: #475569; font-weight: 700; }
+        .amount-box { margin: 16px 0; padding: 12px 16px; border: 2px solid #0f172a; border-radius: 10px;
+                      display: flex; justify-content: space-between; align-items: center; font-weight: 800; }
+        .amount-box .num { font-size: 1.35rem; }
+        .words { margin: -6px 0 12px; font-weight: 700; color: #334155; }
+        .totals { display: flex; gap: 10px; margin: 14px 0; }
+        .totals div { flex: 1; text-align: center; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; }
+        .totals b { display: block; font-size: 1.05rem; }
+        .totals .rem b { color: #b91c1c; }
+        .stamp-sign { display: flex; justify-content: space-between; align-items: flex-end;
+               margin-top: 26px; page-break-inside: avoid; }
+        .stamp { max-width: 130px; max-height: 130px; }
+        .sign { text-align: center; min-width: 200px; }
+        .sign .line { border-top: 1px solid #64748b; margin-top: 44px; padding-top: 6px; font-weight: 700; }
+        .contact { text-align: left; font-size: .85rem; color: #475569; }
+        .contact p { margin: 2px 0; }
+        @media print {
+            .toolbar { display: none !important; }
+            body { padding: 0; background: #fff; font-size: 12.5px; line-height: 1.55; }
+            .sheet { border: 0; border-radius: 0; padding: 0; max-width: 100%; }
+            .logo { max-height: 55px; }
+            .header { margin-bottom: 10px; padding-bottom: 6px; }
+            .header h2 { font-size: 1.2rem; }
+            .row { padding: 6px 4px; }
+            .stamp { max-width: 100px; max-height: 100px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <a class="btn-back" href="{% url 'invoice_view' car.pk bill.pk %}">→ رجوع للفاتورة</a>
+        <button class="btn-print" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+    </div>
+    <div class="sheet">
+        {% if tenant.logo %}<img class="logo" src="{{ tenant.logo.url }}" alt="{{ tenant.name }}">{% endif %}
+        <div class="header">
+            <h2>سند قبض</h2>
+            <div>Receipt Voucher</div>
+        </div>
+
+        <div class="meta">
+            <span>رقم السند: {{ receipt.receipt_number }}</span>
+            <span>التاريخ: {{ receipt.date|date:"Y/m/d" }}</span>
+        </div>
+
+        <div class="amount-box">
+            <span>المبلغ المستلم</span>
+            <span class="num">{{ receipt.amount|floatformat:0|intcomma }} ريال</span>
+        </div>
+        {% if amount_words %}<p class="words">فقط {{ amount_words }} ريال لا غير.</p>{% endif %}
+
+        <div class="row"><span class="lbl">استلمنا من السيد/ة</span><span>{{ buyer.name|default:"—" }}{% if buyer.id %} — هوية/سجل رقم: {{ buyer.id }}{% endif %}{% if buyer.phone %} — جوال: {{ buyer.phone }}{% endif %}</span></div>
+        <div class="row"><span class="lbl">وذلك عن</span><span>{{ receipt.get_purpose_display }} — سيارة {{ car.manufacturer|pretty_en }} {{ car.model|pretty_en }} موديل {{ car.year }}{% if chassis %} (هيكل: {{ chassis }}){% endif %}</span></div>
+        <div class="row"><span class="lbl">طريقة الدفع</span><span>{{ receipt.get_method_display }}{% if receipt.method == 'transfer' and tenant.contract_bank %} — حساب النشاط بمصرف {{ tenant.contract_bank }}{% endif %}</span></div>
+        <div class="row"><span class="lbl">رقم الفاتورة المرتبطة</span><span>{{ bill.receipt_number }}</span></div>
+        {% if receipt.note %}<div class="row"><span class="lbl">ملاحظة</span><span>{{ receipt.note }}</span></div>{% endif %}
+
+        <div class="totals">
+            <div><span>إجمالي الفاتورة</span><b>{{ bill.total|floatformat:0|intcomma }} ريال</b></div>
+            <div><span>إجمالي المستلم</span><b>{{ bill.paid_total|floatformat:0|intcomma }} ريال</b></div>
+            <div class="rem"><span>المتبقي</span><b>{{ bill.remaining|floatformat:0|intcomma }} ريال</b></div>
+        </div>
+
+        <p style="font-size:.8rem;color:#64748b;">هذا السند إثبات باستلام الدفعة الموضحة أعلاه ولا يُعد نقلاً لملكية السيارة. تُستكمل الإجراءات وفق العقد/الفاتورة المرتبطة.</p>
+
+        <div class="stamp-sign">
+            {% if tenant.contract_stamp %}<img class="stamp" src="{{ tenant.contract_stamp.url }}" alt="ختم">{% else %}<span></span>{% endif %}
+            <div class="sign">
+                <div class="line">المستلم{% if receipt.received_by %}: {{ receipt.received_by }}{% endif %}</div>
+            </div>
+            <div class="contact">
+                {% if tenant.contract_phone %}<p>{{ tenant.contract_phone }}</p>{% endif %}
+                {% if tenant.contract_email %}<p>{{ tenant.contract_email }}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

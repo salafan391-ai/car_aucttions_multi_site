@@ -19,7 +19,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
-from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteBillItem, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq, UserProfile
+from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteBillItem, SiteReceipt, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq, UserProfile
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from cars.models import Wishlist
@@ -1952,6 +1952,129 @@ def contract_view(request, pk, bill_pk):
     return render(request, 'site_cars/contract.html', {
         'car': car, 'bill': bill, 'tenant': tenant, 'buyer': buyer, 'chassis': chassis,
     })
+
+
+# ── سند قبض (receipt vouchers) ──────────────────────────────────────────────
+# Arabic amount-in-words (تفقيط) for the printed voucher.
+_TFQ_ONES = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة', 'عشرة',
+             'أحد عشر', 'اثنا عشر', 'ثلاثة عشر', 'أربعة عشر', 'خمسة عشر', 'ستة عشر', 'سبعة عشر',
+             'ثمانية عشر', 'تسعة عشر']
+_TFQ_TENS = ['', '', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون']
+_TFQ_HUNDREDS = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة']
+
+
+def _tafqit_under_1000(n):
+    parts = []
+    h, rem = divmod(n, 100)
+    if h:
+        parts.append(_TFQ_HUNDREDS[h])
+    if rem:
+        if rem < 20:
+            parts.append(_TFQ_ONES[rem])
+        else:
+            t, o = divmod(rem, 10)
+            parts.append((_TFQ_ONES[o] + ' و' + _TFQ_TENS[t]) if o else _TFQ_TENS[t])
+    return ' و'.join(parts)
+
+
+def _tafqit(n):
+    """Arabic words for a positive integer amount (< 1 billion)."""
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return ''
+    if n <= 0 or n >= 1_000_000_000:
+        return ''
+    parts = []
+    millions, rem = divmod(n, 1_000_000)
+    thousands, units = divmod(rem, 1000)
+    if millions:
+        parts.append('مليون' if millions == 1 else 'مليونان' if millions == 2
+                     else _tafqit_under_1000(millions) + (' ملايين' if millions <= 10 else ' مليوناً'))
+    if thousands:
+        parts.append('ألف' if thousands == 1 else 'ألفان' if thousands == 2
+                     else _tafqit_under_1000(thousands) + (' آلاف' if thousands <= 10 else ' ألفاً'))
+    if units:
+        parts.append(_tafqit_under_1000(units))
+    return ' و'.join(parts)
+
+
+def _bill_buyer(bill):
+    """Buyer identity for printable documents: the bill's own fields, else the
+    linked user's profile (same resolution as the buyer contract)."""
+    bu = bill.buyer_user
+    prof = getattr(bu, 'profile', None) if bu else None
+    return {
+        'name': bill.buyer_name or (bu.get_full_name() if bu else '') or (bu.username if bu else ''),
+        'id': bill.buyer_id_number or (getattr(prof, 'identity_number', '') if prof else ''),
+        'phone': bill.buyer_phone or (getattr(prof, 'phone', '') if prof else ''),
+    }
+
+
+@staff_member_required
+def receipt_add(request, pk, bill_pk):
+    """Record a payment (deposit/installment/settlement) against a bill and
+    open its printable سند قبض."""
+    if _is_public_schema():
+        return redirect('home')
+    car = get_object_or_404(SiteCar, pk=pk)
+    bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
+    if request.method == 'POST':
+        from decimal import Decimal, InvalidOperation
+        from django.utils.dateparse import parse_date
+        try:
+            amount = Decimal(str(request.POST.get('amount') or '').strip())
+        except (InvalidOperation, ValueError):
+            amount = Decimal('0')
+        if amount > 0:
+            method = request.POST.get('method')
+            purpose = request.POST.get('purpose')
+            r = SiteReceipt.objects.create(
+                bill=bill,
+                amount=amount,
+                method=method if method in dict(SiteReceipt.METHOD_CHOICES) else 'transfer',
+                purpose=purpose if purpose in dict(SiteReceipt.PURPOSE_CHOICES) else 'deposit',
+                note=(request.POST.get('note') or '').strip()[:255],
+                received_by=(request.POST.get('received_by') or '').strip()[:120],
+                date=parse_date(request.POST.get('date') or '') or timezone.localdate(),
+            )
+            messages.success(request, f'تم إنشاء سند القبض {r.receipt_number}.')
+            return redirect('receipt_view', pk=car.pk, bill_pk=bill.pk, receipt_pk=r.pk)
+        messages.error(request, 'أدخل مبلغاً صحيحاً لسند القبض.')
+    return redirect('invoice_view', pk=car.pk, bill_pk=bill.pk)
+
+
+@staff_member_required
+def receipt_view(request, pk, bill_pk, receipt_pk):
+    """Printable سند قبض for one recorded payment."""
+    if _is_public_schema():
+        return redirect('home')
+    car = get_object_or_404(SiteCar, pk=pk)
+    bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
+    receipt = get_object_or_404(SiteReceipt, pk=receipt_pk, bill=bill)
+    chassis = (car.external_id or '').replace('faqih_', '') or car.vin or car.registration_no or ''
+    return render(request, 'site_cars/receipt.html', {
+        'car': car, 'bill': bill, 'receipt': receipt,
+        'tenant': getattr(connection, 'tenant', None),
+        'buyer': _bill_buyer(bill),
+        'chassis': chassis,
+        'amount_words': _tafqit(receipt.amount),
+    })
+
+
+@staff_member_required
+def receipt_delete(request, pk, bill_pk, receipt_pk):
+    """Remove a mistakenly-entered receipt (POST only)."""
+    if _is_public_schema():
+        return redirect('home')
+    car = get_object_or_404(SiteCar, pk=pk)
+    bill = get_object_or_404(SiteBill, pk=bill_pk, site_car=car)
+    if request.method == 'POST':
+        receipt = get_object_or_404(SiteReceipt, pk=receipt_pk, bill=bill)
+        num = receipt.receipt_number
+        receipt.delete()
+        messages.success(request, f'تم حذف سند القبض {num}.')
+    return redirect('invoice_view', pk=car.pk, bill_pk=bill.pk)
 
 
 def public_track(request, receipt_number):

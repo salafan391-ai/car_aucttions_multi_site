@@ -232,6 +232,60 @@ class SiteBill(models.Model):
             return
         super().save(*args, **kwargs)
 
+    @property
+    def paid_total(self):
+        """Sum of all سند قبض amounts recorded against this bill."""
+        agg = self.receipts.aggregate(s=models.Sum('amount'))['s']
+        return agg or 0
+
+    @property
+    def remaining(self):
+        """What the buyer still owes (invoice total minus receipts)."""
+        return (self.total or 0) - self.paid_total
+
+
+class SiteReceipt(models.Model):
+    """سند قبض — a payment received against a bill. Buyers often hand over a
+    deposit (عربون) to secure a car before paying the rest; each payment gets
+    its own numbered, printable receipt voucher."""
+    PURPOSE_CHOICES = [
+        ('deposit', 'عربون حجز السيارة'),
+        ('partial', 'دفعة من قيمة السيارة'),
+        ('final', 'سداد باقي قيمة السيارة'),
+        ('other', 'أخرى'),
+    ]
+    METHOD_CHOICES = [
+        ('transfer', 'حوالة بنكية'),
+        ('cash', 'نقداً'),
+        ('card', 'شبكة / بطاقة'),
+        ('cheque', 'شيك'),
+    ]
+    bill = models.ForeignKey(SiteBill, on_delete=models.CASCADE, related_name='receipts', verbose_name="الفاتورة")
+    receipt_number = models.CharField(max_length=100, blank=True, null=True, db_index=True, verbose_name="رقم السند")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="المبلغ المستلم")
+    method = models.CharField(max_length=12, choices=METHOD_CHOICES, default='transfer', verbose_name="طريقة الدفع")
+    purpose = models.CharField(max_length=12, choices=PURPOSE_CHOICES, default='deposit', verbose_name="الغرض")
+    note = models.CharField(max_length=255, blank=True, default='', verbose_name="ملاحظة")
+    received_by = models.CharField(max_length=120, blank=True, default='', verbose_name="اسم المستلم")
+    date = models.DateField(verbose_name="التاريخ")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date', '-id']
+        verbose_name = "سند قبض"
+        verbose_name_plural = "سندات القبض"
+
+    def __str__(self):
+        return f"سند قبض {self.receipt_number or self.pk}"
+
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            super().save(*args, **kwargs)
+            self.receipt_number = f"RCV-{self.date.strftime('%Y%m%d')}-{self.pk:05d}"
+            type(self).objects.filter(pk=self.pk).update(receipt_number=self.receipt_number)
+            return
+        super().save(*args, **kwargs)
+
 
 class SiteBillItem(models.Model):
     """A single car line on an invoice. An invoice can have many."""
