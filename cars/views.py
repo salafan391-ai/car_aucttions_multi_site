@@ -1589,15 +1589,21 @@ def car_list(request):
             cache.set(_count_cache_key, c, 60 * 5)
             return c
 
-    # Cards never read the huge JSONB/text fields — deferring them keeps them
-    # out of the ORDER BY sort payload and off the wire (the page query was the
-    # single slowest query on cold hits). select_related kills the per-card
-    # FK lookups (~6 queries x 20 cards).
-    qs = (qs.select_related('manufacturer', 'model', 'badge', 'category', 'body')
-            .defer('extra_features', 'markers', 'options', 'description',
-                   'inspection_notes', 'inspection_image'))
-    paginator = _CachedCountPaginator(qs, 20)
+    # Two-step page fetch: the appeal-tier + shuffle ordering has to sort the
+    # whole filtered set, so paginate over bare ids (narrow sort tuples), then
+    # fetch only the 20 page rows — with card FKs joined and the huge
+    # JSONB/text fields deferred (cards never read them).
+    paginator = _CachedCountPaginator(qs.values_list('id', flat=True), 20)
     page_obj = paginator.get_page(request.GET.get('page'))
+    _page_ids = list(page_obj.object_list)
+    _page_rows = {
+        c.id: c for c in
+        ApiCar.objects.filter(id__in=_page_ids)
+        .select_related('manufacturer', 'model', 'badge', 'category', 'body')
+        .defer('extra_features', 'markers', 'options', 'description',
+               'inspection_notes', 'inspection_image')
+    }
+    page_obj.object_list = [_page_rows[i] for i in _page_ids if i in _page_rows]
 
     # ── "Between auctions" note ── When the auction tab is empty because the
     # last auction ended (and the visitor set no filters), show a friendly
