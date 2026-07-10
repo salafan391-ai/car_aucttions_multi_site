@@ -733,205 +733,127 @@
                 </div>
             </div>
 
-            <!-- Import cost calculator -->
+            <!-- Import cost calculator — fully dynamic: admins define the
+                 destinations AND every cost line themselves (no fixed schema). -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">حاسبة تكلفة الاستيراد</h2>
-                <p class="text-sm text-gray-500 mb-4">القيم المعروضة في صفحة تفاصيل السيارة (السعودية). المبالغ بالريال السعودي والنِسب بالمئة. القيم تقديرية.</p>
+                <p class="text-sm text-gray-500 mb-4">ابنِ الحاسبة بالكامل بنفسك: أضف الوجهات (الدول) وأنشئ بنود التكلفة لكل دولة بالاسم والنوع الذي تريده. تُعرض للمشتري في صفحة تفاصيل السيارة بعملة الدولة المختارة.</p>
 
-                <label class="flex items-center gap-3 mb-3 cursor-pointer">
+                <label class="flex items-center gap-3 mb-5 cursor-pointer">
                     <input type="checkbox" name="import_calc_enabled" {% if tenant.import_calc_enabled %}checked{% endif %}
                            class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                     <span class="text-sm font-medium text-gray-800">عرض الحاسبة في صفحة تفاصيل السيارة</span>
                 </label>
-                <label class="flex items-center gap-3 mb-5 cursor-pointer">
-                    <input type="checkbox" name="import_calc_show_sa" {% if tenant.import_calc_show_sa %}checked{% endif %}
-                           class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <span class="text-sm font-medium text-gray-800">إظهار «السعودية 🇸🇦» كوجهة في الحاسبة (ألغِ التحديد لإزالتها)</span>
-                </label>
 
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الشحن — حجم صغير (ر.س)</label>
-                        <input type="number" min="0" step="1" name="import_calc_shipping_small" value="{{ tenant.import_calc_shipping_small }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <p class="text-xs text-gray-400 mt-1">مثل: مدمجة، صغيرة، هاتشباك</p>
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>الشحن — حجم متوسط (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_shipping" {% if tenant.import_calc_show_shipping %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="1" name="import_calc_shipping" value="{{ tenant.import_calc_shipping }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <p class="text-xs text-gray-400 mt-1">مثل: سيدان، SUV، رياضية (الافتراضي)</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الشحن — حجم كبير (ر.س)</label>
-                        <input type="number" min="0" step="1" name="import_calc_shipping_large" value="{{ tenant.import_calc_shipping_large }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <p class="text-xs text-gray-400 mt-1">مثل: فان، شاحنة، RV، كامل الحجم</p>
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>الرسوم الجمركية (%)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_duty" {% if tenant.import_calc_show_duty %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="0.01" name="import_calc_duty_pct" value="{{ tenant.import_calc_duty_pct }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>ضريبة القيمة المضافة (%)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_vat" {% if tenant.import_calc_show_vat %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="0.01" name="import_calc_vat_pct" value="{{ tenant.import_calc_vat_pct }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>التخليص الجمركي (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_clearance" {% if tenant.import_calc_show_clearance %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="1" name="import_calc_clearance" value="{{ tenant.import_calc_clearance }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>الفحص (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_inspection" {% if tenant.import_calc_show_inspection %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="1" name="import_calc_inspection" value="{{ tenant.import_calc_inspection }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>اللوحات والاستمارة (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_registration" {% if tenant.import_calc_show_registration %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="1" name="import_calc_registration" value="{{ tenant.import_calc_registration }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>عمولة الوكيل (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_agent" {% if tenant.import_calc_show_agent %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="1" name="import_calc_agent" value="{{ tenant.import_calc_agent }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">سنة الموديل للرسوم الإضافية</label>
-                        <input type="number" min="0" step="1" name="import_calc_preyear" value="{{ tenant.import_calc_preyear }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="flex items-center justify-between text-sm font-medium text-gray-700 mb-2"><span>رسوم إضافية للموديلات الأقدم (ر.س)</span><span class="inline-flex items-center gap-1 text-xs font-normal text-gray-500"><input type="checkbox" name="import_calc_show_extra" {% if tenant.import_calc_show_extra %}checked{% endif %} class="rounded"> إظهار</span></label>
-                        <input type="number" min="0" step="1" name="import_calc_preyear_extra" value="{{ tenant.import_calc_preyear_extra }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-base font-bold text-gray-800">الوجهات وبنود التكلفة</h3>
+                    <button type="button" id="icc-add-country" class="text-sm text-white px-3 py-1.5 rounded-lg" style="background-color:var(--color-primary);">+ إضافة دولة</button>
                 </div>
-                <p class="text-xs text-gray-400 mt-3">مثال: تُضاف رسوم «الموديلات الأقدم» للسيارات التي موديلها أقدم من السنة المحددة (افتراضياً 23,000 ر.س لما قبل 2021).</p>
-
-                <!-- Custom SA fee lines -->
-                <div class="mt-6 pt-5 border-t border-gray-100">
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="text-base font-bold text-gray-800">رسوم إضافية خاصة بك (السعودية)</h3>
-                        <button type="button" id="sa-fee-add" class="text-sm text-white px-3 py-1.5 rounded-lg" style="background-color:var(--color-primary);">+ إضافة رسم</button>
-                    </div>
-                    <p class="text-xs text-gray-400 mb-3">أنشئ بنودك الخاصة (مثل: تأمين، نقل داخلي، رسوم أرضية). «مبلغ ثابت» بالريال، أو «٪ من سعر السيارة».</p>
-                    <div id="sa-fees" class="space-y-2"></div>
-                    {{ tenant.import_calc_sa_fees|json_script:"sa-fees-data" }}
-                    <script>
-                    (function () {
-                        var data = [];
-                        try { data = JSON.parse(document.getElementById('sa-fees-data').textContent || '[]') || []; } catch (e) {}
-                        if (!Array.isArray(data)) data = [];
-                        var wrap = document.getElementById('sa-fees');
-                        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
-                        function feeRow(f) {
-                            f = f || {};
-                            var div = document.createElement('div');
-                            div.className = 'sa-fee flex flex-wrap items-center gap-2';
-                            div.innerHTML =
-                                '<input name="sa_fee_label[]" value="' + esc(f.label) + '" placeholder="اسم الرسم (مثال: تأمين)" maxlength="60" class="flex-1 min-w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm">' +
-                                '<input name="sa_fee_amount[]" value="' + esc(f.amount) + '" type="number" step="any" min="0" placeholder="القيمة" class="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm" dir="ltr">' +
-                                '<select name="sa_fee_type[]" class="w-40 px-2 py-2 border border-gray-300 rounded-lg text-sm">' +
-                                '<option value="fixed"' + (f.type !== 'pct' ? ' selected' : '') + '>مبلغ ثابت (ر.س)</option>' +
-                                '<option value="pct"' + (f.type === 'pct' ? ' selected' : '') + '>٪ من سعر السيارة</option></select>' +
-                                '<button type="button" class="sa-fee-rm text-red-600 text-sm font-bold px-2">✕</button>';
-                            return div;
-                        }
-                        data.forEach(function (f) { wrap.appendChild(feeRow(f)); });
-                        document.getElementById('sa-fee-add').addEventListener('click', function () { wrap.appendChild(feeRow({})); });
-                        wrap.addEventListener('click', function (e) { var b = e.target.closest('.sa-fee-rm'); if (b) b.closest('.sa-fee').remove(); });
-                    })();
-                    </script>
-                </div>
-
-                <!-- Extra destination countries -->
-                <div class="mt-6 pt-5 border-t border-gray-100">
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="text-base font-bold text-gray-800">دول إضافية للحاسبة</h3>
-                        <button type="button" id="ic-add-country" class="text-sm text-white px-3 py-1.5 rounded-lg" style="background-color:var(--color-primary);">+ إضافة دولة</button>
-                    </div>
-                    <p class="text-xs text-gray-400 mb-3">السعودية مضبوطة بالأعلى (الوجهة الافتراضية). أضف دولاً أخرى بعملتها ورسومها — يختار المشتري الوجهة في صفحة السيارة وتُحسب بعملة تلك الدولة.</p>
-                    <div id="ic-countries" class="space-y-4"></div>
-                    {{ tenant.import_calc_countries|json_script:"ic-countries-data" }}
-                </div>
+                <p class="text-xs text-gray-400 mb-3 leading-relaxed">
+                    أنواع البنود: <b>مبلغ ثابت</b> بعملة الدولة · <b>حسب حجم السيارة</b> (٣ قيم صغير/متوسط/كبير — مناسب للشحن) ·
+                    <b>٪ من سعر السيارة</b> · <b>٪ من المجموع حتى هذا البند</b> (السعر + كل البنود التي فوقه — هكذا تُحسب الجمارك على السعر+الشحن ثم الضريبة على المجموع، فالترتيب مهم ويمكن تغييره بالأسهم).
+                    وحقل «أقدم من سنة» يجعل البند يُطبق فقط على الموديلات الأقدم من تلك السنة.
+                </p>
+                <div id="icc-countries" class="space-y-4"></div>
+                <input type="hidden" name="import_calc_config_json" id="icc-json" value="">
+                {{ tenant.import_calc_config|json_script:"icc-data" }}
                 <script>
                 (function () {
                     var data = [];
-                    try { data = JSON.parse(document.getElementById('ic-countries-data').textContent || '[]') || []; } catch (e) {}
+                    try { data = JSON.parse(document.getElementById('icc-data').textContent || '[]') || []; } catch (e) {}
                     if (!Array.isArray(data)) data = [];
-                    var wrap = document.getElementById('ic-countries');
+                    var wrap = document.getElementById('icc-countries');
                     function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
-                    var CUR = ['SAR', 'AED', 'USD', 'EUR', 'KRW'];
-                    function field(label, name, val, step) {
-                        return '<div><label class="block text-[11px] text-gray-500 mb-1">' + label + '</label>' +
-                            '<input type="number" min="0" step="' + (step || '1') + '" name="' + name + '[]" value="' + esc(val) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm"></div>';
+                    var CUR = ['SAR', 'AED', 'USD', 'EUR', 'KRW'{% for c in custom_currencies %}, '{{ c.code|escapejs }}'{% endfor %}];
+                    var inp = 'px-2 py-1.5 border border-gray-200 rounded-lg text-sm';
+                    function lineHtml(l) {
+                        l = l || {};
+                        var t = l.type || 'fixed';
+                        function opt(v, lbl) { return '<option value="' + v + '"' + (t === v ? ' selected' : '') + '>' + lbl + '</option>'; }
+                        function num(cls, val, ph, w) { return '<input value="' + (val || val === 0 ? esc(val) : '') + '" type="number" step="any" min="0" placeholder="' + ph + '" class="' + cls + ' ' + w + ' ' + inp + '" dir="ltr">'; }
+                        return '<div class="icc-line flex flex-wrap items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">' +
+                            '<span class="flex flex-col leading-none select-none">' +
+                            '<button type="button" class="icc-up text-gray-400 hover:text-gray-800 text-[10px] leading-tight" title="أعلى">▲</button>' +
+                            '<button type="button" class="icc-down text-gray-400 hover:text-gray-800 text-[10px] leading-tight" title="أسفل">▼</button></span>' +
+                            '<input value="' + esc(l.label) + '" placeholder="اسم البند (الشحن، الجمارك، تأمين…)" maxlength="60" class="icc-label flex-1 min-w-36 ' + inp + '">' +
+                            '<select class="icc-type w-44 ' + inp + '">' +
+                            opt('fixed', 'مبلغ ثابت') + opt('tiered', 'حسب حجم السيارة') +
+                            opt('pct_car', '٪ من سعر السيارة') + opt('pct_sub', '٪ من المجموع حتى هنا') + '</select>' +
+                            num('icc-amount', l.amount, 'القيمة', 'w-24') +
+                            '<span class="icc-tiers flex-wrap items-center gap-1" style="display:' + (t === 'tiered' ? 'inline-flex' : 'none') + '">' +
+                            num('icc-s', l.amount_s, 'صغير', 'w-20') + num('icc-m', l.amount_m, 'متوسط', 'w-20') + num('icc-g', l.amount_l, 'كبير', 'w-20') + '</span>' +
+                            '<input value="' + (l.cond_max_year ? esc(l.cond_max_year) : '') + '" type="number" min="1980" max="2100" placeholder="أقدم من سنة؟" title="اتركه فارغاً ليُطبق دائماً، أو اكتب سنة ليُطبق فقط على الموديلات الأقدم منها" class="icc-year w-28 ' + inp + '" dir="ltr">' +
+                            '<button type="button" class="icc-line-rm text-red-600 text-sm font-bold px-1" title="حذف البند">✕</button></div>';
+                    }
+                    function syncLine(lr) {
+                        var t = lr.querySelector('.icc-type').value;
+                        lr.querySelector('.icc-amount').style.display = (t === 'tiered') ? 'none' : '';
+                        lr.querySelector('.icc-tiers').style.display = (t === 'tiered') ? 'inline-flex' : 'none';
                     }
                     function row(c) {
                         c = c || {};
                         var div = document.createElement('div');
-                        div.className = 'ic-country border border-gray-200 rounded-xl p-4 bg-gray-50 relative';
-                        var opts = CUR.map(function (k) { return '<option value="' + k + '"' + (c.currency === k ? ' selected' : '') + '>' + k + '</option>'; }).join('');
+                        div.className = 'icc-country border border-gray-200 rounded-xl p-4 bg-gray-50 relative';
+                        var opts = CUR.map(function (k) { return '<option value="' + k + '"' + ((c.currency || 'SAR') === k ? ' selected' : '') + '>' + k + '</option>'; }).join('');
                         div.innerHTML =
-                            '<button type="button" class="ic-remove absolute top-2 left-2 text-red-500 text-lg leading-none">&times;</button>' +
-                            '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
-                            '<div><label class="block text-[11px] text-gray-500 mb-1">الدولة (عربي)</label><input type="text" name="c_name_ar[]" value="' + esc(c.name_ar) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm" placeholder="الإمارات"></div>' +
-                            '<div><label class="block text-[11px] text-gray-500 mb-1">Country (EN)</label><input type="text" name="c_name_en[]" value="' + esc(c.name_en) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm" placeholder="UAE"></div>' +
-                            '<div><label class="block text-[11px] text-gray-500 mb-1">العلم (إيموجي)</label><input type="text" name="c_flag[]" value="' + esc(c.flag) + '" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm" placeholder="🇦🇪"></div>' +
-                            '<div><label class="block text-[11px] text-gray-500 mb-1">العملة</label><select name="c_currency[]" class="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm">' + opts + '</select></div>' +
-                            field('الشحن صغير', 'c_shipping_small', c.shipping_small) +
-                            field('الشحن متوسط', 'c_shipping_medium', c.shipping_medium) +
-                            field('الشحن كبير', 'c_shipping_large', c.shipping_large) +
-                            field('الجمارك %', 'c_duty_pct', c.duty_pct, '0.01') +
-                            field('ض.ق.م %', 'c_vat_pct', c.vat_pct, '0.01') +
-                            field('التخليص', 'c_clearance', c.clearance) +
-                            field('الفحص', 'c_inspection', c.inspection) +
-                            field('اللوحات', 'c_registration', c.registration) +
-                            field('عمولة الوكيل', 'c_agent', c.agent) +
-                            field('سنة الرسوم الإضافية', 'c_preyear', c.preyear) +
-                            field('رسوم الموديل الأقدم', 'c_preyear_extra', c.preyear_extra) +
+                            '<button type="button" class="icc-remove absolute top-2 left-2 text-red-500 text-lg leading-none" title="حذف الدولة">&times;</button>' +
+                            '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">الدولة (عربي)</label><input type="text" value="' + esc(c.name_ar) + '" class="icc-name-ar w-full ' + inp + '" placeholder="السعودية"></div>' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">Country (EN)</label><input type="text" value="' + esc(c.name_en) + '" class="icc-name-en w-full ' + inp + '" placeholder="Saudi Arabia"></div>' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">العلم (إيموجي)</label><input type="text" value="' + esc(c.flag) + '" class="icc-flag w-full ' + inp + '" placeholder="🇸🇦"></div>' +
+                            '<div><label class="block text-[11px] text-gray-500 mb-1">العملة</label><select class="icc-currency w-full ' + inp + '">' + opts + '</select></div>' +
                             '</div>' +
-                            '<div class="ic-fees mt-3 pt-3 border-t border-gray-200">' +
-                            '<div class="flex items-center justify-between mb-1"><span class="text-[11px] font-bold text-gray-600">رسوم خاصة بهذه الدولة (بعملتها)</span><button type="button" class="ic-fee-add text-[11px] font-bold" style="color:var(--color-primary,#4338ca);">+ رسم</button></div>' +
-                            '<div class="ic-fee-rows space-y-1.5">' + ((c.fees || []).map(feeHtml).join('')) + '</div>' +
-                            '<input type="hidden" name="c_fees_json[]" class="ic-fees-json" value="[]">' +
-                            '</div>';
+                            '<div class="flex items-center justify-between mb-1.5">' +
+                            '<span class="text-[11px] font-bold text-gray-600">بنود التكلفة (تُحسب من الأعلى إلى الأسفل — سعر السيارة يُضاف تلقائياً كأول سطر)</span>' +
+                            '<button type="button" class="icc-line-add text-[11px] font-bold" style="color:var(--color-primary,#4338ca);">+ إضافة بند</button></div>' +
+                            '<div class="icc-lines space-y-1.5">' + (c.lines || []).map(lineHtml).join('') + '</div>';
+                        div.querySelectorAll('.icc-line').forEach(syncLine);
                         return div;
                     }
-                    function feeHtml(f) {
-                        f = f || {};
-                        return '<div class="ic-fee flex flex-wrap items-center gap-2">' +
-                            '<input value="' + esc(f.label) + '" placeholder="اسم الرسم" maxlength="60" class="ic-fee-label flex-1 min-w-32 px-2 py-1.5 border border-gray-200 rounded-lg text-sm">' +
-                            '<input value="' + esc(f.amount) + '" type="number" step="any" min="0" placeholder="القيمة" class="ic-fee-amount w-24 px-2 py-1.5 border border-gray-200 rounded-lg text-sm" dir="ltr">' +
-                            '<select class="ic-fee-type w-36 px-2 py-1.5 border border-gray-200 rounded-lg text-sm">' +
-                            '<option value="fixed"' + (f.type !== 'pct' ? ' selected' : '') + '>مبلغ ثابت</option>' +
-                            '<option value="pct"' + (f.type === 'pct' ? ' selected' : '') + '>٪ من السعر</option></select>' +
-                            '<button type="button" class="ic-fee-rm text-red-600 text-sm font-bold px-1">✕</button></div>';
-                    }
                     data.forEach(function (c) { wrap.appendChild(row(c)); });
-                    document.getElementById('ic-add-country').addEventListener('click', function () { wrap.appendChild(row({})); });
-                    wrap.addEventListener('click', function (e) {
-                        var b = e.target.closest('.ic-remove'); if (b) { b.closest('.ic-country').remove(); return; }
-                        var a = e.target.closest('.ic-fee-add');
-                        if (a) { a.closest('.ic-fees').querySelector('.ic-fee-rows').insertAdjacentHTML('beforeend', feeHtml({})); return; }
-                        var r = e.target.closest('.ic-fee-rm'); if (r) r.closest('.ic-fee').remove();
+                    document.getElementById('icc-add-country').addEventListener('click', function () {
+                        wrap.appendChild(row({ currency: 'SAR', lines: [{ label: 'الشحن (كوريا ← الوجهة)', type: 'tiered' }] }));
                     });
-                    // Serialize each country's fee rows into its hidden JSON just before save.
+                    wrap.addEventListener('click', function (e) {
+                        var b;
+                        if ((b = e.target.closest('.icc-remove'))) { if (confirm('حذف هذه الدولة من الحاسبة؟')) b.closest('.icc-country').remove(); return; }
+                        if ((b = e.target.closest('.icc-line-add'))) {
+                            var rows = b.closest('.icc-country').querySelector('.icc-lines');
+                            rows.insertAdjacentHTML('beforeend', lineHtml({}));
+                            syncLine(rows.lastElementChild);
+                            return;
+                        }
+                        if ((b = e.target.closest('.icc-line-rm'))) { b.closest('.icc-line').remove(); return; }
+                        if ((b = e.target.closest('.icc-up'))) { var r = b.closest('.icc-line'), p = r.previousElementSibling; if (p) r.parentNode.insertBefore(r, p); return; }
+                        if ((b = e.target.closest('.icc-down'))) { var r2 = b.closest('.icc-line'), nx = r2.nextElementSibling; if (nx) r2.parentNode.insertBefore(nx, r2); return; }
+                    });
+                    wrap.addEventListener('change', function (e) { if (e.target.closest('.icc-type')) syncLine(e.target.closest('.icc-line')); });
+                    // Serialize the whole builder into one JSON field just before save.
                     var form = wrap.closest('form');
                     if (form) form.addEventListener('submit', function () {
-                        wrap.querySelectorAll('.ic-country').forEach(function (cRow) {
-                            var fees = [];
-                            cRow.querySelectorAll('.ic-fee').forEach(function (fr) {
-                                fees.push({
-                                    label: (fr.querySelector('.ic-fee-label').value || '').trim(),
-                                    amount: parseFloat(fr.querySelector('.ic-fee-amount').value) || 0,
-                                    type: fr.querySelector('.ic-fee-type').value
+                        var cfg = [];
+                        wrap.querySelectorAll('.icc-country').forEach(function (cRow) {
+                            var lines = [];
+                            cRow.querySelectorAll('.icc-line').forEach(function (lr) {
+                                lines.push({
+                                    label: (lr.querySelector('.icc-label').value || '').trim(),
+                                    type: lr.querySelector('.icc-type').value,
+                                    amount: parseFloat(lr.querySelector('.icc-amount').value) || 0,
+                                    amount_s: parseFloat(lr.querySelector('.icc-s').value) || 0,
+                                    amount_m: parseFloat(lr.querySelector('.icc-m').value) || 0,
+                                    amount_l: parseFloat(lr.querySelector('.icc-g').value) || 0,
+                                    cond_max_year: parseInt(lr.querySelector('.icc-year').value, 10) || 0
                                 });
                             });
-                            cRow.querySelector('.ic-fees-json').value = JSON.stringify(fees);
+                            cfg.push({
+                                name_ar: (cRow.querySelector('.icc-name-ar').value || '').trim(),
+                                name_en: (cRow.querySelector('.icc-name-en').value || '').trim(),
+                                flag: (cRow.querySelector('.icc-flag').value || '').trim(),
+                                currency: cRow.querySelector('.icc-currency').value,
+                                lines: lines
+                            });
                         });
+                        document.getElementById('icc-json').value = JSON.stringify(cfg);
                     });
                 })();
                 </script>

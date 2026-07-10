@@ -174,109 +174,63 @@ def site_settings(request):
         tenant.email_use_tls = 'email_use_tls' in request.POST
         tenant.email_from_name = request.POST.get('email_from_name', tenant.email_from_name)
 
-        # Import-cost calculator settings
+        # Import-cost calculator settings — fully dynamic. The settings page
+        # serializes the whole builder (countries + admin-defined cost lines)
+        # into one JSON field; legacy flat fields are no longer written.
         tenant.import_calc_enabled = 'import_calc_enabled' in request.POST
 
-        def _num(field, current, cast):
-            raw = request.POST.get(field)
-            if raw is None or str(raw).strip() == '':
-                return current
-            try:
-                return cast(str(raw).strip())
-            except (TypeError, ValueError):
-                return current
-
-        tenant.import_calc_shipping = _num('import_calc_shipping', tenant.import_calc_shipping, int)
-        tenant.import_calc_shipping_small = _num('import_calc_shipping_small', tenant.import_calc_shipping_small, int)
-        tenant.import_calc_shipping_large = _num('import_calc_shipping_large', tenant.import_calc_shipping_large, int)
-        tenant.import_calc_duty_pct = _num('import_calc_duty_pct', tenant.import_calc_duty_pct, float)
-        tenant.import_calc_vat_pct = _num('import_calc_vat_pct', tenant.import_calc_vat_pct, float)
-        tenant.import_calc_clearance = _num('import_calc_clearance', tenant.import_calc_clearance, int)
-        tenant.import_calc_inspection = _num('import_calc_inspection', tenant.import_calc_inspection, int)
-        tenant.import_calc_registration = _num('import_calc_registration', tenant.import_calc_registration, int)
-        tenant.import_calc_agent = _num('import_calc_agent', tenant.import_calc_agent, int)
-        tenant.import_calc_preyear = _num('import_calc_preyear', tenant.import_calc_preyear, int)
-        tenant.import_calc_preyear_extra = _num('import_calc_preyear_extra', tenant.import_calc_preyear_extra, int)
-        # Per-row show/hide checkboxes (+ Saudi Arabia destination).
-        for _f in ('shipping', 'duty', 'vat', 'clearance', 'inspection', 'registration', 'agent', 'extra', 'sa'):
-            setattr(tenant, 'import_calc_show_' + _f, ('import_calc_show_' + _f) in request.POST)
-
-        # ── Custom calculator fee lines ──
-        def _parse_fees(labels, amounts, types):
-            fees = []
-            for _j, _lb in enumerate(labels):
-                _lb = (_lb or '').strip()[:60]
-                if not _lb:
-                    continue
-                try:
-                    _am = float((amounts[_j] if _j < len(amounts) else '') or 0)
-                except (TypeError, ValueError):
-                    _am = 0
-                if _am <= 0:
-                    continue
-                _ty = (types[_j] if _j < len(types) else 'fixed')
-                fees.append({'label': _lb, 'amount': _am, 'type': 'pct' if _ty == 'pct' else 'fixed'})
-            return fees
-
-        def _parse_fees_json(raw):
+        _icc_raw = request.POST.get('import_calc_config_json')
+        if _icc_raw is not None:
             import json as _json
-            try:
-                data = _json.loads(raw or '[]')
-            except Exception:
-                return []
-            if not isinstance(data, list):
-                return []
-            return _parse_fees(
-                [str((f or {}).get('label', '')) for f in data],
-                [(f or {}).get('amount', 0) for f in data],
-                [str((f or {}).get('type', 'fixed')) for f in data],
-            )
 
-        tenant.import_calc_sa_fees = _parse_fees(
-            request.POST.getlist('sa_fee_label[]'),
-            request.POST.getlist('sa_fee_amount[]'),
-            request.POST.getlist('sa_fee_type[]'),
-        )
-
-        # Extra destination countries (repeatable rows -> JSON list)
-        _c_names = request.POST.getlist('c_name_ar[]')
-        if _c_names is not None:
-            _c_en = request.POST.getlist('c_name_en[]')
-            _c_flag = request.POST.getlist('c_flag[]')
-            _c_cur = request.POST.getlist('c_currency[]')
-
-            def _carr(n):
-                return request.POST.getlist(n + '[]')
-
-            def _at(lst, i, cast, default=0):
+            def _f(v, default=0.0):
                 try:
-                    v = lst[i]
-                    return cast(v) if str(v).strip() != '' else default
-                except (IndexError, ValueError, TypeError):
+                    return float(v)
+                except (TypeError, ValueError):
                     return default
 
-            _ship_s, _ship_m, _ship_l = _carr('c_shipping_small'), _carr('c_shipping_medium'), _carr('c_shipping_large')
-            _duty, _vat = _carr('c_duty_pct'), _carr('c_vat_pct')
-            _clr, _insp, _reg, _ag = _carr('c_clearance'), _carr('c_inspection'), _carr('c_registration'), _carr('c_agent')
-            _py, _pye = _carr('c_preyear'), _carr('c_preyear_extra')
-            _cfees = _carr('c_fees_json')
-            _countries = []
-            for i, nm in enumerate(_c_names):
-                if not (nm or '').strip():
-                    continue
-                _countries.append({
-                    'fees': _parse_fees_json(_cfees[i] if i < len(_cfees) else '[]'),
-                    'name_ar': nm.strip(),
-                    'name_en': (_c_en[i].strip() if i < len(_c_en) else ''),
-                    'flag': (_c_flag[i].strip() if i < len(_c_flag) else ''),
-                    'currency': (_c_cur[i].strip() if i < len(_c_cur) and _c_cur[i] else 'SAR'),
-                    'shipping_small': _at(_ship_s, i, int), 'shipping_medium': _at(_ship_m, i, int), 'shipping_large': _at(_ship_l, i, int),
-                    'duty_pct': _at(_duty, i, float), 'vat_pct': _at(_vat, i, float),
-                    'clearance': _at(_clr, i, int), 'inspection': _at(_insp, i, int),
-                    'registration': _at(_reg, i, int), 'agent': _at(_ag, i, int),
-                    'preyear': _at(_py, i, int), 'preyear_extra': _at(_pye, i, int),
-                })
-            tenant.import_calc_countries = _countries
+            _LINE_TYPES = ('fixed', 'tiered', 'pct_car', 'pct_sub')
+            _cfg = []
+            try:
+                _data = _json.loads(_icc_raw or '[]')
+            except Exception:
+                _data = None
+            if isinstance(_data, list):
+                for _co in _data[:20]:
+                    if not isinstance(_co, dict):
+                        continue
+                    _nm = str(_co.get('name_ar') or '').strip()[:60]
+                    if not _nm:
+                        continue
+                    _lines = []
+                    for _ln in (_co.get('lines') or [])[:40]:
+                        if not isinstance(_ln, dict):
+                            continue
+                        _lb = str(_ln.get('label') or '').strip()[:60]
+                        _ty = _ln.get('type') if _ln.get('type') in _LINE_TYPES else 'fixed'
+                        _amounts = {
+                            'amount': _f(_ln.get('amount')),
+                            'amount_s': _f(_ln.get('amount_s')),
+                            'amount_m': _f(_ln.get('amount_m')),
+                            'amount_l': _f(_ln.get('amount_l')),
+                        }
+                        # keep a line only if it has a label and some value
+                        if not _lb or not any(v > 0 for v in _amounts.values()):
+                            continue
+                        _line = {'label': _lb, 'type': _ty}
+                        _line.update({k: v for k, v in _amounts.items() if v > 0})
+                        _yr = int(_f(_ln.get('cond_max_year')))
+                        if 1980 <= _yr <= 2100:
+                            _line['cond_max_year'] = _yr
+                        _lines.append(_line)
+                    _cfg.append({
+                        'name_ar': _nm,
+                        'name_en': str(_co.get('name_en') or '').strip()[:60],
+                        'flag': str(_co.get('flag') or '').strip()[:8],
+                        'currency': (str(_co.get('currency') or 'SAR').strip().upper()[:6] or 'SAR'),
+                        'lines': _lines,
+                    })
+                tenant.import_calc_config = _cfg
 
         # ── Buyer contract (عقد وساطة) ──
         tenant.contract_enabled = 'contract_enabled' in request.POST

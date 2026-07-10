@@ -1048,8 +1048,7 @@
                     <label class="mod-calc-field">
                         <span class="bilingual" data-lang-ar="الوجهة" data-lang-en="Destination" data-lang-es="Destino" data-lang-ru="Назначение">الوجهة</span>
                         <select id="lux-calc-country">
-                            {% if import_calc_show_sa %}<option value="SA" selected>🇸🇦 السعودية</option>{% endif %}
-                            {% for co in import_calc_countries %}<option value="{{ forloop.counter }}"{% if not import_calc_show_sa and forloop.first %} selected{% endif %}>{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
+                            {% for co in import_calc_config %}<option value="{{ forloop.counter0 }}"{% if forloop.first %} selected{% endif %}>{{ co.flag }} {{ co.name_ar }}</option>{% endfor %}
                         </select>
                     </label>
                     <div class="mod-calc-rows" id="lux-calc-rows"></div>
@@ -1084,24 +1083,12 @@
                 SAR: { symbol: '﷼', rate: {{ rate_sar|default:"0.0025" }} }, AED: { symbol: 'د.إ', rate: {{ rate_aed|default:"0.00272" }} },
                 USD: { symbol: '$', rate: {{ rate_usd|default:"0.00067" }} }, EUR: { symbol: '€', rate: {{ rate_eur|default:"0.00069" }} }, KRW: { symbol: '₩', rate: 1 }
             };
+                {% for cc in custom_currencies %}CURMAP['{{ cc.code }}'] = { symbol: '{{ cc.symbol|escapejs }}', rate: {{ cc.rate|stringformat:"g" }} };
+                {% endfor %}
             var RATES = {
-                {% if import_calc_show_sa %}SA: {
-                    nameAr: 'السعودية', currency: 'SAR',
-                    shipping: shipFor({{ import_calc_shipping_small }}, {{ import_calc_shipping }}, {{ import_calc_shipping_large }}),
-                    dutyPct: {{ import_calc_duty_pct|floatformat:"-2" }}, vatPct: {{ import_calc_vat_pct|floatformat:"-2" }},
-                    clearance: {{ import_calc_clearance }}, inspection: {{ import_calc_inspection }}, registration: {{ import_calc_registration }}, agent: {{ import_calc_agent }},
-                    preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }},
-                    fees: [{% for f in import_calc_sa_fees %}{l:'{{ f.label|escapejs }}',a:{{ f.amount|stringformat:"g" }},t:'{{ f.type }}'},{% endfor %}]
-                }{% endif %}{% for co in import_calc_countries %}{% if not forloop.first or import_calc_show_sa %},{% endif %}
-                "{{ forloop.counter }}": {
-                    nameAr: '{{ co.name_ar|escapejs }}', currency: '{{ co.currency|default:"SAR"|escapejs }}',
-                    shipping: shipFor({{ co.shipping_small|default:0 }}, {{ co.shipping_medium|default:0 }}, {{ co.shipping_large|default:0 }}),
-                    dutyPct: {{ co.duty_pct|default:0 }}, vatPct: {{ co.vat_pct|default:0 }},
-                    clearance: {{ co.clearance|default:0 }}, inspection: {{ co.inspection|default:0 }}, registration: {{ co.registration|default:0 }}, agent: {{ co.agent|default:0 }},
-                    preYear: {{ co.preyear|default:0 }}, preYearExtra: {{ co.preyear_extra|default:0 }},
-                    fees: [{% for f in co.fees %}{l:'{{ f.label|escapejs }}',a:{{ f.amount|default:0|stringformat:"g" }},t:'{{ f.type|default:"fixed" }}'},{% endfor %}]
-                }{% endfor %}
-            };
+{% for co in import_calc_config %}                "{{ forloop.counter0 }}": { nameAr: '{{ co.name_ar|escapejs }}', nameEn: '{{ co.name_en|default:co.name_ar|escapejs }}', flag: '{{ co.flag|escapejs }}', currency: '{{ co.currency|default:"SAR"|escapejs }}',
+                    lines: [{% for l in co.lines %}{ l: '{{ l.label|escapejs }}', t: '{{ l.type|default:"fixed" }}', a: {{ l.amount|default:0|stringformat:"g" }}, s: {{ l.amount_s|default:0|stringformat:"g" }}, m: {{ l.amount_m|default:0|stringformat:"g" }}, g: {{ l.amount_l|default:0|stringformat:"g" }}, y: {{ l.cond_max_year|default:0 }} },{% endfor %}] },
+{% endfor %}                };
 
             var LABELS = {
                 ar: { car:'سعر السيارة', shipping:'الشحن (كوريا ← الوجهة)', duty:'الرسوم الجمركية', extra:'رسوم جمركية إضافية (موديل أقدم)', vat:'ضريبة القيمة المضافة', clearance:'التخليص الجمركي', inspection:'الفحص', registration:'اللوحات والاستمارة', agent:'عمولة الوكيل' },
@@ -1130,30 +1117,22 @@
                 function carAmt() { return PRICE_KRW * rate * (window.SITE_PRICE_MARKUP || 1); }
                 function feeAmt(v) { return v; }   // fees are already in the country's currency
 
-                var carCur = carAmt();
-                var shipping = feeAmt(c.shipping);
-                var cif = carCur + shipping;
-                var duty = cif * (c.dutyPct / 100);
-                var extra = (YEAR && YEAR < c.preYear) ? feeAmt(c.preYearExtra) : 0;
-                var vat = (cif + duty + extra) * (c.vatPct / 100);
-                var clearance = feeAmt(c.clearance), inspection = feeAmt(c.inspection), registration = feeAmt(c.registration), agent = feeAmt(c.agent);
-                var total = carCur + shipping + duty + extra + vat + clearance + inspection + registration + agent;
-
-                var rows = [['car', carCur], ['shipping', shipping], ['duty', duty]];
-                if (extra) rows.push(['extra', extra]);
-                rows.push(['vat', vat], ['clearance', clearance], ['inspection', inspection], ['registration', registration], ['agent', agent]);
-                (c.fees || []).forEach(function (f, fi) {
-                    var fa = f.t === 'pct' ? carCur * (parseFloat(f.a) || 0) / 100 : (parseFloat(f.a) || 0);
-                    rows.push(['_cf' + fi, fa, f.l]);
+                var carCur = PRICE_KRW * rate * (window.SITE_PRICE_MARKUP || 1);
+                var rows = [['car', carCur]];
+                var running = carCur;
+                (c.lines || []).forEach(function (L, li) {
+                    if (L.y && (!YEAR || YEAR >= L.y)) return;   // line only applies to models older than L.y
+                    var amt = L.t === 'tiered' ? shipFor(L.s || 0, L.m || 0, L.g || 0)
+                            : L.t === 'pct_car' ? carCur * (L.a || 0) / 100
+                            : L.t === 'pct_sub' ? running * (L.a || 0) / 100
+                            : (L.a || 0);
+                    running += amt;
+                    rows.push(['_l' + li, amt, L.l + ((L.t === 'pct_car' || L.t === 'pct_sub') ? ' (' + L.a + '%)' : '')]);
                 });
-                var _SH = {shipping:{{import_calc_show_shipping|yesno:"1,0"}},duty:{{import_calc_show_duty|yesno:"1,0"}},vat:{{import_calc_show_vat|yesno:"1,0"}},clearance:{{import_calc_show_clearance|yesno:"1,0"}},inspection:{{import_calc_show_inspection|yesno:"1,0"}},registration:{{import_calc_show_registration|yesno:"1,0"}},agent:{{import_calc_show_agent|yesno:"1,0"}},extra:{{import_calc_show_extra|yesno:"1,0"}}};
-                rows = rows.filter(function(r){ return _SH[r[0]] !== 0; });
-                total = rows.reduce(function(a,r){ return a + r[1]; }, 0);
+                var total = running;
 
                 document.getElementById('lux-calc-rows').innerHTML = rows.map(function (r) {
                     var name = r[2] || lbl[r[0]];
-                    if (r[0] === 'duty') name += ' (' + c.dutyPct + '%)';
-                    if (r[0] === 'vat') name += ' (' + c.vatPct + '%)';
                     return '<div class="mod-calc-row"><span class="k">' + name + '</span><span class="v">' + fmt(r[1], sym, L) + '</span></div>';
                 }).join('');
                 document.getElementById('lux-calc-total').textContent = fmt(total, sym, L);

@@ -119,6 +119,17 @@ class Tenant(TenantMixin):
     # car price. Custom countries carry their own "fees" list inside each
     # import_calc_countries row.
     import_calc_sa_fees = models.JSONField(default=list, blank=True, verbose_name="رسوم إضافية للحاسبة (السعودية)")
+    # ── Fully dynamic calculator ── the source of truth for the import-cost
+    # calculator. A list of destination countries, each with admin-defined
+    # LINES (no fixed schema; Saudi is just a row like any other):
+    #   {"name_ar","name_en","flag","currency",
+    #    "lines":[{"label","type":"fixed"|"tiered"|"pct_car"|"pct_sub",
+    #              "amount", "amount_s","amount_m","amount_l",   # tiered by car size
+    #              "cond_max_year"}]}                            # only for models older than year
+    # pct_sub = % of the running subtotal (car + all lines above it), so row
+    # order expresses real customs math (duty on CIF, VAT on CIF+duty, …).
+    # The legacy flat fields above are kept for history but no longer read.
+    import_calc_config = models.JSONField(default=list, blank=True, verbose_name="إعداد الحاسبة (ديناميكي)")
     # Per-row show/hide in the calculator. Hiding a row removes it from the total too.
     import_calc_show_shipping = models.BooleanField(default=True, verbose_name="إظهار الشحن في الحاسبة")
     import_calc_show_duty = models.BooleanField(default=True, verbose_name="إظهار الرسوم الجمركية في الحاسبة")
