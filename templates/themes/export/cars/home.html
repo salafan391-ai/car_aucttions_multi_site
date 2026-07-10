@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+{% load humanize custom_filters %}
+{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }} — تصدير السيارات من كوريا{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+    .xph-wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.25rem; }
+
+    /* ── Hero ── */
+    .xph-hero { text-align: center; padding: 2.6rem 0 1rem; }
+    .xph-kicker {
+        display: inline-flex; align-items: center; gap: .5rem;
+        font-size: .76rem; font-weight: 700; letter-spacing: .12em; color: var(--xp-gold);
+        border: 1px solid rgba(245,185,66,.3); background: rgba(245,185,66,.07);
+        padding: .4rem .9rem; border-radius: 99px; margin-bottom: 1.1rem;
+    }
+    .xph-hero h1 { font-size: clamp(1.7rem, 4.6vw, 3rem); font-weight: 900; line-height: 1.25; letter-spacing: -.02em; color: var(--xp-ink); }
+    .xph-hero h1 .grad {
+        background: linear-gradient(90deg, var(--xp-gold), #ffd98a 50%, var(--xp-gold));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .xph-tagline { margin-top: .9rem; font-size: clamp(.85rem, 2vw, 1rem); color: var(--xp-muted); line-height: 1.7; min-height: 3.4em; }
+    .xph-tw1, .xph-tw2 { display: block; min-height: 1.7em; }
+    .xp-cursor { display: inline-block; width: 2px; height: .9em; background: var(--xp-gold); margin-inline-start: 2px; vertical-align: middle; animation: xp-blink .75s step-end infinite; }
+    @keyframes xp-blink { 50% { opacity: 0; } }
+
+    .xph-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 1.3rem; }
+    .xph-stat {
+        display: inline-flex; align-items: center; gap: .5rem;
+        padding: .5rem 1rem; border-radius: 12px;
+        background: rgba(255,255,255,.04); border: 1px solid var(--xp-line); backdrop-filter: blur(8px);
+    }
+    .xph-stat b { font-size: 1.05rem; font-weight: 900; color: var(--xp-ink); }
+    .xph-stat span { font-size: .74rem; color: var(--xp-muted); font-weight: 600; }
+    .xph-stat .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── Route map ── */
+    .xph-route { margin: 1.8rem auto .4rem; max-width: 860px; }
+    .xph-route svg { width: 100%; height: auto; display: block; }
+
+    /* ── Section heads ── */
+    .xph-sec { padding: 2.6rem 0 0; }
+    .xph-sec-head { text-align: center; margin-bottom: 1.5rem; }
+    .xph-label {
+        display: inline-flex; align-items: center; gap: .5rem;
+        font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+        color: var(--xp-teal); margin-bottom: .5rem;
+    }
+    .xph-label::before, .xph-label::after { content: ''; width: 28px; height: 1px; background: rgba(45,212,191,.35); }
+    .xph-title { font-size: clamp(1.25rem, 3vw, 1.7rem); font-weight: 900; letter-spacing: -.01em; color: var(--xp-ink); }
+    .xph-rail-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .xph-rail-head h2 { font-size: 1.25rem; font-weight: 900; margin: 0; color: var(--xp-ink); }
+    .xph-all { color: var(--xp-teal); font-weight: 800; font-size: .82rem; white-space: nowrap; }
+    .xph-all:hover { color: var(--xp-gold); }
+
+    /* journey steps */
+    .xph-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; }
+    .xph-step {
+        position: relative; padding: 1.3rem 1.1rem 1.2rem; border-radius: 16px;
+        background: rgba(255,255,255,.035); border: 1px solid var(--xp-line);
+        transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .25s, background .25s;
+    }
+    .xph-step:hover { transform: translateY(-4px); border-color: rgba(245,185,66,.35); background: rgba(255,255,255,.055); }
+    .xph-step-num { position: absolute; top: 1rem; inset-inline-end: 1rem; font-size: 1.6rem; font-weight: 900; color: rgba(255,255,255,.07); line-height: 1; }
+    .xph-step-icon {
+        width: 46px; height: 46px; border-radius: 12px; margin-bottom: .8rem;
+        display: flex; align-items: center; justify-content: center;
+        background: color-mix(in srgb, var(--step-c) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--step-c) 28%, transparent);
+    }
+    .xph-step-icon svg { width: 23px; height: 23px; color: var(--step-c); }
+    .xph-step-title { font-size: .95rem; font-weight: 800; margin-bottom: .3rem; color: var(--xp-ink); }
+    .xph-step-sub { font-size: .74rem; color: var(--xp-muted); line-height: 1.6; }
+    .xph-s1 { --step-c: var(--color-accent); }
+    .xph-s2 { --step-c: var(--xp-gold); }
+    .xph-s3 { --step-c: var(--xp-teal); }
+    .xph-s4 { --step-c: #a78bfa; }
+
+    /* car rails — landing-style dark glass cards */
+    .xph-rail { display: flex; gap: .85rem; overflow-x: auto; padding: .2rem .2rem 1rem; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .xph-car {
+        flex: 0 0 236px; scroll-snap-align: start; border-radius: 16px; overflow: hidden;
+        background: rgba(255,255,255,.04) !important; border: 1px solid var(--xp-line);
+        display: flex; flex-direction: column;
+        transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .25s, box-shadow .25s;
+    }
+    .xph-car:hover { transform: translateY(-4px); border-color: rgba(245,185,66,.4); box-shadow: 0 14px 40px -16px rgba(245,185,66,.35); }
+    .xph-car-img { aspect-ratio: 4/3; background: rgba(255,255,255,.05); position: relative; }
+    .xph-car-img img { width: 100%; height: 100%; object-fit: cover; }
+    .xph-badge { position: absolute; top: 8px; inset-inline-start: 8px; z-index: 6; font-size: .66rem; font-weight: 900; padding: 2px 9px; border-radius: 999px; color: #fff; }
+    .xph-car-bd { padding: .65rem .8rem .8rem; display: flex; flex-direction: column; gap: .22rem; flex: 1; }
+    .xph-car-nm { font-size: .9rem; font-weight: 800; color: var(--xp-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .xph-car-mt { font-size: .72rem; color: var(--xp-muted); font-weight: 700; }
+    .xph-car-pr { margin-top: auto; padding-top: .3rem; font-weight: 900; color: var(--xp-gold); direction: ltr; text-align: start; font-size: .95rem; }
+
+    /* reviews */
+    .xph-revs { display: flex; gap: .85rem; overflow-x: auto; padding-bottom: .8rem; }
+    .xph-rev { flex: 0 0 300px; background: rgba(255,255,255,.04); border: 1px solid var(--xp-line); border-radius: 14px; padding: .9rem 1rem; }
+    .xph-rev .who { font-weight: 800; font-size: .82rem; color: var(--xp-ink); display: flex; justify-content: space-between; }
+    .xph-rev .stars { color: var(--xp-gold); font-size: .8rem; }
+    .xph-rev p { margin: .35rem 0 0; font-size: .82rem; color: var(--xp-muted); line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+    @media (max-width: 860px) { .xph-steps { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) {
+        .xph-steps { grid-template-columns: 1fr; }
+        .xph-route svg .pt-name { font-size: 26px; }
+        .xph-route svg .pt-sub  { font-size: 19px; }
+        .xph-route svg .pt-cap  { font-size: 20px; }
+    }
+</style>
+
+<!-- ── Hero ── -->
+<section class="xph-hero xph-wrap">
+    <div class="xph-kicker">
+        <span>🚢</span>
+        <span class="bilingual" data-lang-ar="من ميناء بوسان إلى باب بيتك" data-lang-en="From Busan port to your doorstep" data-lang-es="De Busan a tu puerta" data-lang-ru="Из порта Пусан к вашему дому">من ميناء بوسان إلى باب بيتك</span>
+    </div>
+    <h1>
+        <span class="bilingual" data-lang-ar="نصدّر سيارتك من" data-lang-en="We export your car from" data-lang-es="Exportamos tu coche desde" data-lang-ru="Экспортируем ваш автомобиль из">نصدّر سيارتك من</span>
+        <span class="grad bilingual" data-lang-ar="كوريا" data-lang-en="Korea" data-lang-es="Corea" data-lang-ru="Кореи">كوريا</span>
+        <br>
+        <span class="bilingual" data-lang-ar="بكل شفافية وأمان" data-lang-en="with full transparency" data-lang-es="con total transparencia" data-lang-ru="с полной прозрачностью">بكل شفافية وأمان</span>
+    </h1>
+    <p class="xph-tagline">
+        <span class="xph-tw1" {% if tagline %}data-tw-ar="{{ tagline }}"{% endif %}></span>
+        <span class="xph-tw2"></span>
+    </p>
+
+    <div class="xph-stats">
+        {% if total_cars %}
+        <div class="xph-stat"><span class="dot" style="background:var(--color-accent);"></span><b>{{ total_cars|intcomma }}</b><span class="bilingual" data-lang-ar="سيارة متاحة" data-lang-en="cars available" data-lang-es="coches" data-lang-ru="авто">سيارة متاحة</span></div>
+        {% endif %}
+        {% if show_auctions and auction_count %}
+        <div class="xph-stat"><span class="dot" style="background:var(--xp-gold);"></span><b>{{ auction_count|intcomma }}</b><span class="bilingual" data-lang-ar="سيارة في المزاد" data-lang-en="auction cars" data-lang-es="en subasta" data-lang-ru="на аукционе">سيارة في المزاد</span></div>
+        {% endif %}
+        {% if show_site_cars and site_cars_count %}
+        <div class="xph-stat"><span class="dot" style="background:var(--xp-teal);"></span><b>{{ site_cars_count }}</b><span class="bilingual" data-lang-ar="بيع مباشر" data-lang-en="direct sale" data-lang-es="venta directa" data-lang-ru="прямая продажа">بيع مباشر</span></div>
+        {% endif %}
+        {% if site_rating_count %}
+        <div class="xph-stat"><span class="dot" style="background:#a78bfa;"></span><b>★ {{ site_rating_avg }}</b><span>{{ site_rating_count }} <span class="bilingual" data-lang-ar="تقييم" data-lang-en="reviews" data-lang-es="opiniones" data-lang-ru="отзывов">تقييم</span></span></div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ── Route: Busan → Gulf (the landing's signature animation) ── -->
+<div class="xph-route xph-wrap" aria-hidden="true">
+    <svg viewBox="0 0 860 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="xpsea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(148,197,255,.06)"/>
+                <stop offset="1" stop-color="rgba(148,197,255,0)"/>
+            </linearGradient>
+            <linearGradient id="xprouteLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#2dd4bf"/>
+                <stop offset="1" stop-color="#f5b942"/>
+            </linearGradient>
+        </defs>
+        <rect x="0" y="120" width="860" height="120" fill="url(#xpsea)"/>
+        <path d="M0 150 Q 60 142 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150" stroke="rgba(148,197,255,.10)" stroke-width="1.5" fill="none">
+            <animate attributeName="d" dur="6s" repeatCount="indefinite"
+                values="M0 150 Q 60 142 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150;
+                        M0 150 Q 60 158 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150;
+                        M0 150 Q 60 142 120 150 T 240 150 T 360 150 T 480 150 T 600 150 T 720 150 T 860 150"/>
+        </path>
+        <path d="M0 180 Q 70 172 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180" stroke="rgba(148,197,255,.07)" stroke-width="1.5" fill="none">
+            <animate attributeName="d" dur="8s" repeatCount="indefinite"
+                values="M0 180 Q 70 172 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180;
+                        M0 180 Q 70 188 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180;
+                        M0 180 Q 70 172 140 180 T 280 180 T 420 180 T 560 180 T 700 180 T 860 180"/>
+        </path>
+        <path id="xpShipRoute" d="M 760 120 C 620 38, 240 38, 100 120" fill="none" stroke="url(#xprouteLine)" stroke-width="2" stroke-dasharray="7 8" opacity=".75">
+            <animate attributeName="stroke-dashoffset" from="0" to="-60" dur="3s" repeatCount="indefinite"/>
+        </path>
+        <g>
+            <circle cx="760" cy="120" r="7" fill="#f5b942"/>
+            <circle cx="760" cy="120" r="7" fill="none" stroke="#f5b942" stroke-width="1.5"><animate attributeName="r" values="7;18" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;0" dur="2s" repeatCount="indefinite"/></circle>
+            <text x="760" y="158" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-name bilingual" font-size="15" font-weight="800" fill="#e8f1fb" data-lang-ar="🇰🇷 بوسان" data-lang-en="🇰🇷 Busan" data-lang-es="🇰🇷 Busan" data-lang-ru="🇰🇷 Пусан">🇰🇷 بوسان</text>
+            <text x="760" y="178" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-sub bilingual" font-size="10.5" fill="#8fa8c2" data-lang-ar="كوريا الجنوبية" data-lang-en="South Korea" data-lang-es="Corea del Sur" data-lang-ru="Южная Корея">كوريا الجنوبية</text>
+        </g>
+        <g>
+            <circle cx="100" cy="120" r="7" fill="#2dd4bf"/>
+            <circle cx="100" cy="120" r="7" fill="none" stroke="#2dd4bf" stroke-width="1.5"><animate attributeName="r" values="7;18" dur="2s" begin="1s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;0" dur="2s" begin="1s" repeatCount="indefinite"/></circle>
+            <text x="100" y="158" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-name bilingual" font-size="15" font-weight="800" fill="#e8f1fb" data-lang-ar="ميناء بلدك" data-lang-en="Your home port" data-lang-es="Tu puerto" data-lang-ru="Ваш порт">ميناء بلدك</text>
+            <text x="100" y="178" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-sub bilingual" font-size="10.5" fill="#8fa8c2" data-lang-ar="الخليج العربي" data-lang-en="Arabian Gulf" data-lang-es="Golfo Arábigo" data-lang-ru="Персидский залив">الخليج العربي</text>
+        </g>
+        <g>
+            <text font-size="26" text-anchor="middle" dominant-baseline="middle" style="transform: scaleX(-1); transform-box: fill-box; transform-origin: center;">🚢</text>
+            <animateMotion dur="14s" repeatCount="indefinite" rotate="0"><mpath href="#xpShipRoute"/></animateMotion>
+        </g>
+        <text x="430" y="48" text-anchor="middle" font-family="Tajawal, sans-serif" class="pt-cap bilingual" font-size="11.5" font-weight="700" fill="#8fa8c2" data-lang-ar="شحن بحري ٣٠–٤٥ يوماً" data-lang-en="Sea freight 30–45 days" data-lang-es="Flete marítimo 30–45 días" data-lang-ru="Морская доставка 30–45 дней">شحن بحري ٣٠–٤٥ يوماً</text>
+    </svg>
+</div>
+
+<!-- ── Journey steps ── -->
+<section class="xph-sec xph-wrap">
+    <div class="xph-sec-head">
+        <div class="xph-label"><span class="bilingual" data-lang-ar="رحلة سيارتك" data-lang-en="Your car's journey" data-lang-es="El viaje de tu coche" data-lang-ru="Путь вашего авто">رحلة سيارتك</span></div>
+        <h2 class="xph-title bilingual" data-lang-ar="من المزاد الكوري إلى مفتاحك" data-lang-en="From the Korean auction to your keys" data-lang-es="De la subasta coreana a tus llaves" data-lang-ru="От корейского аукциона до ваших ключей">من المزاد الكوري إلى مفتاحك</h2>
+    </div>
+    <div class="xph-steps">
+        <div class="xph-step xph-s1">
+            <span class="xph-step-num">01</span>
+            <div class="xph-step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></div>
+            <div class="xph-step-title bilingual" data-lang-ar="اختر سيارتك" data-lang-en="Pick your car" data-lang-es="Elige tu coche" data-lang-ru="Выберите авто">اختر سيارتك</div>
+            <div class="xph-step-sub bilingual" data-lang-ar="تصفّح آلاف السيارات من معارض ومزادات كوريا بالصور والمواصفات الكاملة." data-lang-en="Browse thousands of cars from Korean dealers and auctions with full photos and specs." data-lang-es="Explora miles de coches de Corea con fotos y especificaciones." data-lang-ru="Тысячи авто из Кореи с фото и характеристиками.">تصفّح آلاف السيارات من معارض ومزادات كوريا بالصور والمواصفات الكاملة.</div>
+        </div>
+        <div class="xph-step xph-s2">
+            <span class="xph-step-num">02</span>
+            <div class="xph-step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.6 2A9 9 0 1112 3a9 9 0 018.6 9z"/></svg></div>
+            <div class="xph-step-title bilingual" data-lang-ar="الفحص والشراء" data-lang-en="Inspection &amp; purchase" data-lang-es="Inspección y compra" data-lang-ru="Осмотр и покупка">الفحص والشراء</div>
+            <div class="xph-step-sub bilingual" data-lang-ar="نفحص السيارة ميدانياً ونرسل لك تقريراً مفصلاً قبل إتمام الشراء." data-lang-en="We inspect the car on the ground and send you a detailed report before purchase." data-lang-es="Inspeccionamos el coche y te enviamos un informe detallado." data-lang-ru="Осматриваем авто и отправляем подробный отчёт.">نفحص السيارة ميدانياً ونرسل لك تقريراً مفصلاً قبل إتمام الشراء.</div>
+        </div>
+        <div class="xph-step xph-s3">
+            <span class="xph-step-num">03</span>
+            <div class="xph-step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h18M5 17l1.5-6h11L19 17M9 11V7h6v4M2 21h20"/></svg></div>
+            <div class="xph-step-title bilingual" data-lang-ar="الشحن البحري" data-lang-en="Sea freight" data-lang-es="Flete marítimo" data-lang-ru="Морская доставка">الشحن البحري</div>
+            <div class="xph-step-sub bilingual" data-lang-ar="نشحن سيارتك من ميناء بوسان مع تتبّع مباشر لرحلتها حتى الوصول." data-lang-en="We ship from Busan port with live tracking until arrival." data-lang-es="Enviamos desde Busan con seguimiento en vivo." data-lang-ru="Отправка из Пусана с отслеживанием.">نشحن سيارتك من ميناء بوسان مع تتبّع مباشر لرحلتها حتى الوصول.</div>
+        </div>
+        <div class="xph-step xph-s4">
+            <span class="xph-step-num">04</span>
+            <div class="xph-step-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.74 5.74L9 19l-2 1-1.5-1.5L7 17l-1.5-1.5L7 14l-1-1 4.26-4.26A6 6 0 1121 9z"/></svg></div>
+            <div class="xph-step-title bilingual" data-lang-ar="التخليص والتسليم" data-lang-en="Customs &amp; delivery" data-lang-es="Aduana y entrega" data-lang-ru="Таможня и доставка">التخليص والتسليم</div>
+            <div class="xph-step-sub bilingual" data-lang-ar="نخلّص الجمارك ونسلّمك المفتاح — مع حاسبة تكلفة استيراد واضحة من البداية." data-lang-en="We clear customs and hand you the keys — with a clear import-cost calculator from day one." data-lang-es="Despachamos aduanas y te entregamos las llaves." data-lang-ru="Растаможка и передача ключей.">نخلّص الجمارك ونسلّمك المفتاح — مع حاسبة تكلفة استيراد واضحة من البداية.</div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Auctions rail ── -->
+{% if show_auctions and latest_auctions %}
+<section class="xph-wrap xph-sec">
+    <div class="xph-rail-head">
+        <h2 class="bilingual" data-lang-ar="سيارات المزاد" data-lang-en="Auction Cars" data-lang-es="Subastas" data-lang-ru="Аукционные авто">سيارات المزاد</h2>
+        <a href="{% url 'car_list' %}?car_type=auction" class="xph-all bilingual" data-lang-ar="عرض الكل ←" data-lang-en="View all →" data-lang-es="Ver todo →" data-lang-ru="Все →">عرض الكل ←</a>
+    </div>
+    <div class="xph-rail">
+        {% for car in latest_auctions %}
+        <a href="{% url 'car_detail' car.slug %}" class="xph-car">
+            <div class="xph-car-img car-img-wm">
+                <span class="xph-badge" style="background:linear-gradient(135deg,#b45309,#f5b942);">🔨 <span class="bilingual" data-lang-ar="مزاد" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد</span></span>
+                {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+            </div>
+            <div class="xph-car-bd">
+                <div class="xph-car-nm">{% card_title car %}</div>
+                <div class="xph-car-mt">{{ car.year }}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}{% if car.auction_date %} · ⏱ {{ car.auction_date|date:"m/d" }}{% endif %}</div>
+                {% if car.price %}<div class="xph-car-pr" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- ── Encar rail ── -->
+{% if show_encar and latest_cars %}
+<section class="xph-wrap xph-sec">
+    <div class="xph-rail-head">
+        <h2 class="bilingual" data-lang-ar="المعارض الكورية" data-lang-en="Korean Dealers" data-lang-es="Concesionarios" data-lang-ru="Корейские дилеры">المعارض الكورية</h2>
+        <a href="{% url 'car_list' %}" class="xph-all bilingual" data-lang-ar="عرض الكل ←" data-lang-en="View all →" data-lang-es="Ver todo →" data-lang-ru="Все →">عرض الكل ←</a>
+    </div>
+    <div class="xph-rail">
+        {% for car in latest_cars %}
+        <a href="{% url 'car_detail' car.slug %}" class="xph-car">
+            <div class="xph-car-img car-img-wm">
+                {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+            </div>
+            <div class="xph-car-bd">
+                <div class="xph-car-nm">{% card_title car %}</div>
+                <div class="xph-car-mt">{{ car.year }}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}</div>
+                {% if car.price %}<div class="xph-car-pr" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- ── Our cars rail ── -->
+{% if show_site_cars and site_cars %}
+<section class="xph-wrap xph-sec">
+    <div class="xph-rail-head">
+        <h2 class="bilingual" data-lang-ar="البيع المباشر" data-lang-en="Direct Sales" data-lang-es="Venta directa" data-lang-ru="Прямая продажа">البيع المباشر</h2>
+        <a href="{% url 'site_car_list' %}" class="xph-all bilingual" data-lang-ar="عرض الكل ←" data-lang-en="View all →" data-lang-es="Ver todo →" data-lang-ru="Все →">عرض الكل ←</a>
+    </div>
+    <div class="xph-rail">
+        {% for car in site_cars %}
+        <a href="{% url 'site_car_detail' car.id %}" class="xph-car">
+            <div class="xph-car-img car-img-wm">
+                <span class="xph-badge" style="background:linear-gradient(135deg,#0f766e,#2dd4bf);">✓ <span class="bilingual" data-lang-ar="وصلت" data-lang-en="Landed" data-lang-es="Llegó" data-lang-ru="Прибыл">وصلت</span></span>
+                {% if car.image %}<img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">{% elif car.gallery.first %}<img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" loading="lazy">{% elif car.external_image_url %}<img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+            </div>
+            <div class="xph-car-bd">
+                <div class="xph-car-nm">{% card_title car %}</div>
+                <div class="xph-car-mt">{% if car.year %}{{ car.year }}{% endif %}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}</div>
+                {% if car.price %}<div class="xph-car-pr"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- ── Sold cars ── -->
+{% if show_site_cars and sold_cars %}
+<section class="xph-wrap xph-sec">
+    <div class="xph-rail-head">
+        <h2 class="bilingual" data-lang-ar="سيارات مباعة" data-lang-en="Sold Cars" data-lang-es="Vendidos" data-lang-ru="Проданные">سيارات مباعة</h2>
+        <a href="{% url 'site_car_list' %}?status=sold" class="xph-all bilingual" data-lang-ar="عرض الكل ←" data-lang-en="View all →" data-lang-es="Ver todo →" data-lang-ru="Все →">عرض الكل ←</a>
+    </div>
+    <div class="xph-rail">
+        {% for car in sold_cars %}
+        <a href="{% url 'site_car_detail' car.id %}" class="xph-car">
+            <div class="xph-car-img car-img-wm">
+                <span class="xph-badge bilingual" style="background:#dc2626;" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продан">تم البيع</span>
+                {% if car.image %}<img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">{% elif car.gallery.first %}<img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" loading="lazy">{% elif car.external_image_url %}<img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+            </div>
+            <div class="xph-car-bd">
+                <div class="xph-car-nm">{% card_title car %}</div>
+                <div class="xph-car-mt">{% if car.year %}{{ car.year }}{% endif %}{% if car.mileage %} · {{ car.mileage|intcomma }} km{% endif %}</div>
+                {% if car.price %}<div class="xph-car-pr"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|intcomma }} {{ car.currency }}{% else %} data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩{% endif %}</div>{% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- ── Reviews ── -->
+{% if site_reviews %}
+<section class="xph-wrap xph-sec" style="padding-bottom:2.4rem;">
+    <div class="xph-rail-head">
+        <h2 class="bilingual" data-lang-ar="تقييمات العملاء" data-lang-en="Customer Reviews" data-lang-es="Opiniones" data-lang-ru="Отзывы">تقييمات العملاء</h2>
+    </div>
+    <div class="xph-revs">
+        {% for r in site_reviews %}
+        <div class="xph-rev">
+            <div class="who"><span>{{ r.display_name }}</span><span class="stars">{% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}</span></div>
+            {% if r.comment %}<p>{{ r.comment }}</p>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<script>
+(function () {
+    // Typewriter tagline — the landing's animation, self-contained to these two
+    // lines (page language stays governed by the site switcher).
+    var el1 = document.querySelector('.xph-tw1'), el2 = document.querySelector('.xph-tw2');
+    if (!el1 || !el2) return;
+    var SPEED = 46, ERASE = 22, HOLD = 2600;
+    var rounds = [
+        { l1: el1.dataset.twAr || 'من مزادات ومعارض كوريا إلى ميناء بلدك', l2: el1.dataset.twAr ? '' : 'فحص، شراء، شحن، وتخليص — كل شيء علينا', dir: 'rtl' },
+        { l1: 'From Korea’s auctions and dealers to your port', l2: 'Inspection, purchase, shipping & customs — all on us', dir: 'ltr' }
+    ];
+    function typeLine(el, text, dir, cb) {
+        var chars = Array.from(text); el.setAttribute('dir', dir); el.textContent = '';
+        var cur = document.createElement('span'); cur.className = 'xp-cursor'; el.appendChild(cur);
+        var i = 0;
+        (function tick() {
+            if (i < chars.length) {
+                if (cur.previousSibling) cur.previousSibling.nodeValue = chars.slice(0, i + 1).join('');
+                else el.insertBefore(document.createTextNode(chars.slice(0, i + 1).join('')), cur);
+                i++; setTimeout(tick, SPEED);
+            } else { cur.remove(); if (cb) cb(); }
+        })();
+    }
+    function eraseLine(el, cb) {
+        var chars = Array.from(el.textContent); var i = chars.length;
+        (function tick() {
+            if (i >= 0) { el.textContent = chars.slice(0, i).join(''); i--; setTimeout(tick, ERASE); }
+            else if (cb) cb();
+        })();
+    }
+    var round = 0;
+    try { if ((localStorage.getItem('site_lang') || 'ar') !== 'ar') round = 1; } catch (e) {}
+    function run() {
+        var r = rounds[round++ % rounds.length];
+        typeLine(el1, r.l1, r.dir, function () {
+            typeLine(el2, r.l2, r.dir, function () {
+                setTimeout(function () { eraseLine(el2, function () { eraseLine(el1, function () { setTimeout(run, 300); }); }); }, HOLD);
+            });
+        });
+    }
+    setTimeout(run, 700);
+})();
+</script>
+{% endblock %}

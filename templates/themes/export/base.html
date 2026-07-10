@@ -1,0 +1,1959 @@
+{% load static tailwind_tags whatsapp_tags django_htmx custom_filters %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root" data-theme="{{ site_theme|default:'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
+    {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endif %}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{% if seo_keywords %}{{ seo_keywords }}{% else %}سيارات, بيع سيارات, شراء سيارات, سيارات مستعملة, سيارات جديدة, مزادات سيارات, تجارة سيارات, {{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="author" content="{{ site_name|default:'سيارات' }}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    <meta name="language" content="ar">
+    <meta name="geo.region" content="SA">
+    <meta name="geo.position" content="24.7136;46.6753">
+    <meta name="ICBM" content="24.7136, 46.6753">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="ar_AR">
+    <meta property="og:site_name" content="{{ site_name|default:'سيارات' }}">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_name|default:"سيارات" }} - منصة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="theme-color" content="{{ primary_color|default:'#2563eb' }}">
+    <meta name="msapplication-TileColor" content="{{ primary_color|default:'#2563eb' }}">
+    <meta name="application-name" content="{{ site_name|default:'سيارات' }}">
+    <meta name="apple-mobile-web-app-title" content="{{ site_name|default:'سيارات' }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+    <!-- Global business structured data (every page) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoDealer",
+      "name": "{{ site_name|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
+      {% if site_logo %}"logo": "{{ site_logo }}",
+      "image": "{{ site_logo }}",{% endif %}
+      "description": "{{ seo_description|escapejs }}",
+      {% if site_phone %}"telephone": "{{ site_phone|escapejs }}",{% endif %}
+      {% if site_address %}"address": {"@type": "PostalAddress","streetAddress": "{{ site_address|escapejs }}","addressCountry": "SA"},{% endif %}
+      "areaServed": {"@type": "Country", "name": "SA"}{% if social_links %},
+      "sameAs": [{% for s in social_links %}{% if not forloop.first %},{% endif %}"{{ s|escapejs }}"{% endfor %}]{% endif %}
+    }
+    </script>
+
+    {% htmx_script %}
+    <!-- Structured Data (JSON-LD) -->
+    {% block structured_data %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "{{ site_name|default:'سيارات' }}",
+        "url": "{{ request.build_absolute_uri }}",
+        "description": "منصة سيارات شاملة لبيع وشراء السيارات الجديدة والمستعملة، مزادات سيارات، وكل ما تحتاجه لعالم السيارات",
+        "inLanguage": "ar",
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "{{ request.build_absolute_uri }}?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+    {% endblock %}
+    <!-- Fonts: preconnect + non-blocking load (saves ~2 s render-block) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <!-- Preload the font CSS so it's discovered early but doesn't block render -->
+    <link rel="preload" as="style"
+          href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap"
+          onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap">
+    </noscript>
+    {% tailwind_css %}
+    <style>
+        :root {
+            --color-primary: {{ primary_color|default:'#2563eb' }};
+            --color-secondary: {{ secondary_color|default:'#1e3a8a' }};
+            --color-accent: {{ accent_color|default:'#3b82f6' }};
+            --color-body-bg: {{ body_bg_color|default:'#ffffff' }};
+        }
+        body { font-family: 'Tajawal', Arial, sans-serif; background-color: var(--color-body-bg); }
+        /* Full-width pages: let page content span the whole viewport instead of a
+           centered ~1280px column. Side padding (px-*) on the containers is kept
+           so content doesn't touch the screen edges. */
+        .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl { max-width: 100% !important; }
+        /* Car results grid: column count follows the available width (more
+           columns as the page gets wider). Two-up on phones. */
+        .car-results-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        @media (max-width: 640px) { .car-results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
+        html[lang="en"] body, html[lang="ko"] body { font-family: 'Tajawal', Arial, sans-serif; }
+        .car-card:hover { transform: translateY(-4px); }
+        .car-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        /* Modern mesh-gradient hero: soft brand-coloured glows on a deep
+           navy base. Reads as premium / cinematic without committing to a
+           single bold colour. */
+        .hero-gradient {
+            background:
+                radial-gradient(60% 80% at 15% 15%, color-mix(in srgb, var(--color-primary) 55%, transparent) 0%, transparent 60%),
+                radial-gradient(55% 70% at 88% 25%, color-mix(in srgb, var(--color-accent) 45%, transparent) 0%, transparent 65%),
+                radial-gradient(60% 85% at 75% 95%, color-mix(in srgb, var(--color-primary) 35%, transparent) 0%, transparent 60%),
+                linear-gradient(180deg, #0a0e27 0%, #11183a 50%, #0a0e27 100%);
+            position: relative;
+            isolation: isolate;
+        }
+        /* Subtle grain to break the mesh banding, keeps it from looking flat.
+           z-index 0 sits below children that come later in the DOM, so the
+           slideshow + content stay on top automatically — no need to force
+           `position: relative` on children (which would break the absolutely-
+           positioned slideshow background). */
+        .hero-gradient::before {
+            content: "";
+            position: absolute; inset: 0;
+            background-image:
+                radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+            background-size: 4px 4px;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .bg-brand { background-color: var(--color-primary); }
+        .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .bg-brand\/20 { background-color: color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        .bg-brand\/50 { background-color: color-mix(in srgb, var(--color-primary) 80%, transparent); }
+        .hover\:bg-brand\/10:hover { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .hover\:bg-brand\/20:hover { background-color: color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        .bg-brand-hover:hover { background-color: var(--color-secondary); }
+        .text-brand { color: var(--color-primary); }
+        .text-brand-hover:hover { color: var(--color-primary); }
+        .border-brand { border-color: var(--color-primary); }
+        .ring-brand:focus { --tw-ring-color: var(--color-accent); }
+        .bg-brand-light { background-color: color-mix(in srgb, var(--color-primary) 10%, white); }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .text-brand-on-light { color: var(--color-primary); }
+
+        /* ── Dark theme ── */
+        [data-theme="dark"] {
+            --color-body-bg: #0f172a;
+            --color-card-bg: #1e293b;
+            --color-nav-bg: #1e293b;
+            --color-text: #f1f5f9;
+            --color-text-muted: #94a3b8;
+            --color-border: #334155;
+            --color-input-bg: #1e293b;
+        }
+        [data-theme="dark"] body { color: var(--color-text); }
+        [data-theme="dark"] .bg-white { background-color: var(--color-card-bg) !important; }
+        [data-theme="dark"] .bg-gray-50 { background-color: #1e293b !important; }
+        [data-theme="dark"] .bg-gray-100 { background-color: #273549 !important; }
+        [data-theme="dark"] .bg-gray-200 { background-color: #2d3f55 !important; }
+        [data-theme="dark"] .text-gray-900,
+        [data-theme="dark"] .text-gray-800,
+        [data-theme="dark"] .text-gray-700,
+        [data-theme="dark"] .text-gray-600 { color: var(--color-text) !important; }
+        [data-theme="dark"] .text-gray-500,
+        [data-theme="dark"] .text-gray-400 { color: var(--color-text-muted) !important; }
+        [data-theme="dark"] .border-gray-200,
+        [data-theme="dark"] .border-gray-100 { border-color: var(--color-border) !important; }
+        [data-theme="dark"] nav { background-color: var(--color-nav-bg) !important; }
+        [data-theme="dark"] footer { background-color: #020617 !important; }
+        [data-theme="dark"] input,
+        [data-theme="dark"] select,
+        [data-theme="dark"] textarea { background-color: var(--color-input-bg) !important; border-color: var(--color-border) !important; color: var(--color-text) !important; }
+        [data-theme="dark"] .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; }
+        [data-theme="dark"] .shadow { box-shadow: 0 2px 6px rgba(0,0,0,0.6) !important; }
+        [data-theme="dark"] .divide-gray-200 > * + * { border-color: var(--color-border) !important; }
+        [data-theme="dark"] .hover\:bg-gray-50:hover,
+        [data-theme="dark"] .hover\:bg-gray-100:hover { background-color: #2d3f55 !important; }
+        [data-theme="dark"] #mobile-menu { background-color: var(--color-card-bg) !important; }
+        [data-theme="dark"] #mobile-menu button { color: var(--color-text) !important; }
+        [data-theme="dark"] #mobile-menu .bg-gray-100 { background-color: #1e293b !important; }
+
+        /* ── Dark theme: hero filter panel option cards ── */
+        [data-theme="dark"] #hero-search-filters .manufacturer-option,
+        [data-theme="dark"] #hero-search-filters .year-from-option,
+        [data-theme="dark"] #hero-search-filters .year-to-option,
+        [data-theme="dark"] #hero-search-filters .model-option {
+            background-color: #1e293b !important;
+            border-color: rgba(255,255,255,0.15) !important;
+        }
+        [data-theme="dark"] #hero-search-filters .manufacturer-option:hover,
+        [data-theme="dark"] #hero-search-filters .year-from-option:hover,
+        [data-theme="dark"] #hero-search-filters .year-to-option:hover,
+        [data-theme="dark"] #hero-search-filters .model-option:hover {
+            background-color: #2d3f55 !important;
+            border-color: rgba(255,255,255,0.4) !important;
+        }
+        [data-theme="dark"] #hero-search-filters .manufacturer-option .text-gray-800,
+        [data-theme="dark"] #hero-search-filters .manufacturer-option .text-gray-500,
+        [data-theme="dark"] #hero-search-filters .year-from-option,
+        [data-theme="dark"] #hero-search-filters .year-to-option,
+        [data-theme="dark"] #hero-search-filters .model-option {
+            color: #e2e8f0 !important;
+        }
+        [data-theme="dark"] #hero-search-filters .manufacturer-option .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        [data-theme="dark"] #hero-search-filters .bg-gray-100 {
+            background-color: #1e293b !important;
+        }
+
+        /* ── Light theme (default) ── */
+        [data-theme="light"] {}
+        /* Navbar on light theme: white background, primary-colored text */
+        [data-theme="light"] nav#main-nav {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] nav#main-nav a:not(.bg-brand):not(.text-white),
+        [data-theme="light"] nav#main-nav span.font-medium,
+        [data-theme="light"] nav#main-nav button:not(.bg-brand):not(.bg-red-500):not(.bg-brand\/10):not(.bg-gray-50) {
+            color: var(--color-primary) !important;
+        }
+        [data-theme="light"] nav#main-nav a:not(.bg-brand):not(.text-white):hover {
+            color: color-mix(in srgb, var(--color-primary) 75%, black) !important;
+        }
+        [data-theme="light"] nav#main-nav .text-gray-600 { color: #4b5563 !important; }
+        [data-theme="light"] nav#main-nav .text-gray-500 { color: #6b7280 !important; }
+        [data-theme="light"] nav#main-nav .text-gray-400 { color: #9ca3af !important; }
+        [data-theme="light"] nav#main-nav .border-gray-200 { border-color: #e5e7eb !important; }
+        [data-theme="light"] nav#main-nav .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, white) !important; }
+        [data-theme="light"] nav#main-nav .text-brand { color: var(--color-primary) !important; }
+        [data-theme="light"] nav#main-nav .bg-gray-100 { background-color: #f3f4f6 !important; }
+        [data-theme="light"] nav#main-nav .hover\:bg-gray-100:hover { background-color: #f3f4f6 !important; }
+        [data-theme="light"] nav#main-nav .hover\:bg-gray-50:hover { background-color: #f9fafb !important; }
+        [data-theme="light"] nav#main-nav #mobile-menu-btn svg { color: var(--color-primary) !important; }
+        [data-theme="light"] nav#main-nav.nav-scrolled {
+            background-color: rgba(255,255,255,0.95) !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+        }
+        /* Mobile menu on light theme.
+           The menu's inline style hardcodes background:var(--color-primary); on a
+           light theme the text is also var(--color-primary), so without this the
+           menu is one solid colour (text == background). Force a light panel. */
+        [data-theme="light"] #mobile-menu { background-color: #ffffff !important; }
+        [data-theme="light"] #mobile-menu a,
+        [data-theme="light"] #mobile-menu button,
+        [data-theme="light"] #mobile-menu span { color: var(--color-primary) !important; }
+        [data-theme="light"] #mobile-menu a:hover { background-color: #f3f4f6 !important; }
+        [data-theme="light"] #mobile-menu .border-t { border-color: #e5e7eb !important; }
+        [data-theme="light"] #mobile-menu .bg-gray-100 { background-color: #f3f4f6 !important; }
+
+        /* ── Smooth image loading: shimmer + fade-in ── */
+        .img-loading {
+            background: linear-gradient(90deg,
+                #f0f2f5 25%,
+                #e4e7ec 50%,
+                #f0f2f5 75%);
+            background-size: 200% 100%;
+            animation: img-shimmer 1.4s ease-in-out infinite;
+        }
+        [data-theme="dark"] .img-loading {
+            background: linear-gradient(90deg,
+                #1e293b 25%,
+                #273549 50%,
+                #1e293b 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes img-shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── Page transition: top progress bar ── */
+        #nprogress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 0%;
+            height: 3px;
+            background: var(--color-primary);
+            z-index: 99999;
+            transition: width 0.25s ease, opacity 0.4s ease;
+            pointer-events: none;
+            border-radius: 0 2px 2px 0;
+            box-shadow: 0 0 8px var(--color-primary), 0 0 4px var(--color-primary);
+        }
+        #nprogress-bar::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 0;
+            width: 80px; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.6));
+            animation: shimmer-bar 0.8s ease-in-out infinite;
+        }
+        @keyframes shimmer-bar {
+            0%   { opacity: 0; }
+            50%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        #nprogress-bar.done {
+            width: 100% !important;
+            opacity: 0;
+        }
+
+        /* ── Page content fade-in removed ── */
+        /* NOTE: DO NOT add animation/transform/opacity/filter/will-change to
+           <main> or any ancestor of position:fixed elements. Those properties
+           create a new stacking context that breaks fixed positioning — the
+           filter drawer and lightbox stop being relative to the viewport. */
+
+        /* ── Custom theme — uses tenant color fields ── */
+        [data-theme="custom"] {
+            --color-body-bg: {{ body_bg_color|default:'#ffffff' }};
+        }
+
+        /* ════════════════════════════════════════════════════════════════
+           🐪  DESERT ARABIA THEME
+           Palette: sand dunes, camel brown, warm gold, terracotta,
+                    deep midnight-blue for contrast.
+           ════════════════════════════════════════════════════════════════ */
+
+        /* ── CSS variable palette ── */
+        [data-theme="desert"] {
+            --color-primary:     #c8860a;   /* rich camel gold          */
+            --color-secondary:   #7a4a1e;   /* dark camel / saddle brown*/
+            --color-accent:      #e9a832;   /* burnished gold            */
+            --color-body-bg:     #f5e9d0;   /* warm sand                 */
+            --desert-sand:       #f5e9d0;
+            --desert-sand-dark:  #e8d5a3;
+            --desert-dune:       #d4aa6b;
+            --desert-camel:      #c8860a;
+            --desert-saddle:     #7a4a1e;
+            --desert-clay:       #c05c2b;   /* terracotta / clay          */
+            --desert-night:      #1a0f07;   /* desert midnight            */
+            --desert-sky:        #2d4a6b;   /* deep desert sky blue       */
+            --desert-text:       #3d2408;   /* dark parchment text        */
+            --desert-text-muted: #7a5c38;
+            --desert-border:     #c8a96e;
+            --desert-card:       #fdf6e3;
+            --desert-card-hover: #f7ead0;
+            --desert-gold-light: #fff8e7;
+            --color-body-bg:     var(--desert-sand);
+        }
+
+        /* ── Google Font import for desert — Scheherazade New (Arabic calligraphy) ── */
+        @import url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap');
+
+        /* ── Base body & font ── */
+        [data-theme="desert"] body {
+            color: var(--desert-text);
+            background-color: var(--desert-sand);
+            background-image:
+                radial-gradient(ellipse 120% 40% at 50% 0%,   rgba(200,134,10,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 80%  60% at 80% 100%, rgba(122,74,30,0.07)  0%, transparent 70%);
+            font-family: 'Tajawal', 'Scheherazade New', sans-serif;
+        }
+
+        /* ── Ornamental top-border stripe ── */
+        [data-theme="desert"]::before {
+            content: '';
+            display: block;
+            height: 4px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--desert-camel)   0px,  var(--desert-camel)   12px,
+                var(--desert-clay)    12px, var(--desert-clay)    24px,
+                var(--desert-dune)    24px, var(--desert-dune)    36px,
+                var(--desert-camel)   36px, var(--desert-camel)   48px
+            );
+        }
+
+        /* ── Headings — Arabic calligraphic feel ── */
+        [data-theme="desert"] h1,
+        [data-theme="desert"] h2,
+        [data-theme="desert"] h3 {
+            font-family: 'Scheherazade New', 'Tajawal', serif;
+            color: var(--desert-saddle);
+            letter-spacing: 0.01em;
+        }
+
+        /* ── Navbar ── */
+        nav#main-nav {
+            background-color: var(--color-primary);
+            transition: background-color .3s ease, backdrop-filter .3s ease, box-shadow .3s ease;
+        }
+        nav#main-nav a,
+        nav#main-nav span.font-medium,
+        nav#main-nav button:not(.bg-brand):not(.bg-red-500):not(.bg-brand\/10):not(.bg-gray-50) {
+            color: rgba(255,255,255,0.85);
+        }
+        nav#main-nav a:hover { color: #fff !important; }
+        nav#main-nav .text-gray-600 { color: rgba(255,255,255,0.8) !important; }
+        nav#main-nav .text-gray-500 { color: rgba(255,255,255,0.6) !important; }
+        nav#main-nav .text-gray-400 { color: rgba(255,255,255,0.45) !important; }
+        nav#main-nav .border-gray-200 { border-color: rgba(255,255,255,0.2) !important; }
+        nav#main-nav .bg-brand\/10 { background-color: rgba(255,255,255,0.15) !important; }
+        nav#main-nav .text-brand { color: #fff !important; }
+        nav#main-nav .bg-gray-100 { background-color: rgba(255,255,255,0.15) !important; }
+        nav#main-nav .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.2) !important; }
+        nav#main-nav .hover\:bg-gray-50:hover { background-color: rgba(255,255,255,0.12) !important; }
+        /* Dropdown menus (lang/currency) keep their own light styling */
+        nav#main-nav #lang-menu,
+        nav#main-nav #currency-menu { background-color: #fff !important; }
+        nav#main-nav #lang-menu button,
+        nav#main-nav #currency-menu button,
+        nav#main-nav #lang-menu button span,
+        nav#main-nav #currency-menu button span { color: #1f2937 !important; }
+        nav#main-nav #lang-menu button:hover,
+        nav#main-nav #currency-menu button:hover { background-color: rgba(37,99,235,0.06) !important; }
+        nav#main-nav #mobile-menu-btn svg { color: rgba(255,255,255,0.85); }
+        #mobile-menu a, #mobile-menu button, #mobile-menu span { color: rgba(255,255,255,0.85) !important; }
+        #mobile-menu a:hover { color: #fff !important; background-color: rgba(255,255,255,0.12) !important; }
+        #mobile-menu .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.12) !important; }
+        #mobile-menu .border-t { border-color: rgba(255,255,255,0.15) !important; }
+        #mobile-menu .bg-gray-100 { background-color: rgba(255,255,255,0.12) !important; }
+        nav#main-nav.nav-scrolled {
+            background-color: color-mix(in srgb, var(--color-primary) 92%, black) !important;
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: 0 2px 20px rgba(0,0,0,.15) !important;
+        }
+        [data-theme="dark"] nav#main-nav.nav-scrolled {
+            background-color: rgba(15,15,25,0.9) !important;
+        }
+        [data-theme="desert"] nav#main-nav {
+            background: linear-gradient(135deg, var(--desert-saddle) 0%, #5c3412 60%, var(--desert-night) 100%) !important;
+            border-bottom: 3px solid var(--desert-camel) !important;
+            box-shadow: 0 4px 24px rgba(122,74,30,0.35) !important;
+        }
+        [data-theme="desert"] nav a,
+        [data-theme="desert"] nav span,
+        [data-theme="desert"] nav button { color: #f5deb3 !important; }
+        [data-theme="desert"] nav a:hover { color: var(--desert-accent, #e9a832) !important; }
+        [data-theme="desert"] .text-brand { color: var(--desert-camel) !important; }
+        [data-theme="desert"] .bg-brand   { background-color: var(--desert-camel) !important; }
+        [data-theme="desert"] .bg-brand:hover,
+        [data-theme="desert"] .bg-brand-hover:hover { background-color: var(--desert-saddle) !important; }
+        [data-theme="desert"] .text-brand-hover:hover { color: var(--desert-accent, #e9a832) !important; }
+
+        /* Logo circle in navbar */
+        [data-theme="desert"] nav .bg-brand.rounded-full {
+            background: radial-gradient(circle, var(--desert-camel), var(--desert-saddle)) !important;
+            border: 2px solid var(--desert-dune) !important;
+        }
+
+        /* Nav active/hover pill */
+        [data-theme="desert"] nav .bg-brand\/10 {
+            background-color: rgba(200,134,10,0.18) !important;
+            border: 1px solid rgba(200,134,10,0.3) !important;
+        }
+
+        /* Mobile menu */
+        [data-theme="desert"] #mobile-menu {
+            background: linear-gradient(180deg, #5c3412, var(--desert-night)) !important;
+            border-top: 2px solid var(--desert-camel) !important;
+        }
+        [data-theme="desert"] #mobile-menu a,
+        [data-theme="desert"] #mobile-menu span,
+        [data-theme="desert"] #mobile-menu button { color: #f5deb3 !important; }
+        [data-theme="desert"] #mobile-menu .bg-gray-100 {
+            background-color: rgba(200,134,10,0.2) !important;
+            border: 1px solid rgba(200,134,10,0.3) !important;
+        }
+        [data-theme="desert"] #mobile-menu .text-gray-800 { color: #f5deb3 !important; }
+        [data-theme="desert"] #mobile-menu .border-gray-100 { border-color: rgba(200,134,10,0.3) !important; }
+        [data-theme="desert"] #mobile-menu .hover\:bg-gray-100:hover { background-color: rgba(200,134,10,0.15) !important; }
+
+        /* ── Cards / White containers ── */
+        [data-theme="desert"] .bg-white {
+            background-color: var(--desert-card) !important;
+            border: 1px solid var(--desert-border) !important;
+        }
+        [data-theme="desert"] .car-card {
+            background-color: var(--desert-card) !important;
+            border: 1px solid var(--desert-border) !important;
+            box-shadow: 0 2px 12px rgba(122,74,30,0.12) !important;
+        }
+        [data-theme="desert"] .car-card:hover {
+            background-color: var(--desert-card-hover) !important;
+            box-shadow: 0 8px 32px rgba(122,74,30,0.22) !important;
+            border-color: var(--desert-camel) !important;
+        }
+
+        /* ── Gray backgrounds → sand tones ── */
+        [data-theme="desert"] .bg-gray-50  { background-color: #f9f0dc !important; }
+        [data-theme="desert"] .bg-gray-100 { background-color: #f0ddb8 !important; }
+        [data-theme="desert"] .bg-gray-200 { background-color: #e5cc99 !important; }
+        [data-theme="desert"] .bg-gray-800 { background-color: var(--desert-saddle) !important; }
+        [data-theme="desert"] .bg-gray-900 { background-color: var(--desert-night) !important; }
+
+        /* ── Text ── */
+        [data-theme="desert"] .text-gray-900,
+        [data-theme="desert"] .text-gray-800,
+        [data-theme="desert"] .text-gray-700 { color: var(--desert-text)       !important; }
+        [data-theme="desert"] .text-gray-600,
+        [data-theme="desert"] .text-gray-500 { color: var(--desert-text-muted) !important; }
+        [data-theme="desert"] .text-gray-400 { color: var(--desert-dune)       !important; }
+        [data-theme="desert"] .text-white     { color: #fdf6e3                  !important; }
+
+        /* ── Borders ── */
+        [data-theme="desert"] .border-gray-100,
+        [data-theme="desert"] .border-gray-200 { border-color: var(--desert-border) !important; }
+        [data-theme="desert"] .divide-gray-200 > * + * { border-color: var(--desert-border) !important; }
+
+        /* ── Inputs & selects ── */
+        [data-theme="desert"] input,
+        [data-theme="desert"] select,
+        [data-theme="desert"] textarea {
+            background-color: var(--desert-gold-light) !important;
+            border-color: var(--desert-border)         !important;
+            color: var(--desert-text)                  !important;
+        }
+        [data-theme="desert"] input:focus,
+        [data-theme="desert"] select:focus,
+        [data-theme="desert"] textarea:focus {
+            border-color: var(--desert-camel) !important;
+            box-shadow: 0 0 0 3px rgba(200,134,10,0.2) !important;
+            outline: none !important;
+        }
+        [data-theme="desert"] input::placeholder,
+        [data-theme="desert"] textarea::placeholder { color: var(--desert-dune) !important; }
+
+        /* ── Buttons ── */
+        [data-theme="desert"] button.bg-brand,
+        [data-theme="desert"] a.bg-brand {
+            background: linear-gradient(135deg, var(--desert-camel), var(--desert-clay)) !important;
+            border: none !important;
+            color: #fff8e7 !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.03em !important;
+        }
+        [data-theme="desert"] button.bg-brand:hover,
+        [data-theme="desert"] a.bg-brand:hover {
+            background: linear-gradient(135deg, var(--desert-clay), var(--desert-saddle)) !important;
+        }
+
+        /* ── Hero gradient override ── */
+        [data-theme="desert"] .hero-gradient {
+            background: linear-gradient(
+                160deg,
+                var(--desert-night)  0%,
+                var(--desert-saddle) 45%,
+                var(--desert-camel)  80%,
+                var(--desert-dune)   100%
+            ) !important;
+        }
+
+        /* ── Ornamental section divider ── */
+        [data-theme="desert"] .desert-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 1.5rem 0;
+            color: var(--desert-camel);
+            font-size: 1.25rem;
+        }
+        [data-theme="desert"] .desert-divider::before,
+        [data-theme="desert"] .desert-divider::after {
+            content: '';
+            flex: 1;
+            height: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--desert-camel)  0, var(--desert-camel)  6px,
+                transparent          6px, transparent         12px
+            );
+        }
+
+        /* ── Car-card badge (price) ── */
+        [data-theme="desert"] .badge-price,
+        [data-theme="desert"] .bg-brand-light {
+            background: linear-gradient(90deg, #fff8e7, #fdecc8) !important;
+            color: var(--desert-saddle) !important;
+            border: 1px solid var(--desert-dune) !important;
+        }
+
+        /* ── Tags / chips ── */
+        [data-theme="desert"] .rounded-full.bg-brand\/10,
+        [data-theme="desert"] .rounded-full.bg-blue-50,
+        [data-theme="desert"] .rounded-full.bg-green-50,
+        [data-theme="desert"] .rounded-full.bg-amber-50 {
+            background: linear-gradient(135deg, #fff2cc, #ffe098) !important;
+            color: var(--desert-saddle) !important;
+            border: 1px solid var(--desert-dune) !important;
+        }
+
+        /* ── Shadows ── */
+        [data-theme="desert"] .shadow-sm { box-shadow: 0 1px 4px  rgba(122,74,30,0.18) !important; }
+        [data-theme="desert"] .shadow    { box-shadow: 0 2px 10px rgba(122,74,30,0.22) !important; }
+        [data-theme="desert"] .shadow-lg { box-shadow: 0 6px 28px rgba(122,74,30,0.30) !important; }
+
+        /* ── Footer ── */
+        [data-theme="desert"] footer {
+            background: linear-gradient(180deg, var(--desert-night) 0%, #0a0603 100%) !important;
+            border-top: 4px solid var(--desert-camel) !important;
+            position: relative;
+        }
+        [data-theme="desert"] footer::before {
+            content: '🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽  ✦  🐪  ✦  ☽';
+            display: block;
+            text-align: center;
+            font-size: 0.65rem;
+            color: rgba(200,134,10,0.45);
+            padding: 6px 0 0;
+            letter-spacing: 0.15em;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        [data-theme="desert"] footer h3 { color: var(--desert-dune) !important; }
+        [data-theme="desert"] footer .text-gray-300,
+        [data-theme="desert"] footer .text-gray-400 { color: #c4a86b !important; }
+        [data-theme="desert"] footer a:hover { color: var(--desert-camel) !important; }
+        [data-theme="desert"] footer .bg-gray-800 {
+            background-color: rgba(255,255,255,0.06) !important;
+            border: 1px solid rgba(200,134,10,0.2) !important;
+        }
+
+        /* ── Hover list items ── */
+        [data-theme="desert"] .hover\:bg-gray-50:hover,
+        [data-theme="desert"] .hover\:bg-gray-100:hover { background-color: #f0ddb8 !important; }
+
+        /* ── Scrollbar (Webkit) ── */
+        [data-theme="desert"] ::-webkit-scrollbar { width: 8px; }
+        [data-theme="desert"] ::-webkit-scrollbar-track { background: var(--desert-sand); }
+        [data-theme="desert"] ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--desert-camel), var(--desert-saddle));
+            border-radius: 4px;
+        }
+
+        /* ── Auction countdown in desert ── */
+        [data-theme="desert"] .countdown-ok     { background: #fffbeb; color: #92400e; }
+        [data-theme="desert"] .countdown-soon   { background: #fef3c7; color: #b45309; }
+        [data-theme="desert"] .countdown-urgent { background: #fef2f2; color: #dc2626; }
+
+        /* ── Glass card override ── */
+        [data-theme="desert"] .glass {
+            background: rgba(253,246,227,0.15) !important;
+            border: 1px solid rgba(200,134,10,0.25) !important;
+        }
+
+        /* ── Mobile FAB buttons ── */
+        [data-theme="desert"] .fixed.bottom-4 .bg-white.rounded-full {
+            background: linear-gradient(135deg, var(--desert-gold-light), #fdecc8) !important;
+            border: 1px solid var(--desert-border) !important;
+            box-shadow: 0 4px 16px rgba(122,74,30,0.25) !important;
+        }
+
+        /* ── Section headings ornament ── */
+        [data-theme="desert"] .section-heading-ornament {
+            display: inline-block;
+            position: relative;
+        }
+        [data-theme="desert"] .section-heading-ornament::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            right: 0;
+            left: 0;
+            height: 3px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--desert-camel) 0, var(--desert-camel) 8px,
+                transparent 8px, transparent 16px
+            );
+            border-radius: 2px;
+        }
+        /* ════════════════════════════════════════════
+           🌊 OCEAN THEME — Korean maritime (navy/teal/gold)
+           Matches the Export landing: deep sea backgrounds,
+           teal accents, gold highlights.
+           ════════════════════════════════════════════ */
+        [data-theme="ocean"] {
+            --ocean-deep:   #050e1a;   /* abyss — footer / darkest      */
+            --ocean-body:   #081726;   /* open sea — page background    */
+            --ocean-card:   #0e2236;   /* card surface                  */
+            --ocean-raise:  #14304a;   /* hover / raised surface        */
+            --ocean-teal:   #2dd4bf;   /* port-marker teal accent       */
+            --ocean-gold:   #f5b942;   /* cargo gold accent             */
+            --ocean-text:   #e8f1fb;
+            --ocean-muted:  #8fa8c2;
+            --ocean-border: #24405c;
+            --color-body-bg:    var(--ocean-body);
+            --color-card-bg:    var(--ocean-card);
+            --color-nav-bg:     rgba(5,14,26,.92);
+            --color-text:       var(--ocean-text);
+            --color-text-muted: var(--ocean-muted);
+            --color-border:     var(--ocean-border);
+            --color-input-bg:   var(--ocean-card);
+        }
+        [data-theme="ocean"] body {
+            color: var(--ocean-text);
+            background-color: var(--ocean-body);
+            background-image:
+                radial-gradient(ellipse 90% 50% at 70% -10%, color-mix(in srgb, var(--color-primary) 16%, transparent), transparent),
+                radial-gradient(ellipse 70% 45% at 10% 110%, rgba(45,212,191,.07), transparent);
+            background-attachment: fixed;
+        }
+        /* ── Signature: teal→gold route stripe across the top ── */
+        [data-theme="ocean"]::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--ocean-teal), var(--ocean-gold));
+            z-index: 100;
+            pointer-events: none;
+        }
+        /* ── Surfaces ── */
+        [data-theme="ocean"] .bg-white { background-color: var(--ocean-card) !important; }
+        [data-theme="ocean"] .bg-gray-50  { background-color: #0c1e30 !important; }
+        [data-theme="ocean"] .bg-gray-100 { background-color: #112a42 !important; }
+        [data-theme="ocean"] .bg-gray-200 { background-color: var(--ocean-raise) !important; }
+        [data-theme="ocean"] .bg-gray-800 { background-color: var(--ocean-deep) !important; }
+        [data-theme="ocean"] .bg-gray-900 { background-color: var(--ocean-deep) !important; }
+        [data-theme="ocean"] .hover\:bg-gray-50:hover,
+        [data-theme="ocean"] .hover\:bg-gray-100:hover { background-color: var(--ocean-raise) !important; }
+        /* ── Text ── */
+        [data-theme="ocean"] .text-gray-900,
+        [data-theme="ocean"] .text-gray-800,
+        [data-theme="ocean"] .text-gray-700,
+        [data-theme="ocean"] .text-gray-600 { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] .text-gray-500,
+        [data-theme="ocean"] .text-gray-400 { color: var(--ocean-muted) !important; }
+        /* ── Borders / dividers / shadows ── */
+        [data-theme="ocean"] .border-gray-200,
+        [data-theme="ocean"] .border-gray-100 { border-color: var(--ocean-border) !important; }
+        [data-theme="ocean"] .divide-gray-200 > * + * { border-color: var(--ocean-border) !important; }
+        [data-theme="ocean"] .shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,.5) !important; }
+        [data-theme="ocean"] .shadow { box-shadow: 0 2px 8px rgba(0,0,0,.55) !important; }
+        /* ── Navbar: deep sea glass with teal underline ── */
+        [data-theme="ocean"] nav#main-nav {
+            background-color: var(--color-nav-bg) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(45,212,191,.18);
+        }
+        [data-theme="ocean"] nav a,
+        [data-theme="ocean"] nav span,
+        [data-theme="ocean"] nav button { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] nav a:hover { color: var(--ocean-gold) !important; }
+        [data-theme="ocean"] #mobile-menu { background-color: var(--ocean-deep) !important; }
+        [data-theme="ocean"] #mobile-menu a,
+        [data-theme="ocean"] #mobile-menu span,
+        [data-theme="ocean"] #mobile-menu button { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] #mobile-menu .bg-gray-100 { background-color: #112a42 !important; }
+        [data-theme="ocean"] #mobile-menu .border-gray-100 { border-color: var(--ocean-border) !important; }
+        [data-theme="ocean"] #mobile-menu .hover\:bg-gray-100:hover { background-color: var(--ocean-raise) !important; }
+        /* ── Forms ── */
+        [data-theme="ocean"] input,
+        [data-theme="ocean"] select,
+        [data-theme="ocean"] textarea {
+            background-color: var(--ocean-card) !important;
+            border-color: var(--ocean-border) !important;
+            color: var(--ocean-text) !important;
+        }
+        [data-theme="ocean"] input::placeholder,
+        [data-theme="ocean"] textarea::placeholder { color: var(--ocean-muted) !important; }
+        [data-theme="ocean"] input:focus,
+        [data-theme="ocean"] select:focus,
+        [data-theme="ocean"] textarea:focus { border-color: var(--ocean-teal) !important; }
+        /* ── Cards: teal lift on hover ── */
+        [data-theme="ocean"] .car-card {
+            background-color: var(--ocean-card) !important;
+            border: 1px solid var(--ocean-border) !important;
+        }
+        [data-theme="ocean"] .car-card:hover {
+            border-color: color-mix(in srgb, var(--ocean-teal) 45%, var(--ocean-border)) !important;
+            box-shadow: 0 14px 36px -16px rgba(45,212,191,.35) !important;
+        }
+        /* ── Footer: the abyss ── */
+        [data-theme="ocean"] footer {
+            background-color: var(--ocean-deep) !important;
+            border-top: 1px solid rgba(45,212,191,.15);
+        }
+        /* ── Hero filter panel option cards ── */
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option,
+        [data-theme="ocean"] #hero-search-filters .year-from-option,
+        [data-theme="ocean"] #hero-search-filters .year-to-option,
+        [data-theme="ocean"] #hero-search-filters .model-option {
+            background-color: var(--ocean-card) !important;
+            border-color: rgba(148,197,255,.18) !important;
+            color: var(--ocean-text) !important;
+        }
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option:hover,
+        [data-theme="ocean"] #hero-search-filters .year-from-option:hover,
+        [data-theme="ocean"] #hero-search-filters .year-to-option:hover,
+        [data-theme="ocean"] #hero-search-filters .model-option:hover {
+            background-color: var(--ocean-raise) !important;
+            border-color: var(--ocean-teal) !important;
+        }
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option .text-gray-800 { color: var(--ocean-text) !important; }
+        [data-theme="ocean"] #hero-search-filters .manufacturer-option .text-gray-500 { color: var(--ocean-muted) !important; }
+        [data-theme="ocean"] #hero-search-filters .bg-gray-100 { background-color: var(--ocean-card) !important; }
+        /* ── Mobile FAB buttons ── */
+        [data-theme="ocean"] .fixed.bottom-4 .bg-white.rounded-full {
+            background: linear-gradient(135deg, var(--ocean-card), var(--ocean-raise)) !important;
+            border: 1px solid rgba(45,212,191,.3) !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,.5) !important;
+        }
+
+        {% if site_logo and show_watermark %}
+        :root { --site-logo-url: url("{{ site_logo }}"); }
+        .car-img-wm { position: relative; }
+        .car-img-wm::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: var(--site-logo-url);
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 50% auto;
+            opacity: 0.4;
+            pointer-events: none;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+            z-index: 5;
+        }
+        {% endif %}
+
+        /* ── EXPORT THEME layer — the export landing's ocean-night look for the
+           whole site: layered ocean gradients, glass panels with thin light
+           borders, gold/teal accents, fade-up section entrances. Inner pages
+           reuse the default base machinery re-skinned via utility overrides.
+           Scoped to screen so printable pages (invoice) stay light. ── */
+        :root {
+            --xp-ocean-0: #050e1a;
+            --xp-ocean-1: #081726;
+            --xp-ocean-2: #0c2238;
+            --xp-line: rgba(148, 197, 255, .14);
+            --xp-ink: #e8f1fb;
+            --xp-mid: #b9cade;
+            --xp-muted: #8fa8c2;
+            --xp-gold: #f5b942;
+            --xp-teal: #2dd4bf;
+        }
+        @media screen {
+            body {
+                color: var(--xp-ink);
+                background:
+                    radial-gradient(ellipse 90% 60% at 70% -10%, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent),
+                    radial-gradient(ellipse 70% 50% at 10% 110%, color-mix(in srgb, var(--color-secondary) 30%, transparent), transparent),
+                    linear-gradient(180deg, var(--xp-ocean-0) 0%, var(--xp-ocean-1) 45%, var(--xp-ocean-2) 100%) !important;
+                background-attachment: fixed !important;
+            }
+            /* glass panels instead of white cards */
+            .bg-white { background: rgba(255,255,255,.045) !important; }
+            .bg-gray-50, .bg-gray-100, .bg-gray-200 { background: rgba(255,255,255,.07) !important; }
+            .text-gray-900, .text-gray-800 { color: var(--xp-ink) !important; }
+            .text-gray-700, .text-gray-600 { color: var(--xp-mid) !important; }
+            .text-gray-500, .text-gray-400 { color: var(--xp-muted) !important; }
+            .border-gray-100, .border-gray-200, .border-gray-300,
+            .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+            .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: var(--xp-line) !important; }
+            .shadow, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl { box-shadow: 0 16px 44px -20px rgba(0,0,0,.65) !important; }
+            input, select, textarea { color-scheme: dark; }
+            input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea {
+                background: rgba(255,255,255,.06) !important; color: var(--xp-ink) !important;
+                border-color: var(--xp-line) !important;
+            }
+            input::placeholder, textarea::placeholder { color: var(--xp-muted) !important; }
+            /* chrome: dark glass nav + deep footer */
+            nav#main-nav {
+                background: rgba(8,23,38,.86) !important; backdrop-filter: blur(12px);
+                border-bottom: 1px solid var(--xp-line); box-shadow: none;
+            }
+            nav#main-nav.nav-scrolled { box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+            nav#main-nav a:not(.bg-brand):not(.text-white), nav#main-nav span.font-medium,
+            nav#main-nav button:not(.bg-brand):not(.bg-red-500) { color: var(--xp-ink); }
+            nav#main-nav .text-gray-600, nav#main-nav .text-gray-500 { color: var(--xp-mid) !important; }
+            #lang-dropdown > button, #currency-dropdown > button {
+                border-radius: 999px; border-width: 1px; border-color: var(--xp-line) !important;
+                background: rgba(255,255,255,.05) !important; color: var(--xp-ink) !important; box-shadow: none;
+            }
+            #lang-dropdown > button:hover, #currency-dropdown > button:hover { border-color: var(--xp-gold) !important; color: var(--xp-gold) !important; }
+            footer.bg-gray-900 { background-color: #050e1a !important; border-top: 1px solid var(--xp-line); }
+            /* landing-style entrances + card lift */
+            @keyframes xp-fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+            main > section, main > div > section { animation: xp-fade-up .5s ease both; }
+            .xp-lift { transition: transform .25s cubic-bezier(.22,1,.36,1), border-color .25s, box-shadow .25s; }
+            .xp-lift:hover { transform: translateY(-4px); }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+    {% include "partials/site_font.html" %}
+    <script>/* tenant price markup (base 1% × admin %), for the calculator, cart and price conversions */
+    window.SITE_PRICE_MARKUP = {{ site_price_markup|default:"1.01" }};</script>
+</head>
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}' class="font-tajawal text-gray-800 min-h-screen flex flex-col" style="background-color: var(--color-body-bg);">
+{% include "partials/ticker.html" %}
+<div id="nprogress-bar"></div>
+        {% if eid_is_active %}
+        <!-- Eid Balloons Overlay -->
+        <div class="eid-balloons" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;left:5vw;top:10vh;width:120px;animation:balloon-float 3s ease-in-out infinite alternate;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;right:5vw;top:12vh;width:120px;transform:scaleX(-1);animation:balloon-float 2.7s ease-in-out infinite alternate;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;left:20vw;top:18vh;width:80px;animation:balloon-float 2.2s ease-in-out infinite alternate;">
+                <img src="{% static 'images/eid-balloons.svg' %}" class="eid-balloon-img" style="position:absolute;right:20vw;top:20vh;width:80px;transform:scaleX(-1);animation:balloon-float 2.5s ease-in-out infinite alternate;">
+                <div class="eid-mubarak" style="position:absolute;top:22vh;left:50%;transform:translateX(-50%);font-size:2.5rem;font-weight:bold;color:#FFD700;text-shadow:0 2px 8px #009688,0 0 16px #fffbe6;animation:eid-mubarak-fade 2.5s ease-in-out infinite alternate;">عيد مبارك</div>
+        </div>
+        <style>
+        @keyframes balloon-float {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-32px); }
+        }
+        @keyframes eid-mubarak-fade {
+            0% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        </style>
+        {% endif %}
+    <!-- Navbar -->
+    {% include "site_builder/header.html" %}
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="p-4 rounded-lg mb-2 {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    <!-- Content -->
+    <main class="flex-grow pb-16 md:pb-0">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% include "site_builder/footer.html" %}
+
+    <script>
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('lang-dropdown')?.contains(e.target)) {
+                document.getElementById('lang-menu')?.classList.add('hidden');
+            }
+            if (!document.getElementById('currency-dropdown')?.contains(e.target)) {
+                document.getElementById('currency-menu')?.classList.add('hidden');
+            }
+        });
+
+        // ═══════════ LANGUAGE SYSTEM ═══════════
+        var LANGS = {
+            ar: { flag: '🇸🇦', label: 'العربية', dir: 'rtl', font: "'Tajawal', sans-serif" },
+            en: { flag: '🇬🇧', label: 'English', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+            es: { flag: '🇪🇸', label: 'Español', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+            ru: { flag: '🇷🇺', label: 'Русский', dir: 'ltr', font: "'Inter', 'Tajawal', sans-serif" },
+        };
+        var LANG_ORDER = ['ar', 'en', 'es', 'ru'];
+
+        var TRANSLATIONS = {
+            // Navbar
+            'الرئيسية': { en: 'Home', es: 'Hogar', ru: 'Дом' },
+            'السيارات': { en: 'Cars', es: 'coches', ru: 'Автомобили' },
+            'سياراتنا': { en: 'Our Cars', es: 'Nuestros coches', ru: 'Наши автомобили' },
+            'المباعة': { en: 'Sold', es: 'Vendido', ru: 'Продал' },
+            'طلب سيارة': { en: 'Request Car', es: 'Solicitar coche', ru: 'Запросить автомобиль' },
+            'تواصل معنا': { en: 'Contact Us', es: 'Contáctanos', ru: 'Связаться с нами' },
+            'طلباتي': { en: 'My Orders', es: 'Mis pedidos', ru: 'Мои заказы' },
+            'الرسائل': { en: 'Messages', es: 'Mensajes', ru: 'Сообщения' },
+            'لوحة التحكم': { en: 'Dashboard', es: 'Panel', ru: 'Панель управления' },
+            'خروج': { en: 'Logout', es: 'Cerrar sesión', ru: 'Выйти' },
+            'دخول': { en: 'Login', es: 'Acceso', ru: 'Авторизоваться' },
+            'حساب جديد': { en: 'Register', es: 'Registro', ru: 'Регистрация' },
+            'تسجيل الدخول': { en: 'Login', es: 'Acceso', ru: 'Авторизоваться' },
+            'إنشاء حساب': { en: 'Create Account', es: 'Crear una cuenta', ru: 'Зарегистрироваться' },
+            'تسجيل الخروج': { en: 'Logout', es: 'Cerrar sesión', ru: 'Выйти' },
+            'السيارات المباعة': { en: 'Sold Cars', es: 'Autos vendidos', ru: 'Проданные автомобили' },
+            // Home
+            'اعثر على سيارة أحلامك': { en: 'Find Your Dream Car', es: 'Encuentra el coche de tus sueños', ru: 'Найдите автомобиль своей мечты' },
+            'تصفح آلاف السيارات المستوردة بأفضل الأسعار والجودة': { en: 'Browse thousands of imported cars at the best prices and quality', es: 'Explore miles de autos importados a los mejores precios y con la mejor calidad.', ru: 'Просмотрите тысячи импортных автомобилей по лучшим ценам и качеству.' },
+            'بحث': { en: 'Search', es: 'Buscar', ru: 'Поиск' },
+            'الشركة المصنعة': { en: 'Manufacturer', es: 'Fabricante', ru: 'Производитель' },
+            'سنة الصنع': { en: 'Year', es: 'Año', ru: 'Год' },
+            'سيارة متاحة': { en: 'Available Cars', es: 'Autos disponibles', ru: 'Доступные автомобили' },
+            'شركة مصنعة': { en: 'Manufacturers', es: 'fabricantes', ru: 'Производители' },
+            'موديل': { en: 'Models', es: 'Modelos', ru: 'Модели' },
+            'دعم متواصل': { en: '24/7 Support', es: 'Soporte 24/7', ru: 'Круглосуточная поддержка' },
+            'أحدث السيارات': { en: 'Latest Cars', es: 'Últimos coches', ru: 'Новейшие автомобили' },
+            'عرض الكل': { en: 'View All', es: 'Ver todo', ru: 'Посмотреть все' },
+            'الشركات المصنعة': { en: 'Manufacturers', es: 'fabricantes', ru: 'Производители' },
+            'لم تجد سيارتك المطلوبة؟': { en: 'Didn\'t find your car?', es: '¿No encontraste tu coche?', ru: 'Не нашли свою машину?' },
+            'أرسل لنا طلبك وسنبحث لك عن السيارة المناسبة بأفضل سعر': { en: 'Send us your request and we will find the right car at the best price', es: 'Envíanos tu solicitud y encontraremos el coche adecuado al mejor precio.', ru: 'Отправьте нам свой запрос, и мы найдем подходящий автомобиль по лучшей цене.' },
+            'اطلب سيارة الآن': { en: 'Request a Car Now', es: 'Solicita un coche ahora', ru: 'Закажите автомобиль прямо сейчас!' },
+            // Car list
+            'الكل': { en: 'All', es: 'Todo', ru: 'Все' },
+            'سيارات': { en: 'Cars', es: 'coches', ru: 'Автомобили' },
+            'مزادات': { en: 'Auctions', es: 'Subastas', ru: 'Аукционы' },
+            'نتيجة': { en: 'results', es: 'resultados', ru: 'результаты' },
+            'ابحث سيارة مخصصة': { en: 'Search for a specific car', es: 'Buscar un coche específico', ru: 'Поиск конкретного автомобиля' },
+            'ترتيب:': { en: 'Sort:', es: 'Clasificar:', ru: 'Сортировка:' },
+            'الأحدث': { en: 'Newest', es: 'El más nuevo', ru: 'Новейшие' },
+            'الأرخص': { en: 'Cheapest', es: 'El más barato', ru: 'Самый дешевый' },
+            'الأغلى': { en: 'Most Expensive', es: 'El más caro', ru: 'Самый дорогой' },
+            'الأحدث صنعاً': { en: 'Newest Make', es: 'Marca más reciente', ru: 'Новейшая марка' },
+            'أقل مسافة': { en: 'Lowest Mileage', es: 'Menor kilometraje', ru: 'Самый низкий пробег' },
+            'أكثر مسافة': { en: 'Highest Mileage', es: 'Mayor kilometraje', ru: 'Максимальный пробег' },
+            'تم البيع': { en: 'Sold', es: 'Vendido', ru: 'Продал' },
+            'كم': { en: 'km', es: 'kilómetros', ru: 'км' },
+            'لا توجد نتائج': { en: 'No Results', es: 'No hay resultados', ru: 'Результаты отсутствуют' },
+            'جرّب تغيير الفلاتر أو البحث بكلمات مختلفة': { en: 'Try changing filters or search with different keywords', es: 'Intenta cambiar los filtros o buscar con palabras clave diferentes.', ru: 'Попробуйте изменить фильтры или выполнить поиск с использованием других ключевых слов.' },
+            'عرض جميع السيارات': { en: 'Show All Cars', es: 'Mostrar todos los coches', ru: 'Показать все автомобили' },
+            'مسح الكل': { en: 'Clear All', es: 'Borrar todo', ru: 'Очистить все' },
+            'مسح جميع الفلاتر': { en: 'Clear All Filters', es: 'Borrar todos los filtros', ru: 'Очистить все фильтры' },
+            'تطبيق الفلاتر': { en: 'Apply Filters', es: 'Aplicar filtros', ru: 'Применить фильтры' },
+            'متاح': { en: 'Available', es: 'Disponible', ru: 'Доступный' },
+            'قيد الانتظار': { en: 'Pending', es: 'Pendiente', ru: 'В ожидании' },
+            'منتهي': { en: 'Expired', es: 'Venció', ru: 'Истекший' },
+            // Car detail
+            'المواصفات': { en: 'Specifications', es: 'Presupuesto', ru: 'Технические характеристики' },
+            'الموديل': { en: 'Model', es: 'Modelo', ru: 'Модель' },
+            'المسافة المقطوعة': { en: 'Mileage', es: 'Kilometraje', ru: 'Пробег' },
+            'المسافة': { en: 'Mileage', es: 'Kilometraje', ru: 'Пробег' },
+            'ناقل الحركة': { en: 'Transmission', es: 'Transmisión', ru: 'Передача инфекции' },
+            'الوقود': { en: 'Fuel', es: 'Combustible', ru: 'Топливо' },
+            'اللون': { en: 'Color', es: 'Color', ru: 'Цвет' },
+            'لون المقاعد': { en: 'Seat Color', es: 'Color del asiento', ru: 'Цвет сиденья' },
+            'نوع الهيكل': { en: 'Body Type', es: 'Tipo de cuerpo', ru: 'Тип телосложения' },
+            'القوة': { en: 'Power', es: 'Fuerza', ru: 'Власть' },
+            'نظام الدفع': { en: 'Drive', es: 'Conducir', ru: 'Водить машину' },
+            'المحرك': { en: 'Engine', es: 'Motor', ru: 'Двигатель' },
+            'رقم الهيكل': { en: 'VIN', es: 'VIN', ru: 'VIN' },
+            'الموقع': { en: 'Location', es: 'Ubicación', ru: 'Расположение' },
+            'السعر': { en: 'Price', es: 'Precio', ru: 'Цена' },
+            'اطلب هذه السيارة': { en: 'Order This Car', es: 'Pide este coche', ru: 'Закажите этот автомобиль' },
+            'استفسار': { en: 'Inquiry', es: 'Consulta', ru: 'Расследование' },
+            'رقم القطعة:': { en: 'Lot #:', es: 'Lote #:', ru: 'Много #:' },
+            'تقرير الفحص': { en: 'Inspection Report', es: 'Informe de inspección', ru: 'Отчет об инспекции' },
+            'الوصف': { en: 'Description', es: 'Descripción', ru: 'Описание' },
+            'المميزات': { en: 'Features', es: 'Características', ru: 'Функции' },
+            'التقييمات': { en: 'Reviews', es: 'Reseñas', ru: 'Отзывы' },
+            // Footer
+            'روابط سريعة': { en: 'Quick Links', es: 'Enlaces rápidos', ru: 'Быстрые ссылки' },
+            'تواصل سريع': { en: 'Quick Contact', es: 'Contacto rápido', ru: 'Быстрый контакт' },
+            'راسلنا واتساب': { en: 'WhatsApp Us', es: 'Contáctanos por WhatsApp', ru: 'Напишите нам в WhatsApp' },
+            'جميع الحقوق محفوظة.': { en: 'All rights reserved.', es: 'Reservados todos los derechos.', ru: 'Все права защищены.' },
+            // Filters
+            'جميع الشركات': { en: 'All Manufacturers', es: 'Todos los fabricantes', ru: 'Все производители' },
+            'جميع الموديلات': { en: 'All Models', es: 'Todos los modelos', ru: 'Все модели' },
+            'جميع السنوات': { en: 'All Years', es: 'Todos los años', ru: 'Все годы' },
+            'جميع الألوان': { en: 'All Colors', es: 'Todos los colores', ru: 'Все цвета' },
+            'السعر من': { en: 'Price From', es: 'Precio desde', ru: 'Цена от' },
+            'السعر إلى': { en: 'Price To', es: 'Precio a', ru: 'Цена к' },
+            'المسافة من': { en: 'Mileage From', es: 'Kilometraje desde', ru: 'Пробег от' },
+            'المسافة إلى': { en: 'Mileage To', es: 'Kilometraje a', ru: 'Пробег до' },
+            'لا توجد سيارات حالياً': { en: 'No cars available', es: 'No hay coches disponibles', ru: 'Нет свободных автомобилей' },
+            'مميزة': { en: 'Featured', es: 'Presentado', ru: 'Рекомендуемые' },
+            // Expired auctions
+            'مزادات منتهية': { en: 'Expired Auctions', es: 'Subastas vencidas', ru: 'Аукционы завершились' },
+            'المزادات النشطة': { en: 'Active Auctions', es: 'Subastas activas', ru: 'Активные аукционы' },
+            // Forms
+            'الاسم الكامل': { en: 'Full Name', es: 'Nombre completo', ru: 'Полное имя' },
+            'رقم الجوال': { en: 'Phone Number', es: 'Número de teléfono', ru: 'Номер телефона' },
+            'البريد الإلكتروني': { en: 'Email', es: 'Correo electrónico', ru: 'Электронная почта' },
+            'الرسالة': { en: 'Message', es: 'Mensaje', ru: 'Сообщение' },
+            'إرسال': { en: 'Send', es: 'Enviar', ru: 'Отправлять' },
+            'للاستفسارات والطلبات': { en: 'For inquiries and orders', es: 'Para consultas y pedidos', ru: 'Для запросов и заказов' },
+
+            // Nav / menu additions
+            'المنشورات': { en: 'Posts', es: 'Publicaciones', ru: 'Сообщения' },
+            'قائمة الأمنيات': { en: 'Wishlist', es: 'Lista de deseos', ru: 'Список желаний' },
+            'المفضلة': { en: 'Favorites', es: 'Favoritos', ru: 'Избранное' },
+            'حسابي': { en: 'My Account', es: 'Mi cuenta', ru: 'Мой счет' },
+            'واتساب': { en: 'WhatsApp', es: 'WhatsApp', ru: 'WhatsApp' },
+
+            // Tooltip / hint card copy
+            'جديد!': { en: 'New!', es: '¡Nuevo!', ru: 'Новый!' },
+            'تغيير العملة واللغة': { en: 'Change currency & language', es: 'Cambiar moneda e idioma', ru: 'Изменить валюту и язык' },
+            'احفظ السيارات المفضلة لديك': { en: 'Save your favorite cars', es: 'Guarda tus coches favoritos', ru: 'Сохраните свои любимые автомобили' },
+            'إعدادات الحساب والملف الشخصي': { en: 'Account & profile settings', es: 'Configuración de cuenta y perfil', ru: 'Настройки учетной записи и профиля' },
+
+            // Footer
+            'روابط سريعة': { en: 'Quick Links', es: 'Enlaces rápidos', ru: 'Быстрые ссылки' },
+            'طلب سيارة': { en: 'Request a Car', es: 'Solicitar un coche', ru: 'Заказать автомобиль' },
+
+            // Settings / auth modals
+            'الإعدادات': { en: 'Settings', es: 'Ajustes', ru: 'Настройки' },
+            'اللغة': { en: 'Language', es: 'Idioma', ru: 'Язык' },
+            'العربية': { en: 'Arabic', es: 'árabe', ru: 'арабский' },
+            'العملة': { en: 'Currency', es: 'Divisa', ru: 'Валюта' },
+            'إغلاق': { en: 'Close', es: 'Cerca', ru: 'Закрывать' },
+            'إلغاء': { en: 'Cancel', es: 'Cancelar', ru: 'Отмена' },
+            'مرحباً!': { en: 'Welcome!', es: '¡Bienvenido!', ru: 'Добро пожаловать!' },
+            'سجل دخولك أو أنشئ حساباً جديداً للاستفادة من جميع الميزات': { en: 'Sign in or create an account to unlock all features', es: 'Inicia sesión o crea una cuenta para desbloquear todas las funciones.', ru: 'Войдите в систему или создайте учетную запись, чтобы разблокировать все функции.' },
+            'إنشاء حساب جديد': { en: 'Create a New Account', es: 'Crear una nueva cuenta', ru: 'Создать новую учетную запись' },
+
+            // Social tooltips
+            'انستقرام': { en: 'Instagram', es: 'Instagram', ru: 'Инстаграм' },
+            'تويتر': { en: 'Twitter', es: 'Gorjeo', ru: 'Твиттер' },
+            'فيسبوك': { en: 'Facebook', es: 'Facebook', ru: 'Фейсбук' },
+            'تيك توك': { en: 'TikTok', es: 'TikTok', ru: 'ТикТок' },
+            'سناب شات': { en: 'Snapchat', es: 'Snapchat', ru: 'Snapchat' },
+            'يوتيوب': { en: 'YouTube', es: 'YouTube', ru: 'YouTube' },
+            'تيليجرام': { en: 'Telegram', es: 'Telegrama', ru: 'Телеграмма' },
+
+            // Auction countdown
+            'انتهى المزاد': { en: 'Auction ended', es: 'La subasta ha finalizado.', ru: 'Аукцион завершился.' },
+
+            // Eid
+            'عيد مبارك': { en: 'Eid Mubarak', es: 'Eid Mubarak', ru: 'Ид Мубарак' },
+        };
+
+        function t(text, lang) {
+            // TRANSLATIONS entries can be either a flat `en` string (legacy) or
+            // a nested `{ en: '...', es: '...', ru: '...' }` object once the
+            // `translate_base_dict` command has rewritten them.
+            const entry = TRANSLATIONS[text];
+            if (!entry) return text;
+            if (typeof entry === 'string') return lang === 'en' ? entry : text;
+            return entry[lang] || entry.en || text;
+        }
+
+        function setLang(lang) {
+            localStorage.setItem('site_lang', lang);
+            applyLang(lang);
+            document.getElementById('lang-menu')?.classList.add('hidden');
+        }
+
+        function cycleLang() {
+            const cur = localStorage.getItem('site_lang') || 'ar';
+            const idx = (LANG_ORDER.indexOf(cur) + 1) % LANG_ORDER.length;
+            setLang(LANG_ORDER[idx]);
+        }
+
+        function applyLang(lang) {
+            const cfg = LANGS[lang];
+            const root = document.getElementById('html-root');
+            root.setAttribute('lang', lang);
+            root.setAttribute('dir', cfg.dir);
+            document.body.style.fontFamily = cfg.font;
+
+            // Update switcher labels
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl('lang-flag', cfg.flag);
+            setEl('lang-label', cfg.label);
+            setEl('mobile-lang-flag', cfg.flag);
+            setEl('mobile-lang-label', cfg.label);
+
+            // Handle bilingual elements (data-lang-ar / data-lang-en / data-lang-es / data-lang-ru).
+            // Fallback chain: requested lang → en → ar, so partially-translated pages
+            // still read correctly.
+            document.querySelectorAll('.bilingual').forEach(el => {
+                const val = el.getAttribute('data-lang-' + lang)
+                         || el.getAttribute('data-lang-en')
+                         || el.getAttribute('data-lang-ar');
+                if (val) el.textContent = val;
+            });
+
+            // Swap input placeholders (data-placeholder-<lang>) with the same fallback chain.
+            document.querySelectorAll('[data-placeholder-ar], [data-placeholder-en]').forEach(el => {
+                const val = el.getAttribute('data-placeholder-' + lang)
+                         || el.getAttribute('data-placeholder-en')
+                         || el.getAttribute('data-placeholder-ar');
+                if (val !== null) el.setAttribute('placeholder', val);
+            });
+
+            // Notify dynamic JS-rendered content that the language changed.
+            document.dispatchEvent(new CustomEvent('langchange', { detail: { lang } }));
+
+            // Swap title / aria-label attributes with the same fallback chain.
+            document.querySelectorAll('[data-title-ar], [data-title-en]').forEach(el => {
+                const val = el.getAttribute('data-title-' + lang)
+                         || el.getAttribute('data-title-en')
+                         || el.getAttribute('data-title-ar');
+                if (val !== null) el.setAttribute('title', val);
+            });
+            document.querySelectorAll('[data-aria-label-ar], [data-aria-label-en]').forEach(el => {
+                const val = el.getAttribute('data-aria-label-' + lang)
+                         || el.getAttribute('data-aria-label-en')
+                         || el.getAttribute('data-aria-label-ar');
+                if (val !== null) el.setAttribute('aria-label', val);
+            });
+
+            const TEXT_NODE_SELECTOR = 'a, span, button, h1, h2, h3, h4, h5, h6, p, div, label, li, option, td, th';
+            // Dict-based translation for text that isn't wrapped in `.bilingual`.
+            // Runs for every non-Arabic language so navbar / footer / modal text
+            // localizes even for es/ru once `translate_base_dict` has been run.
+            if (lang !== 'ar') {
+                document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(el => {
+                    if (el.classList.contains('bilingual')) return;
+                    el.childNodes.forEach(node => {
+                        if (node.nodeType === 3) {
+                            const orig = node._origText || node.textContent.trim();
+                            if (!node._origText && orig) node._origText = orig;
+                            if (orig) {
+                                const translated = t(orig, lang);
+                                if (translated !== orig) node.textContent = node.textContent.replace(orig, translated);
+                            }
+                        }
+                    });
+                });
+                document.querySelectorAll('[title]').forEach(el => {
+                    const orig = el._origTitle || el.getAttribute('title').trim();
+                    if (!el._origTitle && orig) el._origTitle = orig;
+                    if (orig) {
+                        const translated = t(orig, lang);
+                        if (translated !== orig) el.setAttribute('title', translated);
+                    }
+                });
+            } else {
+                // Restoring Arabic originals. Bilingual elements are handled by the
+                // data-lang-<lang> loop above, so skip them here.
+                document.querySelectorAll(TEXT_NODE_SELECTOR).forEach(el => {
+                    if (el.classList.contains('bilingual')) return;
+                    el.childNodes.forEach(node => {
+                        if (node.nodeType === 3 && node._origText) {
+                            node.textContent = node.textContent.replace(node.textContent.trim(), node._origText);
+                        }
+                    });
+                });
+                document.querySelectorAll('[title]').forEach(el => {
+                    if (el._origTitle) el.setAttribute('title', el._origTitle);
+                });
+            }
+
+            // Highlight the active language/currency in desktop dropdowns.
+            syncLangCurrencyMenuActive();
+        }
+
+        function syncLangCurrencyMenuActive() {
+            const curLang = localStorage.getItem('site_lang') || 'ar';
+            document.querySelectorAll('.lang-menu-item').forEach(btn => {
+                const active = btn.dataset.langCode === curLang;
+                btn.classList.toggle('bg-brand/10', active);
+                btn.classList.toggle('text-brand', active);
+                const check = btn.querySelector('.lang-check-icon');
+                if (check) check.classList.toggle('hidden', !active);
+            });
+            const curCurrency = localStorage.getItem('site_currency') || 'SAR';
+            document.querySelectorAll('.currency-menu-item').forEach(btn => {
+                const active = btn.dataset.currencyCode === curCurrency;
+                btn.classList.toggle('bg-brand/10', active);
+                btn.classList.toggle('text-brand', active);
+                const check = btn.querySelector('.currency-check-icon');
+                if (check) check.classList.toggle('hidden', !active);
+            });
+        }
+
+        // ═══════════ CURRENCY SYSTEM ═══════════
+        var CURRENCIES = {
+            KRW: { symbol: '₩', label: '₩ KRW', rate: 1 },
+            USD: { symbol: '$', label: '$ USD', rate: {{ rate_usd|default:"0.00067" }} },
+            SAR: { symbol: '﷼', label: '﷼ SAR', rate: {{ rate_sar|default:"0.00250" }} },
+            AED: { symbol: 'د.إ', label: 'د.إ AED', rate: {{ rate_aed|default:"0.00272" }} },
+            EUR: { symbol: '€', label: '€ EUR', rate: {{ rate_eur|default:"0.00069" }} },
+        };
+        var CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
+        {% for c in custom_currencies %}CURRENCIES['{{ c.code }}'] = { symbol: '{{ c.symbol|escapejs }}', label: '{{ c.symbol|escapejs }} {{ c.code }}', rate: {{ c.rate|stringformat:"g" }} };
+        CURRENCY_ORDER.push('{{ c.code }}');
+        {% endfor %}
+
+        function setCurrency(code) {
+            localStorage.setItem('site_currency', code);
+            applyCurrency(code);
+            document.getElementById('currency-menu')?.classList.add('hidden');
+            syncLangCurrencyMenuActive();
+        }
+
+        function cycleCurrency() {
+            const cur = localStorage.getItem('site_currency') || 'SAR';
+            const idx = (CURRENCY_ORDER.indexOf(cur) + 1) % CURRENCY_ORDER.length;
+            setCurrency(CURRENCY_ORDER[idx]);
+        }
+
+        function applyCurrency(code) {
+            const cfg = CURRENCIES[code];
+            const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setEl('currency-label', cfg.label);
+            setEl('mobile-currency-label', cfg.label);
+
+            // Convert all prices: find elements with data-price-krw or price patterns
+            const PRICE_MARKUP = {{ site_price_markup|default:"1.01" }};
+            document.querySelectorAll('[data-price-krw]').forEach(el => {
+                const krw = parseFloat(el.getAttribute('data-price-krw'));
+                if (isNaN(krw)) return;
+                const converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate * PRICE_MARKUP);
+                el.innerHTML = converted.toLocaleString() + ' <span class="text-[9px] sm:text-xs font-medium">' + cfg.symbol + '</span>';
+            });
+        }
+
+        // ═══════════ INIT ON LOAD ═══════════
+        document.addEventListener('DOMContentLoaded', function() {
+            const lang = localStorage.getItem('site_lang') || 'ar';
+            const currency = localStorage.getItem('site_currency') || 'SAR';
+            // Only run heavy DOM scan if non-default language is active
+            if (lang !== 'ar') applyLang(lang);
+            else {
+                const cfg = LANGS[lang];
+                const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                setEl('lang-flag', cfg.flag);
+                setEl('lang-label', cfg.label);
+                setEl('mobile-lang-flag', cfg.flag);
+                setEl('mobile-lang-label', cfg.label);
+            }
+            if (currency !== 'SAR') applyCurrency(currency);
+            else applyCurrency('SAR');
+            syncLangCurrencyMenuActive();
+        });
+
+        // ── Navbar scroll transparency ──
+        (function () {
+            const nav = document.getElementById('main-nav');
+            if (!nav) return;
+            function onScroll() {
+                if (window.scrollY > 10) {
+                    nav.classList.add('nav-scrolled');
+                } else {
+                    nav.classList.remove('nav-scrolled');
+                }
+            }
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll(); // run once on load
+        })();
+
+        // Wishlist count functionality with caching
+        let wishlistCountCache = null;
+        let wishlistCountPromise = null;
+        
+        function fetchWishlistCount() {
+            {% if user.is_authenticated %}
+            // Return cached promise if already fetching
+            if (wishlistCountPromise) {
+                return wishlistCountPromise;
+            }
+            
+            // Return cached value if available and fresh (less than 5 seconds old)
+            if (wishlistCountCache && Date.now() - wishlistCountCache.timestamp < 5000) {
+                return Promise.resolve(wishlistCountCache.count);
+            }
+            
+            // Fetch new count
+            wishlistCountPromise = fetch('/wishlist/count/')
+                .then(response => response.json())
+                .then(data => {
+                    wishlistCountCache = {
+                        count: data.count,
+                        timestamp: Date.now()
+                    };
+                    wishlistCountPromise = null;
+                    return data.count;
+                })
+                .catch(error => {
+                    console.error('Error fetching wishlist count:', error);
+                    wishlistCountPromise = null;
+                    return 0;
+                });
+            
+            return wishlistCountPromise;
+            {% else %}
+            return Promise.resolve(0);
+            {% endif %}
+        }
+        
+        function updateWishlistCount() {
+            fetchWishlistCount().then(count => {
+                const desktopCount = document.getElementById('wishlist-count');
+                const mobileCount = document.getElementById('wishlist-count-mobile');
+                
+                if (desktopCount) {
+                    desktopCount.textContent = count;
+                    desktopCount.style.display = count > 0 ? 'flex' : 'none';
+                }
+                if (mobileCount) {
+                    mobileCount.textContent = count;
+                    mobileCount.style.display = count > 0 ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // Update wishlist count on page load
+        document.addEventListener('DOMContentLoaded', updateWishlistCount);
+
+        // Update wishlist count after wishlist toggle
+        window.updateWishlistCount = updateWishlistCount;
+
+        // ═══════════ MOBILE FLOATING ACTION BUTTONS ═══════════
+        
+        // Discovery tooltips system
+        let discoveryTimeouts = {};
+        let hasShownTooltips = {};
+        
+        function showTooltip(tooltipId) {
+            const tooltip = document.getElementById(tooltipId);
+            if (!tooltip || hasShownTooltips[tooltipId]) return;
+            
+            clearTimeout(discoveryTimeouts[tooltipId]);
+            tooltip.style.opacity = '1';
+            
+            // Auto hide after 4 seconds
+            discoveryTimeouts[tooltipId] = setTimeout(() => {
+                tooltip.style.opacity = '0';
+                hasShownTooltips[tooltipId] = true;
+            }, 4000);
+        }
+        
+        function hideTooltip(tooltipId) {
+            const tooltip = document.getElementById(tooltipId);
+            if (!tooltip) return;
+            
+            clearTimeout(discoveryTimeouts[tooltipId]);
+            tooltip.style.opacity = '0';
+        }
+        
+        // Currency/Language menu for mobile
+        function showCurrencyLanguageMenu() {
+            const curLang = localStorage.getItem('site_lang') || 'ar';
+            const curCurrency = localStorage.getItem('site_currency') || 'SAR';
+
+            const ACTIVE_CLS   = 'bg-brand text-white ring-2 ring-brand';
+            const INACTIVE_CLS = 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+
+            const langBtn = (code, label) => {
+                const cls = curLang === code ? ACTIVE_CLS : INACTIVE_CLS;
+                return `<button onclick="setLang('${code}'); document.getElementById('cl-modal').remove();" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${cls}">${label}</button>`;
+            };
+
+            const curBtn = (code, label) => {
+                const cls = curCurrency === code ? ACTIVE_CLS : INACTIVE_CLS;
+                return `<button onclick="setCurrency('${code}'); document.getElementById('cl-modal').remove();" class="py-2 px-3 rounded-lg text-sm font-medium transition ${cls}">${label}</button>`;
+            };
+
+            const SETTINGS_LABELS = {
+                ar: { settings: 'الإعدادات', language: 'اللغة', currency: 'العملة', close: 'إغلاق' },
+                en: { settings: 'Settings',    language: 'Language', currency: 'Currency', close: 'Close' },
+                es: { settings: 'Ajustes',     language: 'Idioma',   currency: 'Moneda',   close: 'Cerrar' },
+                ru: { settings: 'Настройки',   language: 'Язык',     currency: 'Валюта',   close: 'Закрыть' },
+            };
+            const L = SETTINGS_LABELS[curLang] || SETTINGS_LABELS.en;
+            const settingsTitle = L.settings;
+            const langTitle     = L.language;
+            const currencyTitle = L.currency;
+            const closeLabel    = L.close;
+
+            const modal = document.createElement('div');
+            modal.id = 'cl-modal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+                    <h3 class="text-lg font-bold mb-4 text-gray-900">${settingsTitle}</h3>
+
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">${langTitle}</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${langBtn('ar', 'العربية')}
+                            ${langBtn('en', 'English')}
+                            ${langBtn('es', 'Español')}
+                            ${langBtn('ru', 'Русский')}
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">${currencyTitle}</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${curBtn('KRW', '₩ KRW')}
+                            ${curBtn('USD', '$ USD')}
+                            ${curBtn('SAR', '﷼ SAR')}
+                            ${curBtn('AED', 'د.إ AED')}
+                        </div>
+                    </div>
+
+                    <button onclick="document.getElementById('cl-modal').remove();" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg text-sm">${closeLabel}</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // Login/Register menu for mobile
+        function showLoginRegisterMenu() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+                    <h3 class="text-lg font-bold mb-4 text-gray-900">مرحباً!</h3>
+                    <p class="text-gray-600 mb-6 text-sm">سجل دخولك أو أنشئ حساباً جديداً للاستفادة من جميع الميزات</p>
+                    
+                    <div class="space-y-3">
+                        <a href="{% url 'login' %}" class="block w-full py-3 bg-brand text-white rounded-lg text-center font-medium hover:bg-brand-hover transition">تسجيل الدخول</a>
+                        <a href="{% url 'register' %}" class="block w-full py-3 bg-gray-200 text-gray-700 rounded-lg text-center font-medium hover:bg-gray-300 transition">إنشاء حساب جديد</a>
+                    </div>
+                    
+                    <button onclick="this.parentElement.parentElement.remove()" class="w-full mt-4 py-2 text-gray-500 text-sm">إلغاء</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // Account menu for mobile
+        function showAccountMenu() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">{{ user.username|first|upper }}</div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">{{ user.get_short_name|default:user.username }}</h3>
+                            <p class="text-sm text-gray-500">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+
+                        <a href="{% url 'account' %}" class="block w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg text-right hover:bg-gray-200 transition">
+                            <div class="flex items-center justify-between">
+                                <span class="bilingual" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</span>
+                                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'wishlist' %}" class="block w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg text-right hover:bg-gray-200 transition">
+                            <div class="flex items-center justify-between">
+                                <span>قائمة الأمنيات</span>
+                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'my_orders' %}" class="block w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg text-right hover:bg-gray-200 transition">
+                            <div class="flex items-center justify-between">
+                                <span>طلباتي</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                </svg>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'inbox' %}" class="block w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg text-right hover:bg-gray-200 transition">
+                            <div class="flex items-center justify-between">
+                                <span>الرسائل</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                        </a>
+                        
+                        {% if user.is_staff %}
+                        <a href="{% url 'site_dashboard' %}" class="block w-full py-3 px-4 bg-brand/10 text-brand rounded-lg text-right hover:bg-brand/20 transition">
+                            <div class="flex items-center justify-between">
+                                <span>لوحة التحكم</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                                </svg>
+                            </div>
+                        </a>
+                        {% endif %}
+                        
+                        <div class="border-t pt-2 mt-2">
+                            <a href="{% url 'logout' %}" class="block w-full py-3 px-4 bg-red-50 text-red-500 rounded-lg text-right hover:bg-red-100 transition">
+                                <div class="flex items-center justify-between">
+                                    <span>تسجيل الخروج</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <button onclick="this.parentElement.parentElement.remove()" class="w-full mt-4 py-2 text-gray-500 text-sm">إلغاء</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Close on backdrop click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // Update wishlist count for FAB (uses same cache)
+        function updateWishlistCountFAB() {
+            fetchWishlistCount().then(count => {
+                const fabCount = document.getElementById('wishlist-count-fab');
+                if (fabCount) {
+                    fabCount.textContent = count;
+                    fabCount.style.display = count > 0 ? 'flex' : 'none';
+                }
+            });
+        }
+        
+        // Initialize wishlist counter on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateWishlistCountFAB();
+        });
+        
+        // Update FAB count when wishlist changes
+        var originalUpdateWishlistCount = window.updateWishlistCount;
+        window.updateWishlistCount = function() {
+            // Clear cache to force fresh fetch
+            wishlistCountCache = null;
+            wishlistCountPromise = null;
+            
+            // Update both displays
+            originalUpdateWishlistCount();
+            updateWishlistCountFAB();
+        };
+    </script>
+    
+    <!-- ── Auction Countdown Engine ─────────────────────────────────────── -->
+    <script>
+    (function () {
+        function pad(n) { return String(n).padStart(2, '0'); }
+
+        function renderCountdown(el, targetMs) {
+            const curLang = localStorage.getItem('site_lang') || 'ar';
+            const U = curLang === 'en'
+                ? { d: 'd', h: 'h', m: 'm', s: 's', ended: 'Auction ended' }
+                : { d: 'ي', h: 'س', m: 'د', s: 'ث', ended: 'انتهى المزاد' };
+
+            const diff = targetMs - Date.now();
+            if (diff <= 0) {
+                el.innerHTML = `<span class="auction-ended-badge">${U.ended}</span>`;
+                el.classList.add('auction-ended');
+                return false; // stop ticking
+            }
+
+            const totalSec = Math.floor(diff / 1000);
+            const days  = Math.floor(totalSec / 86400);
+            const hours = Math.floor((totalSec % 86400) / 3600);
+            const mins  = Math.floor((totalSec % 3600)  / 60);
+            const secs  = totalSec % 60;
+
+            const urgency = diff < 3600000   ? 'countdown-urgent'   // < 1 hr  → red
+                          : diff < 86400000  ? 'countdown-soon'      // < 1 day → amber
+                          :                    'countdown-ok';        // ≥ 1 day → green
+
+            // remove old urgency classes
+            el.classList.remove('countdown-urgent', 'countdown-soon', 'countdown-ok');
+            el.classList.add(urgency);
+
+            if (days > 0) {
+                el.innerHTML =
+                    `<span class="cd-unit">${days}<small>${U.d}</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(hours)}<small>${U.h}</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(mins)}<small>${U.m}</small></span>`;
+            } else {
+                el.innerHTML =
+                    `<span class="cd-unit">${pad(hours)}<small>${U.h}</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(mins)}<small>${U.m}</small></span>` +
+                    `<span class="cd-sep">:</span>` +
+                    `<span class="cd-unit">${pad(secs)}<small>${U.s}</small></span>`;
+            }
+            return true;
+        }
+
+        function initCountdowns() {
+            const elements = document.querySelectorAll('[data-auction-date]');
+            elements.forEach(function (el) {
+                const iso = el.getAttribute('data-auction-date');
+                if (!iso) return;
+                const targetMs = new Date(iso).getTime();
+                if (isNaN(targetMs)) return;
+
+                // initial render
+                const alive = renderCountdown(el, targetMs);
+                if (!alive) return;
+
+                // tick every second
+                const timer = setInterval(function () {
+                    const still = renderCountdown(el, targetMs);
+                    if (!still) clearInterval(timer);
+                }, 1000);
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCountdowns);
+        } else {
+            initCountdowns();
+        }
+
+        // expose so dynamically added cards (infinite scroll etc.) can call it
+        window.initAuctionCountdowns = initCountdowns;
+    })();
+    </script>
+
+    <style>
+    /* Countdown base */
+    .auction-countdown {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 0.7rem;
+        letter-spacing: 0.02em;
+        transition: background 0.4s, color 0.4s;
+    }
+    .auction-countdown .cd-unit {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.1;
+    }
+    .auction-countdown .cd-unit small {
+        font-size: 0.55em;
+        font-weight: 500;
+        opacity: 0.8;
+        line-height: 1;
+    }
+    .auction-countdown .cd-sep { opacity: 0.6; font-weight: 400; }
+
+    /* colour states — brand-coloured by default; only the final hour turns red */
+    .countdown-ok     { background: color-mix(in srgb, var(--color-primary) 12%, #fff); color: var(--color-primary); }
+    .countdown-soon   { background: color-mix(in srgb, var(--color-primary) 12%, #fff); color: var(--color-primary); }
+    .countdown-urgent { background: #fef2f2; color: #dc2626; animation: pulse-red 1s ease-in-out infinite; }
+    .auction-ended    { background: #f3f4f6; color: #6b7280; }
+    .auction-ended-badge { font-size: 0.7rem; font-weight: 600; }
+
+    @keyframes pulse-red {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.65; }
+    }
+    </style>
+
+    {% block extra_js %}{% endblock %}
+
+    {% block mobile_bottom_nav %}
+    <!-- Default Mobile Bottom Navigation -->
+    <div class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.10)]">
+        <div class="flex items-center justify-around px-2 pb-2 pt-1">
+
+            <!-- Home -->
+            <a href="{% url 'home' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-[10px] mt-0.5">الرئيسية</span>
+            </a>
+
+            <!-- Cars list -->
+            <a href="{% url 'car_list' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span class="text-[10px] mt-0.5">السيارات</span>
+            </a>
+
+            {% if user.is_staff %}
+            <!-- Add car FAB (admin only) -->
+            <div class="flex flex-col items-center flex-1 relative" style="margin-top:-22px;">
+                <a href="{% url 'site_car_add' %}"
+                   class="w-16 h-16 bg-brand hover:opacity-90 active:scale-95 rounded-full flex items-center justify-center shadow-xl shadow-brand/40 transition ring-4 ring-white"
+                   style="background-color: var(--color-primary);">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                </a>
+                <span class="text-[10px] mt-1 font-semibold bilingual" data-lang-ar="أضف سيارة" data-lang-ru="Добавить машину" data-lang-es="Añadir un coche" data-lang-en="Add Car" style="color: var(--color-primary);">أضف سيارة</span>
+            </div>
+            {% elif site_whatsapp %}
+            {% whatsapp_site_inquiry_message site_name as wa_site_inquiry_msg %}
+            <!-- WhatsApp FAB -->
+            <div class="flex flex-col items-center flex-1 relative" style="margin-top:-22px;">
+                <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ wa_site_inquiry_msg }}"
+                   target="_blank"
+                   class="w-16 h-16 bg-green-500 hover:bg-green-600 active:scale-95 rounded-full flex items-center justify-center shadow-xl shadow-green-300/60 transition ring-4 ring-white">
+                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                </a>
+                <span class="text-[10px] mt-1 text-green-600 font-semibold">واتساب</span>
+            </div>
+            {% endif %}
+
+            <!-- Currency / Language -->
+            <button type="button" onclick="showCurrencyLanguageMenu()" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="العملة" data-lang-ru="Валюта" data-lang-es="Divisa" data-lang-en="Currency">العملة</span>
+            </button>
+
+            <!-- Account -->
+            {% if user.is_authenticated %}
+            <button type="button" onclick="showAccountMenu()" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="حسابي" data-lang-ru="Мой счет" data-lang-es="Mi cuenta" data-lang-en="My Account">حسابي</span>
+            </button>
+            {% else %}
+            <a href="{% url 'login' %}" class="flex flex-col items-center py-1 px-3 text-gray-400 hover:text-brand transition min-w-0 flex-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-[10px] mt-0.5 bilingual" data-lang-ar="دخول" data-lang-ru="вход" data-lang-es="entrada" data-lang-en="Login">دخول</span>
+            </a>
+            {% endif %}
+
+        </div>
+    </div>
+    {% endblock mobile_bottom_nav %}
+
+    <script>
+    /* ── Smooth image loading ── */
+    (function () {
+        function handleImg(img) {
+            // Skip SVGs, data URIs, and icon-sized images
+            var src = img.getAttribute('src') || '';
+            if (!src || src.startsWith('data:') || src.endsWith('.svg')) return;
+            var w = parseInt(img.getAttribute('width') || '0', 10);
+            if (w > 0 && w <= 40) return;
+
+            var parent = img.parentElement;
+            if (!parent) return;
+
+            // Shimmer on parent, image starts invisible
+            parent.classList.add('img-loading');
+            img.style.opacity = '0';
+            img.style.transition = 'opacity 0.5s cubic-bezier(0.4,0,0.2,1)';
+
+            function reveal() {
+                img.style.opacity = '1';
+                parent.classList.remove('img-loading');
+            }
+
+            if (img.complete && img.naturalWidth > 0) {
+                // Already cached — reveal immediately, no flicker
+                reveal();
+            } else {
+                img.addEventListener('load',  reveal, { once: true });
+                img.addEventListener('error', reveal, { once: true });
+            }
+        }
+
+        // All images present at parse time
+        document.querySelectorAll('img').forEach(handleImg);
+
+        // Images injected later (sliders, infinite scroll, modals)
+        new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+                m.addedNodes.forEach(function (n) {
+                    if (!n || n.nodeType !== 1) return;
+                    if (n.tagName === 'IMG') { handleImg(n); return; }
+                    n.querySelectorAll('img').forEach(handleImg);
+                });
+            });
+        }).observe(document.body, { childList: true, subtree: true });
+    })();
+
+    /* ── Page-transition progress bar ── */
+    (function () {
+        var bar = document.getElementById('nprogress-bar');
+        var tid = null;
+
+        function setWidth(w) { bar.style.width = w + '%'; }
+
+        function start() {
+            bar.style.opacity = '1';
+            bar.classList.remove('done');
+            setWidth(8);
+            // eased crawl: 8 → 20 → 45 → 65 → 78
+            var steps = [20, 45, 65, 78];
+            var i = 0;
+            tid = setInterval(function () {
+                if (i < steps.length) { setWidth(steps[i++]); }
+                else { clearInterval(tid); }
+            }, 220);
+        }
+
+        function finish() {
+            clearInterval(tid);
+            setWidth(100);
+            bar.classList.add('done');
+            // reset so next navigation starts fresh
+            setTimeout(function () {
+                bar.style.transition = 'none';
+                setWidth(0);
+                bar.style.opacity = '1';
+                bar.classList.remove('done');
+                // re-enable transition next frame
+                requestAnimationFrame(function () {
+                    bar.style.transition = '';
+                });
+            }, 500);
+        }
+
+        // Finish as soon as the page is interactive
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', finish);
+        } else {
+            finish();
+        }
+
+        // Intercept all internal <a> clicks
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest('a');
+            if (!a) return;
+            var href = a.getAttribute('href');
+            if (!href) return;
+            // Skip: external, hash-only, javascript:, mailto:, tel:, download
+            if (a.target === '_blank') return;
+            if (href.startsWith('#') || href.startsWith('javascript') ||
+                href.startsWith('mailto') || href.startsWith('tel')) return;
+            if (a.hasAttribute('download')) return;
+            try {
+                var url = new URL(href, window.location.href);
+                if (url.origin !== window.location.origin) return;
+            } catch (_) { return; }
+            // Don't start if it's the exact same page (refresh)
+            if (href === window.location.pathname + window.location.search) return;
+            start();
+        });
+
+        // Also start on form submit (filters, search)
+        document.addEventListener('submit', function (e) {
+            var f = e.target;
+            if (f.tagName !== 'FORM') return;
+            var action = f.getAttribute('action') || window.location.href;
+            if (f.target === '_blank') return;
+            try {
+                var url = new URL(action, window.location.href);
+                if (url.origin !== window.location.origin) return;
+            } catch (_) { return; }
+            start();
+        });
+    })();
+    </script>
+    <script>
+    // Fresh CSRF token for forms on cached pages (home HTML is server- + CDN-
+    // cached, so its rendered token is stale for other anonymous visitors → 403).
+    (function () {
+        if (!document.querySelector('input[name=csrfmiddlewaretoken]')) return;
+        fetch('/csrf/', { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                if (!d || !d.csrftoken) return;
+                document.querySelectorAll('input[name=csrfmiddlewaretoken]').forEach(function (i) { i.value = d.csrftoken; });
+            }).catch(function () {});
+    })();
+    </script>
+{% include "partials/label_overrides.html" %}
+{% include "partials/loading_bar.html" %}
+</body>
+</html>

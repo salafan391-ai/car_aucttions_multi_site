@@ -413,22 +413,36 @@
       ];
       function typeLine(el,text,dir,speed,cb){const chars=[...text];el.setAttribute('dir',dir);el.textContent='';const cur=document.createElement('span');cur.className='tw-cursor';el.appendChild(cur);let i=0;(function tick(){if(i<chars.length){cur.previousSibling?cur.previousSibling.nodeValue=chars.slice(0,i+1).join(''):el.insertBefore(document.createTextNode(chars.slice(0,i+1).join('')),cur);i++;setTimeout(tick,speed);}else{cur.remove();if(cb)cb();}})();}
       function eraseLine(el,cb){const chars=[...el.textContent];let i=chars.length;(function tick(){if(i>=0){el.textContent=chars.slice(0,i).join('');i--;setTimeout(tick,ERASE);}else if(cb)cb();})();}
-      // flip every bilingual element (data-ar / data-en) in sync with the typewriter language
-      const i18nEls=document.querySelectorAll('[data-ar][data-en]');
+      // flip every bilingual element in sync with the typewriter language.
+      // Covers both conventions: this page's data-ar/data-en AND the shared
+      // partials' data-lang-ar/data-lang-en (FAQ band etc.), so the whole page
+      // stays in one language.
+      const i18nEls=document.querySelectorAll('[data-ar][data-en], [data-lang-ar][data-lang-en]');
+      const txt=(e,key)=>e.dataset[key]||e.dataset[key==='ar'?'langAr':'langEn']||'';
+      function put(e,key,dir){const t=txt(e,key);if(!t)return;e.textContent=t;if(e.setAttribute&&e.namespaceURI!=='http://www.w3.org/2000/svg')e.setAttribute('dir',dir);}
       function flip(dir){
         const key=dir==='rtl'?'ar':'en';
         i18nEls.forEach(e=>{
-          const t=e.dataset[key];if(!t)return;
-          if(e.namespaceURI==='http://www.w3.org/2000/svg'){e.textContent=t;return;}
+          if(!txt(e,key))return;
+          if(e.namespaceURI==='http://www.w3.org/2000/svg'){put(e,key,dir);return;}
           // background tabs throttle timers: swap instantly there or the page is left at opacity 0
-          if(document.hidden){e.textContent=t;e.setAttribute('dir',dir);return;}
+          if(document.hidden){put(e,key,dir);return;}
           e.style.opacity='0';
-          setTimeout(()=>{e.textContent=t;e.setAttribute('dir',dir);e.style.transition='opacity .22s';e.style.opacity='';},220);
+          setTimeout(()=>{put(e,key,dir);e.style.transition='opacity .22s';e.style.opacity='';},220);
         });
+        // watchdog: timers can stall mid-fade — never leave the page's text hidden
+        setTimeout(()=>{i18nEls.forEach(e=>{if(e.style&&e.style.opacity==='0'){put(e,key,dir);e.style.opacity='';}});},700);
       }
       document.addEventListener('visibilitychange',()=>{if(!document.hidden)i18nEls.forEach(e=>{if(e.style)e.style.opacity='';});});
-      let round=0;
-      function run(){const{line1,line2,dir}=rounds[round++%rounds.length];if(round>1)flip(dir);typeLine(el1,line1,dir,SPEED,()=>typeLine(el2,line2,dir,SPEED,()=>setTimeout(()=>eraseLine(el2,()=>eraseLine(el1,()=>setTimeout(run,300))),HOLD)));}
+      // start in the visitor's saved site language (the DOM ships in Arabic)
+      let round=0,cur='ar';
+      try{if((localStorage.getItem('site_lang')||'ar')!=='ar')round=1;}catch(e){}
+      function run(){
+        const r=rounds[round++%rounds.length];
+        const lang=r.dir==='rtl'?'ar':'en';
+        if(lang!==cur){cur=lang;flip(r.dir);}
+        typeLine(el1,r.line1,r.dir,SPEED,()=>typeLine(el2,r.line2,r.dir,SPEED,()=>setTimeout(()=>eraseLine(el2,()=>eraseLine(el1,()=>setTimeout(run,300))),HOLD)));
+      }
       setTimeout(run,700);
     })();
   </script>
