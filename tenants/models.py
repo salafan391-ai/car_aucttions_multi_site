@@ -114,6 +114,11 @@ class Tenant(TenantMixin):
     import_calc_agent = models.PositiveIntegerField(default=2000, verbose_name="عمولة الوكيل (ر.س)")
     import_calc_preyear = models.PositiveIntegerField(default=2021, verbose_name="سنة الموديل للرسوم الإضافية")
     import_calc_preyear_extra = models.PositiveIntegerField(default=23000, verbose_name="رسوم جمركية إضافية للموديلات الأقدم (ر.س)")
+    # Admin-defined extra fee lines for the Saudi calculator column. List of
+    # {"label": "تأمين", "amount": 500, "type": "fixed"|"pct"} — pct = % of the
+    # car price. Custom countries carry their own "fees" list inside each
+    # import_calc_countries row.
+    import_calc_sa_fees = models.JSONField(default=list, blank=True, verbose_name="رسوم إضافية للحاسبة (السعودية)")
     # Per-row show/hide in the calculator. Hiding a row removes it from the total too.
     import_calc_show_shipping = models.BooleanField(default=True, verbose_name="إظهار الشحن في الحاسبة")
     import_calc_show_duty = models.BooleanField(default=True, verbose_name="إظهار الرسوم الجمركية في الحاسبة")

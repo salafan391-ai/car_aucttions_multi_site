@@ -811,6 +811,42 @@
                 </div>
                 <p class="text-xs text-gray-400 mt-3">مثال: تُضاف رسوم «الموديلات الأقدم» للسيارات التي موديلها أقدم من السنة المحددة (افتراضياً 23,000 ر.س لما قبل 2021).</p>
 
+                <!-- Custom SA fee lines -->
+                <div class="mt-6 pt-5 border-t border-gray-100">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-base font-bold text-gray-800">رسوم إضافية خاصة بك (السعودية)</h3>
+                        <button type="button" id="sa-fee-add" class="text-sm text-white px-3 py-1.5 rounded-lg" style="background-color:var(--color-primary);">+ إضافة رسم</button>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">أنشئ بنودك الخاصة (مثل: تأمين، نقل داخلي، رسوم أرضية). «مبلغ ثابت» بالريال، أو «٪ من سعر السيارة».</p>
+                    <div id="sa-fees" class="space-y-2"></div>
+                    {{ tenant.import_calc_sa_fees|json_script:"sa-fees-data" }}
+                    <script>
+                    (function () {
+                        var data = [];
+                        try { data = JSON.parse(document.getElementById('sa-fees-data').textContent || '[]') || []; } catch (e) {}
+                        if (!Array.isArray(data)) data = [];
+                        var wrap = document.getElementById('sa-fees');
+                        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+                        function feeRow(f) {
+                            f = f || {};
+                            var div = document.createElement('div');
+                            div.className = 'sa-fee flex flex-wrap items-center gap-2';
+                            div.innerHTML =
+                                '<input name="sa_fee_label[]" value="' + esc(f.label) + '" placeholder="اسم الرسم (مثال: تأمين)" maxlength="60" class="flex-1 min-w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm">' +
+                                '<input name="sa_fee_amount[]" value="' + esc(f.amount) + '" type="number" step="any" min="0" placeholder="القيمة" class="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm" dir="ltr">' +
+                                '<select name="sa_fee_type[]" class="w-40 px-2 py-2 border border-gray-300 rounded-lg text-sm">' +
+                                '<option value="fixed"' + (f.type !== 'pct' ? ' selected' : '') + '>مبلغ ثابت (ر.س)</option>' +
+                                '<option value="pct"' + (f.type === 'pct' ? ' selected' : '') + '>٪ من سعر السيارة</option></select>' +
+                                '<button type="button" class="sa-fee-rm text-red-600 text-sm font-bold px-2">✕</button>';
+                            return div;
+                        }
+                        data.forEach(function (f) { wrap.appendChild(feeRow(f)); });
+                        document.getElementById('sa-fee-add').addEventListener('click', function () { wrap.appendChild(feeRow({})); });
+                        wrap.addEventListener('click', function (e) { var b = e.target.closest('.sa-fee-rm'); if (b) b.closest('.sa-fee').remove(); });
+                    })();
+                    </script>
+                </div>
+
                 <!-- Extra destination countries -->
                 <div class="mt-6 pt-5 border-t border-gray-100">
                     <div class="flex items-center justify-between mb-1">
@@ -856,12 +892,47 @@
                             field('عمولة الوكيل', 'c_agent', c.agent) +
                             field('سنة الرسوم الإضافية', 'c_preyear', c.preyear) +
                             field('رسوم الموديل الأقدم', 'c_preyear_extra', c.preyear_extra) +
+                            '</div>' +
+                            '<div class="ic-fees mt-3 pt-3 border-t border-gray-200">' +
+                            '<div class="flex items-center justify-between mb-1"><span class="text-[11px] font-bold text-gray-600">رسوم خاصة بهذه الدولة (بعملتها)</span><button type="button" class="ic-fee-add text-[11px] font-bold" style="color:var(--color-primary,#4338ca);">+ رسم</button></div>' +
+                            '<div class="ic-fee-rows space-y-1.5">' + ((c.fees || []).map(feeHtml).join('')) + '</div>' +
+                            '<input type="hidden" name="c_fees_json[]" class="ic-fees-json" value="[]">' +
                             '</div>';
                         return div;
                     }
+                    function feeHtml(f) {
+                        f = f || {};
+                        return '<div class="ic-fee flex flex-wrap items-center gap-2">' +
+                            '<input value="' + esc(f.label) + '" placeholder="اسم الرسم" maxlength="60" class="ic-fee-label flex-1 min-w-32 px-2 py-1.5 border border-gray-200 rounded-lg text-sm">' +
+                            '<input value="' + esc(f.amount) + '" type="number" step="any" min="0" placeholder="القيمة" class="ic-fee-amount w-24 px-2 py-1.5 border border-gray-200 rounded-lg text-sm" dir="ltr">' +
+                            '<select class="ic-fee-type w-36 px-2 py-1.5 border border-gray-200 rounded-lg text-sm">' +
+                            '<option value="fixed"' + (f.type !== 'pct' ? ' selected' : '') + '>مبلغ ثابت</option>' +
+                            '<option value="pct"' + (f.type === 'pct' ? ' selected' : '') + '>٪ من السعر</option></select>' +
+                            '<button type="button" class="ic-fee-rm text-red-600 text-sm font-bold px-1">✕</button></div>';
+                    }
                     data.forEach(function (c) { wrap.appendChild(row(c)); });
                     document.getElementById('ic-add-country').addEventListener('click', function () { wrap.appendChild(row({})); });
-                    wrap.addEventListener('click', function (e) { var b = e.target.closest('.ic-remove'); if (b) b.closest('.ic-country').remove(); });
+                    wrap.addEventListener('click', function (e) {
+                        var b = e.target.closest('.ic-remove'); if (b) { b.closest('.ic-country').remove(); return; }
+                        var a = e.target.closest('.ic-fee-add');
+                        if (a) { a.closest('.ic-fees').querySelector('.ic-fee-rows').insertAdjacentHTML('beforeend', feeHtml({})); return; }
+                        var r = e.target.closest('.ic-fee-rm'); if (r) r.closest('.ic-fee').remove();
+                    });
+                    // Serialize each country's fee rows into its hidden JSON just before save.
+                    var form = wrap.closest('form');
+                    if (form) form.addEventListener('submit', function () {
+                        wrap.querySelectorAll('.ic-country').forEach(function (cRow) {
+                            var fees = [];
+                            cRow.querySelectorAll('.ic-fee').forEach(function (fr) {
+                                fees.push({
+                                    label: (fr.querySelector('.ic-fee-label').value || '').trim(),
+                                    amount: parseFloat(fr.querySelector('.ic-fee-amount').value) || 0,
+                                    type: fr.querySelector('.ic-fee-type').value
+                                });
+                            });
+                            cRow.querySelector('.ic-fees-json').value = JSON.stringify(fees);
+                        });
+                    });
                 })();
                 </script>
             </div>

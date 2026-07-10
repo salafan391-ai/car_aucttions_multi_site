@@ -1090,14 +1090,16 @@
                     shipping: shipFor({{ import_calc_shipping_small }}, {{ import_calc_shipping }}, {{ import_calc_shipping_large }}),
                     dutyPct: {{ import_calc_duty_pct|floatformat:"-2" }}, vatPct: {{ import_calc_vat_pct|floatformat:"-2" }},
                     clearance: {{ import_calc_clearance }}, inspection: {{ import_calc_inspection }}, registration: {{ import_calc_registration }}, agent: {{ import_calc_agent }},
-                    preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }}
+                    preYear: {{ import_calc_preyear }}, preYearExtra: {{ import_calc_preyear_extra }},
+                    fees: [{% for f in import_calc_sa_fees %}{l:'{{ f.label|escapejs }}',a:{{ f.amount|stringformat:"g" }},t:'{{ f.type }}'},{% endfor %}]
                 }{% endif %}{% for co in import_calc_countries %}{% if not forloop.first or import_calc_show_sa %},{% endif %}
                 "{{ forloop.counter }}": {
                     nameAr: '{{ co.name_ar|escapejs }}', currency: '{{ co.currency|default:"SAR"|escapejs }}',
                     shipping: shipFor({{ co.shipping_small|default:0 }}, {{ co.shipping_medium|default:0 }}, {{ co.shipping_large|default:0 }}),
                     dutyPct: {{ co.duty_pct|default:0 }}, vatPct: {{ co.vat_pct|default:0 }},
                     clearance: {{ co.clearance|default:0 }}, inspection: {{ co.inspection|default:0 }}, registration: {{ co.registration|default:0 }}, agent: {{ co.agent|default:0 }},
-                    preYear: {{ co.preyear|default:0 }}, preYearExtra: {{ co.preyear_extra|default:0 }}
+                    preYear: {{ co.preyear|default:0 }}, preYearExtra: {{ co.preyear_extra|default:0 }},
+                    fees: [{% for f in co.fees %}{l:'{{ f.label|escapejs }}',a:{{ f.amount|default:0|stringformat:"g" }},t:'{{ f.type|default:"fixed" }}'},{% endfor %}]
                 }{% endfor %}
             };
 
@@ -1140,12 +1142,16 @@
                 var rows = [['car', carCur], ['shipping', shipping], ['duty', duty]];
                 if (extra) rows.push(['extra', extra]);
                 rows.push(['vat', vat], ['clearance', clearance], ['inspection', inspection], ['registration', registration], ['agent', agent]);
+                (c.fees || []).forEach(function (f, fi) {
+                    var fa = f.t === 'pct' ? carCur * (parseFloat(f.a) || 0) / 100 : (parseFloat(f.a) || 0);
+                    rows.push(['_cf' + fi, fa, f.l]);
+                });
                 var _SH = {shipping:{{import_calc_show_shipping|yesno:"1,0"}},duty:{{import_calc_show_duty|yesno:"1,0"}},vat:{{import_calc_show_vat|yesno:"1,0"}},clearance:{{import_calc_show_clearance|yesno:"1,0"}},inspection:{{import_calc_show_inspection|yesno:"1,0"}},registration:{{import_calc_show_registration|yesno:"1,0"}},agent:{{import_calc_show_agent|yesno:"1,0"}},extra:{{import_calc_show_extra|yesno:"1,0"}}};
                 rows = rows.filter(function(r){ return _SH[r[0]] !== 0; });
                 total = rows.reduce(function(a,r){ return a + r[1]; }, 0);
 
                 document.getElementById('lux-calc-rows').innerHTML = rows.map(function (r) {
-                    var name = lbl[r[0]];
+                    var name = r[2] || lbl[r[0]];
                     if (r[0] === 'duty') name += ' (' + c.dutyPct + '%)';
                     if (r[0] === 'vat') name += ' (' + c.vatPct + '%)';
                     return '<div class="mod-calc-row"><span class="k">' + name + '</span><span class="v">' + fmt(r[1], sym, L) + '</span></div>';

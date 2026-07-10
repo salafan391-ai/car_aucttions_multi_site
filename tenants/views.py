@@ -201,6 +201,43 @@ def site_settings(request):
         for _f in ('shipping', 'duty', 'vat', 'clearance', 'inspection', 'registration', 'agent', 'extra', 'sa'):
             setattr(tenant, 'import_calc_show_' + _f, ('import_calc_show_' + _f) in request.POST)
 
+        # ── Custom calculator fee lines ──
+        def _parse_fees(labels, amounts, types):
+            fees = []
+            for _j, _lb in enumerate(labels):
+                _lb = (_lb or '').strip()[:60]
+                if not _lb:
+                    continue
+                try:
+                    _am = float((amounts[_j] if _j < len(amounts) else '') or 0)
+                except (TypeError, ValueError):
+                    _am = 0
+                if _am <= 0:
+                    continue
+                _ty = (types[_j] if _j < len(types) else 'fixed')
+                fees.append({'label': _lb, 'amount': _am, 'type': 'pct' if _ty == 'pct' else 'fixed'})
+            return fees
+
+        def _parse_fees_json(raw):
+            import json as _json
+            try:
+                data = _json.loads(raw or '[]')
+            except Exception:
+                return []
+            if not isinstance(data, list):
+                return []
+            return _parse_fees(
+                [str((f or {}).get('label', '')) for f in data],
+                [(f or {}).get('amount', 0) for f in data],
+                [str((f or {}).get('type', 'fixed')) for f in data],
+            )
+
+        tenant.import_calc_sa_fees = _parse_fees(
+            request.POST.getlist('sa_fee_label[]'),
+            request.POST.getlist('sa_fee_amount[]'),
+            request.POST.getlist('sa_fee_type[]'),
+        )
+
         # Extra destination countries (repeatable rows -> JSON list)
         _c_names = request.POST.getlist('c_name_ar[]')
         if _c_names is not None:
@@ -222,11 +259,13 @@ def site_settings(request):
             _duty, _vat = _carr('c_duty_pct'), _carr('c_vat_pct')
             _clr, _insp, _reg, _ag = _carr('c_clearance'), _carr('c_inspection'), _carr('c_registration'), _carr('c_agent')
             _py, _pye = _carr('c_preyear'), _carr('c_preyear_extra')
+            _cfees = _carr('c_fees_json')
             _countries = []
             for i, nm in enumerate(_c_names):
                 if not (nm or '').strip():
                     continue
                 _countries.append({
+                    'fees': _parse_fees_json(_cfees[i] if i < len(_cfees) else '[]'),
                     'name_ar': nm.strip(),
                     'name_en': (_c_en[i].strip() if i < len(_c_en) else ''),
                     'flag': (_c_flag[i].strip() if i < len(_c_flag) else ''),
