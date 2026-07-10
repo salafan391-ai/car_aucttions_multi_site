@@ -599,7 +599,7 @@
                     </div>
                     {% endif %}
 
-                    {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' %}
+                    {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' or not request.GET.car_type %}
                     <div class="gl-list-field">
                         <label class="gl-list-flabel bilingual" data-lang-ar="حالة السيارة" data-lang-en="Car condition" data-lang-es="Estado del coche" data-lang-ru="Состояние">حالة السيارة</label>
                         <div class="gl-list-chips">

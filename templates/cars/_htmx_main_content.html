@@ -217,7 +217,7 @@
                         </details>
                     </div>
                     {% endif %}
-                    {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' %}
+                    {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' or not request.GET.car_type %}
                     <!-- Car condition: clean main parts (auction) / no accidents (encar) -->
                     <div class="col-span-2">
                         <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2" data-lang-ar="حالة السيارة" data-lang-en="Car condition" data-lang-es="Estado del coche" data-lang-ru="Состояние">حالة السيارة</span>
@@ -554,7 +554,7 @@
                 </details>
                 {% endif %}
 
-                {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' %}
+                {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' or not request.GET.car_type %}
                 <!-- Car condition: clean main parts (auction) / no accidents (encar) -->
                 <div class="border-t border-gray-100 pt-3">
                     <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2" data-lang-ar="حالة السيارة" data-lang-en="Car condition" data-lang-es="Estado del coche" data-lang-ru="Состояние">حالة السيارة</span>

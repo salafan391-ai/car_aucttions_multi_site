@@ -1043,7 +1043,13 @@ _MARKER_NON_BODY_RE = r'(lamp|mirror|glass|windshield)'
 # Encar "no accidents" — MUST stay textually identical to the expression in
 # the cars_apicar_accident_cnt index (migration 0034) so Postgres uses it
 # instead of detoasting every extra_features blob (~5s -> ms).
-_NO_ACCIDENT_WHERE = "(extra_features -> 'record' ->> 'accidentCnt') = '0'"
+# "No accidents" = no RECORDED accident (insurance record shows 0, or the car
+# has no record at all — e.g. auction cars on the mixed tab, which must not
+# vanish when the box is ticked). Both arms reuse the exact expression of the
+# cars_apicar_accident_cnt index (migration 0034) so Postgres bitmap-ORs two
+# index scans instead of detoasting every blob.
+_NO_ACCIDENT_WHERE = ("((extra_features -> 'record' ->> 'accidentCnt') IS NULL "
+                      "OR (extra_features -> 'record' ->> 'accidentCnt') = '0')")
 
 
 def _damaged_main_parts_subq():
@@ -1210,7 +1216,7 @@ def _compute_facet_counts(facet_base, GET):
         # clean_main: cars remaining if "clean main parts" is ticked.
         out['clean_main'] = (_apply_sidebar_filters(facet_base, GET, exclude='clean_main')
                              .exclude(pk__in=_damaged_main_parts_subq()).count())
-    if _ct in ('cars', 'truck'):
+    if _ct in ('cars', 'truck') or not _ct:
         # no_accident: encar cars whose insurance record shows zero accidents.
         out['no_accident'] = (_apply_sidebar_filters(facet_base, GET, exclude='no_accident')
                               .extra(where=[_NO_ACCIDENT_WHERE]).count())
