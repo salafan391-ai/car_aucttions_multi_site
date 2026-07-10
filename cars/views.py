@@ -1589,6 +1589,13 @@ def car_list(request):
             cache.set(_count_cache_key, c, 60 * 5)
             return c
 
+    # Cards never read the huge JSONB/text fields — deferring them keeps them
+    # out of the ORDER BY sort payload and off the wire (the page query was the
+    # single slowest query on cold hits). select_related kills the per-card
+    # FK lookups (~6 queries x 20 cards).
+    qs = (qs.select_related('manufacturer', 'model', 'badge', 'category', 'body')
+            .defer('extra_features', 'markers', 'options', 'description',
+                   'inspection_notes', 'inspection_image'))
     paginator = _CachedCountPaginator(qs, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
 
