@@ -120,6 +120,37 @@
                 </div>
             </div>
 
+            <!-- Custom currencies -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-1 text-gray-900">عملات إضافية</h2>
+                <p class="text-xs text-gray-500 mb-4">أضف عملات عرض إضافية لمحوّل العملات (مثل KWD أو QAR). سعر الصرف = قيمة العملة مقابل <b>1 وون كوري</b> (مثال: الريال ≈ 0.0025). تظهر فوراً في قائمة العملات على موقعك.</p>
+                <div id="cc-rows" class="space-y-2 mb-3"></div>
+                <button type="button" id="cc-add" class="text-sm text-white px-3 py-1.5 rounded-lg" style="background-color:var(--color-primary,#4338ca);">+ إضافة عملة</button>
+                {{ tenant.custom_currencies|json_script:"cc-data" }}
+                <script>
+                (function () {
+                    var data = [];
+                    try { data = JSON.parse(document.getElementById('cc-data').textContent || '[]') || []; } catch (e) {}
+                    if (!Array.isArray(data)) data = [];
+                    var wrap = document.getElementById('cc-rows');
+                    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+                    function row(c) {
+                        var div = document.createElement('div');
+                        div.className = 'cc-row flex flex-wrap items-center gap-2';
+                        div.innerHTML =
+                            '<input name="cc_code[]" value="' + esc(c.code) + '" placeholder="الرمز (KWD)" maxlength="6" class="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm" style="text-transform:uppercase" dir="ltr">' +
+                            '<input name="cc_symbol[]" value="' + esc(c.symbol) + '" placeholder="الرمز المعروض (د.ك)" maxlength="8" class="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm">' +
+                            '<input name="cc_rate[]" value="' + esc(c.rate) + '" type="number" step="any" min="0" placeholder="السعر مقابل 1 وون" class="w-44 px-3 py-2 border border-gray-300 rounded-lg text-sm" dir="ltr">' +
+                            '<button type="button" class="cc-remove text-red-600 text-sm font-bold px-2">✕</button>';
+                        return div;
+                    }
+                    data.forEach(function (c) { wrap.appendChild(row(c)); });
+                    document.getElementById('cc-add').addEventListener('click', function () { wrap.appendChild(row({})); });
+                    wrap.addEventListener('click', function (e) { var b = e.target.closest('.cc-remove'); if (b) b.closest('.cc-row').remove(); });
+                })();
+                </script>
+            </div>
+
             <!-- Branding Section -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">العلامة التجارية</h2>

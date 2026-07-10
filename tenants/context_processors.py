@@ -15,6 +15,20 @@ def _work_steps(tenant):
         return []
 
 
+def _custom_currencies(tenant):
+    """Validated per-tenant extra currencies for the switcher/converters."""
+    out = []
+    for c in (getattr(tenant, 'custom_currencies', None) or []):
+        try:
+            code = str(c.get('code', '')).strip().upper()[:6]
+            rate = float(c.get('rate') or 0)
+            if code and rate > 0 and code not in ('KRW', 'USD', 'SAR', 'AED', 'EUR'):
+                out.append({'code': code, 'symbol': str(c.get('symbol', '') or code).strip()[:8], 'rate': rate})
+        except Exception:
+            continue
+    return out
+
+
 def _global_rates():
     try:
         rates = GlobalExchangeRates.get_solo()
@@ -52,7 +66,8 @@ def tenant_branding(request):
                 'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01),
                 'label_encar': getattr(tenant, 'label_encar', '') or '',
                 'label_auctions': getattr(tenant, 'label_auctions', '') or '',
-                'label_sitecars': getattr(tenant, 'label_sitecars', '') or ''}
+                'label_sitecars': getattr(tenant, 'label_sitecars', '') or '',
+                'custom_currencies': _custom_currencies(tenant)}
 
     # Get all phone numbers for the tenant
     phone_numbers = []
@@ -235,4 +250,5 @@ def tenant_branding(request):
             'site_price_markup': getattr(tenant, 'price_markup_factor', 1.01),
             'label_encar': getattr(tenant, 'label_encar', '') or '',
             'label_auctions': getattr(tenant, 'label_auctions', '') or '',
-            'label_sitecars': getattr(tenant, 'label_sitecars', '') or ''}
+            'label_sitecars': getattr(tenant, 'label_sitecars', '') or '',
+            'custom_currencies': _custom_currencies(tenant)}

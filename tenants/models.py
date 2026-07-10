@@ -305,6 +305,10 @@ class Tenant(TenantMixin):
     label_encar = models.CharField(max_length=40, blank=True, default="", verbose_name="تسمية «السيارات» (Encar)")
     label_auctions = models.CharField(max_length=40, blank=True, default="", verbose_name="تسمية «المزادات»")
     label_sitecars = models.CharField(max_length=40, blank=True, default="", verbose_name="تسمية «سياراتنا»")
+    # Extra display currencies the admin adds (beyond KRW/USD/SAR/AED/EUR).
+    # List of {"code": "KWD", "symbol": "د.ك", "rate": 0.00021} — rate is per 1 KRW,
+    # same semantics as rate_sar. Injected into the currency switcher + converters.
+    custom_currencies = models.JSONField(default=list, blank=True, verbose_name="عملات إضافية")
     # Admin-set markup added to every displayed car price (on top of the base 1%).
     price_markup_pct = models.DecimalField(
         max_digits=5, decimal_places=2, default=0,

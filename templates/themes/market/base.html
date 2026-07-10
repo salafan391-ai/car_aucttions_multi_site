@@ -1233,6 +1233,9 @@
             EUR: { symbol: '€', label: '€ EUR', rate: {{ rate_eur|default:"0.00069" }} },
         };
         var CURRENCY_ORDER = ['KRW', 'USD', 'SAR', 'AED', 'EUR'];
+        {% for c in custom_currencies %}CURRENCIES['{{ c.code }}'] = { symbol: '{{ c.symbol|escapejs }}', label: '{{ c.symbol|escapejs }} {{ c.code }}', rate: {{ c.rate|stringformat:"g" }} };
+        CURRENCY_ORDER.push('{{ c.code }}');
+        {% endfor %}
 
         function setCurrency(code) {
             localStorage.setItem('site_currency', code);

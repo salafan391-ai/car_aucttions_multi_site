@@ -138,6 +138,7 @@
                             <span>€ EUR</span>
                             <svg class="currency-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                         </button>
+                        {% for c in custom_currencies %}<button data-currency-code="{{ c.code }}" onclick="setCurrency('{{ c.code }}')" class="currency-menu-item w-full text-right px-3 py-2.5 text-sm font-medium hover:bg-brand/5 flex items-center justify-between gap-2 transition"><span>{{ c.symbol }} {{ c.code }}</span><svg class="currency-check-icon w-4 h-4 text-brand hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></button>{% endfor %}
                     </div>
                 </div>
             </div>
@@ -188,6 +189,7 @@
                     <button type="button" onclick="setCurrency('AED')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">د.إ AED</button>
                     <button type="button" onclick="setCurrency('EUR')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">€ EUR</button>
                     <button type="button" onclick="setCurrency('KRW')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">₩ KRW</button>
+                    {% for c in custom_currencies %}<button type="button" onclick="setCurrency('{{ c.code }}')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">{{ c.symbol }} {{ c.code }}</button>{% endfor %}
                 </div>
                 <span id="mobile-lang-flag" class="hidden"></span><span id="mobile-lang-label" class="hidden"></span><span id="mobile-currency-label" class="hidden"></span>
             </div>

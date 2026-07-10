@@ -507,6 +507,7 @@
                     <button type="button" data-currency-code="SAR" onclick="setCurrency('SAR')" class="currency-menu-item mod-menu-item">﷼ SAR <span class="currency-check-icon hidden">✓</span></button>
                     <button type="button" data-currency-code="AED" onclick="setCurrency('AED')" class="currency-menu-item mod-menu-item">د.إ AED <span class="currency-check-icon hidden">✓</span></button>
                     <button type="button" data-currency-code="EUR" onclick="setCurrency('EUR')" class="currency-menu-item mod-menu-item">€ EUR <span class="currency-check-icon hidden">✓</span></button>
+                    {% for c in custom_currencies %}<button type="button" data-currency-code="{{ c.code }}" onclick="setCurrency('{{ c.code }}')" class="currency-menu-item mod-menu-item">{{ c.symbol }} {{ c.code }} <span class="currency-check-icon hidden">✓</span></button>{% endfor %}
                 </div>
             </div>
 

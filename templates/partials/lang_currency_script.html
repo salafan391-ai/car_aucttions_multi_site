@@ -158,6 +158,8 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
         AED: { symbol: 'د.إ', label: 'د.إ AED', rate: {{ rate_aed|default:"0.00272" }} },
         EUR: { symbol: '€',   label: '€ EUR',   rate: {{ rate_eur|default:"0.00069" }} },
     };
+    {% for c in custom_currencies %}CURRENCIES['{{ c.code }}'] = { symbol: '{{ c.symbol|escapejs }}', label: '{{ c.symbol|escapejs }} {{ c.code }}', rate: {{ c.rate|stringformat:"g" }} };
+    {% endfor %}
     /* Markup applied when converting AWAY from the source KRW price. KRW
        displays the original feed price; every other currency shows the tenant's
        markup (base 1% × the admin's added %). */

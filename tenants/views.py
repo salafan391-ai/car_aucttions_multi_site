@@ -320,6 +320,26 @@ def site_settings(request):
         tenant.label_sitecars = (request.POST.get('label_sitecars', '') or '').strip()[:40]
         _labels_changed = (tenant.label_encar, tenant.label_auctions, tenant.label_sitecars) != _labels_before
 
+        # ── Custom display currencies (code / symbol / rate per 1 KRW) ──
+        _cc_codes = request.POST.getlist('cc_code[]')
+        _cc_syms = request.POST.getlist('cc_symbol[]')
+        _cc_rates = request.POST.getlist('cc_rate[]')
+        _ccs = []
+        for _i, _code in enumerate(_cc_codes):
+            _code = (_code or '').strip().upper()[:6]
+            if not _code or _code in ('KRW', 'USD', 'SAR', 'AED', 'EUR'):
+                continue
+            try:
+                _rate = float((_cc_rates[_i] if _i < len(_cc_rates) else '') or 0)
+            except (TypeError, ValueError):
+                _rate = 0
+            if _rate <= 0:
+                continue
+            _sym = (_cc_syms[_i] if _i < len(_cc_syms) else '').strip()[:8] or _code
+            if not any(c['code'] == _code for c in _ccs):
+                _ccs.append({'code': _code, 'symbol': _sym, 'rate': _rate})
+        tenant.custom_currencies = _ccs
+
         tenant.save()
 
         # Catalog-surface cache keys embed a filter signature, so brand-new filter
