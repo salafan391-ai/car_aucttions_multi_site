@@ -1183,25 +1183,67 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
 
 
 def _compute_facet_counts(facet_base, GET):
-    """Per-option live counts for each facet (excludes that facet's own filter)."""
+    """Per-option live counts for each facet (excludes that facet's own filter).
+
+    Dimensions the user hasn't filtered on all share the exact same base
+    queryset, so they're computed in ONE table scan via GROUPING SETS instead
+    of a query per dimension (13 scans -> 1). Only currently-selected
+    dimensions still need their own query (each excludes its own filter).
+    """
     out = {}
-    for dim, field in _FACET_FIELD.items():
+    dims = list(_FACET_FIELD)
+    selected = [d for d in dims if GET.getlist(d)]
+    unselected = [d for d in dims if d not in selected]
+    # body_type facets key by name, but the single-scan groups by the raw
+    # FK column and maps ids -> names afterwards (BodyType is tiny).
+    _col = lambda d: 'body_id' if d == 'body_type' else _FACET_FIELD[d]
+    if unselected:
+        base = _apply_sidebar_filters(facet_base, GET, exclude=None).order_by()
+        cols = [_col(d) for d in unselected]
+        sub_sql, sub_params = base.values_list(*cols).query.sql_with_params()
+        col_list = ', '.join(cols)
+        sql = (f"SELECT {col_list}, COUNT(*), GROUPING({col_list}) "
+               f"FROM ({sub_sql}) t GROUP BY GROUPING SETS ({', '.join(f'({c})' for c in cols)})")
+        with connection.cursor() as cur:
+            cur.execute(sql, sub_params)
+            rows = cur.fetchall()
+        n = len(cols)
+        res = {d: {} for d in unselected}
+        for row in rows:
+            g = row[n + 1]  # GROUPING() bitmap: bit 0 = grouped by that column
+            for j in range(n):
+                if not (g >> (n - 1 - j)) & 1:
+                    if row[j] not in (None, ''):
+                        res[unselected[j]][str(row[j])] = row[n]
+                    break
+        if 'body_type' in res:
+            _bmap = dict(BodyType.objects.values_list('id', 'name'))
+            res['body_type'] = {_bmap[int(k)]: v for k, v in res['body_type'].items()
+                                if _bmap.get(int(k)) not in (None, '')}
+        out.update(res)
+    for dim in selected:
+        field = _FACET_FIELD[dim]
         fq = _apply_sidebar_filters(facet_base, GET, exclude=dim)
         out[dim] = {
             str(r[field]): r['c']
             for r in fq.values(field).annotate(c=Count('id'))
             if r[field] not in (None, '')
         }
-    # marker_panel: per-panel 'replaced' counts (JSONB — not a plain GROUP BY)
+    # marker_panel: per-panel 'replaced' counts — aggregated in SQL so the big
+    # markers JSONB never leaves Postgres (the old Python loop detoasted and
+    # shipped every auction car's markers per request).
     mq = (_apply_sidebar_filters(facet_base, GET, exclude='marker_panel')
-          .filter(category__name='auction').exclude(markers__isnull=True))
-    mp = {}
-    for m in mq.values_list('markers', flat=True):
-        if isinstance(m, dict):
-            for p, info in m.items():
-                if p in _MARKER_PANEL_SET and isinstance(info, dict) and info.get('status') == 'replaced':
-                    mp[p] = mp.get(p, 0) + 1
-    out['marker_panel'] = mp
+          .filter(category__name='auction').exclude(markers__isnull=True).order_by())
+    sub_sql, sub_params = mq.values_list('markers').query.sql_with_params()
+    with connection.cursor() as cur:
+        cur.execute(
+            "SELECT kv.key, COUNT(*) FROM (" + sub_sql + ") t, "
+            "LATERAL jsonb_each(CASE WHEN jsonb_typeof(t.markers) = 'object' "
+            "THEN t.markers ELSE '{}'::jsonb END) kv "
+            "WHERE kv.value ->> 'status' = 'replaced' AND kv.key = ANY(%s) "
+            "GROUP BY kv.key",
+            tuple(sub_params) + (list(_MARKER_PANEL_SET),))
+        out['marker_panel'] = {k: c for k, c in cur.fetchall()}
     # marker_type: how many (sibling-filtered) cars would be hidden per type
     # (auctions via markers, encar via extra_features — both via car_dmg_types)
     mt_base = _apply_sidebar_filters(facet_base, GET, exclude='marker_type')
