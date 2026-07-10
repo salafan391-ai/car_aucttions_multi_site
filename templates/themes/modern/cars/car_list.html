@@ -1020,7 +1020,20 @@
                         </div>
                     </a>
                     {% empty %}
+                    {% if auction_break %}
+                    <div class="mod-empty">
+                        <div style="font-size:2.4rem; line-height:1; margin-bottom:.7rem;">🔨⏳</div>
+                        <div class="bilingual" style="font-weight:900; font-size:1.2rem; margin-bottom:.45rem;" data-lang-ar="انتهى المزاد الحالي" data-lang-en="The current auction has ended" data-lang-es="La subasta actual ha terminado" data-lang-ru="Текущий аукцион завершён">انتهى المزاد الحالي</div>
+                        <div class="bilingual" style="max-width:34rem; margin:0 auto; line-height:1.9;" data-lang-ar="نقوم الآن بتجهيز سيارات المزاد الجديد وستُعرض هنا فور رفعها — ترقّبونا!" data-lang-en="We're preparing the next auction's cars — they'll appear here as soon as they're uploaded. Stay tuned!" data-lang-es="Estamos preparando la próxima subasta — pronto aquí." data-lang-ru="Готовим новый аукцион — скоро здесь!">نقوم الآن بتجهيز سيارات المزاد الجديد وستُعرض هنا فور رفعها — ترقّبونا!</div>
+                        {% if last_auction_end %}<div class="bilingual" style="font-size:.78rem; opacity:.65; margin-top:.5rem;" data-lang-ar="آخر مزاد انتهى بتاريخ {{ last_auction_end|date:'Y/m/d' }}" data-lang-en="Last auction ended {{ last_auction_end|date:'Y/m/d' }}" data-lang-es="Última subasta: {{ last_auction_end|date:'Y/m/d' }}" data-lang-ru="Аукцион завершился {{ last_auction_end|date:'Y/m/d' }}">آخر مزاد انتهى بتاريخ {{ last_auction_end|date:'Y/m/d' }}</div>{% endif %}
+                        <div style="margin-top:1.1rem; display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap;">
+                            <a href="{% url 'car_list' %}" class="bilingual" style="background:var(--color-primary,#4338ca); color:#fff; font-weight:800; font-size:.85rem; padding:.6rem 1.2rem; border-radius:12px; text-decoration:none;" data-lang-ar="تصفّح سيارات المعارض" data-lang-en="Browse showroom cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفّح سيارات المعارض</a>
+                            <a href="{% url 'expired_auctions' %}" class="bilingual" style="border:1px solid currentColor; opacity:.75; font-weight:800; font-size:.85rem; padding:.6rem 1.2rem; border-radius:12px; text-decoration:none;" data-lang-ar="أرشيف المزادات السابقة" data-lang-en="Past auctions archive" data-lang-es="Subastas pasadas" data-lang-ru="Прошлые аукционы">أرشيف المزادات السابقة</a>
+                        </div>
+                    </div>
+                    {% else %}
                     <div class="mod-empty bilingual" data-lang-ar="لا توجد سيارات تطابق بحثك." data-lang-en="No vehicles match your search." data-lang-es="No hay vehículos que coincidan." data-lang-ru="Нет автомобилей по вашему запросу.">لا توجد سيارات تطابق بحثك.</div>
+                    {% endif %}
                     {% endfor %}
                 </div>
 

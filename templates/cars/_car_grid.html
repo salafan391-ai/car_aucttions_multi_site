@@ -334,6 +334,18 @@
         {% endif %}
 
         {% empty %}
+        {% if auction_break %}
+        <div class="col-span-full text-center py-20">
+            <div class="text-5xl mb-4">🔨⏳</div>
+            <h3 class="bilingual text-xl font-black text-gray-800 mb-2" data-lang-ar="انتهى المزاد الحالي" data-lang-en="The current auction has ended" data-lang-es="La subasta actual ha terminado" data-lang-ru="Текущий аукцион завершён">انتهى المزاد الحالي</h3>
+            <p class="bilingual text-gray-500 text-sm mb-1 max-w-xl mx-auto leading-7" data-lang-ar="نقوم الآن بتجهيز سيارات المزاد الجديد وستُعرض هنا فور رفعها — ترقّبونا!" data-lang-en="We're preparing the next auction's cars — they'll appear here as soon as they're uploaded. Stay tuned!" data-lang-es="Estamos preparando la próxima subasta — pronto aquí." data-lang-ru="Готовим новый аукцион — скоро здесь!">نقوم الآن بتجهيز سيارات المزاد الجديد وستُعرض هنا فور رفعها — ترقّبونا!</p>
+            {% if last_auction_end %}<p class="bilingual text-gray-400 text-xs mb-5" data-lang-ar="آخر مزاد انتهى بتاريخ {{ last_auction_end|date:'Y/m/d' }}" data-lang-en="Last auction ended {{ last_auction_end|date:'Y/m/d' }}" data-lang-es="Última subasta: {{ last_auction_end|date:'Y/m/d' }}" data-lang-ru="Аукцион завершился {{ last_auction_end|date:'Y/m/d' }}">آخر مزاد انتهى بتاريخ {{ last_auction_end|date:'Y/m/d' }}</p>{% endif %}
+            <div class="flex gap-3 justify-center flex-wrap">
+                <a href="{% url 'car_list' %}" class="bilingual inline-flex items-center gap-2 px-5 py-2.5 bg-brand bg-brand-hover text-white text-sm font-bold rounded-xl transition" data-lang-ar="تصفّح سيارات المعارض" data-lang-en="Browse showroom cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفّح سيارات المعارض</a>
+                <a href="{% url 'expired_auctions' %}" class="bilingual inline-flex items-center gap-2 px-5 py-2.5 border border-gray-300 text-gray-600 text-sm font-bold rounded-xl transition hover:border-gray-400" data-lang-ar="أرشيف المزادات السابقة" data-lang-en="Past auctions archive" data-lang-es="Subastas pasadas" data-lang-ru="Прошлые аукционы">أرشيف المزادات السابقة</a>
+            </div>
+        </div>
+        {% else %}
         <div class="col-span-full text-center py-20">
             <div class="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
                 <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -345,6 +357,7 @@
                 {% if request.GET.car_type == 'auction' %}عرض جميع مزادات السيارات{% else %}عرض جميع السيارات{% endif %}
             </a>
         </div>
+        {% endif %}
         {% endfor %}
     </div>
 

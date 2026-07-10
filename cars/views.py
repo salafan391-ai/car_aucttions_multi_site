@@ -1542,6 +1542,22 @@ def car_list(request):
     paginator = _CachedCountPaginator(qs, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
 
+    # ── "Between auctions" note ── When the auction tab is empty because the
+    # last auction ended (and the visitor set no filters), show a friendly
+    # "new auction coming soon" note instead of the cold no-results state.
+    auction_break = False
+    last_auction_end = None
+    if car_type == 'auction' and paginator.count == 0:
+        _user_filtered = any(
+            v for k, v in request.GET.items() if k not in ('car_type', 'sort', 'page')
+        )
+        if not _user_filtered:
+            last_auction_end = (ApiCar.objects
+                                .filter(category__name='auction', auction_date__lt=timezone.now())
+                                .order_by('-auction_date')
+                                .values_list('auction_date', flat=True).first())
+            auction_break = last_auction_end is not None
+
     query_params = request.GET.copy()
     query_params.pop('page', None)
     query_string = query_params.urlencode()
@@ -2056,6 +2072,8 @@ def car_list(request):
         'marker_types':          [(k, ar, en) for k, (ar, en) in _MARKER_TYPE_LABELS.items()],
         'sel_marker_types':      sel_marker_types,
         'sel_clean_main':        sel_clean_main,
+        'auction_break':         auction_break,
+        'last_auction_end':      last_auction_end,
         'sel_no_accident':       sel_no_accident,
     }
     # HTMX partial request — return only the car grid fragment
