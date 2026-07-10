@@ -111,6 +111,23 @@
                 </button>
             </div>
         </form>
+
+        <form method="post" action="{% url 'delete_auctions' %}" class="border-t border-gray-100 pt-5 mt-5">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reschedule">
+            <input type="hidden" name="auction_name" value="{{ sel_name }}">
+            <input type="hidden" name="date_op" value="{{ sel_op }}">
+            <input type="hidden" name="date_from" value="{{ sel_from }}">
+            <input type="hidden" name="date_to" value="{{ sel_to }}">
+            <label class="block text-sm font-medium text-gray-700 mb-1">أو غيّر موعد انتهاء المزاد للسيارات المطابقة ({{ preview_count }})</label>
+            <div class="flex flex-wrap gap-3 items-center">
+                <input type="datetime-local" name="new_datetime" required class="border border-gray-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-amber-400 focus:border-transparent">
+                <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-2.5 rounded-xl transition whitespace-nowrap">
+                    تحديث الموعد
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">يُطبَّق على جميع المواقع. اختيار موعد مستقبلي يُعيد إظهار المزادات المنتهية في القوائم وصفحات التفاصيل.</p>
+        </form>
         {% else %}
         <p class="text-gray-500 text-sm">لا توجد سيارات مطابقة قابلة للحذف.</p>
         {% endif %}

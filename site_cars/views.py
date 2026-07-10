@@ -1530,6 +1530,25 @@ def delete_auctions(request):
         if not has_filter:
             messages.error(request, 'حدد فلتراً واحداً على الأقل (اسم المزاد أو التاريخ) قبل الحذف.')
             return redirect('delete_auctions')
+
+        # ── Reschedule: set a new end time for every matched auction car ──
+        if src.get('action') == 'reschedule':
+            from django.utils.dateparse import parse_datetime
+            from django.utils import timezone as _tz
+            raw = (src.get('new_datetime') or '').strip()
+            new_dt = parse_datetime(raw) if raw else None
+            if new_dt is None:
+                messages.error(request, 'أدخل موعد الانتهاء الجديد.')
+                return redirect('delete_auctions')
+            if _tz.is_naive(new_dt):
+                new_dt = _tz.make_aware(new_dt)
+            count = deletable.update(auction_date=new_dt)
+            messages.success(
+                request,
+                f'تم تحديث موعد انتهاء {count} سيارة مزاد إلى {new_dt:%Y-%m-%d %H:%M} (على مستوى جميع المواقع).'
+            )
+            return redirect('delete_auctions')
+
         if src.get('confirm') != 'DELETE':
             messages.error(request, 'لم يتم تأكيد الحذف. اكتب DELETE في خانة التأكيد.')
             return redirect('delete_auctions')
