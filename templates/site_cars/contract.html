@@ -7,30 +7,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>عقد رقم {{ bill.receipt_number }}</title>
     <style>
-        @page { size: A4 portrait; margin: 1cm; }
+        @page { size: A4 portrait; margin: 0.9cm; }
         * { box-sizing: border-box; }
         body { font-family: "Noto Naskh Arabic", "Amiri", "Segoe UI", Tahoma, sans-serif;
-               direction: rtl; color: #111; line-height: 1.9; padding: 20px; }
+               direction: rtl; color: #111; line-height: 1.7; padding: 20px; }
         .toolbar { max-width: 800px; margin: 0 auto 14px; display: flex; gap: 10px; justify-content: flex-end; }
         .toolbar button, .toolbar a { font: inherit; font-weight: 700; border: 0; border-radius: 8px;
                padding: .55rem 1.1rem; cursor: pointer; text-decoration: none; }
         .btn-print { background: #2563eb; color: #fff; }
         .btn-back { background: #f1f5f9; color: #334155; }
         .container { max-width: 800px; margin: 0 auto; padding: 10px 24px 24px; }
-        .logo { display: block; margin: 0 auto 6px; max-height: 90px; }
-        .header { text-align: center; margin-bottom: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .header h2 { margin: 6px 0 2px; font-size: 1.5rem; }
-        .header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; }
-        .para { margin: 8px 0; }
-        ul { margin: 6px 24px; }
-        .amount-title { font-weight: 800; margin-top: 12px; display: block; }
-        .written { font-weight: 800; display: block; margin-top: 14px; }
+        .logo { display: block; margin: 0 auto 4px; max-height: 70px; }
+        .header { text-align: center; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+        .header h2 { margin: 4px 0 2px; font-size: 1.35rem; }
+        .header h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+        .para { margin: 6px 0; }
+        ul { margin: 4px 24px; }
+        .amount-title { font-weight: 800; margin-top: 10px; display: block; }
+        .written { font-weight: 800; display: block; margin-top: 10px; }
         .stamp-contact { display: flex; justify-content: space-between; align-items: flex-end;
-               margin-top: 34px; page-break-inside: avoid; }
-        .stamp { max-width: 160px; max-height: 160px; }
+               margin-top: 18px; page-break-inside: avoid; }
+        .stamp { max-width: 130px; max-height: 130px; }
         .contact { text-align: left; }
         .contact p { margin: 2px 0; }
-        @media print { .toolbar { display: none !important; } body { padding: 0; } }
+        /* Print: compact everything so the contract always fits one A4 page. */
+        @media print {
+            .toolbar { display: none !important; }
+            body { padding: 0; font-size: 12.5px; line-height: 1.55; }
+            .container { padding: 0; max-width: 100%; }
+            .logo { max-height: 55px; }
+            .header { margin-bottom: 8px; padding-bottom: 6px; }
+            .header h2 { font-size: 1.15rem; }
+            .header h3 { font-size: .95rem; }
+            .para { margin: 4px 0; }
+            ul { margin: 3px 22px; }
+            .amount-title, .written { margin-top: 6px; }
+            .stamp-contact { margin-top: 12px; }
+            .stamp { max-width: 100px; max-height: 100px; }
+        }
     </style>
 </head>
 <body>
