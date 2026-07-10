@@ -172,14 +172,24 @@
                 <a href="/p/{{ page.slug }}/" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">{{ page.title }}</a>
             {% endfor %}
 
-            <!-- Mobile Lang/Currency -->
-            <div class="flex items-center gap-2 py-2 px-3 border-t border-gray-100 mt-2">
-                <button onclick="cycleLang()" id="mobile-lang-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium text-gray-800">
-                    <span id="mobile-lang-flag">🇸🇦</span> <span id="mobile-lang-label">العربية</span>
-                </button>
-                <button onclick="cycleCurrency()" id="mobile-currency-btn" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-medium text-gray-800">
-                    <span id="mobile-currency-label">﷼ SAR</span>
-                </button>
+            <!-- Mobile Lang/Currency — full pickers (tap = choose, no blind cycling) -->
+            <div class="py-2 px-3 border-t border-white/20 mt-2">
+                <div class="text-[11px] font-bold opacity-70 mb-1.5 bilingual" data-lang-ar="اللغة" data-lang-en="Language" data-lang-es="Idioma" data-lang-ru="Язык">اللغة</div>
+                <div class="flex gap-1.5 flex-wrap mb-3">
+                    <button type="button" onclick="setLang('ar')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇸🇦 العربية</button>
+                    <button type="button" onclick="setLang('en')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇬🇧 English</button>
+                    <button type="button" onclick="setLang('es')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇪🇸 Español</button>
+                    <button type="button" onclick="setLang('ru')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇷🇺 Русский</button>
+                </div>
+                <div class="text-[11px] font-bold opacity-70 mb-1.5 bilingual" data-lang-ar="العملة" data-lang-en="Currency" data-lang-es="Moneda" data-lang-ru="Валюта">العملة</div>
+                <div class="flex gap-1.5 flex-wrap">
+                    <button type="button" onclick="setCurrency('SAR')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">﷼ SAR</button>
+                    <button type="button" onclick="setCurrency('USD')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">$ USD</button>
+                    <button type="button" onclick="setCurrency('AED')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">د.إ AED</button>
+                    <button type="button" onclick="setCurrency('EUR')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">€ EUR</button>
+                    <button type="button" onclick="setCurrency('KRW')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">₩ KRW</button>
+                </div>
+                <span id="mobile-lang-flag" class="hidden"></span><span id="mobile-lang-label" class="hidden"></span><span id="mobile-currency-label" class="hidden"></span>
             </div>
             <div class="border-t border-gray-100 pt-2 mt-2">
                 <a href="{% url 'wishlist' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium relative">
