@@ -54,6 +54,11 @@
         <span class="sc-cart-count"><b id="sc-count">0</b> <span class="bilingual" data-lang-ar="سيارة في السلة" data-lang-en="cars in cart" data-lang-es="coches" data-lang-ru="авто">سيارة في السلة</span></span>
         <button type="button" class="sc-btn sc-btn-primary" onclick="scCopyAll(this)"><span class="bilingual" data-lang-ar="نسخ كل الروابط" data-lang-en="Copy all links" data-lang-es="Copiar todo" data-lang-ru="Копировать всё">نسخ كل الروابط</span></button>
         <button type="button" class="sc-btn sc-btn-tg" id="sc-tg-btn" onclick="scTelegram(this)" style="display:none; background:#229ED9; color:#fff;"><span id="sc-tg-label">✈️ <span class="bilingual" data-lang-ar="إرسال إلى تيليجرام" data-lang-en="Send to Telegram" data-lang-es="Enviar a Telegram" data-lang-ru="В Telegram">إرسال إلى تيليجرام</span></span></button>
+        <div id="sc-tg-who" style="display:none; font-size:.75rem; color:#64748b; width:100%; margin-top:.2rem;">
+            <span class="bilingual" data-lang-ar="متصل بتيليجرام:" data-lang-en="Connected to Telegram:" data-lang-es="Conectado a Telegram:" data-lang-ru="Подключено к Telegram:">متصل بتيليجرام:</span>
+            <b style="color:#229ED9;"></b>
+            <a href="#" onclick="if(TG.link){window.open(TG.link,'_blank','noopener');}return false;" style="color:#94a3b8; text-decoration:underline; margin-inline-start:.4rem;" class="bilingual" data-lang-ar="تغيير" data-lang-en="Change" data-lang-es="Cambiar" data-lang-ru="Сменить">تغيير</a>
+        </div>
         <button type="button" class="sc-btn sc-btn-ghost" onclick="scClear()"><span class="bilingual" data-lang-ar="إفراغ السلة" data-lang-en="Empty cart" data-lang-es="Vaciar" data-lang-ru="Очистить">إفراغ السلة</span></button>
     </div>
 
@@ -151,6 +156,13 @@
             if (!TG.configured) return;                 // bot not set up on the server
             btn.style.display = '';
             if (!TG.connected) tgLabel('🔗 <span class="bilingual" data-lang-ar="ربط تيليجرام" data-lang-en="Connect Telegram">ربط تيليجرام</span>');
+            else if (TG.who) {
+                var w = document.getElementById('sc-tg-who');
+                if (w) {
+                    w.style.display = '';
+                    w.querySelector('b').textContent = TG.who;
+                }
+            }
         }).catch(function () {});
 
     window.scTelegram = function (b) {

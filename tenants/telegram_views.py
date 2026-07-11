@@ -24,7 +24,12 @@ def telegram_webhook(request, secret):
         tid = tg.verify_connect_token(parts[1] if len(parts) > 1 else "")
         if tid:
             from .models import Tenant
-            Tenant.objects.filter(id=tid).update(telegram_chat_id=str(chat_id))
+            chat = msg.get("chat") or {}
+            who = " ".join(p for p in [chat.get("first_name"), chat.get("last_name")] if p)
+            if chat.get("username"):
+                who = (who + f' (@{chat["username"]})').strip()
+            Tenant.objects.filter(id=tid).update(
+                telegram_chat_id=str(chat_id), telegram_chat_name=who[:128])
             tg.send_message(chat_id, "✅ تم ربط حسابك بنجاح.\nستصلك روابط السيارات التي ترسلها من «سلة الروابط» في لوحة التحكم هنا.")
         else:
             tg.send_message(chat_id, "مرحباً 👋\nلربط حسابك، افتح رابط الربط من صفحة «سلة الروابط» في لوحة التحكم.")

@@ -66,6 +66,12 @@ def _call(method, **data):
     return body
 
 
+def get_chat(chat_id):
+    """Fetch chat info (first/last name, username) for a connected chat id."""
+    body = _call("getChat", chat_id=chat_id) or {}
+    return body.get("result") or {}
+
+
 def send_message(chat_id, text):
     return _call("sendMessage", chat_id=chat_id, text=text, parse_mode="HTML")
 

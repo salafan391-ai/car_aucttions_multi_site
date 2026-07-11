@@ -2505,9 +2505,23 @@ def telegram_status(request):
     link = ""
     if tenant and tg.is_configured() and tg.bot_username():
         link = f"https://t.me/{tg.bot_username()}?start={tg.connect_token(tenant.id)}"
+    chat_id = getattr(tenant, "telegram_chat_id", "") if tenant else ""
+    who = getattr(tenant, "telegram_chat_name", "") if tenant else ""
+    if chat_id and not who and tg.is_configured():
+        # connected before we started recording identity — backfill once
+        try:
+            chat = tg.get_chat(chat_id)
+            who = " ".join(p for p in [chat.get("first_name"), chat.get("last_name")] if p)
+            if chat.get("username"):
+                who = (who + f' (@{chat["username"]})').strip()
+            if who:
+                type(tenant).objects.filter(pk=tenant.pk).update(telegram_chat_name=who[:128])
+        except Exception:
+            who = ""
     return JsonResponse({
         "configured": tg.is_configured(),
-        "connected": bool(getattr(tenant, "telegram_chat_id", "")),
+        "connected": bool(chat_id),
+        "who": who,
         "link": link,
     })
 

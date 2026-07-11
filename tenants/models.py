@@ -294,6 +294,9 @@ class Tenant(TenantMixin):
     telegram_username = models.CharField(max_length=64, blank=True, null=True, verbose_name="تيليجرام (اسم المستخدم)", help_text="ادخل اسم المستخدم بدون @ — سيُحوّل تلقائياً إلى رابط t.me/username")
     # Chat id captured when the dealer connects ofleet0_bot (for pushing car links).
     telegram_chat_id = models.CharField(max_length=32, blank=True, default="", verbose_name="Telegram chat id (bot)")
+    # Who connected: "First Last (@username)" captured from the /start message
+    # (or backfilled via getChat) so admins can see which account receives links.
+    telegram_chat_name = models.CharField(max_length=128, blank=True, default="", verbose_name="Telegram المتصل (اسم)")
 
     # ── Buyer contract (per-tenant) ──
     # When enabled, each invoice/bill can be printed as a "brokerage contract"
