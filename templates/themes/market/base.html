@@ -1260,7 +1260,9 @@
         }
 
         function applyCurrency(code) {
-            const cfg = CURRENCIES[code];
+            let cfg = CURRENCIES[code];
+            if (!cfg) { code = 'SAR'; cfg = CURRENCIES[code]; }   // stale saved code (e.g. removed custom currency)
+            if (!cfg) return;
             const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
             setEl('currency-label', cfg.label);
             setEl('mobile-currency-label', cfg.label);
@@ -1272,6 +1274,34 @@
                 if (isNaN(krw)) return;
                 const converted = code === 'KRW' ? krw : Math.round(krw * cfg.rate * PRICE_MARKUP);
                 el.innerHTML = converted.toLocaleString() + ' <span class="text-[9px] sm:text-xs font-medium">' + cfg.symbol + '</span>';
+            });
+            // Prices entered in an explicit source currency (the tenant's own cars):
+            // exact amount in their own currency, plain conversion (no markup) otherwise.
+            document.querySelectorAll('[data-price-src]').forEach(el => {
+                const amt = parseFloat(el.getAttribute('data-price-src'));
+                if (isNaN(amt)) return;
+                const src = (el.getAttribute('data-cur-src') || 'KRW').toUpperCase();
+                const srcCfg = CURRENCIES[src];
+                if (!srcCfg) return;
+                const krw = (src === 'KRW') ? amt : amt / srcCfg.rate;
+                let out;
+                if (code === src) out = Math.round(amt);
+                else if (code === 'KRW') out = Math.round(krw);
+                else out = Math.round(krw * cfg.rate);
+                el.innerHTML = out.toLocaleString() + ' <span class="text-[9px] sm:text-xs font-medium">' + cfg.symbol + '</span>';
+            });
+            // Fill WhatsApp share links' __PRICE__ token with the price in the
+            // visitor's selected currency (matches what they see on the page).
+            document.querySelectorAll('a[data-wa-krw]').forEach(el => {
+                if (!el._waBase) el._waBase = el.getAttribute('href') || '';
+                if (el._waBase.indexOf('__PRICE__') === -1) return;
+                const krw = parseFloat(el.getAttribute('data-wa-krw'));
+                let priceStr = '';
+                if (!isNaN(krw) && krw) {
+                    const amount = code === 'KRW' ? Math.round(krw) : Math.round(krw * cfg.rate * PRICE_MARKUP);
+                    priceStr = amount.toLocaleString('en-US') + ' ' + code;
+                }
+                el.setAttribute('href', el._waBase.replace('__PRICE__', encodeURIComponent(priceStr)));
             });
         }
 

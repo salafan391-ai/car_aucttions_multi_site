@@ -181,6 +181,7 @@ in TRANSLATIONS gets dictionary-translated for non-Arabic languages.
 
     function applyCurrency(code) {
         var cfg = CURRENCIES[code];
+        if (!cfg) { code = 'SAR'; cfg = CURRENCIES[code]; }   // stale saved code (e.g. removed custom currency)
         if (!cfg) return;
         function setEl(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
         setEl('currency-label', cfg.label);

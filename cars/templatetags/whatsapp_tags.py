@@ -199,7 +199,9 @@ def whatsapp_site_car_message(context, car, site_name=""):
     message_parts.append(car_name)
 
     if car.price:
-        message_parts.append(f"السعر: {car.price:,.0f} ريال سعودي")
+        _cur_ar = {'SAR': 'ريال سعودي', 'USD': 'دولار', 'AED': 'درهم', 'EUR': 'يورو', 'KRW': 'وون'}
+        _cur = _cur_ar.get((getattr(car, 'currency', '') or 'SAR').upper(), 'ريال سعودي')
+        message_parts.append(f"السعر: {car.price:,.0f} {_cur}")
 
     try:
         request = context.get('request')
