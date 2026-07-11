@@ -70,11 +70,18 @@ class TenantAdminForm(forms.ModelForm):
 @admin.register(Tenant)
 class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     form = TenantAdminForm
-    list_display = ("name", "schema_name", "is_active", "create_superuser_button", "primary_color", "dashboard_themes_display", "created_at")
+    list_display = ("name", "schema_name", "is_active", "create_superuser_button", "primary_color", "dashboard_themes_display", "telegram_display", "created_at")
 
     @admin.display(description="ثيمات اللوحة")
     def dashboard_themes_display(self, obj):
         return "، ".join(obj.dashboard_themes) if obj.dashboard_themes else "(الافتراضية)"
+
+    @admin.display(description="تيليجرام (سلة الروابط)")
+    def telegram_display(self, obj):
+        if not obj.telegram_chat_id:
+            return format_html('<span style="color:#9ca3af;">غير متصل</span>')
+        who = obj.telegram_chat_name or "؟"
+        return format_html('<b>{}</b><br><code style="font-size:11px;">{}</code>', who, obj.telegram_chat_id)
 
     list_editable = ("is_active",)
     list_filter = ("is_active",)
@@ -154,6 +161,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
         ("Contact Person", {"fields": ("contact_person_name", "contact_person_photo")}),
         ("Commercial Registration", {"fields": ("commercial_registration", "cr_barcode")}),
         ("Social Media", {"fields": ("instagram", "twitter", "facebook", "tiktok", "snapchat", "youtube", "telegram", "telegram_username", "whatsapp_channel"), "classes": ("collapse",)}),
+        ("Telegram bot (سلة الروابط)", {"fields": ("telegram_chat_id", "telegram_chat_name"), "classes": ("collapse",), "description": "الحساب المرتبط بـ ofleet0_bot الذي تصله روابط السيارات من سلة الروابط. امسح الحقلين لفصل الربط."}),
         ("Email SMTP Settings", {"fields": ("email_host", "email_port", "email_username", "email_password", "email_use_tls", "email_from_name"), "classes": ("collapse",)}),
         ("ofleet PDF Export API", {"fields": ("ofleet_username", "ofleet_password", "ofleet_split_by_make"), "classes": ("collapse",), "description": "بيانات تسجيل الدخول الخاصة بهذا الموقع لـ API تصدير PDF من ofleet0.com"}),
     )
