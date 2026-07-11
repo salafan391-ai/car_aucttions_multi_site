@@ -1048,10 +1048,14 @@ _MARKER_NON_BODY_RE = r'(lamp|mirror|glass|windshield)'
 # vanish when the box is ticked). Both arms reuse the exact expression of the
 # cars_apicar_accident_cnt index (migration 0034) so Postgres bitmap-ORs two
 # index scans instead of detoasting every blob.
-# accident_cnt is a STORED generated column (migration cars/0035) extracting
-# extra_features->'record'->>'accidentCnt' — filtering on it avoids detoasting
-# the big JSONB per row. NULL-safe so auction cars survive the mixed tab.
-_NO_ACCIDENT_WHERE = "(accident_cnt IS NULL OR accident_cnt = '0')"
+# accident_cnt / dmg_replaced are STORED generated columns (migrations
+# cars/0035-0036): the insurance accident count and whether the inspection
+# sheet shows any exchanged (X-coded) panel. "0 accidents" means a clean
+# insurance record AND no replaced parts — filtering on the materialized
+# columns avoids detoasting the big JSONB per row. NULL-safe so auction cars
+# survive the mixed tab (their replaced panels still disqualify them).
+_NO_ACCIDENT_WHERE = ("((accident_cnt IS NULL OR accident_cnt = '0') "
+                      "AND NOT COALESCE(dmg_replaced, false))")
 
 
 def _damaged_main_parts_subq():

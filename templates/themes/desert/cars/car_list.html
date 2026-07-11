@@ -611,7 +611,7 @@
                             {% else %}
                             <label>
                                 <input type="checkbox" name="no_accident" value="1" {% if sel_no_accident %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip bilingual" data-lang-ar="بدون حوادث" data-lang-en="No accidents" data-lang-es="Sin accidentes" data-lang-ru="Без ДТП">بدون حوادث{% with fc=facet_counts|get_item:'no_accident' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                                <span class="gl-list-chip bilingual" data-lang-ar="بدون حوادث أو قطع مُبدّلة" data-lang-en="No accidents or replaced parts" data-lang-es="Sin accidentes ni piezas reemplazadas" data-lang-ru="Без ДТП и замен деталей">بدون حوادث أو قطع مُبدّلة{% with fc=facet_counts|get_item:'no_accident' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endif %}
                         </div>
