@@ -265,6 +265,15 @@
         [data-theme="light"] #mobile-menu a:hover { background-color: #f3f4f6 !important; }
         [data-theme="light"] #mobile-menu .border-t { border-color: #e5e7eb !important; }
         [data-theme="light"] #mobile-menu .bg-gray-100 { background-color: #f3f4f6 !important; }
+        /* mobile lang/currency picker chips are white pills — keep their text
+           dark under every nav theme (the drawer rules above force !important
+           colors on all buttons) */
+        #mobile-menu button.mob-chip,
+        [data-theme="dark"] #mobile-menu button.mob-chip,
+        [data-theme="light"] #mobile-menu button.mob-chip {
+            color: #1f2937 !important;
+            background: rgba(255,255,255,.95) !important;
+        }
 
         /* ── Smooth image loading: shimmer + fade-in ── */
         .img-loading {

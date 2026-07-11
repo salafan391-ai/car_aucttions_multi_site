@@ -185,19 +185,19 @@
             <div class="py-2 px-3 border-t border-white/20 mt-2">
                 <div class="text-[11px] font-bold opacity-70 mb-1.5 bilingual" data-lang-ar="اللغة" data-lang-en="Language" data-lang-es="Idioma" data-lang-ru="Язык">اللغة</div>
                 <div class="flex gap-1.5 flex-wrap mb-3">
-                    <button type="button" onclick="setLang('ar')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇸🇦 العربية</button>
-                    <button type="button" onclick="setLang('en')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇬🇧 English</button>
-                    <button type="button" onclick="setLang('es')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇪🇸 Español</button>
-                    <button type="button" onclick="setLang('ru')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇷🇺 Русский</button>
+                    <button type="button" onclick="setLang('ar')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇸🇦 العربية</button>
+                    <button type="button" onclick="setLang('en')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇬🇧 English</button>
+                    <button type="button" onclick="setLang('es')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇪🇸 Español</button>
+                    <button type="button" onclick="setLang('ru')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇷🇺 Русский</button>
                 </div>
                 <div class="text-[11px] font-bold opacity-70 mb-1.5 bilingual" data-lang-ar="العملة" data-lang-en="Currency" data-lang-es="Moneda" data-lang-ru="Валюта">العملة</div>
                 <div class="flex gap-1.5 flex-wrap">
-                    <button type="button" onclick="setCurrency('SAR')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">﷼ SAR</button>
-                    <button type="button" onclick="setCurrency('USD')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">$ USD</button>
-                    <button type="button" onclick="setCurrency('AED')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">د.إ AED</button>
-                    <button type="button" onclick="setCurrency('EUR')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">€ EUR</button>
-                    <button type="button" onclick="setCurrency('KRW')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">₩ KRW</button>
-                    {% for c in custom_currencies %}<button type="button" onclick="setCurrency('{{ c.code }}')" class="px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">{{ c.symbol }} {{ c.code }}</button>{% endfor %}
+                    <button type="button" onclick="setCurrency('SAR')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">﷼ SAR</button>
+                    <button type="button" onclick="setCurrency('USD')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">$ USD</button>
+                    <button type="button" onclick="setCurrency('AED')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">د.إ AED</button>
+                    <button type="button" onclick="setCurrency('EUR')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">€ EUR</button>
+                    <button type="button" onclick="setCurrency('KRW')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">₩ KRW</button>
+                    {% for c in custom_currencies %}<button type="button" onclick="setCurrency('{{ c.code }}')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">{{ c.symbol }} {{ c.code }}</button>{% endfor %}
                 </div>
                 <span id="mobile-lang-flag" class="hidden"></span><span id="mobile-lang-label" class="hidden"></span><span id="mobile-currency-label" class="hidden"></span>
             </div>
