@@ -1055,15 +1055,18 @@ _NO_ACCIDENT_WHERE = "(accident_cnt IS NULL OR accident_cnt = '0')"
 
 
 def _damaged_main_parts_subq():
-    """RawSQL subquery: ids of auction cars with a damaged marker on any MAIN
-    body part (lamps/mirrors/glass don't count). Marker keys are free-form
-    across feeds, so we iterate the JSONB instead of enumerating panels."""
+    """RawSQL subquery: ids of auction cars with a SERIOUS damage marker on any
+    MAIN body part (lamps/mirrors/glass don't count). 'repaired' (paint/small
+    bodywork) is near-universal on auction sheets — treating it as damage left
+    the filter matching ~0 cars — so only replaced/welded-grade statuses count.
+    Marker keys are free-form across feeds, so we iterate the JSONB instead of
+    enumerating panels."""
     return RawSQL(
         "SELECT id FROM cars_apicar WHERE markers IS NOT NULL "
         "AND jsonb_typeof(markers) = 'object' AND EXISTS ("
         "  SELECT 1 FROM jsonb_each(markers) AS kv"
         "  WHERE jsonb_typeof(kv.value) = 'object'"
-        "  AND COALESCE(lower(kv.value->>'status'), '') NOT IN ('', 'good')"
+        "  AND COALESCE(lower(kv.value->>'status'), '') NOT IN ('', 'good', 'repaired')"
         "  AND lower(kv.key) !~ %s"
         ")",
         [_MARKER_NON_BODY_RE])
