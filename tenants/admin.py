@@ -79,7 +79,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     @admin.display(description="تيليجرام (سلة الروابط)")
     def telegram_display(self, obj):
         if not obj.telegram_chat_id:
-            return format_html('<span style="color:#9ca3af;">غير متصل</span>')
+            return format_html('<span style="color:#9ca3af;">{}</span>', 'غير متصل')
         who = obj.telegram_chat_name or "؟"
         return format_html('<b>{}</b><br><code style="font-size:11px;">{}</code>', who, obj.telegram_chat_id)
 
