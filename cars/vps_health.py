@@ -177,4 +177,12 @@ def vps_health(request):
     except Exception:
         pass
 
+    # ── Fleet rollups (owner overview) ──
+    try:
+        from tenants.metrics import fleet_gsc, fleet_sales
+        ctx["fleet_gsc"] = fleet_gsc()
+        ctx["fleet_sales"] = fleet_sales()
+    except Exception:
+        pass
+
     return render(request, "vps_health.html", ctx)

@@ -115,6 +115,41 @@
         </div>
     </div>
 
+    <!-- Site traffic (your visits) -->
+    {% if traffic %}
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                زيارات موقعك
+            </h2>
+            <span class="text-xs text-gray-500">آخر 30 يوم</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+                <div class="text-2xl font-extrabold text-gray-900">{{ traffic.today }}</div>
+                <div class="text-xs text-gray-500 mt-1">اليوم</div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+                <div class="text-2xl font-extrabold text-gray-900">{{ traffic.week }}</div>
+                <div class="text-xs text-gray-500 mt-1">آخر 7 أيام</div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+                <div class="text-2xl font-extrabold text-gray-900">{{ traffic.month }}</div>
+                <div class="text-xs text-gray-500 mt-1">آخر 30 يوم</div>
+            </div>
+        </div>
+        {% if traffic.spark %}
+        <div class="bg-white rounded-2xl shadow-sm p-5 mt-4">
+            <div class="text-xs text-gray-500 mb-2">الزيارات اليومية</div>
+            <div class="flex items-end gap-0.5" style="height:44px" dir="ltr">
+                {% for h in traffic.spark %}<div class="flex-1 bg-indigo-500 rounded-t" style="height:{{ h }}%;min-height:2px"></div>{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Google Search Console -->
     {% if gsc %}
     <div class="mb-8">
@@ -127,11 +162,17 @@
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div class="bg-white rounded-2xl shadow-sm p-5">
-                <div class="text-2xl font-extrabold text-gray-900">{{ gsc.clicks }}</div>
+                <div class="flex items-baseline gap-2">
+                    <div class="text-2xl font-extrabold text-gray-900">{{ gsc.clicks }}</div>
+                    {% if gsc.clicks_delta != None %}<span class="text-xs font-bold {% if gsc.clicks_delta >= 0 %}text-green-600{% else %}text-red-500{% endif %}">{% if gsc.clicks_delta >= 0 %}▲{% else %}▼{% endif %}{{ gsc.clicks_delta }}%</span>{% endif %}
+                </div>
                 <div class="text-xs text-gray-500 mt-1">النقرات</div>
             </div>
             <div class="bg-white rounded-2xl shadow-sm p-5">
-                <div class="text-2xl font-extrabold text-gray-900">{{ gsc.impressions }}</div>
+                <div class="flex items-baseline gap-2">
+                    <div class="text-2xl font-extrabold text-gray-900">{{ gsc.impressions }}</div>
+                    {% if gsc.impr_delta != None %}<span class="text-xs font-bold {% if gsc.impr_delta >= 0 %}text-green-600{% else %}text-red-500{% endif %}">{% if gsc.impr_delta >= 0 %}▲{% else %}▼{% endif %}{{ gsc.impr_delta }}%</span>{% endif %}
+                </div>
                 <div class="text-xs text-gray-500 mt-1">مرات الظهور</div>
             </div>
             <div class="bg-white rounded-2xl shadow-sm p-5">
@@ -143,28 +184,42 @@
                 <div class="text-xs text-gray-500 mt-1">متوسط الترتيب</div>
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% if gsc.spark %}
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-4">
+            <div class="text-xs text-gray-500 mb-2">النقرات اليومية</div>
+            <div class="flex items-end gap-0.5" style="height:44px" dir="ltr">
+                {% for h in gsc.spark %}<div class="flex-1 bg-blue-500 rounded-t" style="height:{{ h }}%;min-height:2px"></div>{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white rounded-2xl shadow-sm p-5">
                 <div class="text-sm font-bold text-gray-900 mb-3">أهم عبارات البحث</div>
                 {% for q in gsc.top_queries %}
                 <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
                     <span class="text-sm text-gray-700 truncate">{{ q.q }}</span>
-                    <span class="text-xs text-gray-500 whitespace-nowrap mr-2">{{ q.clicks }} نقرة · {{ q.impressions }} ظهور</span>
+                    <span class="text-xs text-gray-500 whitespace-nowrap mr-2">{{ q.clicks }} · {{ q.impressions }}</span>
                 </div>
-                {% empty %}
-                <div class="text-xs text-gray-400">لا توجد بيانات بعد</div>
-                {% endfor %}
+                {% empty %}<div class="text-xs text-gray-400">لا توجد بيانات بعد</div>{% endfor %}
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-5 ring-1 ring-amber-200">
+                <div class="text-sm font-bold text-gray-900 mb-1">كلمات على وشك الصفحة الأولى</div>
+                <div class="text-[11px] text-gray-400 mb-2">ترتيبك 5–15 — حسّنها لتتصدر</div>
+                {% for o in gsc.opportunities %}
+                <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-700 truncate">{{ o.q }}</span>
+                    <span class="text-xs whitespace-nowrap mr-2"><span class="text-amber-600 font-bold">#{{ o.position }}</span> · {{ o.impressions }} ظهور</span>
+                </div>
+                {% empty %}<div class="text-xs text-gray-400">لا توجد فرص حالياً</div>{% endfor %}
             </div>
             <div class="bg-white rounded-2xl shadow-sm p-5">
                 <div class="text-sm font-bold text-gray-900 mb-3">أهم الصفحات</div>
                 {% for p in gsc.top_pages %}
                 <div class="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
                     <span class="text-sm text-gray-700 truncate" dir="ltr">{{ p.url }}</span>
-                    <span class="text-xs text-gray-500 whitespace-nowrap mr-2">{{ p.clicks }} نقرة</span>
+                    <span class="text-xs text-gray-500 whitespace-nowrap mr-2">{{ p.clicks }}</span>
                 </div>
-                {% empty %}
-                <div class="text-xs text-gray-400">لا توجد بيانات بعد</div>
-                {% endfor %}
+                {% empty %}<div class="text-xs text-gray-400">لا توجد بيانات بعد</div>{% endfor %}
             </div>
         </div>
     </div>

@@ -125,5 +125,26 @@
     {% endif %}
 
   </div>
+
+  {% if fleet_gsc %}
+  <div class="card" style="margin-top:16px">
+    <h2>🔎 Fleet search · 28 days — {{ fleet_gsc.total_clicks }} clicks · {{ fleet_gsc.total_impr }} impressions</h2>
+    {% for r in fleet_gsc.rows %}
+    <div class="row"><span class="k">{{ r.label }}</span><span><b>{{ r.clicks }}</b> <span class="unit">clicks · {{ r.impressions }} impr</span></span></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if fleet_sales %}
+  <div class="card" style="margin-top:16px">
+    <h2>💰 Fleet sales — {{ fleet_sales.orders }} orders · {{ fleet_sales.sold }} sold · {{ fleet_sales.revenue }} revenue</h2>
+    {% for s in fleet_sales.per %}
+    <div class="row"><span class="k">{{ s.label }}</span><span><b>{{ s.revenue }}</b> <span class="unit">· {{ s.orders }} orders · {{ s.sold }} sold</span></span></div>
+    {% empty %}
+    <div class="row"><span class="unit">no sales recorded yet</span></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
 </body>
 </html>

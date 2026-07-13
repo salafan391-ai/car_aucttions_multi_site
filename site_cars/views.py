@@ -110,6 +110,14 @@ def dashboard(request):
     except Exception:
         context['gsc'] = None
 
+    # This tenant's own site traffic (from the request counter).
+    try:
+        from django.db import connection
+        from tenants.metrics import tenant_traffic
+        context['traffic'] = tenant_traffic(getattr(connection, 'schema_name', 'public'))
+    except Exception:
+        context['traffic'] = None
+
     return render(request, 'site_cars/dashboard.html', context)
 
 
