@@ -56,6 +56,41 @@ class OnDemandTLSCheckMiddleware:
         return self.get_response(request)
 
 
+class TrafficCounterMiddleware:
+    """Best-effort per-tenant request counters in Redis for the health dashboard.
+    One pipelined round-trip per request; wrapped so counting never affects the
+    response. Skips static/internal/self paths. Must sit AFTER TenantMainMiddleware
+    so connection.schema_name is set."""
+
+    _SKIP = ("/static/", "/media/", "/internal/", "/vps-health/", "/favicon", "/robots")
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            p = request.path
+            if not any(p.startswith(s) for s in self._SKIP):
+                self._count(getattr(connection, "schema_name", "public"))
+        except Exception:
+            pass
+        return self.get_response(request)
+
+    def _count(self, schema):
+        import time
+        from django_redis import get_redis_connection
+        t = time.gmtime()
+        minute = time.strftime("%Y%m%d%H%M", t)
+        hour = time.strftime("%Y%m%d%H", t)
+        day = time.strftime("%Y%m%d", t)
+        r = get_redis_connection("default")
+        pipe = r.pipeline()
+        pipe.incr(f"traf:min:{minute}"); pipe.expire(f"traf:min:{minute}", 7200)          # 2h
+        pipe.hincrby(f"traf:hour:{hour}", schema, 1); pipe.expire(f"traf:hour:{hour}", 172800)   # 2d
+        pipe.hincrby(f"traf:day:{day}", schema, 1); pipe.expire(f"traf:day:{day}", 2764800)      # 32d
+        pipe.execute()
+
+
 class QueryStringGuardMiddleware:
     """
     Multi-layer request protection:

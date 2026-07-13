@@ -107,6 +107,23 @@
     </div>
     {% endif %}
 
+    {% if traffic %}
+    <div class="card">
+      <h2>Traffic</h2>
+      <div class="big ok">{{ traffic.rate }}<span class="unit"> req/min</span></div>
+      <div class="row"><span class="k">this hour</span><span>{{ traffic.hour_total }}</span></div>
+      <div class="row"><span class="k">today</span><span>{{ traffic.day_total }}</span></div>
+    </div>
+    {% if traffic.top %}
+    <div class="card">
+      <h2>Top tenants today</h2>
+      {% for t in traffic.top %}
+      <div class="row"><span class="k">{{ t.label }}</span><span>{{ t.count }}</span></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
   </div>
 </body>
 </html>

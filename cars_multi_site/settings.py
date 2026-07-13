@@ -110,6 +110,7 @@ MIDDLEWARE = [
     "tenants.middleware.OnDemandTLSCheckMiddleware",
     "tenants.middleware.QueryStringGuardMiddleware",
     "django_tenants.middleware.main.TenantMainMiddleware",
+    "tenants.middleware.TrafficCounterMiddleware",
     "tenants.middleware.BlockTenantAdminMiddleware",
     "tenants.middleware.TenantPublicSchemaMiddleware",
     "django.middleware.security.SecurityMiddleware",

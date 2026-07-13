@@ -147,4 +147,34 @@ def vps_health(request):
     except Exception:
         pass
 
+    # ── Traffic (from TrafficCounterMiddleware's Redis counters) ──
+    try:
+        from django_redis import get_redis_connection
+        r = get_redis_connection("default")
+        gm = time.gmtime()
+        hour = time.strftime("%Y%m%d%H", gm)
+        day = time.strftime("%Y%m%d", gm)
+        prev_min = time.strftime("%Y%m%d%H%M", time.gmtime(time.time() - 60))
+        rate = int(r.get(f"traf:min:{prev_min}") or 0)
+        hour_h = {k.decode(): int(v) for k, v in (r.hgetall(f"traf:hour:{hour}") or {}).items()}
+        day_h = {k.decode(): int(v) for k, v in (r.hgetall(f"traf:day:{day}") or {}).items()}
+        name_by_schema = {}
+        try:
+            from tenants.models import Tenant
+            name_by_schema = dict(Tenant.objects.values_list("schema_name", "name"))
+        except Exception:
+            pass
+        top = [
+            {"label": name_by_schema.get(s, s) or s, "count": c}
+            for s, c in sorted(day_h.items(), key=lambda x: -x[1])[:6]
+        ]
+        ctx["traffic"] = {
+            "rate": rate,
+            "hour_total": sum(hour_h.values()),
+            "day_total": sum(day_h.values()),
+            "top": top,
+        }
+    except Exception:
+        pass
+
     return render(request, "vps_health.html", ctx)
