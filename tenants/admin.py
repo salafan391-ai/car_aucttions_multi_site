@@ -170,6 +170,22 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
 @admin.register(Domain)
 class DomainAdmin(admin.ModelAdmin):
     list_display = ("domain", "tenant", "is_primary")
+    actions = ("activate_on_vps",)
+
+    @admin.action(description="Activate on VPS (point Cloudflare DNS here)")
+    def activate_on_vps(self, request, queryset):
+        """Set each selected domain's Cloudflare A record to the VPS (grey-cloud).
+        Caddy then issues the TLS cert on-demand on the first HTTPS hit."""
+        from django.contrib import messages
+        from .cloudflare import point_domain_to_vps, CloudflareError
+        for d in queryset:
+            try:
+                msg = point_domain_to_vps(d.domain)
+                self.message_user(request, f"✓ {msg}", level=messages.SUCCESS)
+            except CloudflareError as e:
+                self.message_user(request, f"✗ {d.domain}: {e}", level=messages.ERROR)
+            except Exception as e:  # network/unexpected — surface, don't 500
+                self.message_user(request, f"✗ {d.domain}: {e}", level=messages.ERROR)
 
 
 @admin.register(GlobalExchangeRates)

@@ -12,6 +12,10 @@ class Command(BaseCommand):
         parser.add_argument('schema_name', type=str, help='Schema name (e.g., tenant1)')
         parser.add_argument('domain', type=str, help='Domain name (e.g., tenant1.yourdomain.com)')
         parser.add_argument('--name', type=str, help='Tenant display name', default='')
+        parser.add_argument(
+            '--activate-dns', action='store_true',
+            help='Also point the domain at the VPS via the Cloudflare API (grey-cloud A record)',
+        )
 
     def handle(self, *args, **options):
         schema_name = options['schema_name']
@@ -47,6 +51,15 @@ class Command(BaseCommand):
             is_primary=True
         )
         self.stdout.write(self.style.SUCCESS(f'✓ Domain "{domain_name}" created'))
+
+        if options.get('activate_dns'):
+            from tenants.cloudflare import point_domain_to_vps, CloudflareError
+            self.stdout.write(f'Pointing {domain_name} at the VPS via Cloudflare...')
+            try:
+                msg = point_domain_to_vps(domain_name)
+                self.stdout.write(self.style.SUCCESS(f'✓ DNS: {msg}'))
+            except CloudflareError as e:
+                self.stdout.write(self.style.WARNING(f'DNS not set ({e}) — flip it manually or retry'))
 
         self.stdout.write(self.style.SUCCESS(f'\n🎉 Tenant successfully created!'))
         self.stdout.write(f'   Schema: {tenant.schema_name}')
