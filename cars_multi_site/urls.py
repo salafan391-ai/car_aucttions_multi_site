@@ -27,6 +27,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from tenants.views import site_settings, set_dashboard_password
 from tenants.sso_views import launch as sso_launch, enter as sso_enter
+from cars.vps_health import vps_health
 from tenants import oauth_relay
 from tenants.telegram_views import telegram_webhook
 from billing.views import stripe_webhook
@@ -206,6 +207,7 @@ urlpatterns = [
     path("robots.txt", robots_txt),
     path("sitemap.xml", sitemap_xml),
     re_path(r"^(?P<fname>google[\w-]+\.html)$", gsc_verify_file),
+    path("vps-health/", vps_health, name="vps_health"),
     path("admin/", admin.site.urls),
     path("settings/", site_settings, name="site_settings"),
     path("settings/password/", set_dashboard_password, name="set_dashboard_password"),

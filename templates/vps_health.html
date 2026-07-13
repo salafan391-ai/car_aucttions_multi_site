@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="20">
+<title>VPS Health</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system, Segoe UI, Roboto, sans-serif;
+         background: #0f172a; color: #e2e8f0; padding: 24px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #94a3b8; font-size: 12px; margin-bottom: 20px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em;
+             color: #94a3b8; margin: 0 0 10px; }
+  .big { font-size: 26px; font-weight: 700; }
+  .unit { font-size: 13px; color: #94a3b8; font-weight: 400; }
+  .row { display: flex; justify-content: space-between; padding: 3px 0; }
+  .row .k { color: #94a3b8; }
+  .bar { height: 6px; background: #334155; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; border-radius: 4px; }
+  .ok { color: #4ade80; } .warn { color: #fbbf24; } .bad { color: #f87171; }
+  .bg-ok { background: #4ade80; } .bg-warn { background: #fbbf24; } .bg-bad { background: #f87171; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .pill { font-size: 12px; }
+  @media (prefers-color-scheme: light) {
+    body { background: #f1f5f9; color: #0f172a; }
+    .card { background: #fff; border-color: #e2e8f0; }
+    .card h2, .sub, .row .k, .unit { color: #64748b; }
+    .bar { background: #e2e8f0; }
+  }
+</style>
+</head>
+<body>
+  <h1>🖥️ VPS Health &amp; Metrics</h1>
+  <div class="sub">142.132.232.37 · updated {{ now }} · auto-refresh 20s{% if uptime %} · up {{ uptime }}{% endif %}</div>
+
+  <div class="grid">
+
+    {% if load %}
+    <div class="card">
+      <h2>CPU load</h2>
+      <div class="big {% if load_pct < 60 %}ok{% elif load_pct < 90 %}warn{% else %}bad{% endif %}">
+        {{ load.0 }} <span class="unit">/ {{ cores }} cores</span>
+      </div>
+      <div class="bar"><span class="{% if load_pct < 60 %}bg-ok{% elif load_pct < 90 %}bg-warn{% else %}bg-bad{% endif %}" style="width: {% if load_pct > 100 %}100{% else %}{{ load_pct }}{% endif %}%"></span></div>
+      <div class="row"><span class="k">1 / 5 / 15 min</span><span>{{ load.0 }} · {{ load.1 }} · {{ load.2 }}</span></div>
+    </div>
+    {% endif %}
+
+    {% if mem %}
+    <div class="card">
+      <h2>Memory</h2>
+      <div class="big {% if mem.pct < 70 %}ok{% elif mem.pct < 90 %}warn{% else %}bad{% endif %}">{{ mem.used_gb }}<span class="unit"> / {{ mem.total_gb }} GB</span></div>
+      <div class="bar"><span class="{% if mem.pct < 70 %}bg-ok{% elif mem.pct < 90 %}bg-warn{% else %}bg-bad{% endif %}" style="width: {{ mem.pct }}%"></span></div>
+      <div class="row"><span class="k">cache</span><span>{{ mem.cache_gb }} GB</span></div>
+      {% if swap %}<div class="row"><span class="k">swap</span><span>{{ swap.used_mb }} / {{ swap.total_mb }} MB</span></div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if disk %}
+    <div class="card">
+      <h2>Disk (/)</h2>
+      <div class="big {% if disk.pct < 70 %}ok{% elif disk.pct < 90 %}warn{% else %}bad{% endif %}">{{ disk.used_gb }}<span class="unit"> / {{ disk.total_gb }} GB</span></div>
+      <div class="bar"><span class="{% if disk.pct < 70 %}bg-ok{% elif disk.pct < 90 %}bg-warn{% else %}bg-bad{% endif %}" style="width: {{ disk.pct }}%"></span></div>
+      <div class="row"><span class="k">free</span><span>{{ disk.free_gb }} GB</span></div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Services</h2>
+      {% for name, state in services.items %}
+      <div class="row">
+        <span><span class="dot {% if state == 'active' %}bg-ok{% else %}bg-bad{% endif %}"></span>{{ name }}</span>
+        <span class="pill {% if state == 'active' %}ok{% else %}bad{% endif %}">{{ state }}</span>
+      </div>
+      {% endfor %}
+      {% if next_import %}<div class="row" style="margin-top:6px"><span class="k">next import</span><span>{{ next_import }}</span></div>{% endif %}
+    </div>
+
+    {% if pg_size %}
+    <div class="card">
+      <h2>PostgreSQL</h2>
+      <div class="row"><span class="k">db size</span><span>{{ pg_size }}</span></div>
+      <div class="row"><span class="k">cache hit</span><span class="{% if pg_cache_hit >= 99 %}ok{% elif pg_cache_hit >= 95 %}warn{% else %}bad{% endif %}">{{ pg_cache_hit }}%</span></div>
+      {% if pg_conns %}<div class="row"><span class="k">connections</span><span>{{ pg_conns.total }} / {{ pg_conns.max }} <span class="unit">({{ pg_conns.active }} active)</span></span></div>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if redis %}
+    <div class="card">
+      <h2>Redis (cache)</h2>
+      <div class="row"><span class="k">memory</span><span>{{ redis.used }} / {{ redis.max }}</span></div>
+      <div class="row"><span class="k">hit rate</span><span class="{% if redis.hit_pct >= 90 %}ok{% elif redis.hit_pct >= 70 %}warn{% else %}bad{% endif %}">{{ redis.hit_pct }}%</span></div>
+      <div class="row"><span class="k">keys</span><span>{{ redis.keys }}</span></div>
+    </div>
+    {% endif %}
+
+    {% if tenant_count %}
+    <div class="card">
+      <h2>Tenants</h2>
+      <div class="big ok">{{ tenant_count }}<span class="unit"> tenants</span></div>
+      <div class="row"><span class="k">domains</span><span>{{ domain_count }}</span></div>
+    </div>
+    {% endif %}
+
+  </div>
+</body>
+</html>
