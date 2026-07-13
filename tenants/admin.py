@@ -169,8 +169,31 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
 
 @admin.register(Domain)
 class DomainAdmin(admin.ModelAdmin):
-    list_display = ("domain", "tenant", "is_primary")
+    list_display = ("domain", "tenant", "is_primary", "current_ip")
     actions = ("activate_on_vps",)
+
+    @admin.display(description="Current IP")
+    def current_ip(self, obj):
+        """Live A-record the domain resolves to (cached 5 min). Green ✓ VPS when
+        it points at this box, orange when it's still on Railway/Cloudflare."""
+        import os
+        import socket
+        from django.core.cache import cache
+        from django.utils.html import format_html
+        vps = os.environ.get("VPS_IP") or "142.132.232.37"
+        key = f"domain_ip:{obj.domain}"
+        ip = cache.get(key)
+        if ip is None:
+            try:
+                ip = socket.gethostbyname(obj.domain)
+            except Exception:
+                ip = ""
+            cache.set(key, ip, 300)
+        if ip == vps:
+            return format_html('<b style="color:#0a8a0a">✓ VPS</b> {}', ip)
+        if not ip:
+            return format_html('<span style="color:#999">—</span>')
+        return format_html('<span style="color:#c60">{}</span>', ip)
 
     @admin.action(description="Activate on VPS (point Cloudflare DNS here)")
     def activate_on_vps(self, request, queryset):
