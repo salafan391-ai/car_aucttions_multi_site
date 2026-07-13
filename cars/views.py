@@ -259,48 +259,7 @@ def landing(request):
         return home(request)
 
     schema = getattr(connection, 'schema_name', 'public')
-
-    now = timezone.now()
     _lt = getattr(connection, 'tenant', None)
-    agg = _apply_tenant_catalog(ApiCar.objects.exclude(
-        category__name='auction', auction_date__lt=now
-    ), _lt).aggregate(
-        cars_count=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
-        auction_count=Count('id', filter=Q(category__name='auction')),
-        kb_count=Count('id', filter=Q(category__name='kbchachacha')),
-    )
-
-    next_auction = (
-        _apply_tenant_catalog(ApiCar.objects.filter(
-            category__name='auction',
-            status='available',
-            auction_date__gte=now,
-        ), _lt)
-        .order_by('auction_date')
-        .values_list('auction_date', flat=True)
-        .first()
-    )
-
-    WEEKDAYS_AR = {
-        0: 'الاثنين',
-        1: 'الثلاثاء',
-        2: 'الأربعاء',
-        3: 'الخميس',
-        4: 'الجمعة',
-        5: 'السبت',
-        6: 'الأحد',
-    }
-    WEEKDAYS_EN = {
-        0: 'Monday',
-        1: 'Tuesday',
-        2: 'Wednesday',
-        3: 'Thursday',
-        4: 'Friday',
-        5: 'Saturday',
-        6: 'Sunday',
-    }
-    next_auction_day_ar = WEEKDAYS_AR[next_auction.weekday()] if next_auction else None
-    next_auction_day_en = WEEKDAYS_EN[next_auction.weekday()] if next_auction else None
 
     # Get site cars + damaged cars counts
     try:
@@ -340,6 +299,49 @@ def landing(request):
     cached_html = cache.get(html_cache_key)
     if cached_html:
         return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
+
+    # ── Cache miss only ── the expensive catalog aggregates live here so a warm
+    # homepage skips the 179k-row COUNTs (they feed the context, not the key).
+    now = timezone.now()
+    agg = _apply_tenant_catalog(ApiCar.objects.exclude(
+        category__name='auction', auction_date__lt=now
+    ), _lt).aggregate(
+        cars_count=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
+        auction_count=Count('id', filter=Q(category__name='auction')),
+        kb_count=Count('id', filter=Q(category__name='kbchachacha')),
+    )
+
+    next_auction = (
+        _apply_tenant_catalog(ApiCar.objects.filter(
+            category__name='auction',
+            status='available',
+            auction_date__gte=now,
+        ), _lt)
+        .order_by('auction_date')
+        .values_list('auction_date', flat=True)
+        .first()
+    )
+
+    WEEKDAYS_AR = {
+        0: 'الاثنين',
+        1: 'الثلاثاء',
+        2: 'الأربعاء',
+        3: 'الخميس',
+        4: 'الجمعة',
+        5: 'السبت',
+        6: 'الأحد',
+    }
+    WEEKDAYS_EN = {
+        0: 'Monday',
+        1: 'Tuesday',
+        2: 'Wednesday',
+        3: 'Thursday',
+        4: 'Friday',
+        5: 'Saturday',
+        6: 'Sunday',
+    }
+    next_auction_day_ar = WEEKDAYS_AR[next_auction.weekday()] if next_auction else None
+    next_auction_day_en = WEEKDAYS_EN[next_auction.weekday()] if next_auction else None
 
     try:
         from site_cars.models import SiteFaq
