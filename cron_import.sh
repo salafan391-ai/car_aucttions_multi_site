@@ -37,3 +37,7 @@ if [ -n "$REDIS_URL" ]; then
     echo "==> Clearing cache..."
     python manage.py shell -c "from django.core.cache import cache; cache.clear(); print('Cache cleared.')"
 fi
+
+# Warm the Google Search Console cache for tenant dashboards (after the clear)
+echo "==> Refreshing GSC metrics cache..."
+python manage.py refresh_gsc || echo "==> GSC refresh failed (non-fatal)"

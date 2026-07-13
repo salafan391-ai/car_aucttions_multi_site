@@ -100,6 +100,16 @@ def dashboard(request):
         context['shop_requests_unhandled'] = ShopRequest.objects.filter(is_handled=False).count()
     except Exception:
         context['shop_requests_unhandled'] = 0
+
+    # Google Search Console metrics for this tenant's primary domain (cached, best-effort).
+    try:
+        from django.db import connection
+        from tenants.gsc import get_search_metrics
+        _dom = connection.tenant.get_primary_domain()
+        context['gsc'] = get_search_metrics(_dom.domain) if _dom else None
+    except Exception:
+        context['gsc'] = None
+
     return render(request, 'site_cars/dashboard.html', context)
 
 
