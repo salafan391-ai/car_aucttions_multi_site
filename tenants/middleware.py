@@ -31,6 +31,31 @@ _VALID_CAR_TYPE_RE = re.compile(r'^(auction|cars|auctioncars|truck|kbchachacha)?
 MAX_PAGE_NUMBER = 200  # Hard cap – no listing needs 200+ pages
 
 
+class OnDemandTLSCheckMiddleware:
+    """Answers Caddy's on-demand-TLS ``ask`` probe: 200 if the requested domain
+    is a known tenant domain, 404 otherwise — so Caddy only provisions Let's
+    Encrypt certs for real tenants (not any domain someone points at the box).
+
+    Must sit first in MIDDLEWARE: the probe hits an internal host that maps to
+    no tenant, so it has to short-circuit before TenantMainMiddleware routes.
+    No-op for every other request (and on Railway, which never receives it).
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.path == "/internal/tls-check":
+            domain = (request.GET.get("domain") or "").strip().lower().rstrip(".")
+            ok = False
+            if domain:
+                from tenants.models import Domain
+                connection.set_schema_to_public()
+                ok = Domain.objects.filter(domain=domain).exists()
+            return HttpResponse("ok") if ok else HttpResponseNotFound("no")
+        return self.get_response(request)
+
+
 class QueryStringGuardMiddleware:
     """
     Multi-layer request protection:

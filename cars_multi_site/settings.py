@@ -107,6 +107,7 @@ if DEBUG:
     INSTALLED_APPS += ["debug_toolbar"]
 
 MIDDLEWARE = [
+    "tenants.middleware.OnDemandTLSCheckMiddleware",
     "tenants.middleware.QueryStringGuardMiddleware",
     "django_tenants.middleware.main.TenantMainMiddleware",
     "tenants.middleware.BlockTenantAdminMiddleware",
