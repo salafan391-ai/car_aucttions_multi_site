@@ -1,19 +1,38 @@
-import csv
-import itertools
+"""
+Daily Encar import wrapper.
+
+Fast strategy (mirrors alokar-main, adapted for django-tenants)
+---------------------------------------------------------------
+1. Download today's CSV from R2 ONCE to local disk via boto3 multipart
+   (parallel 16 MB parts + adaptive retries). This handles R2's per-connection
+   ~80 MB drop quirk and is far faster than streaming with requests.
+2. Hand the local file to import_encar_fast via a `file://` URL. It makes a
+   SINGLE local pass that upserts every active row AND deletes stale cars
+   (lot_number not seen in the CSV) using the lot numbers gathered during that
+   same pass — via a temp-table delete that is aware of every tenant schema.
+
+This replaces the old flow that streamed the 2.9 GB CSV over the network twice
+(once to scan for lot numbers, once to import) and parsed it twice in Python.
+Now: one parallel download, one local parse pass.
+
+Required env vars: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+"""
 import os
+import tempfile
+from pathlib import Path
 
 import boto3
-import requests
+from boto3.s3.transfer import TransferConfig
+from botocore.config import Config
 from django.core.management.base import BaseCommand
 from django.core.management import call_command
-from django.db import connection
 from django.utils import timezone
 
 from cars.models import ApiCar
 
 
 class Command(BaseCommand):
-    help = "Delete stale Encar cars first, then import fresh data from R2"
+    help = "Download today's Encar CSV from R2 once, then upsert + delete stale in a single local pass."
 
     def handle(self, *args, **options):
         s3 = boto3.client(
@@ -22,100 +41,60 @@ class Command(BaseCommand):
             aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
             aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
             region_name="auto",
+            config=Config(
+                retries={"max_attempts": 20, "mode": "adaptive"},
+                read_timeout=120,
+                connect_timeout=30,
+            ),
+        )
+        # Multipart split → each 16 MB part is independently retryable, so a
+        # transient R2 drop mid-file doesn't fail the whole download.
+        transfer_cfg = TransferConfig(
+            multipart_threshold=16 * 1024 * 1024,
+            multipart_chunksize=16 * 1024 * 1024,
+            max_concurrency=4,
+            use_threads=True,
         )
 
-        url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": "encar-csv", "Key": "encar/encar_cars.csv"},
-            ExpiresIn=3600,
-        )
+        # IMPORTANT: write to disk, NOT the default /tmp — on some hosts /tmp is a
+        # RAM-backed tmpfs, so a ~3 GB CSV there would consume RAM and, alongside
+        # the local Postgres upsert, OOM the box. /var/tmp is disk-backed.
+        tmp_base = os.environ.get("ENCAR_TMPDIR") or "/var/tmp"
+        with tempfile.TemporaryDirectory(prefix="encar-import-", dir=tmp_base) as tmpdir:
+            local_csv = Path(tmpdir) / "encar_cars.csv"
 
-        # ── Step 1: Quick pass to collect all lot numbers in the CSV ──────────
-        self.stdout.write("Scanning CSV for lot numbers...")
-        seen: set[str] = set()
-        try:
-            resp = requests.get(url, stream=True, timeout=60)
-            resp.encoding = "utf-8"
-            lines = (line for line in resp.iter_lines(decode_unicode=True) if line)
-            header_line = next(lines, "").lstrip("\ufeff")
-            delimiter = "," if header_line.count(",") >= header_line.count("|") else "|"
-            reader = csv.DictReader(itertools.chain([header_line], lines), delimiter=delimiter)
-            for row in reader:
-                ln = (row.get("inner_id") or row.get("id") or "").strip()
-                if ln:
-                    seen.add(ln)
-            resp.close()
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f"Failed to scan CSV: {e}"))
-            return
+            # ── Step 1: Download CSV to local disk (resumable, drop-resistant) ──
+            self.stdout.write(f"Downloading CSV from R2 to {local_csv}...")
+            s3.download_file(
+                Bucket="encar-csv",
+                Key="encar/encar_cars.csv",
+                Filename=str(local_csv),
+                Config=transfer_cfg,
+            )
+            size_mb = local_csv.stat().st_size / 1024 / 1024
+            self.stdout.write(self.style.SUCCESS(f"Downloaded {size_mb:,.1f} MB"))
 
-        self.stdout.write(f"CSV contains {len(seen):,} lot numbers.")
+            # ── Step 2: Clear previous is_new flags before importing ───────────
+            cleared = ApiCar.objects.filter(is_new=True).update(is_new=False)
+            self.stdout.write(f"Cleared is_new flag on {cleared:,} cars from previous import.")
 
-        # ── Step 2: Delete stale cars using Django ORM ────────────────────────
-        self.stdout.write("Finding stale cars...")
-        db_lots = set(
-            ApiCar.objects.filter(category__isnull=True).values_list("lot_number", flat=True)
-        )
-        stale = db_lots - seen
-        self.stdout.write(f"Deleting {len(stale):,} stale cars...")
+            import_started_at = timezone.now()
 
-        # Find all tenant schemas dynamically
-        from django_tenants.utils import get_tenant_model
-        tenant_schemas = list(
-            get_tenant_model().objects
-            .exclude(schema_name="public")
-            .values_list("schema_name", flat=True)
-        )
+            # ── Step 3: Single local pass — upsert all rows AND delete stale ───
+            # import_encar_fast collects every lot_number it sees, then (with
+            # delete_stale) removes ApiCars not in the CSV via a temp-table join
+            # that also clears references in each tenant schema. No separate scan.
+            self.stdout.write(f"Importing from {local_csv} (upsert + stale delete)...")
+            call_command(
+                "import_encar_fast",
+                url=f"file://{local_csv}",
+                delete_stale=True,
+                progress=True,
+                progress_every=5000,
+                chunk_size=5000,
+                update_batch_size=1000,
+            )
 
-        CHUNK = 3000
-        stale_list = list(stale)
-        total_deleted = 0
-        with connection.cursor() as cursor:
-            for i in range(0, len(stale_list), CHUNK):
-                chunk = stale_list[i : i + CHUNK]
-
-                # Delete from public-schema tables first
-                cursor.execute(
-                    "DELETE FROM cars_wishlist WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
-                    [chunk],
-                )
-                cursor.execute(
-                    "DELETE FROM cars_carimage WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))",
-                    [chunk],
-                )
-
-                # Delete from all tenant-schema tables
-                for schema in tenant_schemas:
-                    for table in ("site_cars_siterating", "site_cars_sitequestion", "site_cars_siteorder", "site_cars_sitesoldcar"):
-                        cursor.execute(
-                            f'DELETE FROM "{schema}".{table} WHERE car_id IN (SELECT id FROM cars_apicar WHERE lot_number = ANY(%s))',
-                            [chunk],
-                        )
-
-                cursor.execute(
-                    "DELETE FROM cars_apicar WHERE lot_number = ANY(%s)",
-                    [chunk],
-                )
-                total_deleted += cursor.rowcount
-
-        self.stdout.write(self.style.SUCCESS(f"Deleted {total_deleted:,} stale cars."))
-
-        # ── Step 3: Clear previous is_new flags before importing ──────────────
-        cleared = ApiCar.objects.filter(is_new=True).update(is_new=False)
-        self.stdout.write(f"Cleared is_new flag on {cleared:,} cars from previous import.")
-
-        import_started_at = timezone.now()
-
-        # ── Step 4: Import fresh data ─────────────────────────────────────────
-        self.stdout.write("Starting import...")
-        call_command(
-            "import_encar_fast",
-            url=url,
-            delete_stale=False,
-            progress=True,
-            progress_every=5000,
-        )
-
-        # ── Step 5: Mark freshly imported cars as new ─────────────────────────
-        marked = ApiCar.objects.filter(created_at__gte=import_started_at).update(is_new=True)
-        self.stdout.write(self.style.SUCCESS(f"Marked {marked:,} newly imported cars as new."))
+            # ── Step 4: Mark freshly imported cars as new ─────────────────────
+            marked = ApiCar.objects.filter(created_at__gte=import_started_at).update(is_new=True)
+            self.stdout.write(self.style.SUCCESS(f"Marked {marked:,} newly imported cars as new."))

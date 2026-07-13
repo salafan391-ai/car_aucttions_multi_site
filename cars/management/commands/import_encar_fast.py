@@ -13,6 +13,7 @@ import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import transaction, connection
+from psycopg2.extras import Json, execute_values
 
 from cars.models import (
     ApiCar,
@@ -23,6 +24,59 @@ from cars.models import (
     CarSeatColor,
     BodyType,
 )
+
+
+class _LocalFileResponse:
+    """Minimal requests.Response replacement for local-file CSV streaming.
+
+    Lets _download_csv_stream serve a file that run_encar_import already pulled
+    to local disk (via boto3 multipart, which handles R2's chunked connection
+    drops far better than streaming with requests). Implements only the surface
+    the stream reader uses: `.encoding`, `.iter_lines(decode_unicode)`, `.close()`,
+    plus a `byte_offset` seek so the network path's retry-with-Range logic is a
+    cheap no-op here.
+    """
+
+    def __init__(self, path: str, byte_offset: int = 0):
+        self.encoding = "utf-8"
+        self.status_code = 200
+        self._f = open(path, "rb")
+        if byte_offset:
+            self._f.seek(byte_offset)
+
+    def iter_lines(self, decode_unicode: bool = False):
+        for raw in self._f:
+            line = raw.rstrip(b"\r\n")
+            yield line.decode(self.encoding, errors="replace") if decode_unicode else line
+
+    def close(self):
+        try:
+            self._f.close()
+        except Exception:
+            pass
+
+
+# ── Parallel parse workers ──────────────────────────────────────────────────
+# _row_to_fields is pure CPU (CSV row dict -> field dict; no DB), so we fan it
+# out across cores. On Linux the pool forks, inheriting the already-initialised
+# Django state, so a worker can call the parser directly. Each worker drops the
+# inherited DB connection so nobody shares the parent's psycopg2 socket; workers
+# never query anyway (FK resolution + upsert stay in the main process).
+_PARSE_CMD = None
+
+
+def _parse_pool_init():
+    global _PARSE_CMD
+    try:
+        from django.db import connection
+        connection.close()
+    except Exception:
+        pass
+    _PARSE_CMD = Command()
+
+
+def _parse_one(row):
+    return _PARSE_CMD._row_to_fields(row)
 
 
 class Command(BaseCommand):
@@ -135,6 +189,13 @@ class Command(BaseCommand):
         )
 
     def _download_csv_stream(self, url: str, username: str = "", password: str = "", byte_offset: int = 0) -> Optional[requests.Response]:
+        # Local-file shortcut — used by run_encar_import after it has downloaded
+        # the CSV to disk with boto3. Reads straight off local disk (no network,
+        # no chunk-drop retries), which is the main speedup over streaming twice.
+        if url.startswith("file://") or url.startswith("/"):
+            local_path = url[7:] if url.startswith("file://") else url
+            return _LocalFileResponse(local_path, byte_offset=byte_offset)
+
         headers = {}
         if byte_offset > 0:
             headers["Range"] = f"bytes={byte_offset}-"
@@ -535,25 +596,11 @@ class Command(BaseCommand):
             if not rows:
                 return
 
-            lot_numbers = [r["lot_number"] for r in rows if r["lot_number"]]
-            if not lot_numbers:
-                return
+            now = datetime.now(timezone.utc)
 
-            # Build a map of existing cars by lot_number -> {id}.
-            existing_map: Dict[str, dict] = {}
-            for row in (
-                ApiCar.objects
-                .filter(lot_number__in=lot_numbers)
-                .order_by('id')
-                .values('id', 'lot_number')
-            ):
-                ln = row['lot_number']
-                if ln not in existing_map:
-                    existing_map[ln] = row
-
-            new_objs: List[ApiCar] = []
-            upd_objs: List[ApiCar] = []
-
+            # Build one value tuple per row (FK ids resolved via the warm caches).
+            # jsonb columns must be wrapped in Json(); a genuine NULL stays None.
+            by_lot: Dict[str, tuple] = {}
             for fields in rows:
                 ln = fields["lot_number"]
                 manufacturer, model, badge, color, seat_color, body = self._get_or_create_related(
@@ -565,101 +612,175 @@ class Command(BaseCommand):
                     fields["seat_color_name"],
                     fields["body"],
                 )
-                if ln in existing_map:
-                    updated += 1
-                    if not dry_run:
-                        upd_objs.append(ApiCar(
-                            id=existing_map[ln]["id"],
-                            car_id=ln[:20],
-                            title=fields["title"],
-                            image=fields["image"],
-                            images=fields["images"],
-                            manufacturer=manufacturer,
-                            vin=fields["vin"] or ln,
-                            lot_number=ln,
-                            model=model,
-                            year=fields["year"],
-                            badge=badge,
-                            model_version=fields["model_version"],
-                            model_year_range=fields["model_year_range"],
-                            engine_group=fields["engine_group"],
-                            trim_detail=fields["trim_detail"],
-                            color=color,
-                            seat_color=seat_color,
-                            transmission=fields["transmission"],
-                            engine=None,
-                            body=body,
-                            power=fields["power"],
-                            price=fields["price"],
-                            mileage=fields["mileage"],
-                            drive_wheel=fields["drive_wheel"],
-                            seat_count=fields["seat_count"],
-                            fuel=fields["fuel"],
-                            is_leasing=False,
-                            extra_features=fields["extra"],
-                            options=fields["options"],
-                            address=fields["address"],
-                        ))
-                else:
-                    created += 1
-                    if not dry_run:
-                        new_objs.append(ApiCar(
-                            car_id=ln[:20],
-                            title=fields["title"],
-                            image=fields["image"],
-                            images=fields["images"],
-                            manufacturer=manufacturer,
-                            vin=fields["vin"] or ln,
-                            lot_number=ln,
-                            model=model,
-                            year=fields["year"],
-                            badge=badge,
-                            model_version=fields["model_version"],
-                            model_year_range=fields["model_year_range"],
-                            engine_group=fields["engine_group"],
-                            trim_detail=fields["trim_detail"],
-                            color=color,
-                            seat_color=seat_color,
-                            transmission=fields["transmission"],
-                            engine=None,
-                            body=body,
-                            power=fields["power"],
-                            price=fields["price"],
-                            mileage=fields["mileage"],
-                            drive_wheel=fields["drive_wheel"],
-                            seat_count=fields["seat_count"],
-                            fuel=fields["fuel"],
-                            is_leasing=False,
-                            extra_features=fields["extra"],
-                            options=fields["options"],
-                            address=fields["address"],
-                        ))
+                # Dedup within this batch (keep last): ON CONFLICT DO UPDATE refuses
+                # to touch the same target row twice inside one INSERT.
+                by_lot[ln] = (
+                    ln[:20],                                                    # car_id
+                    fields["title"],
+                    fields["image"],
+                    Json(fields["images"]) if fields["images"] is not None else None,
+                    manufacturer.id,
+                    fields["vin"] or ln,
+                    ln,                                                         # lot_number
+                    model.id,
+                    fields["year"],
+                    badge.id,
+                    fields["model_version"],
+                    fields["model_year_range"],
+                    fields["engine_group"],
+                    fields["trim_detail"],
+                    color.id,
+                    seat_color.id if seat_color else None,
+                    fields["transmission"],
+                    None,                                                       # engine
+                    body.id if body else None,
+                    fields["power"],
+                    fields["price"],
+                    fields["mileage"],
+                    fields["drive_wheel"],
+                    fields["seat_count"],
+                    fields["fuel"],
+                    False,                                                      # is_leasing
+                    Json(fields["extra"]) if fields["extra"] is not None else None,
+                    Json(fields["options"]) if fields["options"] is not None else None,
+                    fields["address"],
+                    False,                                                      # is_special  (Django default; DB has no default)
+                    False,                                                      # is_luxury
+                    False,                                                      # is_new (run_encar_import flips new rows after)
+                    "available",                                                # status
+                    "",                                                         # first_registration
+                    "",                                                         # usage_type
+                    "",                                                         # features
+                    "",                                                         # inspection_notes
+                    "",                                                         # inspection_report_url
+                    now,                                                        # created_at (ignored on conflict)
+                    now,                                                        # updated_at
+                )
 
-            if dry_run:
+            values = list(by_lot.values())
+            if not values:
                 return
 
-            update_fields = [
-                'car_id','title','image','images','manufacturer','vin','lot_number','model','year','badge',
-                'model_version','model_year_range','engine_group','trim_detail',
-                'color','seat_color','transmission','engine','body','power','price','mileage',
-                'drive_wheel','seat_count','fuel','is_leasing','extra_features','options','address'
-            ]
+            if dry_run:
+                lot_numbers = list(by_lot.keys())
+                existing = set(
+                    ApiCar.objects.filter(lot_number__in=lot_numbers).values_list("lot_number", flat=True)
+                )
+                for ln in by_lot:
+                    if ln in existing:
+                        updated += 1
+                    else:
+                        created += 1
+                return
 
-            # bulk_update existing cars
-            if upd_objs:
-                for i in range(0, len(upd_objs), batch_size):
-                    sub_batch = upd_objs[i : i + batch_size]
-                    with transaction.atomic():
-                        connection.cursor().execute("SET LOCAL statement_timeout = 0")
-                        ApiCar.objects.bulk_update(sub_batch, fields=update_fields, batch_size=len(sub_batch))
+            # Single set-based upsert. RETURNING (xmax = 0) is TRUE for freshly
+            # inserted rows and FALSE for rows that hit DO UPDATE — that gives the
+            # created/updated split with no pre-query.
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    cursor.execute("SET LOCAL statement_timeout = 0")
+                    results = execute_values(
+                        cursor,
+                        """
+                        INSERT INTO cars_apicar (
+                            car_id, title, image, images, manufacturer_id, vin, lot_number,
+                            model_id, year, badge_id, model_version, model_year_range,
+                            engine_group, trim_detail, color_id, seat_color_id, transmission,
+                            engine, body_id, power, price, mileage, drive_wheel, seat_count,
+                            fuel, is_leasing, extra_features, options, address,
+                            is_special, is_luxury, is_new, status, first_registration,
+                            usage_type, features, inspection_notes, inspection_report_url,
+                            created_at, updated_at
+                        )
+                        VALUES %s
+                        ON CONFLICT (lot_number) DO UPDATE SET
+                            car_id = EXCLUDED.car_id, title = EXCLUDED.title, image = EXCLUDED.image,
+                            images = EXCLUDED.images, manufacturer_id = EXCLUDED.manufacturer_id,
+                            vin = EXCLUDED.vin, model_id = EXCLUDED.model_id, year = EXCLUDED.year,
+                            badge_id = EXCLUDED.badge_id, model_version = EXCLUDED.model_version,
+                            model_year_range = EXCLUDED.model_year_range, engine_group = EXCLUDED.engine_group,
+                            trim_detail = EXCLUDED.trim_detail, color_id = EXCLUDED.color_id,
+                            seat_color_id = EXCLUDED.seat_color_id, transmission = EXCLUDED.transmission,
+                            engine = EXCLUDED.engine, body_id = EXCLUDED.body_id, power = EXCLUDED.power,
+                            price = EXCLUDED.price, mileage = EXCLUDED.mileage, drive_wheel = EXCLUDED.drive_wheel,
+                            seat_count = EXCLUDED.seat_count, fuel = EXCLUDED.fuel, is_leasing = EXCLUDED.is_leasing,
+                            extra_features = EXCLUDED.extra_features, options = EXCLUDED.options,
+                            address = EXCLUDED.address, updated_at = EXCLUDED.updated_at
+                        RETURNING (xmax = 0) AS inserted
+                        """,
+                        values,
+                        page_size=1000,
+                        fetch=True,
+                    )
+            for (inserted,) in results:
+                if inserted:
+                    created += 1
+                else:
+                    updated += 1
 
-            # bulk_create new cars
-            if new_objs:
-                with transaction.atomic():
-                    connection.cursor().execute("SET LOCAL statement_timeout = 0")
-                    ApiCar.objects.bulk_create(new_objs, ignore_conflicts=True, batch_size=batch_size)
-                    # Generate slugs for newly created cars that have none
-                    connection.cursor().execute("""
+        row_iter = self._iter_csv_stream(resp, url=url, username=username, password=password)
+
+        def ingest(fields) -> bool:
+            """Handle one parsed row; return True to stop (max_rows reached)."""
+            nonlocal processed
+            processed += 1
+            if fields["lot_number"]:
+                seen_lot_numbers.add(fields["lot_number"])
+                chunk_rows.append(fields)
+                if len(chunk_rows) >= chunk_size:
+                    flush_chunk(chunk_rows)
+                    chunk_rows.clear()
+            if progress and processed % max(1, progress_every) == 0:
+                self.stdout.write(f"Processed {processed} rows... Created: {created}, Updated: {updated}")
+            return bool(max_rows and processed >= max_rows)
+
+        # The parse (_row_to_fields) is pure CPU and dominates wall-clock, so fan
+        # it across cores. FK resolution + the upsert stay here in the main
+        # process (inside flush_chunk). Override with ENCAR_PARSE_WORKERS;
+        # default = cores - 1. Falls back to single-process if a pool can't start.
+        default_workers = max(1, (os.cpu_count() or 2) - 1)
+        workers = self._to_int(os.getenv("ENCAR_PARSE_WORKERS", ""), default=default_workers) or default_workers
+
+        pool = None
+        if workers > 1:
+            try:
+                import multiprocessing as mp
+                from django.db import connections
+                # Close the parent's DB connections BEFORE forking so the workers
+                # don't inherit (and then tear down) the shared psycopg2 socket —
+                # otherwise the main process hits "cursor already closed". Django
+                # transparently reopens on the next query in flush_chunk.
+                connections.close_all()
+                pool = mp.get_context("fork").Pool(processes=workers, initializer=_parse_pool_init)
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f"Parallel parse unavailable ({e}); using single process."))
+                pool = None
+
+        if pool is not None:
+            self.stdout.write(f"Parsing with {workers} worker processes...")
+            try:
+                for fields in pool.imap(_parse_one, row_iter, chunksize=250):
+                    if ingest(fields):
+                        break
+            finally:
+                pool.terminate()
+                pool.join()
+        else:
+            for row in row_iter:
+                if ingest(self._row_to_fields(row)):
+                    break
+
+        # leftover
+        if chunk_rows:
+            flush_chunk(chunk_rows)
+
+        # Generate slugs once, after all rows are upserted, for any newly-inserted
+        # cars that still have none (updates keep their existing slug).
+        if not dry_run:
+            with transaction.atomic():
+                with connection.cursor() as cursor:
+                    cursor.execute("SET LOCAL statement_timeout = 0")
+                    cursor.execute("""
                         UPDATE cars_apicar
                         SET slug = CONCAT(
                             COALESCE(CAST(year AS TEXT), ''), '-',
@@ -675,28 +796,6 @@ class Command(BaseCommand):
                         )
                         WHERE slug IS NULL OR slug = ''
                     """)
-
-        for row in self._iter_csv_stream(resp, url=url, username=username, password=password):
-            processed += 1
-            fields = self._row_to_fields(row)
-            if not fields["lot_number"]:
-                continue
-            seen_lot_numbers.add(fields["lot_number"])
-            chunk_rows.append(fields)
-
-            if len(chunk_rows) >= chunk_size:
-                flush_chunk(chunk_rows)
-                chunk_rows.clear()
-
-            if progress and processed % max(1, progress_every) == 0:
-                self.stdout.write(f"Processed {processed} rows... Created: {created}, Updated: {updated}")
-
-            if max_rows and processed >= max_rows:
-                break
-
-        # leftover
-        if chunk_rows:
-            flush_chunk(chunk_rows)
 
         return created, updated, seen_lot_numbers
 
