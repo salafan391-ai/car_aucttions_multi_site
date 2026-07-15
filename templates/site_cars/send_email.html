@@ -16,7 +16,12 @@
         <!-- Send Form -->
         <div class="lg:col-span-2">
             <div class="bg-white rounded-2xl shadow-sm p-6">
-                <form method="post">
+                {% comment %}
+                Broadcast mails every registered user with an address — customers
+                included — and cannot be unsent. Single sends stay unprompted.
+                {% endcomment %}
+                <form method="post"
+                      onsubmit="return this.send_type.value !== 'broadcast' || confirm('سيتم إرسال هذا البريد إلى جميع المستخدمين المسجّلين في الموقع، بما فيهم العملاء.\n\nلا يمكن التراجع بعد الإرسال.\n\nمتابعة؟');">
                     {% csrf_token %}
 
                     <!-- Send Type Toggle -->

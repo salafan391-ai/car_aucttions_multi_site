@@ -687,12 +687,18 @@ def faq_manage(request):
     })
 
 
+# POST-only: both of these change state and `reject_rating` deletes permanently.
+# As GET links they were reachable by anything that follows a URL while an admin
+# is logged in — a browser prefetcher, a link scanner, a chat client unfurling a
+# pasted link — and carried no CSRF protection. @require_POST + {% csrf_token %}
+# in the templates closes both holes.
+@require_POST
 @section_required("reviews")
 def approve_rating(request, pk):
-    """Approve a rating"""
+    """Approve a rating (POST only)."""
     if _is_public_schema():
         return redirect('home')
-    
+
     rating = get_object_or_404(SiteRating, pk=pk)
     rating.is_approved = True
     rating.save()
@@ -705,12 +711,13 @@ def approve_rating(request, pk):
     return redirect(request.META.get('HTTP_REFERER') or fallback)
 
 
+@require_POST
 @section_required("reviews")
 def reject_rating(request, pk):
-    """Reject and delete a rating"""
+    """Reject and permanently delete a rating (POST only)."""
     if _is_public_schema():
         return redirect('home')
-    
+
     rating = get_object_or_404(SiteRating, pk=pk)
     car_slug = rating.car.slug if rating.car else None
     name = rating.display_name

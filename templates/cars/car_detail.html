@@ -923,19 +923,29 @@
                                     </div>
                                 </div>
                             </div>
+                            {% comment %}
+                            POST forms, not links — approve/reject change state and
+                            reject deletes permanently. See site_cars/views.py.
+                            {% endcomment %}
                             <div class="flex gap-2">
-                                <a href="{% url 'approve_rating' r.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                    <span class="bilingual" data-lang-ar="موافقة" data-lang-ru="согласие" data-lang-es="consentir" data-lang-en="Approve">موافقة</span>
-                                </a>
-                                <a href="{% url 'reject_rating' r.id %}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition" onclick="return confirm((localStorage.getItem('site_lang')||'ar')==='en' ? 'Are you sure you want to reject and delete this rating?' : 'هل أنت متأكد من رفض وحذف هذا التقييم؟')">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                    <span class="bilingual" data-lang-ar="رفض" data-lang-ru="отклонить" data-lang-es="rechazar" data-lang-en="Reject">رفض</span>
-                                </a>
+                                <form method="post" action="{% url 'approve_rating' r.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        <span class="bilingual" data-lang-ar="موافقة" data-lang-ru="согласие" data-lang-es="consentir" data-lang-en="Approve">موافقة</span>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'reject_rating' r.id %}" onsubmit="return confirm((localStorage.getItem('site_lang')||'ar')==='en' ? 'Are you sure you want to reject and delete this rating? This cannot be undone.' : 'هل أنت متأكد من رفض وحذف هذا التقييم؟ لا يمكن التراجع.')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                        <span class="bilingual" data-lang-ar="رفض" data-lang-ru="отклонить" data-lang-es="rechazar" data-lang-en="Reject">رفض</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                         {% if r.comment %}

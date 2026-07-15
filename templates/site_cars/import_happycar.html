@@ -54,7 +54,14 @@
     </div>
     {% else %}
     <!-- Idle state: form -->
-    <form method="post" class="bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-5">
+    {% comment %}
+    Only guards the destructive option: a plain import (add/update) submits with
+    no prompt, but ticking "حذف السيارات المستوردة سابقاً" deletes cars, so that
+    one asks first. A blanket confirm on every import would just train people to
+    click through it.
+    {% endcomment %}
+    <form method="post" class="bg-white rounded-2xl shadow-sm p-6 mb-6 space-y-5"
+          onsubmit="return !this.delete_missing.checked || this.dry_run.checked || confirm('حذّرت: خيار «حذف السيارات المستوردة سابقاً وغير الموجودة في هذا الاستيراد» مُفعَّل.\n\nسيتم حذف السيارات المستوردة سابقاً التي لا تظهر في هذا الاستيراد نهائياً، ولا يمكن التراجع.\n\nمتابعة؟');">
         {% csrf_token %}
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

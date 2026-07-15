@@ -27,13 +27,29 @@
                     <div class="text-xs text-gray-500 mb-2">{{ rating.car }}</div>
                     {% if rating.comment %}<p class="text-sm text-gray-700">{{ rating.comment }}</p>{% endif %}
                 </div>
-                <div class="flex flex-col gap-2">
+                {% comment %}
+                POST forms, not links: reject/delete destroys the rating with no
+                undo, and as a GET link it could fire from a prefetcher or a
+                crawler. The confirm mirrors the one already on car_detail.html.
+                {% endcomment %}
+                <div class="flex flex-col gap-2 shrink-0">
                     {% if not rating.is_approved %}
-                    <a href="{% url 'approve_rating' rating.pk %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded text-xs font-bold text-center">موافق</a>
-                    <a href="{% url 'reject_rating' rating.pk %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold text-center">رفض</a>
+                    <form method="post" action="{% url 'approve_rating' rating.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded text-xs font-bold text-center">موافق</button>
+                    </form>
+                    <form method="post" action="{% url 'reject_rating' rating.pk %}"
+                          onsubmit="return confirm('هل أنت متأكد من رفض وحذف تقييم {{ rating.display_name|escapejs }}؟ لا يمكن التراجع.')">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded text-xs font-bold text-center">رفض</button>
+                    </form>
                     {% else %}
-                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold">موافق عليه</span>
-                    <a href="{% url 'reject_rating' rating.pk %}" class="bg-gray-100 hover:bg-red-100 hover:text-red-700 text-gray-600 px-4 py-1.5 rounded text-xs font-bold text-center">حذف</a>
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold text-center">موافق عليه</span>
+                    <form method="post" action="{% url 'reject_rating' rating.pk %}"
+                          onsubmit="return confirm('هل أنت متأكد من حذف تقييم {{ rating.display_name|escapejs }}؟ لا يمكن التراجع.')">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full bg-gray-100 hover:bg-red-100 hover:text-red-700 text-gray-600 px-4 py-1.5 rounded text-xs font-bold text-center">حذف</button>
+                    </form>
                     {% endif %}
                 </div>
             </div>
