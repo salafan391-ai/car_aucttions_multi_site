@@ -1728,6 +1728,16 @@
 
     {% block extra_js %}{% endblock %}
 
+    {% comment %}
+    Dashboard help assistant, on every page for any staff account. The gate is
+    user.is_staff so it matches the endpoint's @staff_required exactly — `can` is
+    an empty dict for a staff member with no sections granted, which would
+    wrongly hide the widget from the very people most likely to need it.
+    Included here rather than per-page so it's available on the forms staff
+    actually work in (add a car, invoices) and not just the dashboard index.
+    {% endcomment %}
+    {% if user.is_staff %}{% include "assistant/widget.html" %}{% endif %}
+
     {% block mobile_bottom_nav %}
     <!-- Default Mobile Bottom Navigation -->
     <div class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.10)]">
