@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
+from site_cars.permissions import site_admin_required
 from django.db import OperationalError, ProgrammingError, connection
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -108,7 +108,7 @@ def _guard(request):
     return None
 
 
-@staff_member_required
+@site_admin_required
 def pages_list(request):
     guard = _guard(request)
     if guard:
@@ -117,7 +117,7 @@ def pages_list(request):
     return render(request, "site_builder/dashboard/pages_list.html", {"pages": pages})
 
 
-@staff_member_required
+@site_admin_required
 def page_create(request):
     guard = _guard(request)
     if guard:
@@ -133,7 +133,7 @@ def page_create(request):
     return render(request, "site_builder/dashboard/page_form.html", {"form": form, "is_new": True})
 
 
-@staff_member_required
+@site_admin_required
 def page_settings(request, pk):
     guard = _guard(request)
     if guard:
@@ -150,7 +150,7 @@ def page_settings(request, pk):
     return render(request, "site_builder/dashboard/page_form.html", {"form": form, "page": page, "is_new": False})
 
 
-@staff_member_required
+@site_admin_required
 def page_edit(request, pk):
     """Manage a page's sections (add / reorder / edit / delete)."""
     guard = _guard(request)
@@ -163,7 +163,7 @@ def page_edit(request, pk):
     })
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def page_delete(request, pk):
     guard = _guard(request)
@@ -175,7 +175,7 @@ def page_delete(request, pk):
     return redirect("site_builder:pages_list")
 
 
-@staff_member_required
+@site_admin_required
 def section_edit(request, pk, sec_pk=None):
     guard = _guard(request)
     if guard:
@@ -203,7 +203,7 @@ def section_edit(request, pk, sec_pk=None):
     })
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def section_delete(request, pk, sec_pk):
     guard = _guard(request)
@@ -215,7 +215,7 @@ def section_delete(request, pk, sec_pk):
     return redirect("site_builder:page_edit", pk=pk)
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def section_move(request, pk, sec_pk, direction):
     guard = _guard(request)

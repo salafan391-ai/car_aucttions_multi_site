@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.admin.views.decorators import staff_member_required
+from site_cars.permissions import site_admin_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import connection
@@ -172,7 +172,7 @@ def shop_request(request):
     return redirect(redirect_name)
 
 
-@staff_member_required
+@site_admin_required
 def shop_requests(request):
     """Dashboard list of customer part/accessory requests (from the empty-catalogue form)."""
     if _is_public_schema():
@@ -192,7 +192,7 @@ def shop_requests(request):
     })
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def shop_request_toggle(request, pk):
     """Toggle a request's handled flag."""
@@ -267,7 +267,7 @@ def _save_images(item, request):
         ShopItemImage.objects.create(item=item, image=f, order=start + i)
 
 
-@staff_member_required
+@site_admin_required
 def shop_manage(request):
     """Staff inventory list for parts OR accessories (kind filter)."""
     if _is_public_schema():
@@ -286,7 +286,7 @@ def shop_manage(request):
     })
 
 
-@staff_member_required
+@site_admin_required
 def shop_add(request):
     if _is_public_schema():
         messages.error(request, "غير متاح من النطاق العام")
@@ -309,7 +309,7 @@ def shop_add(request):
     })
 
 
-@staff_member_required
+@site_admin_required
 def shop_edit(request, pk):
     if _is_public_schema():
         messages.error(request, "غير متاح من النطاق العام")
@@ -331,7 +331,7 @@ def shop_edit(request, pk):
     })
 
 
-@staff_member_required
+@site_admin_required
 def shop_delete(request, pk):
     if _is_public_schema():
         return redirect("home")
@@ -346,7 +346,7 @@ def shop_delete(request, pk):
     return render(request, "site_shop/shop_delete.html", {"item": item, "kind": kind})
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def shop_delete_image(request, pk, image_id):
     if _is_public_schema():
@@ -358,7 +358,7 @@ def shop_delete_image(request, pk, image_id):
     return redirect("shop_edit", pk=item.pk)
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def shop_toggle_stock(request, pk):
     if _is_public_schema():
@@ -369,7 +369,7 @@ def shop_toggle_stock(request, pk):
     return redirect(request.META.get("HTTP_REFERER") or "shop_manage")
 
 
-@staff_member_required
+@site_admin_required
 def shop_import(request):
     """Upload a CSV catalogue feed (e.g. a Korean wholesaler export) and upsert
     it into the parts/accessories inventory."""

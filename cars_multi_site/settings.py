@@ -146,6 +146,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "tenants.context_processors.tenant_branding",
                 "site_builder.context_processors.site_chrome",
+                "site_cars.context_processors.staff_permissions",
             ],
             "loaders": [
                 "tenants.template_loader.TenantThemeLoader",

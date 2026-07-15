@@ -1,8 +1,14 @@
 from django.urls import path
-from . import views
+from . import staff_views, views
 
 urlpatterns = [
     path('dashboard/', views.dashboard, name='site_dashboard'),
+    # Staff accounts for this site (site admin only)
+    path('dashboard/staff/', staff_views.staff_list, name='staff_list'),
+    path('dashboard/staff/add/', staff_views.staff_add, name='staff_add'),
+    path('dashboard/staff/<int:pk>/edit/', staff_views.staff_edit, name='staff_edit'),
+    path('dashboard/staff/<int:pk>/delete/', staff_views.staff_delete, name='staff_delete'),
+    path('dashboard/staff/password-suggestion/', staff_views.staff_password_suggestion, name='staff_password_suggestion'),
     # Shareable car collections (staff builder + public view)
     path('dashboard/share/', views.share_builder, name='share_builder'),
     path('dashboard/share/search/', views.share_search, name='share_search'),

@@ -518,6 +518,32 @@ class SharedCollection(models.Model):
         super().save(*args, **kwargs)
 
 
+class StaffAccess(models.Model):
+    """Which dashboard sections a limited staff account may reach.
+
+    Only created for limited staff. Site admins (``is_staff`` + ``is_superuser``)
+    bypass this table entirely — see ``site_cars.permissions``. A staff account
+    with no row here reaches nothing, so rows are created alongside the account.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="staff_access")
+    can_cars = models.BooleanField("السيارات والمخزون", default=False)
+    can_sales = models.BooleanField("الفواتير والإيصالات", default=False)
+    can_orders = models.BooleanField("طلبات العملاء", default=False)
+    can_reviews = models.BooleanField("التقييمات والأسئلة", default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="staff_accounts_created",
+    )
+
+    class Meta:
+        verbose_name = "صلاحيات موظف"
+        verbose_name_plural = "صلاحيات الموظفين"
+
+    def __str__(self):
+        return f"StaffAccess: {self.user}"
+
+
 class UserProfile(models.Model):
     """Per-tenant profile for an end-user account (extends auth.User)."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")

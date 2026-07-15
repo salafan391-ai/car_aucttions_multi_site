@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_add %}إضافة موظف{% else %}تعديل موظف{% endif %} - {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block content %}
+<section class="max-w-2xl mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">{% if is_add %}إضافة موظف{% else %}تعديل «{{ member.username }}»{% endif %}</h1>
+        <p class="text-gray-500 mt-1">
+            {% if is_add %}
+            أنشئ حساباً وسلّم بيانات الدخول للموظف. يمكنه تغيير كلمة المرور لاحقاً من صفحة حسابه.
+            {% else %}
+            عدّل الأقسام التي يمكن للموظف الوصول إليها.
+            {% endif %}
+        </p>
+    </div>
+
+    {% if messages %}
+    <div class="space-y-2 mb-6">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-xl text-sm {% if message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="bg-white rounded-2xl shadow-sm p-6 space-y-5">
+            <div>
+                <label for="username" class="block text-sm font-medium mb-1.5">اسم المستخدم</label>
+                {% if is_add %}
+                <input type="text" id="username" name="username" value="{{ form.username }}" required autocomplete="off"
+                       class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/30">
+                <p class="text-xs text-gray-400 mt-1.5">يستخدمه الموظف لتسجيل الدخول. لا يمكن تغييره لاحقاً.</p>
+                {% else %}
+                <input type="text" id="username" value="{{ form.username }}" disabled
+                       class="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-gray-500">
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="first_name" class="block text-sm font-medium mb-1.5">الاسم <span class="text-gray-400 font-normal">(اختياري)</span></label>
+                <input type="text" id="first_name" name="first_name" value="{{ form.first_name }}"
+                       class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/30">
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-medium mb-1.5">البريد الإلكتروني <span class="text-gray-400 font-normal">(اختياري)</span></label>
+                <input type="email" id="email" name="email" value="{{ form.email }}" dir="ltr"
+                       class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/30">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium mb-1.5">
+                    كلمة المرور
+                    {% if not is_add %}<span class="text-gray-400 font-normal">(اتركها فارغة للإبقاء على الحالية)</span>{% endif %}
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" id="password" name="password" dir="ltr" autocomplete="new-password"
+                           {% if is_add %}required{% endif %}
+                           class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 font-mono focus:outline-none focus:ring-2 focus:ring-brand/30">
+                    <button type="button" id="gen-password"
+                            class="border border-gray-200 text-gray-600 text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-gray-50 transition whitespace-nowrap">
+                        توليد
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 mt-1.5">كلمة المرور ظاهرة حتى تتمكن من نسخها وتسليمها للموظف.</p>
+            </div>
+
+            {% if not is_add %}
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="is_active" {% if form.is_active %}checked{% endif %}
+                       class="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand/30">
+                <span class="text-sm">الحساب نشط <span class="text-gray-400">— ألغِ التحديد لمنع الدخول دون حذف الحساب.</span></span>
+            </label>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+            <h2 class="text-lg font-bold mb-1">الصلاحيات</h2>
+            <p class="text-gray-500 text-xs mb-4">حدد الأقسام التي يمكن للموظف فتحها. الأقسام غير المحددة لن تظهر له ولن يتمكن من الوصول إليها.</p>
+            <div class="space-y-3">
+                {% for section in sections %}
+                <label class="flex items-start gap-3 p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition cursor-pointer">
+                    <input type="checkbox" name="section_{{ section.key }}" {% if section.checked %}checked{% endif %}
+                           class="w-4 h-4 mt-0.5 rounded border-gray-300 text-brand focus:ring-brand/30">
+                    <span class="min-w-0">
+                        <span class="block text-sm font-medium">{{ section.label }}</span>
+                        <span class="block text-xs text-gray-500 mt-0.5">{{ section.help }}</span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            <p class="text-xs text-gray-400 mt-4">
+                إعدادات الموقع، المتجر، منشئ الصفحات، والفوترة متاحة لمدير الموقع فقط ولا يمكن منحها للموظفين.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="submit" class="bg-brand bg-brand-hover text-white text-sm font-bold px-6 py-2.5 rounded-xl transition">
+                {% if is_add %}إنشاء الحساب{% else %}حفظ التغييرات{% endif %}
+            </button>
+            <a href="{% url 'staff_list' %}" class="border border-gray-200 text-gray-600 text-sm font-bold px-6 py-2.5 rounded-xl hover:bg-gray-50 transition">
+                إلغاء
+            </a>
+        </div>
+    </form>
+</section>
+
+<script>
+document.getElementById('gen-password').addEventListener('click', async function () {
+    this.disabled = true;
+    try {
+        const res = await fetch("{% url 'staff_password_suggestion' %}");
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        document.getElementById('password').value = data.password;
+    } catch (err) {
+        alert('تعذّر توليد كلمة المرور. حاول مرة أخرى.');
+    } finally {
+        this.disabled = false;
+    }
+});
+</script>
+{% endblock %}

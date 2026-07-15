@@ -7,7 +7,6 @@ import time
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import connection
@@ -20,6 +19,7 @@ from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
 from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteBillItem, SiteReceipt, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq, UserProfile
+from .permissions import section_required, site_admin_required, staff_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from cars.models import Wishlist
@@ -46,7 +46,7 @@ def _bust_home_cache():
     cache.delete(f"home_ctx_v9:{schema}")
 
 
-@staff_member_required
+@staff_required
 def dashboard(request):
     if _is_public_schema():
         return _saas_owner_dashboard(request)
@@ -252,7 +252,7 @@ def site_car_list(request):
     return render(request, 'site_cars/site_car_list.html', context)
 
 
-@staff_member_required
+@section_required("cars")
 def site_car_add(request):
     """Add a new site car"""
     if _is_public_schema():
@@ -316,7 +316,7 @@ def site_car_add(request):
     })
 
 
-@staff_member_required
+@section_required("cars")
 def site_car_edit(request, pk):
     """Edit an existing site car"""
     if _is_public_schema():
@@ -381,7 +381,7 @@ def site_car_edit(request, pk):
     })
 
 
-@staff_member_required
+@section_required("cars")
 def site_car_delete(request, pk):
     """Delete a site car"""
     if _is_public_schema():
@@ -402,7 +402,7 @@ def site_car_delete(request, pk):
     return render(request, 'site_cars/site_car_delete.html', {'car': car})
 
 
-@staff_member_required
+@section_required("cars")
 def site_car_change_status(request, pk):
     """Change the status of a site car"""
     if _is_public_schema():
@@ -420,7 +420,7 @@ def site_car_change_status(request, pk):
     return redirect(request.META.get('HTTP_REFERER', 'site_car_list'))
 
 
-@staff_member_required
+@section_required("cars")
 def site_car_delete_image(request, pk, image_id):
     """Delete a gallery image from a site car"""
     if _is_public_schema():
@@ -634,7 +634,7 @@ def faq(request):
     return render(request, 'site_cars/faq.html', {'faqs': faqs})
 
 
-@staff_member_required
+@section_required("reviews")
 def faq_manage(request):
     """Dashboard FAQ manager: add admin Q&A, answer/publish visitor questions."""
     if _is_public_schema():
@@ -676,7 +676,7 @@ def faq_manage(request):
     })
 
 
-@staff_member_required
+@section_required("reviews")
 def approve_rating(request, pk):
     """Approve a rating"""
     if _is_public_schema():
@@ -694,7 +694,7 @@ def approve_rating(request, pk):
     return redirect(request.META.get('HTTP_REFERER') or fallback)
 
 
-@staff_member_required
+@section_required("reviews")
 def reject_rating(request, pk):
     """Reject and delete a rating"""
     if _is_public_schema():
@@ -789,7 +789,7 @@ def compose_message(request):
 
 # ── Admin: Send Email / Broadcast ──
 
-@staff_member_required
+@site_admin_required
 def send_email_view(request):
     if _is_public_schema():
         return redirect('home')
@@ -827,7 +827,7 @@ def send_email_view(request):
 # ── Admin: Delete Expired Auctions ──
 
 @require_POST
-@staff_member_required
+@section_required("cars")
 def delete_expired_auctions(request):
     if not _is_public_schema():
         return redirect('home')
@@ -897,7 +897,7 @@ def delete_expired_auctions(request):
 
 # ── Admin: Upload Auction JSON ──
 
-@staff_member_required
+@section_required("cars")
 def upload_auction_json(request):
     if not _is_public_schema():
         return redirect('home')
@@ -1248,7 +1248,7 @@ def upload_auction_json(request):
     return render(request, 'site_cars/upload_auction_json.html', {'recent_auctions': recent_auctions})
 
 
-@staff_member_required
+@section_required("cars")
 def import_happycar_view(request):
     """Kick off `manage.py import_happycar` for the current tenant as a
     detached subprocess so the web request returns immediately. A single run
@@ -1438,7 +1438,7 @@ def import_happycar_view(request):
     })
 
 
-@staff_member_required
+@section_required("cars")
 @require_POST
 def delete_unsold_damaged(request):
     """Bulk-delete damaged (HappyCar-imported) SiteCars whose status is not
@@ -1489,7 +1489,7 @@ def _collect_protected_auction_car_ids():
     return protected
 
 
-@staff_member_required
+@staff_required
 def delete_auctions(request):
     """Owner-only tool: filter auction cars by auction name + date and bulk-delete.
 
@@ -1631,7 +1631,7 @@ def delete_auctions(request):
     return render(request, 'site_cars/delete_auctions.html', context)
 
 
-@staff_member_required
+@section_required("cars")
 def auction_browse(request):
     """
     Dashboard view: browse all auction ApiCars (including expired) so the
@@ -1724,7 +1724,7 @@ def auction_browse(request):
     })
 
 
-@staff_member_required
+@section_required("cars")
 @require_POST
 def save_public_car(request, api_car_id):
     """Copy a public ApiCar into the current tenant's SiteCar inventory.
@@ -1782,7 +1782,7 @@ def save_public_car(request, api_car_id):
     return redirect('site_car_detail', pk=site_car.pk)
 
 
-@staff_member_required
+@section_required("sales")
 def invoice_new(request, pk):
     """Create a sales invoice for a SiteCar and redirect to the printable view."""
     if _is_public_schema():
@@ -1841,7 +1841,7 @@ def invoice_new(request, pk):
     return render(request, 'site_cars/invoice_form.html', {'car': car})
 
 
-@staff_member_required
+@section_required("sales")
 def invoice_edit(request, pk, bill_pk):
     """Edit an existing invoice. Receipt number stays locked (auditability)."""
     if _is_public_schema():
@@ -1935,7 +1935,7 @@ def invoice_edit(request, pk, bill_pk):
     })
 
 
-@staff_member_required
+@section_required("sales")
 def invoice_view(request, pk, bill_pk):
     """Render a printable invoice. Use browser print dialog for PDF export."""
     if _is_public_schema():
@@ -1950,7 +1950,7 @@ def invoice_view(request, pk, bill_pk):
     })
 
 
-@staff_member_required
+@section_required("sales")
 def contract_view(request, pk, bill_pk):
     """Printable per-tenant 'buyer contract' (عقد وساطة) for a bill — the blanks
     are filled from the tenant's contract settings + the bill's buyer/car."""
@@ -2039,7 +2039,7 @@ def _bill_buyer(bill):
     }
 
 
-@staff_member_required
+@section_required("sales")
 def receipt_add(request, pk, bill_pk):
     """Record a payment (deposit/installment/settlement) against a bill and
     open its printable سند قبض."""
@@ -2072,7 +2072,7 @@ def receipt_add(request, pk, bill_pk):
     return redirect('invoice_view', pk=car.pk, bill_pk=bill.pk)
 
 
-@staff_member_required
+@section_required("sales")
 def receipt_view(request, pk, bill_pk, receipt_pk):
     """Printable سند قبض for one recorded payment."""
     if _is_public_schema():
@@ -2091,7 +2091,7 @@ def receipt_view(request, pk, bill_pk, receipt_pk):
     })
 
 
-@staff_member_required
+@section_required("sales")
 def receipt_delete(request, pk, bill_pk, receipt_pk):
     """Remove a mistakenly-entered receipt (POST only)."""
     if _is_public_schema():
@@ -2129,7 +2129,7 @@ def public_track(request, receipt_number):
     })
 
 
-@staff_member_required
+@section_required("sales")
 def shipment_edit(request, pk, bill_pk):
     """Create or update the shipment attached to a bill."""
     if _is_public_schema():
@@ -2195,7 +2195,7 @@ def shipment_edit(request, pk, bill_pk):
 
 # ── Staff list pages (replacing Django admin for tenant staff) ─────────────
 
-@staff_member_required
+@section_required("orders")
 def staff_orders(request):
     """Tenant-side orders list with filters and inline status update."""
     if _is_public_schema():
@@ -2224,7 +2224,7 @@ def staff_orders(request):
     })
 
 
-@staff_member_required
+@section_required("orders")
 @require_POST
 def staff_order_update(request, pk):
     if _is_public_schema():
@@ -2241,7 +2241,7 @@ def staff_order_update(request, pk):
     return redirect('staff_orders')
 
 
-@staff_member_required
+@section_required("reviews")
 def staff_ratings(request):
     """Tenant-side ratings list. Approve/reject use existing views."""
     if _is_public_schema():
@@ -2263,7 +2263,7 @@ def staff_ratings(request):
     })
 
 
-@staff_member_required
+@section_required("reviews")
 def staff_questions(request):
     """Tenant-side questions list."""
     if _is_public_schema():
@@ -2284,7 +2284,7 @@ def staff_questions(request):
     })
 
 
-@staff_member_required
+@section_required("reviews")
 @require_POST
 def staff_question_answer(request, pk):
     if _is_public_schema():
@@ -2386,7 +2386,7 @@ def _resolve_collection_refs(refs):
     return out
 
 
-@staff_member_required
+@section_required("cars")
 def share_search(request):
     """AJAX: search the full catalogue (ApiCar + SiteCar) for the share builder."""
     if _is_public_schema():
@@ -2412,7 +2412,7 @@ def share_search(request):
     return JsonResponse({"results": results})
 
 
-@staff_member_required
+@section_required("cars")
 def share_builder(request):
     """Staff page to build shareable car collections + list existing ones."""
     if _is_public_schema():
@@ -2424,7 +2424,7 @@ def share_builder(request):
     })
 
 
-@staff_member_required
+@section_required("cars")
 @require_POST
 def share_create(request):
     if _is_public_schema():
@@ -2444,7 +2444,7 @@ def share_create(request):
     return redirect(f"{reverse('share_builder')}?new={sc.token}")
 
 
-@staff_member_required
+@section_required("cars")
 @require_POST
 def share_delete(request, pk):
     if _is_public_schema():
@@ -2467,7 +2467,7 @@ def shared_collection(request, token):
     })
 
 
-@staff_member_required
+@section_required("cars")
 def cart_page(request):
     """Dedicated 'share cart' page. The cart lives in the browser (localStorage,
     filled from the car list); this page renders it with each car's own link."""
@@ -2515,7 +2515,7 @@ def auction_proxy(request, resource):
     return HttpResponse(cached['body'], status=cached['status'], content_type='application/json')
 
 
-@staff_member_required
+@site_admin_required
 def telegram_status(request):
     """Whether this dealer's Telegram is connected + the one-time connect link."""
     from tenants import telegram_bot as tg
@@ -2544,7 +2544,7 @@ def telegram_status(request):
     })
 
 
-@staff_member_required
+@site_admin_required
 def telegram_send(request):
     """Push the share-cart cars to the dealer's connected Telegram chat."""
     if request.method != "POST":

@@ -6,12 +6,12 @@ Currently not integrated but available for future enhancement.
 """
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.contrib.admin.views.decorators import staff_member_required
+from .permissions import section_required
 from .models import SiteCar, SiteCarImage
 from .image_utils import optimize_image
 
 
-@staff_member_required
+@section_required("cars")
 @require_POST
 def ajax_upload_images(request, car_id):
     """

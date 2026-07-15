@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse, NoReverseMatch
-from django.contrib.admin.views.decorators import staff_member_required
+from site_cars.permissions import site_admin_required, staff_required
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -10,7 +10,7 @@ from .models import Tenant, TenantPhoneNumber, TenantHeroImage, TenantWorkStep, 
 from .fonts import font_choices
 
 
-@staff_member_required
+@staff_required
 def set_dashboard_password(request):
     """Let a tenant owner set a password for their dashboard account, so they
     can log in directly at /login/ (not only via the pdf_export SSO auto-login)."""
@@ -64,7 +64,7 @@ def friendly_page_links():
     return links
 
 
-@staff_member_required
+@site_admin_required
 def site_settings(request):
     """Site settings page for admins"""
     tenant = getattr(connection, 'tenant', None)

@@ -3,7 +3,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
+from site_cars.permissions import site_admin_required
 from django.db import connection
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
@@ -59,7 +59,7 @@ def _absolute_url(request, path):
     return request.build_absolute_uri(path)
 
 
-@staff_member_required
+@site_admin_required
 def billing_dashboard(request):
     tenant = _require_visible_tenant(request)
     subscription = _get_or_create_subscription(tenant)
@@ -76,7 +76,7 @@ def billing_dashboard(request):
     )
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def create_checkout_session(request):
     tenant = _require_visible_tenant(request)
@@ -113,7 +113,7 @@ def create_checkout_session(request):
     return redirect(session.url)
 
 
-@staff_member_required
+@site_admin_required
 def checkout_success(request):
     tenant = _require_visible_tenant(request)
     session_id = request.GET.get("session_id")
@@ -133,7 +133,7 @@ def checkout_success(request):
 
 # ── Payment Link (SaaS-owner only) ─────────────────────────────────────────
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def create_payment_link(request, tenant_id):
     """SaaS-owner only: generate a Stripe Payment Link for a specific tenant.
@@ -177,7 +177,7 @@ def create_payment_link(request, tenant_id):
     })
 
 
-@staff_member_required
+@site_admin_required
 @require_POST
 def create_generic_payment_link(request):
     """SaaS-owner only: generate a Stripe Payment Link for an arbitrary

@@ -12,11 +12,13 @@
             <p class="text-gray-500 mt-1">مرحباً {{ user.get_short_name|default:user.username }}، إليك ملخص موقعك</p>
         </div>
         <div class="flex flex-wrap gap-3">
+            {% if is_site_admin %}
             <a href="{% url 'site_settings' %}" class="inline-flex items-center gap-2 border border-gray-200 text-gray-600 text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-gray-50 transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 إعدادات الموقع
             </a>
-            {% if show_site_cars %}
+            {% endif %}
+            {% if show_site_cars and can.cars %}
             <a href="{% url 'site_car_add' %}" class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 إضافة سيارة
@@ -97,6 +99,7 @@
     </div>
 
     <!-- Revenue + Monthly Stats -->
+    {% if can.sales %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div class="bg-gradient-to-br from-brand to-brand/80 rounded-2xl shadow-sm p-6 text-white">
             <div class="text-sm opacity-80 mb-1">إجمالي الإيرادات</div>
@@ -114,9 +117,10 @@
             <div class="text-xs text-gray-400 mt-2">سيارة مباعة</div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Site traffic (your visits) -->
-    {% if traffic %}
+    {% if traffic and is_site_admin %}
     <div class="mb-8">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -151,7 +155,7 @@
     {% endif %}
 
     <!-- Google Search Console -->
-    {% if gsc %}
+    {% if gsc and is_site_admin %}
     <div class="mb-8">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -229,7 +233,7 @@
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-8">
         <h2 class="text-lg font-bold mb-4">إجراءات سريعة</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            {% if show_site_cars %}
+            {% if show_site_cars and can.cars %}
             <a href="{% url 'site_car_add' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition text-center">
                 <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 <span class="text-xs font-medium text-blue-700">إضافة سيارة</span>
@@ -239,51 +243,74 @@
                 <span class="text-xs font-medium text-indigo-700">إدارة السيارات</span>
             </a>
             {% endif %}
+            {% if is_site_admin %}
             <a href="{% url 'shop_manage' %}?kind=part" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition text-center">
                 <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 <span class="text-xs font-medium text-teal-700">إدارة قطع الغيار</span>
             </a>
+            {% endif %}
+            {% if is_site_admin %}
             <a href="{% url 'shop_manage' %}?kind=accessory" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-fuchsia-50 hover:bg-fuchsia-100 transition text-center">
                 <svg class="w-6 h-6 text-fuchsia-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
                 <span class="text-xs font-medium text-fuchsia-700">إدارة الإكسسوارات</span>
             </a>
+            {% endif %}
+            {% if is_site_admin %}
             <a href="{% url 'shop_import' %}?kind=part" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 transition text-center">
                 <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
                 <span class="text-xs font-medium text-emerald-700">استيراد قطع/إكسسوارات</span>
             </a>
+            {% endif %}
+            {% if is_site_admin %}
             <a href="{% url 'shop_requests' %}" class="relative flex flex-col items-center gap-2 p-4 rounded-xl bg-rose-50 hover:bg-rose-100 transition text-center">
                 {% if shop_requests_unhandled %}<span class="absolute top-2 inset-inline-start-2 min-w-[20px] h-5 px-1.5 rounded-full bg-rose-600 text-white text-[11px] font-bold flex items-center justify-center" style="inset-inline-start:.5rem">{{ shop_requests_unhandled }}</span>{% endif %}
                 <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                 <span class="text-xs font-medium text-rose-700 bilingual" data-lang-ar="طلبات العملاء" data-lang-en="Requests" data-lang-es="Solicitudes" data-lang-ru="Запросы">طلبات العملاء</span>
             </a>
+            {% endif %}
+            {% if can.orders %}
             <a href="{% url 'staff_orders' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition text-center">
                 <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 <span class="text-xs font-medium text-amber-700">إدارة الطلبات</span>
             </a>
+            {% endif %}
+            {% if can.sales %}
             <a href="{% url 'sold_cars' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition text-center">
                 <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <span class="text-xs font-medium text-red-700">المبيعات</span>
             </a>
+            {% endif %}
+            {% if can.reviews %}
             <a href="{% url 'staff_ratings' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-yellow-50 hover:bg-yellow-100 transition text-center">
                 <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                 <span class="text-xs font-medium text-yellow-700">التقييمات</span>
             </a>
+            {% endif %}
+            {% if can.cars %}
             <a href="{% url 'import_happycar' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-red-50 hover:bg-red-100 transition text-center">
                 <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.73 4a2 2 0 00-3.46 0L3.33 16a2 2 0 001.74 3z"/></svg>
                 <span class="text-xs font-medium text-red-700">استيراد سيارات مصدومة</span>
             </a>
+            {% endif %}
+            {% if can.cars %}
             <a href="{% url 'auction_browse' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition text-center">
                 <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <span class="text-xs font-medium text-teal-700">تصفح المزادات</span>
             </a>
+            {% endif %}
+            {% if can.cars %}
             <a href="{% url 'cart_page' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-violet-50 hover:bg-violet-100 transition text-center">
                 <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3c-.6.6-.2 1.7.7 1.7H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 <span class="text-xs font-medium text-violet-700 bilingual" data-lang-ar="سلة الروابط" data-lang-en="Share links" data-lang-es="Enlaces" data-lang-ru="Ссылки">سلة الروابط</span>
             </a>
+            {% endif %}
+            {% if is_site_admin %}
             <a href="{% url 'send_email' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-cyan-50 hover:bg-cyan-100 transition text-center">
                 <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                 <span class="text-xs font-medium text-cyan-700">إرسال بريد</span>
             </a>
+            {% endif %}
+            {% if can.reviews %}
             <a href="{% url 'staff_questions' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition text-center">
                 <div class="relative">
                     <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -293,18 +320,29 @@
                 </div>
                 <span class="text-xs font-medium text-purple-700">الأسئلة</span>
             </a>
+            {% endif %}
+            {% if can.reviews %}
             <a href="{% url 'faq_manage' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-sky-50 hover:bg-sky-100 transition text-center">
                 <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span class="text-xs font-medium text-sky-700">الأسئلة الشائعة</span>
             </a>
+            {% endif %}
+            {% if is_site_admin %}
             <a href="{% url 'site_builder:pages_list' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-violet-50 hover:bg-violet-100 transition text-center">
                 <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v3H4V5zm0 6h7v8H5a1 1 0 01-1-1v-7zm9 0h7v7a1 1 0 01-1 1h-6v-8z"/></svg>
                 <span class="text-xs font-medium text-violet-700">منشئ الصفحات</span>
             </a>
-            {% if billing_visible %}
+            {% endif %}
+            {% if billing_visible and is_site_admin %}
             <a href="{% url 'billing:dashboard' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-green-50 hover:bg-green-100 transition text-center">
                 <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                 <span class="text-xs font-medium text-green-700">الفوترة</span>
+            </a>
+            {% endif %}
+            {% if is_site_admin %}
+            <a href="{% url 'staff_list' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition text-center">
+                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span class="text-xs font-medium text-slate-700">الموظفون</span>
             </a>
             {% endif %}
         </div>
@@ -315,7 +353,9 @@
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between p-6 pb-4">
                 <h2 class="text-lg font-bold">آخر الطلبات</h2>
-                <a href="{% url 'staff_orders' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+                {% if can.orders %}
+            <a href="{% url 'staff_orders' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            {% endif %}
             </div>
             {% if recent_orders %}
             <div class="overflow-x-auto">
@@ -366,7 +406,9 @@
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between p-6 pb-4">
                 <h2 class="text-lg font-bold">آخر المبيعات</h2>
-                <a href="{% url 'sold_cars' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+                {% if can.sales %}
+            <a href="{% url 'sold_cars' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            {% endif %}
             </div>
             {% if recent_sold %}
             <div class="divide-y divide-gray-100">
@@ -404,7 +446,9 @@
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between p-6 pb-4">
                 <h2 class="text-lg font-bold">أسئلة بانتظار الإجابة</h2>
-                <a href="{% url 'staff_questions' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+                {% if can.reviews %}
+            <a href="{% url 'staff_questions' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            {% endif %}
             </div>
             <div class="divide-y divide-gray-100">
                 {% for q in recent_questions %}
@@ -429,7 +473,9 @@
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div class="flex items-center justify-between p-6 pb-4">
                 <h2 class="text-lg font-bold">آخر التقييمات</h2>
-                <a href="{% url 'staff_ratings' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+                {% if can.reviews %}
+            <a href="{% url 'staff_ratings' %}" class="text-brand text-sm font-medium">عرض الكل</a>
+            {% endif %}
             </div>
             <div class="divide-y divide-gray-100">
                 {% for r in recent_ratings %}
@@ -467,7 +513,9 @@
     <div class="bg-white rounded-2xl shadow-sm overflow-hidden mt-8">
         <div class="flex items-center justify-between p-6 pb-4">
             <h2 class="text-lg font-bold">سياراتنا</h2>
+            {% if can.cars %}
             <a href="{% url 'site_car_list' %}" class="text-brand text-sm font-medium">إدارة الكل</a>
+            {% endif %}
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
