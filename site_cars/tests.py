@@ -1,13 +1,16 @@
+import re
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
 from django.template.loader import render_to_string
 from django.test import RequestFactory
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantClient
 
-from .models import StaffAccess
+from .models import SiteCar, StaffAccess, exclude_expired_damaged
 from .permissions import (
     allowed_sections,
     has_section,
@@ -338,3 +341,110 @@ class EncarLinkVisibilityTests(TenantTestCase):
         """Without a lot number the URL would point at a broken Encar page."""
         staff = User.objects.create_user("seller", password="x", is_staff=True)
         self.assertNotIn("fem.encar.com", self._render(staff, lot_number=""))
+
+
+class DamagedCarAuctionTests(TenantTestCase):
+    """Damaged (HappyCar) cars follow the auction-car rules: a live countdown,
+    and they disappear once auction_end passes."""
+
+    def setUp(self):
+        self.client = TenantClient(self.tenant)
+        now = timezone.now()
+        self.live = self._car("hc_live", auction_end=now + timedelta(hours=5))
+        self.expired = self._car("hc_expired", auction_end=now - timedelta(hours=1))
+        self.undated = self._car("hc_undated", auction_end=None)
+        # The tenant's own stock — never subject to the damaged expiry rule.
+        self.own = self._car(None, auction_end=now - timedelta(hours=1))
+
+    @staticmethod
+    def _car(external_id, auction_end):
+        return SiteCar.objects.create(
+            title=f"car {external_id or 'own'}",
+            manufacturer="Hyundai", model="Tucson", year=2015,
+            price=1000000, external_id=external_id, auction_end=auction_end,
+        )
+
+    @staticmethod
+    def _link(car):
+        """Cards always render this href; the title only appears in an
+        alt= when the car has an image."""
+        return 'href="/our-cars/%d/"' % car.pk
+
+    def _damaged_tab(self):
+        return self.client.get("/our-cars/?source=auctions")
+
+    # ---- hiding ----
+
+    def test_live_damaged_car_is_listed(self):
+        self.assertContains(self._damaged_tab(), self._link(self.live))
+
+    def test_expired_damaged_car_is_hidden_from_the_list(self):
+        self.assertNotContains(self._damaged_tab(), self._link(self.expired))
+
+    def test_damaged_car_without_an_end_time_is_kept(self):
+        """Mirrors auction cars: a null auction_date never expires."""
+        self.assertContains(self._damaged_tab(), self._link(self.undated))
+
+    def test_own_stock_is_never_expired_by_auction_end(self):
+        """auction_end on the tenant's own car must not hide it."""
+        response = self.client.get("/our-cars/?source=mine")
+        self.assertContains(response, self._link(self.own))
+
+    def test_expired_damaged_car_is_excluded_from_the_helper(self):
+        kept = set(exclude_expired_damaged(SiteCar.objects.all()).values_list("pk", flat=True))
+        self.assertIn(self.live.pk, kept)
+        self.assertIn(self.undated.pk, kept)
+        self.assertIn(self.own.pk, kept)
+        self.assertNotIn(self.expired.pk, kept)
+
+    def test_damaged_tab_count_matches_the_list(self):
+        """The tab counter must not advertise cars the list hides."""
+        response = self._damaged_tab()
+        self.assertEqual(response.context["auctions_total"], 2)  # live + undated
+
+    # ---- detail page ----
+
+    def test_expired_damaged_detail_404s_for_a_visitor(self):
+        self.assertEqual(
+            self.client.get(f"/our-cars/{self.expired.pk}/").status_code, 404
+        )
+
+    def test_live_damaged_detail_is_reachable(self):
+        self.assertEqual(self.client.get(f"/our-cars/{self.live.pk}/").status_code, 200)
+
+    def test_expired_damaged_detail_is_reachable_for_staff(self):
+        staff = User.objects.create_user("seller", password="staffpass123", is_staff=True)
+        StaffAccess.objects.create(user=staff, can_cars=True)
+        self.client.login(username="seller", password="staffpass123")
+        self.assertEqual(
+            self.client.get(f"/our-cars/{self.expired.pk}/").status_code, 200
+        )
+
+    def test_expired_damaged_detail_is_reachable_via_the_archived_escape_hatch(self):
+        self.assertEqual(
+            self.client.get(f"/our-cars/{self.expired.pk}/?archived=1").status_code, 200
+        )
+
+    def test_expired_own_car_detail_still_works(self):
+        self.assertEqual(self.client.get(f"/our-cars/{self.own.pk}/").status_code, 200)
+
+    # ---- countdown markup ----
+
+    @staticmethod
+    def _rendered_countdowns(response):
+        """The instants the countdown JS would tick against. Parsed rather than
+        string-compared: the template renders date:'c' in local time."""
+        found = re.findall(r'data-auction-date="([^"]+)"', response.content.decode())
+        return [datetime.fromisoformat(value) for value in found]
+
+    def test_list_renders_the_countdown_contract(self):
+        """class + data-auction-date is the whole contract the base.html
+        countdown engine needs — no JS change required."""
+        response = self._damaged_tab()
+        self.assertContains(response, "auction-countdown")
+        self.assertIn(self.live.auction_end, self._rendered_countdowns(response))
+
+    def test_detail_renders_the_countdown_contract(self):
+        response = self.client.get(f"/our-cars/{self.live.pk}/")
+        self.assertContains(response, "auction-countdown")
+        self.assertIn(self.live.auction_end, self._rendered_countdowns(response))

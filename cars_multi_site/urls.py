@@ -187,9 +187,11 @@ def sitemap_xml(request):
 
         if tenant is not None and schema != "public" and getattr(tenant, "show_site_cars", True):
             try:
-                from site_cars.models import SiteCar
-                for pk, upd in (SiteCar.objects.exclude(status="sold")
-                                .order_by("-updated_at").values_list("pk", "updated_at")[:10000]):
+                from site_cars.models import SiteCar, exclude_expired_damaged
+                # Ended damaged auctions 404 too — keep them out of the sitemap.
+                _sc_qs = exclude_expired_damaged(SiteCar.objects.exclude(status="sold"))
+                for pk, upd in (_sc_qs.order_by("-updated_at")
+                                .values_list("pk", "updated_at")[:10000]):
                     urls.append({"loc": f"{base}/our-cars/{pk}/", "lastmod": upd, "changefreq": "weekly", "priority": "0.6"})
             except Exception:
                 pass

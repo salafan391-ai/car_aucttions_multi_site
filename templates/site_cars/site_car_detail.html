@@ -305,7 +305,7 @@
                     {% if car.auction_end %}
                     <div class="flex justify-between">
                         <span class="bilingual text-gray-500" data-lang-ar="نهاية المزاد" data-lang-en="auction end" data-lang-es="fin de subasta" data-lang-ru="конец аукциона">نهاية المزاد</span>
-                        <span class="font-medium">{{ car.auction_end|date:"H:i Y.m.d" }}</span>
+                        <span class="font-medium auction-countdown" data-auction-date="{{ car.auction_end|date:'c' }}">{{ car.auction_end|date:"H:i Y.m.d" }}</span>
                     </div>
                     {% endif %}
                     {% if car.source_url %}

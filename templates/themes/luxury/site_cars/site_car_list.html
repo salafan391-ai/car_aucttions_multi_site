@@ -444,7 +444,7 @@
                         {% if car.location or car.auction_end %}
                         <div class="lux-card-foot">
                             {% if car.location %}<div class="bilingual" data-lang-ar="📍 {{ car.location|translate_location }}" data-lang-ru="📍 {{ car.location|translate_location:'ru' }}" data-lang-es="📍 {{ car.location|translate_location:'es' }}" data-lang-en="📍 {{ car.location|translate_location:'en' }}">📍 {{ car.location|translate_location }}</div>{% endif %}
-                            {% if car.auction_end %}<div>🕐 {{ car.auction_end|date:"H:i Y.m.d" }}</div>{% endif %}
+                            {% if car.auction_end %}<div>🕐 <span class="auction-countdown" data-auction-date="{{ car.auction_end|date:'c' }}">{{ car.auction_end|date:"H:i Y.m.d" }}</span></div>{% endif %}
                         </div>
                         {% endif %}
                     </div>

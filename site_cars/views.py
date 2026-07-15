@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 
 from cars.models import ApiCar, Manufacturer, CarModel
 from .models import SiteCar, SiteCarImage, SiteOrder, SiteBill, SiteBillItem, SiteReceipt, SiteShipment, SiteRating, SiteQuestion, SiteSoldCar, SiteMessage, SiteEmailLog, SiteFaq, UserProfile
+from .models import damaged_auction_ended, damaged_qs, exclude_expired_damaged, own_qs
 from .permissions import section_required, site_admin_required, staff_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
@@ -128,11 +129,13 @@ def site_car_list(request):
     # Primary tab — "mine" (admin-uploaded) vs. "auctions" (imported cars
     # whose external_id starts with 'hc_' e.g. from HappyCar).
     source = request.GET.get('source', 'mine')  # 'mine' | 'auctions'
-    external_qs = SiteCar.objects.filter(external_id__startswith='hc_')
+    # Damaged cars drop off the list once their auction ends, the same way
+    # expired auction cars drop off /cars/.
+    external_qs = exclude_expired_damaged(damaged_qs())
     if source == 'auctions':
         base_qs = external_qs
     else:
-        base_qs = SiteCar.objects.exclude(external_id__startswith='hc_')
+        base_qs = own_qs()
         source = 'mine'
 
     # Secondary tab (within the selected source): active / sold / all
@@ -193,7 +196,7 @@ def site_car_list(request):
     sold_count = base_qs.filter(status='sold').count()
     active_count = base_qs.exclude(status='sold').count()
     auctions_total = external_qs.count()
-    mine_total = SiteCar.objects.exclude(external_id__startswith='hc_').count()
+    mine_total = own_qs().count()
 
     # ---- Dropdown options (scoped to the active source, not the filters
     # so users can always see the full list of available values) ----
@@ -436,6 +439,14 @@ def site_car_detail(request, pk):
     if _is_public_schema():
         return redirect('home')
     car = get_object_or_404(SiteCar, pk=pk)
+
+    # Once a damaged car's auction ends, hide its detail page — the same rule
+    # cars.views.car_detail applies to expired auction cars. Staff keep access
+    # so they can still manage the row, and ?archived=1 leaves an escape hatch.
+    if (damaged_auction_ended(car)
+            and request.GET.get('archived') != '1' and not request.user.is_staff):
+        raise Http404("auction ended")
+
     return render(request, 'site_cars/site_car_detail.html', {'car': car})
 
 

@@ -1,10 +1,48 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 from cars.models import ApiCar
 from cars.normalization import (
     normalize_name, normalize_fuel, normalize_transmission,
 )
 from site_cars.image_utils import optimize_image
+
+#: External-id prefix marking a damaged car imported from HappyCar. Rows without
+#: it are the tenant's own admin-uploaded stock.
+DAMAGED_PREFIX = 'hc_'
+
+
+def damaged_qs(qs=None):
+    """Damaged (HappyCar) cars only."""
+    qs = SiteCar.objects.all() if qs is None else qs
+    return qs.filter(external_id__startswith=DAMAGED_PREFIX)
+
+
+def own_qs(qs=None):
+    """The tenant's own stock — everything that isn't a HappyCar import."""
+    qs = SiteCar.objects.all() if qs is None else qs
+    return qs.exclude(external_id__startswith=DAMAGED_PREFIX)
+
+
+def exclude_expired_damaged(qs):
+    """Exclude damaged cars whose auction_end has passed.
+
+    The mirror of ``cars.views._exclude_expired_auctions`` for SiteCar. Damaged
+    cars with no auction_end are kept, matching how auction cars with no
+    auction_date are kept.
+    """
+    return qs.exclude(
+        external_id__startswith=DAMAGED_PREFIX, auction_end__lt=timezone.now()
+    )
+
+
+def damaged_auction_ended(car):
+    """True if this damaged car's auction is over (used to 404 its detail page)."""
+    return bool(
+        (car.external_id or '').startswith(DAMAGED_PREFIX)
+        and car.auction_end
+        and car.auction_end < timezone.now()
+    )
 
 
 class SiteCar(models.Model):
@@ -61,7 +99,11 @@ class SiteCar(models.Model):
         max_length=500, blank=True, default='',
         verbose_name="رابط الإعلان المصدر",
     )
-    auction_end = models.DateTimeField(null=True, blank=True, verbose_name="نهاية المزاد")
+    # Indexed: damaged cars are filtered on this to hide ended auctions, the
+    # same way cars.ApiCar.auction_date gates auction cars.
+    auction_end = models.DateTimeField(
+        null=True, blank=True, db_index=True, verbose_name="نهاية المزاد"
+    )
     source_status = models.CharField(
         max_length=20, blank=True, default='', db_index=True,
         verbose_name="حالة المصدر",

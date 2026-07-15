@@ -263,12 +263,10 @@ def landing(request):
 
     # Get site cars + damaged cars counts
     try:
-        from site_cars.models import SiteCar
-        site_cars_count = (SiteCar.objects
-                           .exclude(external_id__startswith='hc_')
-                           .filter(status='available').count())
-        damaged_cars_count = (SiteCar.objects
-                              .filter(external_id__startswith='hc_').count())
+        from site_cars.models import damaged_qs, exclude_expired_damaged, own_qs
+        site_cars_count = own_qs().filter(status='available').count()
+        # Ended auctions are hidden, so don't count them on the landing banner.
+        damaged_cars_count = exclude_expired_damaged(damaged_qs()).count()
     except Exception:
         site_cars_count = 0
         damaged_cars_count = 0
@@ -507,14 +505,15 @@ def home(request):
         site_filter_json = '{}'
         tenant = _get_current_tenant()
         if tenant and tenant.schema_name != 'public':
-            from site_cars.models import SiteCar
+            from site_cars.models import damaged_qs, exclude_expired_damaged, own_qs
             _site_only = (
                 'id', 'title', 'image', 'external_image_url',
                 'manufacturer', 'model', 'year', 'price', 'status',
                 'is_featured', 'mileage', 'transmission', 'external_id',
             )
-            _own_qs = SiteCar.objects.exclude(external_id__startswith='hc_')
-            _damaged_qs = SiteCar.objects.filter(external_id__startswith='hc_')
+            _own_qs = own_qs()
+            # Damaged cars vanish from the homepage once their auction ends.
+            _damaged_qs = exclude_expired_damaged(damaged_qs())
             # Our-cars rail shows available stock only — sold cars have their
             # own dedicated homepage section.
             site_cars = list(
@@ -1967,12 +1966,10 @@ def car_list(request):
     damaged_cars_count = cache.get(_damaged_cars_tab_key)
     if site_cars_count is None or damaged_cars_count is None:
         try:
-            from site_cars.models import SiteCar
-            site_cars_count = (SiteCar.objects
-                               .exclude(external_id__startswith='hc_')
-                               .filter(status='available').count())
-            damaged_cars_count = (SiteCar.objects
-                                  .filter(external_id__startswith='hc_').count())
+            from site_cars.models import damaged_qs, exclude_expired_damaged, own_qs
+            site_cars_count = own_qs().filter(status='available').count()
+            # Tab count must match what the damaged tab actually lists.
+            damaged_cars_count = exclude_expired_damaged(damaged_qs()).count()
         except Exception:
             site_cars_count = 0
             damaged_cars_count = 0
