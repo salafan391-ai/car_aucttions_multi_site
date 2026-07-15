@@ -16,18 +16,22 @@
 
             </a>
 
-            <div class="hidden md:flex items-center gap-8">
-                <a href="{% url 'home' %}" class="text-gray-600 text-brand-hover font-medium transition">الرئيسية</a>
-                <a href="{% url 'car_list' %}" class="text-gray-600 text-brand-hover font-medium transition">السيارات</a>
-                {% if show_parts %}<a href="{% url 'parts_list' %}" class="text-gray-600 text-brand-hover font-medium transition bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
-                {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="text-gray-600 text-brand-hover font-medium transition bilingual" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
-                <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition">تواصل معنا</a>
+            {# Desktop nav starts at xl, NOT md. Logged-in staff add three buttons #}
+            {# plus the user chip on top of ~7 links; that needs ~1100px, so at md #}
+            {# (768px) the row overflowed the max-w-7xl container. Below xl everyone #}
+            {# gets the mobile menu, which carries the same links (incl. staff ones). #}
+            <div class="hidden xl:flex items-center gap-4 min-w-0">
+                <a href="{% url 'home' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">الرئيسية</a>
+                <a href="{% url 'car_list' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">السيارات</a>
+                {% if show_parts %}<a href="{% url 'parts_list' %}" class="text-gray-600 text-brand-hover font-medium transition bilingual whitespace-nowrap" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
+                {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="text-gray-600 text-brand-hover font-medium transition bilingual whitespace-nowrap" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
+                <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">تواصل معنا</a>
 
                 {# ── Dynamic NavLinks (site_builder) ── #}
                 {% for link in sb_nav_links %}
                     {% if link.children.all %}
                         <div class="relative group">
-                            <button type="button" class="text-gray-600 text-brand-hover font-medium transition inline-flex items-center gap-1">
+                            <button type="button" class="text-gray-600 text-brand-hover font-medium transition inline-flex items-center gap-1 whitespace-nowrap">
                                 {{ link.label }}
                                 <svg class="h-4 w-4 opacity-60" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                             </button>
@@ -40,53 +44,57 @@
                             </div>
                         </div>
                     {% else %}
-                        <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="text-gray-600 text-brand-hover font-medium transition">{{ link.label }}</a>
+                        <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">{{ link.label }}</a>
                     {% endif %}
                 {% endfor %}
                 {% for page in sb_nav_pages %}
-                    <a href="/p/{{ page.slug }}/" class="text-gray-600 text-brand-hover font-medium transition">{{ page.title }}</a>
+                    <a href="/p/{{ page.slug }}/" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">{{ page.title }}</a>
                 {% endfor %}
 
-                <a href="{% url 'wishlist' %}" class="text-gray-600 text-brand-hover font-medium transition relative">
+                <a href="{% url 'wishlist' %}" class="text-gray-600 text-brand-hover font-medium transition relative whitespace-nowrap">
                     قائمة الأمنيات
                     <span id="wishlist-count" class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                 </a>
                 {% if user.is_authenticated %}
-                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition">طلباتي</a>{% endif %}
-                <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition">الرسائل</a>
+                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">طلباتي</a>{% endif %}
+                <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">الرسائل</a>
                 {% if user.is_staff %}
-                <a href="{% url 'site_car_add' %}"
-                   class="inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-brand/30 ring-1 ring-white/10 transition active:scale-95"
+                {# Staff actions. Labels appear only at 2xl — below that these are #}
+                {# icon-only with a title tooltip, which is what keeps the row #}
+                {# inside the container once all three are visible. #}
+                <a href="{% url 'site_car_add' %}" title="أضف سيارة"
+                   class="inline-flex items-center gap-2 shrink-0 bg-brand bg-brand-hover text-white text-sm font-bold px-3 py-2.5 rounded-xl shadow-lg shadow-brand/30 ring-1 ring-white/10 transition active:scale-95"
                    style="box-shadow: 0 8px 20px -4px color-mix(in srgb, var(--color-primary) 45%, transparent);">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                    <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-ru="Добавить машину" data-lang-es="Añadir un coche" data-lang-en="Add Car">أضف سيارة</span>
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    <span class="bilingual sr-only" data-lang-ar="أضف سيارة" data-lang-ru="Добавить машину" data-lang-es="Añadir un coche" data-lang-en="Add Car">أضف سيارة</span>
                 </a>
-                <a href="{% url 'site_dashboard' %}" class="inline-flex items-center gap-1.5 bg-brand/10 text-brand text-sm font-bold px-4 py-2 rounded-xl hover:bg-brand/20 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
-                    لوحة التحكم
+                <a href="{% url 'site_dashboard' %}" title="لوحة التحكم" class="inline-flex items-center gap-1.5 shrink-0 bg-brand/10 text-brand text-sm font-bold px-3 py-2 rounded-xl hover:bg-brand/20 transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+                    <span class="sr-only">لوحة التحكم</span>
                 </a>
                 {% if billing_visible %}
-                <a href="{% url 'billing:dashboard' %}" class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-sm font-bold px-4 py-2 rounded-xl hover:bg-green-100 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                    الفوترة
+                <a href="{% url 'billing:dashboard' %}" title="الفوترة" class="inline-flex items-center gap-1.5 shrink-0 bg-green-50 text-green-700 text-sm font-bold px-3 py-2 rounded-xl hover:bg-green-100 transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    <span class="sr-only">الفوترة</span>
                 </a>
                 {% endif %}
                 {% endif %}
-                <div class="flex items-center gap-3 border-r border-gray-200 pr-6">
-                    <div class="w-8 h-8 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ user.username|first|upper }}</div>
-                    <span class="text-sm font-medium text-gray-700">{{ user.get_short_name|default:user.username }}</span>
-                    <a href="{% url 'logout' %}" class="text-sm text-red-500 hover:text-red-600 font-medium transition">خروج</a>
+                <div class="flex items-center gap-2 shrink-0 border-r border-gray-200 pr-3">
+                    <div class="w-8 h-8 shrink-0 bg-brand-light rounded-full flex items-center justify-center text-brand font-bold text-sm">{{ user.username|first|upper }}</div>
+                    {# Username is the first thing to go — the avatar already identifies the account. #}
+                    <span class="sr-only">{{ user.get_short_name|default:user.username }}</span>
+                    <a href="{% url 'logout' %}" class="text-sm text-red-500 hover:text-red-600 font-medium transition whitespace-nowrap">خروج</a>
                 </div>
                 {% else %}
                 <div class="flex items-center gap-3 border-r border-gray-200 pr-6">
-                    <a href="{% url 'login' %}" class="text-gray-600 text-brand-hover font-medium transition">دخول</a>
+                    <a href="{% url 'login' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">دخول</a>
                     <a href="{% url 'register' %}" class="bg-brand bg-brand-hover text-white text-sm font-medium px-4 py-2 rounded-xl transition">حساب جديد</a>
                 </div>
                 {% endif %}
             </div>
 
             <!-- Lang & Currency Switcher -->
-            <div class="hidden md:flex items-center gap-2 border-r border-gray-200 pr-4 mr-2">
+            <div class="hidden xl:flex items-center gap-2 shrink-0 whitespace-nowrap border-r border-gray-200 pr-4 mr-2">
                 <div class="relative" id="lang-dropdown">
                     <button type="button" onclick="document.getElementById('lang-menu').classList.toggle('hidden'); document.getElementById('currency-menu')?.classList.add('hidden');" class="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-800 bg-gray-50 border-2 border-gray-200 hover:border-brand hover:text-brand hover:bg-brand/5 rounded-lg shadow-sm transition">
                         <span id="lang-flag" class="text-base leading-none">🇸🇦</span>
@@ -143,7 +151,7 @@
                 </div>
             </div>
 
-            <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg hover:bg-gray-100">
+            <button id="mobile-menu-btn" class="xl:hidden p-2 rounded-lg hover:bg-gray-100">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
@@ -152,7 +160,7 @@
     </div>
 
     <!-- Mobile Menu -->
-    <div id="mobile-menu" class="hidden md:hidden border-t" style="background-color:var(--color-primary)">
+    <div id="mobile-menu" class="hidden xl:hidden border-t" style="background-color:var(--color-primary)">
         <div class="px-4 py-3 space-y-2">
             <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرئيسية</a>
             <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات</a>
