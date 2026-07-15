@@ -1,0 +1,7 @@
+{% comment %}htmx target — swapped into #assistant-answer on every ask.{% endcomment %}
+{% if error %}
+  <p class="text-red-600">{{ error }}</p>
+{% else %}
+  <p class="text-gray-400 text-xs mb-2">{{ question }}</p>
+  <div class="whitespace-pre-wrap text-gray-800">{{ answer }}</div>
+{% endif %}

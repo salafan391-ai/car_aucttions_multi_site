@@ -226,6 +226,7 @@ urlpatterns = [
     path("oauth/google/resume/", oauth_relay.google_resume, name="google_oauth_resume"),
     # Telegram bot webhook (fixed URL; secret in the path).
     path("telegram/webhook/<str:secret>/", telegram_webhook, name="telegram_webhook"),
+    path("", include("assistant.urls")),
     path("", include("cars.urls")),
     path("", include("site_cars.urls")),
     path("", include("site_shop.urls")),

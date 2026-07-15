@@ -69,6 +69,9 @@ SHARED_APPS = [
     "django.contrib.sites",
     "django_htmx",
     "cars",
+    # Dashboard help assistant. No models — it reads a static guide and the
+    # asking user's role, so it needs no per-tenant tables.
+    "assistant",
     "django.contrib.humanize",
     "tailwind",
     "theme",
@@ -228,6 +231,16 @@ else:
 # Cache timeouts (in seconds)
 CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes
 CACHE_MIDDLEWARE_KEY_PREFIX = "cars_multi_site"
+
+
+# Dashboard help assistant
+# Unset ANTHROPIC_API_KEY simply disables the widget — it never breaks a page.
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+ASSISTANT_MODEL = os.environ.get("ASSISTANT_MODEL", "claude-haiku-4-5")
+# Spend guardrail. At roughly $0.002/question, 300/day/tenant caps a runaway
+# tenant near $18/month; normal use is a tiny fraction of that.
+ASSISTANT_TENANT_DAILY_LIMIT = int(os.environ.get("ASSISTANT_TENANT_DAILY_LIMIT", "300"))
+ASSISTANT_USER_BURST_PER_MIN = int(os.environ.get("ASSISTANT_USER_BURST_PER_MIN", "8"))
 
 
 # Password validation

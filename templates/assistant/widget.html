@@ -1,0 +1,60 @@
+{% comment %}
+Dashboard help assistant. Include inside any staff-only page:
+    {% include "assistant/widget.html" %}
+Uses <details> for the open/close toggle so it needs no JS framework — this
+project loads htmx but not Alpine. CSRF rides on the hx-headers attribute
+already set on <body> in base.html.
+{% endcomment %}
+{# bottom-24 on mobile clears the fixed bottom nav in base.html (md:hidden); #}
+{# z-40 keeps the open panel under that nav rather than fighting it at z-50. #}
+<details class="assistant-widget fixed bottom-24 md:bottom-6 left-4 md:left-6 z-40 print:hidden">
+
+  <summary class="list-none cursor-pointer inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-3 rounded-full shadow-lg transition">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8.228 9.247a4 4 0 115.544 3.51c-.83.36-1.272 1.09-1.272 1.743v.5M12 17.5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span class="assistant-label-closed">مساعد لوحة التحكم</span>
+    <span class="assistant-label-open">إغلاق</span>
+  </summary>
+
+  <div class="absolute bottom-16 left-0 w-[22rem] max-w-[calc(100vw-3rem)] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+
+    <div class="px-4 py-3 border-b border-gray-100">
+      <p class="font-bold text-sm">كيف أقدر أساعدك؟</p>
+      <p class="text-xs text-gray-500 mt-0.5">اسأل عن أي خطوة في لوحة التحكم</p>
+    </div>
+
+    <div id="assistant-answer" class="px-4 py-3 max-h-72 overflow-y-auto text-sm leading-relaxed">
+      <p class="text-gray-400">مثال: كيف أضيف سيارة جديدة؟</p>
+    </div>
+
+    <form hx-post="{% url 'assistant_ask' %}"
+          hx-target="#assistant-answer"
+          hx-swap="innerHTML"
+          hx-indicator=".assistant-spinner"
+          hx-disabled-elt="find button, find input"
+          hx-on::after-request="if (event.detail.successful) this.reset()"
+          class="flex items-center gap-2 border-t border-gray-100 p-2">
+      <input type="text" name="question" maxlength="500" required autocomplete="off"
+             placeholder="اكتب سؤالك..."
+             class="flex-1 text-sm px-3 py-2 rounded-xl bg-gray-50 border border-transparent focus:border-gray-200 focus:outline-none disabled:opacity-50">
+      <button type="submit"
+              class="bg-brand bg-brand-hover text-white text-sm font-bold px-4 py-2 rounded-xl transition disabled:opacity-50">
+        إرسال
+      </button>
+      <span class="assistant-spinner htmx-indicator text-xs text-gray-400 px-1">...</span>
+    </form>
+
+    <p class="px-4 pb-3 text-[11px] text-gray-400 leading-snug">
+      المساعد يشرح الخطوات فقط ولا ينفّذ أي إجراء. قد يخطئ — تحقّق قبل الحذف أو التعديل.
+    </p>
+  </div>
+</details>
+
+<style>
+  /* Safari still renders the default disclosure triangle without this. */
+  .assistant-widget > summary::-webkit-details-marker { display: none; }
+  .assistant-widget:not([open]) .assistant-label-open { display: none; }
+  .assistant-widget[open] .assistant-label-closed { display: none; }
+</style>
