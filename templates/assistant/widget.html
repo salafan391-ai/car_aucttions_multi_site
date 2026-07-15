@@ -57,4 +57,9 @@ already set on <body> in base.html.
   .assistant-widget > summary::-webkit-details-marker { display: none; }
   .assistant-widget:not([open]) .assistant-label-open { display: none; }
   .assistant-widget[open] .assistant-label-closed { display: none; }
+  /* htmx normally injects these itself; declaring them here keeps the spinner
+     correct even if htmx.config.includeIndicatorStyles is ever turned off. */
+  .assistant-widget .htmx-indicator { opacity: 0; transition: opacity .2s; }
+  .assistant-widget .htmx-request .htmx-indicator,
+  .assistant-widget .htmx-indicator.htmx-request { opacity: 1; }
 </style>
