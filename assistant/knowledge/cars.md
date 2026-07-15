@@ -1,9 +1,5 @@
 # Dashboard guide: Cars & inventory (section key: `cars`)
 
-Scope note: this file covers the cars/inventory section only. If a question is
-about invoices, orders, ratings, staff accounts, the page builder, or billing,
-say those parts of the guide aren't written yet and point the admin at support.
-
 ## Adding a car
 
 Path: `/our-cars/add/` — button "إضافة سيارة" on the dashboard, or "إدارة السيارات"
@@ -80,7 +76,11 @@ route it to support.
 
 From a car, an invoice can be created at `/our-cars/<id>/invoice/new/`, which then
 leads to receipts, contract, and shipment. That flow belongs to the `sales`
-section — an admin without `sales` cannot reach it. Details aren't in this guide yet.
+section — an admin without `sales` cannot reach it. See the invoices guide.
+
+Note this affects inventory: **creating an invoice marks the car تم البيع
+automatically**, so a car can leave the available listings via the sales flow
+without anyone touching its status field.
 
 ## Permissions in this section
 

@@ -53,15 +53,39 @@ have access to it and that their site admin can grant it — do not walk them \
 through steps that will land on a 403."""
 
 
+#: Section key -> what a `<key>.md` guide file covers, for the scope line.
+_TOPIC_NAMES = {
+    "cars": "cars and inventory",
+    "sales": "invoices, receipts, contracts and shipping",
+    "orders": "customer orders",
+    "reviews": "ratings, questions and the FAQ",
+}
+
+
 @lru_cache(maxsize=1)
 def knowledge_base() -> str:
-    """The concatenated guide. Cached — these files only change on deploy."""
-    parts = []
-    for path in sorted(KNOWLEDGE_DIR.glob("*.md")):
-        parts.append(path.read_text(encoding="utf-8").strip())
-    if not parts:
+    """The concatenated guide, prefixed with what it does and doesn't cover.
+
+    The scope line is derived from the filenames on disk rather than written
+    into any guide. Hand-written scope notes go stale the moment a new file is
+    added — a leftover "invoices aren't covered yet" makes the model refuse
+    questions it can now answer. Dropping a new .md in this directory is
+    therefore the only step needed to widen the assistant's scope.
+    """
+    paths = sorted(KNOWLEDGE_DIR.glob("*.md"))
+    if not paths:
         raise RuntimeError(f"No knowledge files found in {KNOWLEDGE_DIR}")
-    return "\n\n---\n\n".join(parts)
+
+    covered = [_TOPIC_NAMES.get(p.stem, p.stem) for p in paths]
+    scope = (
+        "This guide currently covers: "
+        + "; ".join(covered)
+        + ". Anything else in the dashboard (staff accounts, the page builder, "
+        "site settings, billing/subscription, Telegram, imports) is NOT covered "
+        "— for those, say you don't have the information and suggest support."
+    )
+    body = "\n\n---\n\n".join(p.read_text(encoding="utf-8").strip() for p in paths)
+    return f"{scope}\n\n---\n\n{body}"
 
 
 def _describe_role(user) -> tuple[str, str]:
