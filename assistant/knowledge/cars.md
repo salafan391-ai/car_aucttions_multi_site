@@ -65,12 +65,52 @@ route it to support.
 
 ## Importing cars instead of typing them
 
-- **HappyCar import**: `/dashboard/import-happycar/` — bulk-imports listings.
-- **Save a car from the public/auction listings**: browsing at `/auctions/browse/`,
-  an admin can save a listing into their own inventory
-  (`/our-cars/save/<car_id>/`) instead of re-entering it by hand. Worth suggesting
-  whenever someone asks about adding a car that already exists in the auction feed.
-- **Auction JSON upload**: `/upload-auction/`.
+All of these need the `cars` section — they are **not** site-admin-only.
+
+**Save a car from the auction listings** — browse at `/auctions/browse/` (read-only,
+filter by auction date, auction name, entry number, or free text) and save any car
+into your own inventory instead of re-typing it. Saving twice is safe: you get
+«هذه السيارة محفوظة لديك بالفعل» rather than a duplicate. Suggest this whenever
+someone asks about adding a car that already exists in the auction feed.
+
+**HappyCar import** — `/dashboard/import-happycar/`. Runs in the background; you'll
+see «بدأ الاستيراد في الخلفية». Only one import per site at a time — a second
+attempt says «استيراد جارٍ بالفعل، الرجاء الانتظار حتى ينتهي». Options include how
+many pages, whether to fetch the gallery, and whether to download images.
+
+> ⚠️ **حذف السيارات المستوردة سابقاً وغير الموجودة في هذا الاستيراد** is a
+> destructive checkbox sitting in an ordinary-looking import form, and it does
+> **not** ask for confirmation. Ticking it deletes previously-imported cars that
+> aren't in this run. If someone is unsure, tell them to leave it unticked — an
+> import without it only adds and updates.
+
+There is also a reset button for when an import appears stuck. It only clears the
+"import is running" flag; it does not undo anything.
+
+## Deleting damaged cars in bulk
+
+`/dashboard/damaged-cars/delete-unsold/` deletes **every imported damaged car that
+isn't marked تم البيع**, along with their photos.
+
+This is irreversible. It does ask for confirmation first («لا يمكن التراجع») and it
+only ever touches this site's own cars. Note it needs only the `cars` section — a
+limited staff member can do it, not just the site admin.
+
+## Shareable car collections (`cars` section)
+
+`/dashboard/share/` — pick any number of cars, from both the shared catalogue and
+your own inventory, and get **one link to send a customer**: «إنشاء رابط المشاركة»,
+then **نسخ**. Up to 60 cars per link; the page lists your most recent 50 links.
+
+The link looks like `/c/<code>/` and is **public — anyone holding it can open it,
+with no login**. The code is unguessable, but the link **never expires**. There is
+no way to disable a link other than deleting the collection («تم حذف المجموعة»),
+which is the honest answer if an admin asks how to revoke one they sent by mistake.
+
+A related page, `/share-cart/`, can push the cart to the dealership's Telegram —
+but the Telegram buttons only work for the site admin. A limited staff member with
+`cars` can open the cart and see the button, and clicking it fails. That's a known
+rough edge, not something they're doing wrong.
 
 ## Billing a car
 

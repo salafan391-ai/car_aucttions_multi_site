@@ -53,12 +53,18 @@ have access to it and that their site admin can grant it — do not walk them \
 through steps that will land on a 403."""
 
 
-#: Section key -> what a `<key>.md` guide file covers, for the scope line.
+#: Guide filename stem -> human phrase for the scope line. A stem with no entry
+#: falls back to the stem itself, so a new file is never invisible.
 _TOPIC_NAMES = {
     "cars": "cars and inventory",
     "sales": "invoices, receipts, contracts and shipping",
     "orders": "customer orders",
-    "reviews": "ratings, questions and the FAQ",
+    "reviews": "ratings, customer questions and the FAQ",
+    # Imports and shareable collections are deliberately NOT listed here — their
+    # views are @section_required("cars"), not admin-only, despite what the
+    # permissions.py docstring claims. They're documented in cars.md.
+    "admin": "site-admin-only tools (staff accounts, site settings, page builder, "
+             "Telegram, billing, sending email) and the inbox",
 }
 
 
@@ -77,12 +83,15 @@ def knowledge_base() -> str:
         raise RuntimeError(f"No knowledge files found in {KNOWLEDGE_DIR}")
 
     covered = [_TOPIC_NAMES.get(p.stem, p.stem) for p in paths]
+    # Say only what IS covered. An explicit not-covered list is a second place to
+    # forget to edit — and a stale one makes the model refuse questions it can
+    # actually answer, which is exactly what happened when cars.md still claimed
+    # invoices "aren't written yet" after sales.md shipped.
     scope = (
-        "This guide currently covers: "
+        "This guide covers: "
         + "; ".join(covered)
-        + ". Anything else in the dashboard (staff accounts, the page builder, "
-        "site settings, billing/subscription, Telegram, imports) is NOT covered "
-        "— for those, say you don't have the information and suggest support."
+        + ". If a question is about something not described below, say you don't "
+        "have that information and suggest contacting support — do not guess."
     )
     body = "\n\n---\n\n".join(p.read_text(encoding="utf-8").strip() for p in paths)
     return f"{scope}\n\n---\n\n{body}"
