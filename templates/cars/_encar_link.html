@@ -1,9 +1,9 @@
 {% comment %}
-"View on Encar" source link for Encar (non-auction) cars. Superuser-only —
-same gating as the default theme; it points staff to the original Encar
-listing and is not meant for public visitors. Theme-neutral styling.
+"View on Encar" source link for Encar (non-auction) cars. Staff-only — same
+gating as the default theme; it points staff to the original Encar listing and
+is not meant for public visitors. Theme-neutral styling.
 {% endcomment %}
-{% if car.category.name != 'auction' and car.lot_number and request.user.is_superuser %}
+{% if car.category.name != 'auction' and car.lot_number and request.user.is_staff %}
 <style>
     .gc-encar-link {
         display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%;

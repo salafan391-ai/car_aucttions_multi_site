@@ -1137,7 +1137,7 @@
 
 
 
-                {% if car.category.name != 'auction' and request.user.is_superuser %}
+                {% if car.category.name != 'auction' and car.lot_number and request.user.is_staff %}
                 <div class="mt-4 p-3 bg-red-600 border border-gray-200 rounded-lg text-center">
                     <a class="text-xs text-white mt-4 text-center bilingual" href="https://fem.encar.com/cars/detail/{{ car.lot_number }}" data-lang-ar="عرض في موقع إنكار" data-lang-ru="Отображается на сайте Inkar" data-lang-es="Se muestra en el sitio web de Inkar." data-lang-en="View on Encar">
                         عرض في موقع إنكار

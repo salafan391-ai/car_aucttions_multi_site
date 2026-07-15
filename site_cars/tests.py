@@ -1,5 +1,8 @@
+from types import SimpleNamespace
+
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied
+from django.template.loader import render_to_string
 from django.test import RequestFactory
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantClient
@@ -291,3 +294,47 @@ class GatedViewTests(TenantTestCase):
         self.client.login(username="owner", password="adminpass123")
         response = self.client.get("/dashboard/")
         self.assertContains(response, "إجمالي الإيرادات")
+
+
+class EncarLinkVisibilityTests(TenantTestCase):
+    """The Encar source link points at the original listing, so it is staff-only
+    and must never render for a customer on the public car page."""
+
+    def _render(self, user, category="encar", lot_number="12345678"):
+        return render_to_string(
+            "cars/_encar_link.html",
+            {
+                "car": SimpleNamespace(
+                    category=SimpleNamespace(name=category), lot_number=lot_number
+                ),
+                "request": SimpleNamespace(user=user),
+            },
+        )
+
+    def test_any_staff_member_sees_the_link(self):
+        """Not just the admin — a staff member with no cars access sees it too."""
+        staff = User.objects.create_user("seller", password="x", is_staff=True)
+        StaffAccess.objects.create(user=staff, can_orders=True)
+        self.assertIn("fem.encar.com/cars/detail/12345678", self._render(staff))
+
+    def test_site_admin_sees_the_link(self):
+        admin = User.objects.create_user(
+            "owner", password="x", is_staff=True, is_superuser=True
+        )
+        self.assertIn("fem.encar.com", self._render(admin))
+
+    def test_customer_never_sees_the_link(self):
+        customer = User.objects.create_user("buyer", password="x")
+        self.assertNotIn("fem.encar.com", self._render(customer))
+
+    def test_anonymous_visitor_never_sees_the_link(self):
+        self.assertNotIn("fem.encar.com", self._render(AnonymousUser()))
+
+    def test_hidden_for_auction_cars(self):
+        staff = User.objects.create_user("seller", password="x", is_staff=True)
+        self.assertNotIn("fem.encar.com", self._render(staff, category="auction"))
+
+    def test_hidden_when_the_car_has_no_lot_number(self):
+        """Without a lot number the URL would point at a broken Encar page."""
+        staff = User.objects.create_user("seller", password="x", is_staff=True)
+        self.assertNotIn("fem.encar.com", self._render(staff, lot_number=""))
