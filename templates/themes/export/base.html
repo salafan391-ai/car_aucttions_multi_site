@@ -2010,5 +2010,12 @@
     </script>
 {% include "partials/label_overrides.html" %}
 {% include "partials/loading_bar.html" %}
+{% comment %}
+Dashboard help assistant. Each theme ships a standalone base.html that shadows
+templates/base.html via TenantThemeLoader, so the include must be repeated here —
+otherwise the assistant only ever appears for tenants on the `default` theme.
+Gate is user.is_staff to match the endpoint's @staff_required exactly.
+{% endcomment %}
+{% if user.is_staff %}{% include "assistant/widget.html" %}{% endif %}
 </body>
 </html>

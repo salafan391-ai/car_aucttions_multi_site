@@ -37,7 +37,7 @@ nothing. All motion is disabled under prefers-reduced-motion.
 
       <div class="flex items-center gap-2 mt-3">
         <button type="button" id="assistant-welcome-open"
-                class="bg-brand bg-brand-hover text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                class="assistant-cta text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
           اسألني الآن
         </button>
         <button type="button" id="assistant-welcome-later"
@@ -55,7 +55,7 @@ nothing. All motion is disabled under prefers-reduced-motion.
 
   <details class="assistant-widget relative">
 
-    <summary class="list-none cursor-pointer inline-flex items-center gap-2 bg-brand bg-brand-hover text-white text-sm font-bold px-5 py-3 rounded-full shadow-lg transition">
+    <summary class="assistant-cta list-none cursor-pointer inline-flex items-center gap-2 text-white text-sm font-bold px-5 py-3 rounded-full shadow-lg transition">
       <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M8.228 9.247a4 4 0 115.544 3.51c-.83.36-1.272 1.09-1.272 1.743v.5M12 17.5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -86,7 +86,7 @@ nothing. All motion is disabled under prefers-reduced-motion.
                placeholder="اكتب سؤالك..."
                class="flex-1 text-sm px-3 py-2 rounded-xl bg-gray-50 border border-transparent focus:border-gray-200 focus:outline-none disabled:opacity-50">
         <button type="submit"
-                class="bg-brand bg-brand-hover text-white text-sm font-bold px-4 py-2 rounded-xl transition disabled:opacity-50">
+                class="assistant-cta text-white text-sm font-bold px-4 py-2 rounded-xl transition disabled:opacity-50">
           إرسال
         </button>
         <span class="assistant-spinner htmx-indicator text-xs text-gray-400 px-1">...</span>
@@ -100,6 +100,15 @@ nothing. All motion is disabled under prefers-reduced-motion.
 </div>
 
 <style>
+  /* Own our accent instead of relying on each theme's classes. The 8 tenant
+     themes each ship a full standalone base.html: most define .bg-brand and
+     --color-primary, but `glassy` defines neither (it uses --gl-brand), which
+     would leave this button with no background. The var chain covers all of
+     them and still falls back to a literal colour. */
+  .assistant-root { --assistant-accent: var(--color-primary, var(--gl-brand, #2563eb)); }
+  .assistant-root .assistant-cta { background-color: var(--assistant-accent); color: #fff; }
+  .assistant-root .assistant-cta:hover { filter: brightness(1.08); }
+
   /* Safari still renders the default disclosure triangle without this. */
   .assistant-widget > summary::-webkit-details-marker { display: none; }
   .assistant-widget:not([open]) .assistant-label-open { display: none; }
@@ -134,7 +143,7 @@ nothing. All motion is disabled under prefers-reduced-motion.
   @keyframes assistant-pulse {
     0%, 100% { box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1); }
     50%      { box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1),
-                           0 0 0 6px color-mix(in srgb, var(--color-primary) 22%, transparent); }
+                           0 0 0 6px color-mix(in srgb, var(--assistant-accent) 22%, transparent); }
   }
 
   .assistant-wave { animation: assistant-wave 2s ease-in-out 2; transform-origin: 70% 80%; }
