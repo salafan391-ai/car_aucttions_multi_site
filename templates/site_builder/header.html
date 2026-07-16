@@ -54,7 +54,6 @@
 
                 {% if user.is_authenticated %}
                 {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">طلباتي</a>{% endif %}
-                <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">الرسائل</a>
                 {% if user.is_staff %}
                 {# Staff actions. Labels appear only at 2xl — below that these are #}
                 {# icon-only with a title tooltip, which is what keeps the row #}
@@ -223,7 +222,6 @@
                 </a>
                 {% if user.is_authenticated %}
                 {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">طلباتي</a>{% endif %}
-                <a href="{% url 'inbox' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">الرسائل</a>
                 {% if user.is_staff %}
                 <a href="{% url 'site_car_add' %}" class="flex items-center gap-2 py-2 px-3 rounded-lg bg-brand text-white font-bold">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
