@@ -58,8 +58,12 @@ def _attach_section_data(sections):
 @require_GET
 def page_view(request, slug):
     try:
-        page = Page.objects.get(slug=slug, is_published=True)
+        page = Page.objects.get(slug=slug)
     except Page.DoesNotExist:
+        raise Http404("Page not found")
+
+    # Drafts (unpublished) are previewable by staff only; visitors get a 404.
+    if not page.is_published and not request.user.is_staff:
         raise Http404("Page not found")
 
     sections = list(page.sections.filter(is_visible=True).order_by("order", "id"))

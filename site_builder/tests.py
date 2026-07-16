@@ -109,3 +109,23 @@ class BuilderTests(TenantTestCase):
         self.assertIn("sb-bg-dark", html)
         self.assertIn("sb-align-center", html)
         self.assertIn("sb-w-wide", html)
+
+
+class DraftPreviewTests(TenantTestCase):
+    def setUp(self):
+        self.client = TenantClient(self.tenant)
+        self.page = Page.objects.create(kind="custom", slug="draft", title="D", is_published=False)
+        PageSection.objects.create(page=self.page, type="text", order=0, title="hi", body="x")
+
+    def test_anonymous_gets_404_for_unpublished(self):
+        self.assertEqual(self.client.get("/p/draft/").status_code, 404)
+
+    def test_staff_can_preview_unpublished(self):
+        User.objects.create_user("owner", password="pw", is_staff=True, is_superuser=True)
+        self.client.login(username="owner", password="pw")
+        self.assertEqual(self.client.get("/p/draft/").status_code, 200)
+
+    def test_published_still_public(self):
+        self.page.is_published = True
+        self.page.save()
+        self.assertEqual(self.client.get("/p/draft/").status_code, 200)
