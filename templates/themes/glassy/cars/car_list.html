@@ -523,7 +523,7 @@
                             {% if request.GET.car_type == 'auction' %}
                             <label>
                                 <input type="checkbox" name="clean_main" value="1" {% if sel_clean_main %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip bilingual" data-lang-ar="القطع الأساسية غير مُبدّلة" data-lang-en="No replaced main parts" data-lang-es="Sin piezas principales reemplazadas" data-lang-ru="Без замены основных деталей">القطع الأساسية غير مُبدّلة{% with fc=facet_counts|get_item:'clean_main' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                                <span class="gl-list-chip bilingual" data-lang-ar="القطع الأساسية سليمة" data-lang-en="No replaced main parts" data-lang-es="Sin piezas principales reemplazadas" data-lang-ru="Без замены основных деталей">القطع الأساسية سليمة{% with fc=facet_counts|get_item:'clean_main' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% else %}
                             <label>
