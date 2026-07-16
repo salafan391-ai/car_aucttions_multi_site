@@ -1,9 +1,25 @@
 {% load static tailwind_tags whatsapp_tags django_htmx custom_filters %}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root" data-theme="{{ site_theme|default:'light' }}">
+<html lang="ar" dir="rtl" id="html-root" data-theme="{{ site_theme|default:'light' }}" data-theme-toggle="{{ theme_toggle|yesno:'1,0' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if theme_toggle %}
+    <script>
+      /* Set the visitor's saved/preferred light-dark mode BEFORE paint, so the
+         page never flashes the wrong theme. Only runs on the default template
+         theme (data-theme-toggle="1"). Saved choice wins; else follow device. */
+      (function () {
+        try {
+          var root = document.getElementById('html-root');
+          var saved = localStorage.getItem('color-mode');
+          var mode = (saved === 'light' || saved === 'dark') ? saved
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          root.setAttribute('data-theme', mode);
+        } catch (e) {}
+      })();
+    </script>
+    {% endif %}
     <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
     {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
     

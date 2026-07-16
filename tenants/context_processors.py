@@ -108,6 +108,13 @@ def tenant_branding(request):
         "body_bg_color": "#fffbe6",  # Light gold/white
     }
     theme = getattr(tenant, 'theme', 'light') or 'light'
+    # Visitor light/dark toggle: only on the default template theme, and only
+    # when the tenant's colour mode is light or dark (the special palettes —
+    # desert/ocean/eid/custom — aren't a light/dark pair, so no toggle there).
+    theme_toggle = (
+        getattr(tenant, 'template_theme', 'default') == 'default'
+        and theme in ('light', 'dark')
+    )
 
     # ── Global default SEO — every tenant gets strong meta out of the box,
     #    derived from its name (+ city); the admin's own values override these.
@@ -165,6 +172,7 @@ def tenant_branding(request):
         "accent_color": eid_colors["accent_color"] if theme == "eid" else tenant.accent_color or "#3b82f6",
         "body_bg_color": eid_colors["body_bg_color"] if theme == "eid" else getattr(tenant, 'body_bg_color', None) or "#ffffff",
         "site_theme": theme,
+        "theme_toggle": theme_toggle,
         "footer_text": tenant.footer_text or "",
         "footer_text_en": tenant.footer_text_en or "",
         "car_display": getattr(tenant, 'car_display', 'classic') or 'classic',

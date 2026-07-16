@@ -95,6 +95,12 @@
 
             <!-- Lang & Currency Switcher -->
             <div class="hidden xl:flex items-center gap-2 shrink-0 whitespace-nowrap border-r border-gray-200 pr-4 mr-2">
+                {% if theme_toggle %}
+                <button type="button" id="color-mode-toggle" onclick="window.toggleColorMode()" aria-label="تبديل الوضع الليلي/النهاري" title="الوضع الليلي / النهاري" class="cm-toggle flex items-center justify-center w-9 h-9 text-gray-800 bg-gray-50 border-2 border-gray-200 hover:border-brand hover:text-brand hover:bg-brand/5 rounded-lg shadow-sm transition">
+                    <svg class="cm-icon-sun w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    <svg class="cm-icon-moon w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                {% endif %}
                 <div class="relative" id="lang-dropdown">
                     <button type="button" onclick="document.getElementById('lang-menu').classList.toggle('hidden'); document.getElementById('currency-menu')?.classList.add('hidden');" class="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-800 bg-gray-50 border-2 border-gray-200 hover:border-brand hover:text-brand hover:bg-brand/5 rounded-lg shadow-sm transition">
                         <span id="lang-flag" class="text-base leading-none">🇸🇦</span>
@@ -183,6 +189,13 @@
 
             <!-- Mobile Lang/Currency — full pickers (tap = choose, no blind cycling) -->
             <div class="py-2 px-3 border-t border-white/20 mt-2">
+                {% if theme_toggle %}
+                <button type="button" onclick="window.toggleColorMode()" aria-label="تبديل الوضع الليلي/النهاري" class="mob-chip w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/95 rounded-lg text-xs font-bold text-gray-800 mb-3">
+                    <svg class="cm-icon-sun w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                    <svg class="cm-icon-moon w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <span class="bilingual" data-lang-ar="الوضع الليلي / النهاري" data-lang-en="Light / Dark" data-lang-es="Claro / Oscuro" data-lang-ru="Светлая / Тёмная">الوضع الليلي / النهاري</span>
+                </button>
+                {% endif %}
                 <div class="text-[11px] font-bold opacity-70 mb-1.5 bilingual" data-lang-ar="اللغة" data-lang-en="Language" data-lang-es="Idioma" data-lang-ru="Язык">اللغة</div>
                 <div class="flex gap-1.5 flex-wrap mb-3">
                     <button type="button" onclick="setLang('ar')" class="mob-chip px-3 py-1.5 bg-white/95 rounded-lg text-xs font-bold text-gray-800">🇸🇦 العربية</button>
@@ -231,6 +244,24 @@
             </div>
         </div>
     </div>
+
+    {% if theme_toggle %}
+    {# ── Light/dark visitor toggle (default template theme only) ── #}
+    <style>
+      /* Show the icon for the mode you'd switch TO: moon in light, sun in dark. */
+      .cm-icon-sun, .cm-icon-moon { display: none; }
+      [data-theme="light"] .cm-icon-moon { display: block; }
+      [data-theme="dark"]  .cm-icon-sun  { display: block; }
+    </style>
+    <script>
+      window.toggleColorMode = function () {
+        var root = document.getElementById('html-root');
+        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('color-mode', next); } catch (e) {}
+      };
+    </script>
+    {% endif %}
 
     {# ── Nav hover underline + active-page indicator (added below) ── #}
     <style>
