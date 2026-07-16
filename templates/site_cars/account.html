@@ -28,7 +28,7 @@
     </div>
 
     <!-- Quick links -->
-    <div class="grid grid-cols-3 gap-3 mb-8">
+    <div class="grid grid-cols-2 gap-3 mb-8">
         <a href="{% url 'wishlist' %}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center hover:shadow-md transition">
             <div class="text-2xl font-extrabold text-brand">{{ wishlist_count }}</div>
             <div class="text-xs font-bold text-gray-500 mt-1 bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</div>
@@ -36,10 +36,6 @@
         <a href="{% url 'my_orders' %}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center hover:shadow-md transition">
             <div class="text-2xl font-extrabold text-brand">{{ orders_count }}</div>
             <div class="text-xs font-bold text-gray-500 mt-1 bilingual" data-lang-ar="طلباتي" data-lang-en="My Orders" data-lang-es="Pedidos" data-lang-ru="Заказы">طلباتي</div>
-        </a>
-        <a href="{% url 'inbox' %}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center hover:shadow-md transition relative">
-            <div class="text-2xl font-extrabold text-brand">{{ unread_count }}</div>
-            <div class="text-xs font-bold text-gray-500 mt-1 bilingual" data-lang-ar="الرسائل" data-lang-en="Inbox" data-lang-es="Mensajes" data-lang-ru="Сообщения">الرسائل</div>
         </a>
     </div>
 
