@@ -29,6 +29,10 @@ ticker_color). The page + sticky navs are offset down by the bar height.
     /* Make room for the fixed bar and push the sticky navs below it. */
     body { padding-top: var(--ticker-h); }
     #main-nav, .lux-nav, .mod-nav, .gl-nav { top: var(--ticker-h) !important; }
+    .detail-sticky-card {
+        top: calc(var(--ticker-h) + 6rem) !important;
+        max-height: calc(100vh - var(--ticker-h) - 7rem) !important;
+    }
 </style>
 <script>
 (function () {
