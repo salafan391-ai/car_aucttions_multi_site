@@ -52,10 +52,6 @@
                     <a href="/p/{{ page.slug }}/" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">{{ page.title }}</a>
                 {% endfor %}
 
-                <a href="{% url 'wishlist' %}" title="قائمة الأمنيات" aria-label="قائمة الأمنيات" class="text-gray-600 text-brand-hover transition relative shrink-0">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    <span id="wishlist-count" class="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
-                </a>
                 {% if user.is_authenticated %}
                 {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">طلباتي</a>{% endif %}
                 <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">الرسائل</a>
@@ -96,6 +92,10 @@
 
             <!-- Lang & Currency Switcher -->
             <div class="hidden xl:flex items-center gap-2 shrink-0 whitespace-nowrap pr-4 mr-2">
+                <a href="{% url 'wishlist' %}" title="قائمة الأمنيات" aria-label="قائمة الأمنيات" class="relative flex items-center justify-center w-9 h-9 text-gray-800 bg-gray-50 hover:text-brand hover:bg-brand/5 rounded-lg shadow-sm transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    <span id="wishlist-count" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                </a>
                 {% if theme_toggle %}
                 <button type="button" id="color-mode-toggle" onclick="window.toggleColorMode()" aria-label="تبديل الوضع الليلي/النهاري" title="الوضع الليلي / النهاري" class="cm-toggle flex items-center justify-center w-9 h-9 text-gray-800 bg-gray-50 hover:text-brand hover:bg-brand/5 rounded-lg shadow-sm transition">
                     <svg class="cm-icon-sun w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
