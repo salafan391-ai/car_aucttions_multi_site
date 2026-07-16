@@ -1187,12 +1187,19 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
             {% csrf_token %}
             <div class="font-semibold mb-2 bilingual" data-lang-ar="قم بتقييمنا" data-lang-en="Rate us" data-lang-es="Valóranos" data-lang-ru="Оцените нас">قم بتقييمنا</div>
             <input type="text" name="name" required maxlength="120" value="{{ user.get_full_name|default:user.get_username|default:'' }}" placeholder="الاسم" data-placeholder-ar="الاسم" data-placeholder-en="Your name" data-placeholder-es="Tu nombre" data-placeholder-ru="Ваше имя" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition mb-3">
-            <div class="flex items-center gap-1 mb-3" dir="ltr">
-                {% for i in "12345" %}
-                <label class="cursor-pointer">
-                    <input type="radio" name="rating" value="{{ forloop.counter }}" class="hidden peer" required>
-                    <svg class="w-8 h-8 text-gray-300 peer-checked:text-yellow-400 hover:text-yellow-400 transition" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                </label>
+            <style>
+              /* Reverse order + sibling selector = hovering/picking a star fills every star up to it. */
+              .star-input { display:inline-flex; flex-direction:row-reverse; justify-content:flex-end; }
+              .star-input input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+              .star-input label { cursor:pointer; color:#d1d5db; transition:color .15s; line-height:0; }
+              .star-input label svg { width:2rem; height:2rem; }
+              .star-input label:hover, .star-input label:hover ~ label,
+              .star-input input:checked ~ label { color:#facc15; }
+            </style>
+            <div class="star-input mb-3" dir="ltr">
+                {% for v in "54321" %}
+                <input type="radio" id="site-star-{{ v }}" name="rating" value="{{ v }}" required>
+                <label for="site-star-{{ v }}" aria-label="{{ v }}"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></label>
                 {% endfor %}
             </div>
             <textarea name="comment" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition resize-none mb-3" placeholder="اكتب مراجعتك (اختياري)..." data-placeholder-ar="اكتب مراجعتك (اختياري)..." data-placeholder-en="Write your review (optional)..." data-placeholder-es="Escribe tu reseña (opcional)..." data-placeholder-ru="Напишите свой отзыв (по желанию)..."></textarea>
