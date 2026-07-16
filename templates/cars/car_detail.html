@@ -951,7 +951,7 @@
 
         <!-- Sidebar -->
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
+            <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24 max-h-[calc(100vh_-_7rem)] overflow-y-auto">
                 {% if car.status == 'sold' %}
                 <span class="inline-block bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full mb-4 bilingual" data-lang-ar="تم البيع" data-lang-ru="Продал" data-lang-es="Vendido" data-lang-en="Sold">تم البيع</span>
                 {% elif car.status == 'pending' %}
