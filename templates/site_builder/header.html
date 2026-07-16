@@ -21,17 +21,17 @@
             {# (768px) the row overflowed the max-w-7xl container. Below xl everyone #}
             {# gets the mobile menu, which carries the same links (incl. staff ones). #}
             <div class="hidden xl:flex items-center gap-4 min-w-0">
-                <a href="{% url 'home' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">الرئيسية</a>
-                <a href="{% url 'car_list' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">السيارات</a>
-                {% if show_parts %}<a href="{% url 'parts_list' %}" class="text-gray-600 text-brand-hover font-medium transition bilingual whitespace-nowrap" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
-                {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="text-gray-600 text-brand-hover font-medium transition bilingual whitespace-nowrap" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
-                <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">تواصل معنا</a>
+                <a href="{% url 'home' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">الرئيسية</a>
+                <a href="{% url 'car_list' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">السيارات</a>
+                {% if show_parts %}<a href="{% url 'parts_list' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link bilingual whitespace-nowrap" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
+                {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link bilingual whitespace-nowrap" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
+                <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">تواصل معنا</a>
 
                 {# ── Dynamic NavLinks (site_builder) ── #}
                 {% for link in sb_nav_links %}
                     {% if link.children.all %}
                         <div class="relative group">
-                            <button type="button" class="text-gray-600 text-brand-hover font-medium transition inline-flex items-center gap-1 whitespace-nowrap">
+                            <button type="button" class="text-gray-600 text-brand-hover font-medium transition nav-link inline-flex items-center gap-1 whitespace-nowrap">
                                 {{ link.label }}
                                 <svg class="h-4 w-4 opacity-60" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
                             </button>
@@ -44,20 +44,20 @@
                             </div>
                         </div>
                     {% else %}
-                        <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">{{ link.label }}</a>
+                        <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">{{ link.label }}</a>
                     {% endif %}
                 {% endfor %}
                 {% for page in sb_nav_pages %}
-                    <a href="/p/{{ page.slug }}/" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">{{ page.title }}</a>
+                    <a href="/p/{{ page.slug }}/" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">{{ page.title }}</a>
                 {% endfor %}
 
-                <a href="{% url 'wishlist' %}" class="text-gray-600 text-brand-hover font-medium transition relative whitespace-nowrap">
+                <a href="{% url 'wishlist' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link relative whitespace-nowrap">
                     قائمة الأمنيات
                     <span id="wishlist-count" class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                 </a>
                 {% if user.is_authenticated %}
-                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">طلباتي</a>{% endif %}
-                <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">الرسائل</a>
+                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">طلباتي</a>{% endif %}
+                <a href="{% url 'inbox' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">الرسائل</a>
                 {% if user.is_staff %}
                 {# Staff actions. Labels appear only at 2xl — below that these are #}
                 {# icon-only with a title tooltip, which is what keeps the row #}
@@ -87,7 +87,7 @@
                 </div>
                 {% else %}
                 <div class="flex items-center gap-3 border-r border-gray-200 pr-6">
-                    <a href="{% url 'login' %}" class="text-gray-600 text-brand-hover font-medium transition whitespace-nowrap">دخول</a>
+                    <a href="{% url 'login' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link whitespace-nowrap">دخول</a>
                     <a href="{% url 'register' %}" class="bg-brand bg-brand-hover text-white text-sm font-medium px-4 py-2 rounded-xl transition">حساب جديد</a>
                 </div>
                 {% endif %}
@@ -162,15 +162,15 @@
     <!-- Mobile Menu -->
     <div id="mobile-menu" class="hidden xl:hidden border-t" style="background-color:var(--color-primary)">
         <div class="px-4 py-3 space-y-2">
-            <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرئيسية</a>
-            <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">السيارات</a>
-            {% if show_parts %}<a href="{% url 'parts_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts">قطع غيار</a>{% endif %}
-            {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium bilingual" data-lang-ar="إكسسوارات" data-lang-en="Accessories">إكسسوارات</a>{% endif %}
-            <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تواصل معنا</a>
+            <a href="{% url 'home' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">السيارات</a>
+            {% if show_parts %}<a href="{% url 'parts_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts">قطع غيار</a>{% endif %}
+            {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m bilingual" data-lang-ar="إكسسوارات" data-lang-en="Accessories">إكسسوارات</a>{% endif %}
+            <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">تواصل معنا</a>
 
             {# ── Dynamic NavLinks (site_builder) ── #}
             {% for link in sb_nav_links %}
-                <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">{{ link.label }}</a>
+                <a href="{{ link.resolved_url }}" {% if link.open_in_new_tab %}target="_blank" rel="noopener"{% endif %} class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">{{ link.label }}</a>
                 {% for child in link.children.all %}
                     {% if child.is_visible %}
                         <a href="{{ child.resolved_url }}" class="block ps-7 pe-3 py-2 rounded-lg hover:bg-gray-50 text-sm">— {{ child.label }}</a>
@@ -178,7 +178,7 @@
                 {% endfor %}
             {% endfor %}
             {% for page in sb_nav_pages %}
-                <a href="/p/{{ page.slug }}/" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">{{ page.title }}</a>
+                <a href="/p/{{ page.slug }}/" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">{{ page.title }}</a>
             {% endfor %}
 
             <!-- Mobile Lang/Currency — full pickers (tap = choose, no blind cycling) -->
@@ -202,13 +202,13 @@
                 <span id="mobile-lang-flag" class="hidden"></span><span id="mobile-lang-label" class="hidden"></span><span id="mobile-currency-label" class="hidden"></span>
             </div>
             <div class="border-t border-gray-100 pt-2 mt-2">
-                <a href="{% url 'wishlist' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium relative">
+                <a href="{% url 'wishlist' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m relative">
                     قائمة الأمنيات
                     <span id="wishlist-count-mobile" class="absolute top-2 right-8 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                 </a>
                 {% if user.is_authenticated %}
-                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">طلباتي</a>{% endif %}
-                <a href="{% url 'inbox' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">الرسائل</a>
+                {% if user_has_orders %}<a href="{% url 'my_orders' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">طلباتي</a>{% endif %}
+                <a href="{% url 'inbox' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">الرسائل</a>
                 {% if user.is_staff %}
                 <a href="{% url 'site_car_add' %}" class="flex items-center gap-2 py-2 px-3 rounded-lg bg-brand text-white font-bold">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
@@ -225,10 +225,60 @@
                 </div>
                 <a href="{% url 'logout' %}" class="block py-2 px-3 rounded-lg hover:bg-red-50 text-red-500 font-medium">تسجيل الخروج</a>
                 {% else %}
-                <a href="{% url 'login' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium">تسجيل الدخول</a>
+                <a href="{% url 'login' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">تسجيل الدخول</a>
                 <a href="{% url 'register' %}" class="block py-2 px-3 rounded-lg bg-brand text-white font-medium text-center mt-1">إنشاء حساب</a>
                 {% endif %}
             </div>
         </div>
     </div>
+
+    {# ── Nav hover underline + active-page indicator (added below) ── #}
+    <style>
+      /* Uses currentColor so the underline survives each theme's !important
+         nav-colour overrides in base.html. Desktop = growing underline;
+         mobile drawer = highlighted row. */
+      #main-nav .nav-link { position: relative; }
+      #main-nav .nav-link::after {
+        content: ""; position: absolute; inset-inline: 0; bottom: -6px;
+        height: 2px; border-radius: 2px; background: currentColor;
+        transform: scaleX(0); transform-origin: center;
+        transition: transform .2s ease; opacity: .9; pointer-events: none;
+      }
+      #main-nav .nav-link:hover::after,
+      #main-nav .nav-link:focus-visible::after,
+      #main-nav .nav-link.is-active::after { transform: scaleX(1); }
+      #main-nav .nav-link.is-active { font-weight: 700; }
+      #mobile-menu .nav-link-m { transition: background-color .2s ease; }
+      #mobile-menu .nav-link-m.is-active { background: rgba(255,255,255,.18); font-weight: 700; }
+    </style>
+    <script>
+    (function () {
+      function norm(p) { return (p || '').replace(/\/+$/, '') || '/'; }
+      function paths(a) {
+        if (!a.getAttribute('href')) return null;   // skip dropdown <button>s
+        try { return norm(new URL(a.href, window.location.origin).pathname); }
+        catch (e) { return null; }
+      }
+      function markActiveNav() {
+        var links = document.querySelectorAll('#main-nav .nav-link, #mobile-menu .nav-link-m');
+        if (!links.length) return;
+        var here = norm(window.location.pathname);
+        var best = null, bestLen = -1;
+        links.forEach(function (a) { a.classList.remove('is-active'); a.removeAttribute('aria-current'); });
+        links.forEach(function (a) {
+          var p = paths(a);
+          if (p === null) return;
+          // Home ("/") only matches the home page; others match the page or any child path.
+          var hit = p === '/' ? here === '/' : (here === p || here.indexOf(p + '/') === 0);
+          if (hit && p.length > bestLen) { best = p; bestLen = p.length; }
+        });
+        if (best === null) return;
+        links.forEach(function (a) {
+          if (paths(a) === best) { a.classList.add('is-active'); a.setAttribute('aria-current', 'page'); }
+        });
+      }
+      if (document.readyState !== 'loading') markActiveNav();
+      else document.addEventListener('DOMContentLoaded', markActiveNav);
+    })();
+    </script>
 </nav>
