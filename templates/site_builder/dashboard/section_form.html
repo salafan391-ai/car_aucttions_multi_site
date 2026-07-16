@@ -38,7 +38,7 @@
         </div>
 
         <div data-use="cta" class="space-y-1.5">
-            <label class="block text-sm font-medium text-gray-700">زر الإجراء (CTA)</label>
+            <label class="block text-sm font-medium text-gray-700">الزر الأساسي</label>
             {{ form.cta_label }}
             <select onchange="if(this.value){this.parentElement.querySelector('input[name=cta_url]').value=this.value;} this.selectedIndex=0;"
                     class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
@@ -46,6 +46,36 @@
                 {% for pl in link_options %}<option value="{{ pl.url }}">{{ pl.label }}</option>{% endfor %}
             </select>
             {{ form.cta_url }}
+        </div>
+
+        <div data-use="cta2" class="space-y-1.5">
+            <label class="block text-sm font-medium text-gray-700">الزر الثانوي <span class="text-gray-400 font-normal">(اختياري)</span></label>
+            {{ form.cta_label2 }}
+            <select onchange="if(this.value){this.parentElement.querySelector('input[name=cta_url2]').value=this.value;} this.selectedIndex=0;"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                <option value="">🔗 اختر صفحة للزر…</option>
+                {% for pl in link_options %}<option value="{{ pl.url }}">{{ pl.label }}</option>{% endfor %}
+            </select>
+            {{ form.cta_url2 }}
+        </div>
+
+        <div data-use="gallery_images" class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">صور المعرض</label>
+            {% if section.config.images %}
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {% for img in section.config.images %}
+                <label class="relative block aspect-square rounded-lg overflow-hidden border border-gray-200 cursor-pointer group">
+                    <img src="{{ img.src }}" class="w-full h-full object-cover">
+                    <span class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition"></span>
+                    <span class="absolute top-1 inset-inline-start-1 flex items-center gap-1 bg-white/90 rounded px-1.5 py-0.5 text-[11px] font-bold text-red-600">
+                        <input type="checkbox" name="remove_image" value="{{ forloop.counter0 }}" class="rounded"> حذف
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <input type="file" name="gallery_images" accept="image/*" multiple class="w-full text-sm">
+            <p class="text-xs text-gray-400">اختر صورة أو أكثر لإضافتها للمعرض. حدّد «حذف» على أي صورة لإزالتها عند الحفظ.</p>
         </div>
 
         <div data-use="cars" class="grid grid-cols-3 gap-3">

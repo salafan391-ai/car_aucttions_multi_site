@@ -1,5 +1,6 @@
 from django.contrib import messages
 from site_cars.permissions import site_admin_required
+from django.core.files.storage import default_storage
 from django.db import OperationalError, ProgrammingError, connection
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -9,6 +10,20 @@ from site_cars.models import SiteCar
 
 from .forms import SECTION_META, PageForm, SectionForm
 from .models import Page, PageSection
+
+
+def _apply_gallery_images(request, section):
+    """Update a gallery section's config.images from the upload form: drop the
+    ones ticked for removal, append newly uploaded files."""
+    cfg = dict(section.config or {})
+    images = list(cfg.get("images") or [])
+    remove = set(request.POST.getlist("remove_image"))
+    images = [im for i, im in enumerate(images) if str(i) not in remove]
+    for f in request.FILES.getlist("gallery_images"):
+        saved = default_storage.save(f"site_builder/sections/{f.name}", f)
+        images.append({"src": default_storage.url(saved)})
+    cfg["images"] = images
+    section.config = cfg
 
 
 def _attach_section_data(sections):
@@ -189,6 +204,8 @@ def section_edit(request, pk, sec_pk=None):
             obj.page = page
             if section is None:
                 obj.order = (page.sections.count())
+            if obj.type == "gallery":
+                _apply_gallery_images(request, obj)
             obj.save()
             messages.success(request, "تم حفظ القسم.")
             return redirect("site_builder:page_edit", pk=page.pk)

@@ -4,14 +4,14 @@
       {% if section.title %}<h2 class="text-3xl sm:text-4xl font-bold mb-3">{{ section.title }}</h2>{% endif %}
       {% if section.subtitle %}<p class="text-lg text-white/90 max-w-xl mx-auto mb-6">{{ section.subtitle }}</p>{% endif %}
       <div class="flex flex-wrap items-center justify-center gap-3">
-        {% if section.config.primary_label and section.config.primary_url %}
-          <a href="{{ section.config.primary_url }}" class="inline-block bg-white text-gray-900 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100">
-            {{ section.config.primary_label }}
+        {% if section.config.cta_label and section.config.cta_url %}
+          <a href="{{ section.config.cta_url }}" class="inline-block bg-white text-gray-900 font-semibold px-6 py-3 rounded-lg hover:bg-gray-100">
+            {{ section.config.cta_label }}
           </a>
         {% endif %}
-        {% if section.config.secondary_label and section.config.secondary_url %}
-          <a href="{{ section.config.secondary_url }}" class="inline-block border border-white/40 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/10">
-            {{ section.config.secondary_label }}
+        {% if section.config.cta_label2 and section.config.cta_url2 %}
+          <a href="{{ section.config.cta_url2 }}" class="inline-block border border-white/40 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/10">
+            {{ section.config.cta_label2 }}
           </a>
         {% endif %}
       </div>

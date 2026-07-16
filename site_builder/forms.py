@@ -7,9 +7,9 @@ from .models import Page, PageSection
 SECTION_META = {
     "hero":          {"label": "بانر رئيسي (Hero)", "icon": "🖼️", "uses": ["title", "subtitle", "body", "image", "cta"]},
     "text":          {"label": "نص / فقرة", "icon": "📝", "uses": ["title", "subtitle", "body"]},
-    "cta":           {"label": "دعوة لإجراء (CTA)", "icon": "🎯", "uses": ["title", "subtitle", "image", "cta"]},
+    "cta":           {"label": "دعوة لإجراء (CTA)", "icon": "🎯", "uses": ["title", "subtitle", "cta", "cta2"]},
     "featured_cars": {"label": "سيارات مختارة", "icon": "🚗", "uses": ["title", "subtitle", "cars"]},
-    "gallery":       {"label": "معرض صور", "icon": "🖼️", "uses": ["title", "subtitle", "image"]},
+    "gallery":       {"label": "معرض صور", "icon": "🖼️", "uses": ["title", "subtitle", "gallery_images"]},
     "brand_strip":   {"label": "شريط الماركات", "icon": "🏷️", "uses": ["title"]},
     "contact_form":  {"label": "نموذج تواصل", "icon": "✉️", "uses": ["title", "subtitle"]},
     "html":          {"label": "HTML مخصّص", "icon": "</>", "uses": ["title", "body"]},
@@ -25,13 +25,17 @@ _TEXT = "w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring
 class PageForm(forms.ModelForm):
     class Meta:
         model = Page
-        fields = ["title", "title_en", "slug", "meta_description", "is_published", "show_in_nav", "nav_order"]
+        fields = ["kind", "title", "title_en", "slug", "meta_description", "is_published", "show_in_nav", "nav_order"]
         widgets = {
+            "kind": forms.Select(attrs={"class": _TEXT}),
             "title": forms.TextInput(attrs={"class": _TEXT, "placeholder": "من نحن"}),
             "title_en": forms.TextInput(attrs={"class": _TEXT, "placeholder": "About Us"}),
             "slug": forms.TextInput(attrs={"class": _TEXT, "placeholder": "about", "dir": "ltr"}),
             "meta_description": forms.TextInput(attrs={"class": _TEXT}),
             "nav_order": forms.NumberInput(attrs={"class": _TEXT}),
+        }
+        help_texts = {
+            "kind": "الرئيسية تحل محل الصفحة الرئيسية للموقع. يُسمح بصفحة واحدة فقط لكل من الرئيسية/من نحن/تواصل.",
         }
 
     def clean_slug(self):
@@ -39,11 +43,33 @@ class PageForm(forms.ModelForm):
         slug = (self.cleaned_data.get("slug") or "").strip()
         return slug or slugify(self.cleaned_data.get("title_en") or self.cleaned_data.get("title") or "page")
 
+    def clean(self):
+        cleaned = super().clean()
+        # Friendly error for the singleton kinds instead of an IntegrityError 500.
+        kind = cleaned.get("kind")
+        if kind in ("home", "about", "contact"):
+            dupes = Page.objects.filter(kind=kind)
+            if self.instance.pk:
+                dupes = dupes.exclude(pk=self.instance.pk)
+            if dupes.exists():
+                self.add_error("kind", "يوجد بالفعل صفحة من هذا النوع. اختر «مخصّصة» أو عدّل الصفحة الموجودة.")
+        # Slug uniqueness (also friendly instead of IntegrityError).
+        slug = cleaned.get("slug")
+        if slug:
+            others = Page.objects.filter(slug=slug)
+            if self.instance.pk:
+                others = others.exclude(pk=self.instance.pk)
+            if others.exists():
+                self.add_error("slug", "هذا الرابط مستخدم بالفعل. اختر رابطاً آخر.")
+        return cleaned
+
 
 class SectionForm(forms.ModelForm):
     # config-backed extras (presets + per-type options)
     cta_label = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": _TEXT, "placeholder": "تصفح السيارات"}))
     cta_url = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": _TEXT, "dir": "ltr", "placeholder": "/cars/"}))
+    cta_label2 = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": _TEXT, "placeholder": "تواصل معنا"}))
+    cta_url2 = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": _TEXT, "dir": "ltr", "placeholder": "/contact/"}))
     bg = forms.ChoiceField(choices=BG_CHOICES, required=False, widget=forms.Select(attrs={"class": _TEXT}))
     align = forms.ChoiceField(choices=ALIGN_CHOICES, required=False, widget=forms.Select(attrs={"class": _TEXT}))
     width = forms.ChoiceField(choices=WIDTH_CHOICES, required=False, widget=forms.Select(attrs={"class": _TEXT}))
@@ -51,7 +77,7 @@ class SectionForm(forms.ModelForm):
     columns = forms.IntegerField(required=False, min_value=1, max_value=6, widget=forms.NumberInput(attrs={"class": _TEXT}))
     manufacturer = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": _TEXT, "dir": "ltr"}))
 
-    _CONFIG_TEXT = ["cta_label", "cta_url", "bg", "align", "width", "manufacturer"]
+    _CONFIG_TEXT = ["cta_label", "cta_url", "cta_label2", "cta_url2", "bg", "align", "width", "manufacturer"]
     _CONFIG_NUM = ["limit", "columns"]
 
     class Meta:

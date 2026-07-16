@@ -4,6 +4,16 @@
 {% block meta_description %}{{ page.meta_description|default:page.title }}{% endblock %}
 
 {% block content %}
+<style>
+  /* Section presets (bg / align / width) chosen per-section in the builder. */
+  .sb-bg-muted { background: #f8fafc; }
+  .sb-bg-brand { background: color-mix(in srgb, var(--color-primary) 8%, #fff); }
+  .sb-bg-dark { background: #0f172a; }
+  .sb-bg-dark :is(h1,h2,h3,h4,p,li,blockquote) { color: #e5e7eb !important; }
+  .sb-align-center { text-align: center; }
+  .sb-w-wide :is([class*="max-w-"]) { max-width: 88rem !important; }
+  .sb-w-full :is([class*="max-w-"]) { max-width: 100% !important; }
+</style>
 <main class="sb-page">
   {% for section in sections %}
     {% include "site_builder/sections/_section.html" with section=section %}
