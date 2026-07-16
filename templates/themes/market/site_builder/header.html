@@ -29,6 +29,7 @@
                 {% if show_parts %}<a href="{% url 'parts_list' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
                 {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link bilingual" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
                 <a href="{% url 'contact' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link">تواصل معنا</a>
+                {% if has_faqs %}<a href="{% url 'faq' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="FAQ" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</a>{% endif %}
 
                 {# ── Dynamic NavLinks (site_builder) ── #}
                 {% for link in sb_nav_links %}
@@ -54,9 +55,9 @@
                     <a href="/p/{{ page.slug }}/" class="text-gray-600 text-brand-hover font-medium transition nav-link">{{ page.title }}</a>
                 {% endfor %}
 
-                <a href="{% url 'wishlist' %}" class="text-gray-600 text-brand-hover font-medium transition nav-link relative">
-                    قائمة الأمنيات
-                    <span id="wishlist-count" class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                <a href="{% url 'wishlist' %}" title="قائمة الأمنيات" aria-label="قائمة الأمنيات" class="text-gray-600 text-brand-hover transition relative shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    <span id="wishlist-count" class="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
                 </a>
                 <a href="{% url 'car_list' %}?car_type=auction" class="mk-auction-cta bilingual" data-lang-ar="🔨 المزادات" data-lang-en="🔨 Auctions" data-lang-es="🔨 Subastas" data-lang-ru="🔨 Аукционы">🔨 المزادات</a>
                 {% if user.is_authenticated %}
@@ -167,6 +168,7 @@
             {% if show_parts %}<a href="{% url 'parts_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts">قطع غيار</a>{% endif %}
             {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m bilingual" data-lang-ar="إكسسوارات" data-lang-en="Accessories">إكسسوارات</a>{% endif %}
             <a href="{% url 'contact' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m">تواصل معنا</a>
+            {% if has_faqs %}<a href="{% url 'faq' %}" class="block py-2 px-3 rounded-lg hover:bg-gray-100 font-medium nav-link-m bilingual" data-lang-ar="الأسئلة الشائعة" data-lang-en="FAQ" data-lang-es="Preguntas frecuentes" data-lang-ru="Частые вопросы">الأسئلة الشائعة</a>{% endif %}
 
             {# ── Dynamic NavLinks (site_builder) ── #}
             {% for link in sb_nav_links %}

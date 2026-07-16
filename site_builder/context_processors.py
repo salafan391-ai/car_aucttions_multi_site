@@ -49,10 +49,17 @@ def site_chrome(request):
         except (ProgrammingError, OperationalError):
             user_has_orders = False
 
+    try:
+        from site_cars.models import SiteFaq
+        has_faqs = SiteFaq.objects.filter(is_published=True).exists()
+    except (ProgrammingError, OperationalError):
+        has_faqs = False
+
     return {
         "sb_nav_links": nav_links,
         "sb_footer_columns": footer_columns,
         "sb_nav_pages": nav_pages,
         "sb_listing_config": listing_config,
         "user_has_orders": user_has_orders,
+        "has_faqs": has_faqs,
     }
