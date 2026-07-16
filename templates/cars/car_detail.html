@@ -593,37 +593,10 @@
                 .insp-diagram img{width:100%;display:block}
               </style>
 
-              <!-- Tab buttons -->
-              <div class="flex border-b border-gray-100 overflow-x-auto">
-                {% if car.options.standard or autohub_opts %}
-                <button onclick="switchDetailTab('tab-features',this)" id="btn-tab-features"
-                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-brand border-b-2 border-brand">
-                  <span class="bilingual" data-lang-ar="المميزات" data-lang-ru="Функции" data-lang-es="Características" data-lang-en="Features">المميزات</span>
-                </button>
-                {% endif %}
-                {% if insp.has_inspection %}
-                <button onclick="switchDetailTab('tab-inspection',this)" id="btn-tab-inspection"
-                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition-colors">
-                  <span class="bilingual" data-lang-ar="تقرير الفحص" data-lang-ru="Отчет об инспекции" data-lang-es="Informe de inspección" data-lang-en="Inspection Report">تقرير الفحص</span>
-                </button>
-                {% endif %}
-                {% if rec.openData %}
-                <button onclick="switchDetailTab('tab-history',this)" id="btn-tab-history"
-                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition-colors">
-                  <span class="bilingual" data-lang-ar="سجل التأمين" data-lang-ru="Страховая запись" data-lang-es="historial de seguros" data-lang-en="Insurance History">سجل التأمين</span>
-                </button>
-                {% endif %}
-                {% if opts_choice %}
-                <button onclick="switchDetailTab('tab-options-choice',this)" id="btn-tab-options-choice"
-                  class="detail-tab-btn flex-shrink-0 px-5 py-3.5 text-sm font-semibold text-gray-400 border-b-2 border-transparent hover:text-gray-700 transition-colors">
-                  <span class="bilingual" data-lang-ar="الخيارات الإضافية" data-lang-ru="Дополнительные опции" data-lang-es="Opciones adicionales" data-lang-en="Optional Extras">الخيارات الإضافية</span>
-                </button>
-                {% endif %}
-              </div>
-
               <!-- Tab: Features -->
               {% if car.options.standard %}
               <div id="tab-features" class="detail-tab-panel p-6">
+                <h3 class="text-lg font-bold mb-4 bilingual" data-lang-ar="المميزات" data-lang-en="Features" data-lang-es="Características" data-lang-ru="Функции">المميزات</h3>
                 <div class="flex flex-wrap gap-2">
                   {% for opt in car.options.standard %}
                   <span class="bilingual bg-brand-light text-brand text-sm px-3 py-1.5 rounded-full" data-lang-ar="{{ opt|translate_option }}" data-lang-ru="{{ opt|translate_option:'ru' }}" data-lang-es="{{ opt|translate_option:'es' }}" data-lang-en="{{ opt|translate_option_en }}">
@@ -634,6 +607,7 @@
               </div>
               {% elif autohub_opts %}
               <div id="tab-features" class="detail-tab-panel p-6">
+                <h3 class="text-lg font-bold mb-4 bilingual" data-lang-ar="المميزات" data-lang-en="Features" data-lang-es="Características" data-lang-ru="Функции">المميزات</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {% for opt in autohub_opts %}
                   {% with fallback=opt.name_ar|default:opt.ctDtlNm %}
@@ -653,7 +627,8 @@
 
               <!-- Tab: Optional Extras (factory optionsChoice) -->
               {% if opts_choice %}
-              <div id="tab-options-choice" class="detail-tab-panel hidden p-6">
+              <div id="tab-options-choice" class="detail-tab-panel p-6 border-t border-gray-100">
+                <h3 class="text-lg font-bold mb-4 bilingual" data-lang-ar="الخيارات الإضافية" data-lang-en="Optional Extras" data-lang-es="Opciones adicionales" data-lang-ru="Дополнительные опции">الخيارات الإضافية</h3>
                 <div class="space-y-3">
                   {% for opt in opts_choice %}
                   <div class="flex items-start justify-between gap-4 p-4 bg-brand-light/40 rounded-xl">
@@ -682,7 +657,8 @@
 
               <!-- Tab: Inspection -->
               {% if insp.has_inspection %}
-              <div id="tab-inspection" class="detail-tab-panel hidden" dir="ltr">
+              <div id="tab-inspection" class="detail-tab-panel border-t border-gray-100" dir="ltr">
+                <div dir="rtl" class="px-4 pt-4"><h3 class="text-lg font-bold mb-0 bilingual" data-lang-ar="تقرير الفحص" data-lang-en="Inspection Report" data-lang-es="Informe de inspección" data-lang-ru="Отчет об инспекции">تقرير الفحص</h3></div>
                 {% if not insp.has_outer %}
                 <!-- No damage notice -->
                 <div class="flex items-center gap-3 m-4 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
@@ -731,7 +707,8 @@
 
               <!-- Tab: Vehicle History -->
               {% if rec.openData %}
-              <div id="tab-history" class="detail-tab-panel hidden p-6">
+              <div id="tab-history" class="detail-tab-panel p-6 border-t border-gray-100">
+                <h3 class="text-lg font-bold mb-4 bilingual" data-lang-ar="سجل التأمين" data-lang-en="Insurance History" data-lang-es="Historial de seguros" data-lang-ru="Страховая запись">سجل التأمين</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 text-sm text-center">
                   <div class="bg-{% if rec.accidentCnt %}red-50{% else %}emerald-50{% endif %} rounded-xl p-3">
                     <div class="bilingual text-xs text-gray-500 mb-1" data-lang-ar="إجمالي الحوادث" data-lang-ru="Общее количество аварий" data-lang-es="Accidentes totales" data-lang-en="Total Accidents">إجمالي الحوادث</div>
@@ -798,27 +775,7 @@
             {% endif %}
             {% endwith %}
 
-            <script>
-            function switchDetailTab(tabId, btn) {
-              document.querySelectorAll('.detail-tab-panel').forEach(p => p.classList.add('hidden'));
-              document.querySelectorAll('.detail-tab-btn').forEach(b => {
-                b.classList.remove('text-brand', 'border-brand');
-                b.classList.add('text-gray-400', 'border-transparent');
-              });
-              document.getElementById(tabId).classList.remove('hidden');
-              btn.classList.remove('text-gray-400', 'border-transparent');
-              btn.classList.add('text-brand', 'border-brand');
-            }
-            // Ensure a tab is active even when the Features tab is absent
-            // (e.g. a car that only has optional extras / inspection / history).
-            (function () {
-              var panels = [].slice.call(document.querySelectorAll('.detail-tab-panel'));
-              if (panels.length && !panels.some(function (p) { return !p.classList.contains('hidden'); })) {
-                var firstBtn = document.querySelector('.detail-tab-btn');
-                if (firstBtn) firstBtn.click();
-              }
-            })();
-            </script>
+
 
         <!-- Inspection Images -->
             {% comment %} {% if car.lot_number and car.category.name != "auction" %}
