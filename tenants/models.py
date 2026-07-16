@@ -267,6 +267,7 @@ class Tenant(TenantMixin):
     phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="رقم هاتف إضافي")
     whatsapp = models.CharField(max_length=20, blank=True, null=True, verbose_name="واتساب")
     whatsapp_channel = models.URLField(max_length=255, blank=True, null=True, verbose_name="قناة واتساب (رابط)", help_text="رابط قناة الواتساب، مثال: https://whatsapp.com/channel/xxxx")
+    whatsapp_group = models.URLField(max_length=255, blank=True, null=True, verbose_name="مجموعة واتساب (رابط)", help_text="رابط مجموعة الواتساب، مثال: https://chat.whatsapp.com/xxxx")
     email = models.EmailField(blank=True, null=True, verbose_name="البريد الإلكتروني")
     address = models.CharField(max_length=255, blank=True, null=True, verbose_name="العنوان (عربي)")
     address_en = models.CharField(max_length=255, blank=True, null=True, verbose_name="Address (EN)")
@@ -289,8 +290,10 @@ class Tenant(TenantMixin):
     tiktok = models.URLField(max_length=255, blank=True, null=True, verbose_name="تيك توك")
     snapchat = models.URLField(max_length=255, blank=True, null=True, verbose_name="سناب شات")
     youtube = models.URLField(max_length=255, blank=True, null=True, verbose_name="يوتيوب")
-    # Telegram: allow either a full URL (https://t.me/...) or a username (without @)
-    telegram = models.URLField(max_length=255, blank=True, null=True, verbose_name="تيليجرام (رابط)")
+    # Telegram: allow either a full URL (https://t.me/...) or a username (without @).
+    # `telegram` is the CHANNEL link; `telegram_group` is a separate group link.
+    telegram = models.URLField(max_length=255, blank=True, null=True, verbose_name="قناة تيليجرام (رابط)")
+    telegram_group = models.URLField(max_length=255, blank=True, null=True, verbose_name="مجموعة تيليجرام (رابط)", help_text="رابط مجموعة تيليجرام، مثال: https://t.me/xxxx")
     telegram_username = models.CharField(max_length=64, blank=True, null=True, verbose_name="تيليجرام (اسم المستخدم)", help_text="ادخل اسم المستخدم بدون @ — سيُحوّل تلقائياً إلى رابط t.me/username")
     # Chat id captured when the dealer connects ofleet0_bot (for pushing car links).
     telegram_chat_id = models.CharField(max_length=32, blank=True, default="", verbose_name="Telegram chat id (bot)")

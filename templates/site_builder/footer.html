@@ -12,7 +12,7 @@
                 </div>
                 <p class="text-gray-400 text-sm leading-relaxed bilingual" data-lang-ar="{{ site_about|default:footer_text|default:'منصة متخصصة في عرض وبيع السيارات المستوردة بأفضل الأسعار وأعلى جودة.' }}" data-lang-en="{{ site_about_en|default:footer_text_en|default:'A platform specialized in displaying and selling imported cars at the best prices and highest quality.' }}">{{ site_about|default:footer_text|default:"منصة متخصصة في عرض وبيع السيارات المستوردة بأفضل الأسعار وأعلى جودة." }}</p>
                 <!-- Social Media -->
-                {% if site_instagram or site_twitter or site_facebook or site_tiktok or site_snapchat or site_youtube or site_telegram or site_whatsapp_channel %}
+                {% if site_instagram or site_twitter or site_facebook or site_tiktok or site_snapchat or site_youtube or site_telegram or site_whatsapp_channe or site_telegram_group or site_whatsapp_group %}
                 <div class="flex items-center gap-3 mt-5">
                     {% if site_instagram %}
                     <a href="{{ site_instagram }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-pink-600 rounded-lg flex items-center justify-center transition" title="انستقرام">
@@ -49,8 +49,18 @@
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.162 2.343c-.247-.134-.55-.118-.78.038L1.86 12.06c-.307.167-.46.513-.387.84.073.327.333.574.664.64l4.09.947 1.643 4.98c.109.33.416.537.76.537.072 0 .146-.008.219-.024.354-.092.62-.392.67-.75l.682-6.054 7.45 5.123c.26.178.59.193.86.038.27-.156.43-.447.41-.756l-.69-13.78c-.02-.302-.172-.575-.427-.737z"/></svg>
                     </a>
                     {% endif %}
+                    {% if site_telegram_group %}
+                    <a href="{{ site_telegram_group }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-sky-500 rounded-lg flex items-center justify-center transition" title="مجموعة تيليجرام">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M22.162 2.343c-.247-.134-.55-.118-.78.038L1.86 12.06c-.307.167-.46.513-.387.84.073.327.333.574.664.64l4.09.947 1.643 4.98c.109.33.416.537.76.537.072 0 .146-.008.219-.024.354-.092.62-.392.67-.75l.682-6.054 7.45 5.123c.26.178.59.193.86.038.27-.156.43-.447.41-.756l-.69-13.78c-.02-.302-.172-.575-.427-.737z"/></svg>
+                    </a>
+                    {% endif %}
                     {% if site_whatsapp_channel %}
                     <a href="{{ site_whatsapp_channel }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-green-600 rounded-lg flex items-center justify-center transition" title="قناة واتساب">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                    </a>
+                    {% endif %}
+                    {% if site_whatsapp_group %}
+                    <a href="{{ site_whatsapp_group }}" target="_blank" class="w-9 h-9 bg-gray-800 hover:bg-green-600 rounded-lg flex items-center justify-center transition" title="مجموعة واتساب">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
                     </a>
                     {% endif %}
