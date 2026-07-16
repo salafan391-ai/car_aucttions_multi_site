@@ -21,7 +21,9 @@ Falls back to the legacy single contact person when no salespeople exist.
     .gc-sales-wa svg, .gc-sales-call svg { width: 14px; height: 14px; }
 </style>
 {% if sales_people %}
-{% whatsapp_order_message car site_name as sp_wa_msg %}
+{# Callers may pre-set `sp_wa_msg` (e.g. SiteCar pages use whatsapp_site_car_message,
+   since whatsapp_order_message assumes ApiCar's FK manufacturer/model + slug). #}
+{% if not sp_wa_msg %}{% whatsapp_order_message car site_name as sp_wa_msg %}{% endif %}
 <div class="gc-sales-list">
     {% for sp in sales_people %}
     <div class="gc-sales-card">

@@ -408,17 +408,8 @@
                     {% endif %}
                 </div>
 
-                {% if contact_person_name or contact_person_photo %}
-                <div class="gl-sc-rep">
-                    <div class="gl-sc-rep-img">
-                        {% if contact_person_photo %}<img src="{{ contact_person_photo }}" alt="{{ contact_person_name }}" onerror="this.replaceWith(this.alt.charAt(0));">{% else %}{{ contact_person_name|first }}{% endif %}
-                    </div>
-                    <div>
-                        <div class="gl-sc-rep-name">{{ contact_person_name }}</div>
-                        <div class="gl-sc-rep-role bilingual" data-lang-ar="مسؤول المبيعات" data-lang-en="Sales Rep" data-lang-es="Vendedor" data-lang-ru="Менеджер">مسؤول المبيعات</div>
-                    </div>
-                </div>
-                {% endif %}
+                {% whatsapp_site_car_message car site_name as sp_wa_msg %}
+                {% include "cars/_sales_people.html" %}
 
                 {% if site_whatsapp %}
                 {% whatsapp_site_car_message car site_name as wa_msg %}
