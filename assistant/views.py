@@ -14,13 +14,30 @@ from django.db import connection
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
-from site_cars.permissions import staff_required
+from site_cars.permissions import is_site_admin, staff_required
 
 from .client import AssistantUnavailable, ask
+from .models import AssistantQuery
 
 logger = logging.getLogger(__name__)
 
 MAX_QUESTION_CHARS = 500
+
+
+def _record(request, question, answer, status):
+    """Log one question. Best-effort — a logging failure must never break the
+    answer the user is waiting for."""
+    try:
+        AssistantQuery.objects.create(
+            schema_name=connection.schema_name,
+            username=getattr(request.user, "username", "")[:150],
+            is_site_admin=is_site_admin(request.user),
+            question=question[:2000],
+            answer=(answer or "")[:4000],
+            status=status,
+        )
+    except Exception:  # noqa: BLE001 — telemetry must not surface to the user
+        logger.exception("assistant: failed to record query")
 
 
 def _over_limit(user) -> str | None:
@@ -68,13 +85,18 @@ def assistant_ask(request):
 
     limited = _over_limit(request.user)
     if limited:
+        # Recorded so demand that hit the cap is still visible in the stats,
+        # not silently dropped.
+        _record(request, question, limited, AssistantQuery.STATUS_RATE_LIMITED)
         return render(request, "assistant/_answer.html", {"error": limited})
 
     try:
         answer = ask(request.user, question)
     except AssistantUnavailable as exc:
+        _record(request, question, str(exc), AssistantQuery.STATUS_ERROR)
         return render(request, "assistant/_answer.html", {"error": str(exc)})
 
+    _record(request, question, answer, AssistantQuery.STATUS_OK)
     return render(
         request,
         "assistant/_answer.html",
