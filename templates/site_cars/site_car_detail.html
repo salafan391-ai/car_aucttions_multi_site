@@ -318,9 +318,6 @@
                     {% endif %}
                 </div>
 
-                {# Salespeople (or the legacy single contact as fallback). Pass the
-                   SiteCar-specific WhatsApp message so the shared partial doesn't hit
-                   ApiCar-only fields. #}
                 {% whatsapp_site_car_message car site_name as sp_wa_msg %}
                 {% include "cars/_sales_people.html" %}
 
