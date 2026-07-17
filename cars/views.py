@@ -519,6 +519,27 @@ def home(request):
             )[:12]
         )
 
+        # Latest cars per enabled market (japan_market, …) — one row each, newest
+        # first. Dynamic: adding/enabling a market adds a row with no code change.
+        latest_markets = []
+        for _lm in _tenant_enabled_markets(getattr(connection, 'tenant', None)):
+            _lm_cars = list(
+                _base_qs.filter(category__name=_lm['name']).order_by('-created_at')
+                .only(
+                    'id', 'title', 'slug', 'image', 'images', 'price', 'year',
+                    'mileage', 'status', 'transmission', 'address', 'created_at',
+                    'manufacturer__id', 'manufacturer__name', 'manufacturer__name_ar',
+                    'model__id', 'model__name', 'model__name_ar',
+                    'badge__id', 'badge__name',
+                    'category__id', 'category__name',
+                )[:12]
+            )
+            if _lm_cars:
+                latest_markets.append({
+                    'name': _lm['name'], 'label_ar': _lm['label_ar'],
+                    'label_en': _lm['label_en'], 'cars': _lm_cars,
+                })
+
         # ── Fast aggregation: use DB-side COUNT/DISTINCT instead of full table scan ──
         from django.db.models import Count as _Count
         _base_filter = _apply_tenant_catalog(ApiCar.objects.exclude(
@@ -691,6 +712,7 @@ def home(request):
             'site_faqs': site_faqs,
             'latest_cars': latest_cars,
             'latest_auctions': latest_auctions,
+            'latest_markets': latest_markets,
             'site_cars': site_cars,
             'sold_cars': sold_cars,
             'damaged_cars': damaged_cars,

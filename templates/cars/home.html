@@ -943,6 +943,88 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
 </section>
 {% endif %}
 
+<!-- Latest market cars (japan_market, …) — one row per enabled market -->
+{% for mk in latest_markets %}
+<section class="bg-white py-8 sm:py-12">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4">
+        <div class="flex justify-between items-center mb-6 sm:mb-8">
+            <div>
+                <h2 class="bilingual text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1" data-lang-ar="{{ mk.label_ar }}" data-lang-en="{{ mk.label_en }}">{{ mk.label_ar }}</h2>
+            </div>
+            <a href="{% url 'car_list' %}?car_type={{ mk.name }}" class="text-brand hover:text-brand/80 font-medium text-sm sm:text-base flex items-center gap-1 transition">
+                <span class="bilingual" data-lang-ar="عرض الكل" data-lang-ru="Просмотреть все" data-lang-es="Ver todo" data-lang-en="View All">عرض الكل</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+        </div>
+    <div class="relative group">
+        <button onclick="scrollElement('market-scroll-{{ mk.name }}', 'left')" class="hidden lg:flex absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 -translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+        <button onclick="scrollElement('market-scroll-{{ mk.name }}', 'right')" class="hidden lg:flex absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center text-gray-600 hover:text-brand hover:shadow-xl transition-all opacity-0 group-hover:opacity-100 translate-x-5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+        <div class="flex overflow-x-auto gap-3 sm:gap-4 pb-2 scrollbar-hide scroll-smooth" id="market-scroll-{{ mk.name }}">
+        {% for car in mk.cars %}
+        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="flex-shrink-0 w-[45%] sm:w-[280px] car-card bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-lg overflow-hidden block group">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative car-img-wm">
+                {% if car.image %}
+                <img src="{{ car.image|img_small }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="400" height="300" loading="lazy" decoding="async">
+                {% elif car.images and car.images|length > 0 %}
+                <img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" class="w-full h-full object-cover" width="400" height="300" loading="lazy" decoding="async">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                    <svg class="w-10 h-10 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+                <div class="absolute top-2 sm:top-3 left-2 sm:left-3">
+                    <span class="bg-rose-600/90 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full shadow-sm bilingual" data-lang-ar="{{ mk.label_ar }}" data-lang-en="{{ mk.label_en }}">{{ mk.label_ar }}</span>
+                </div>
+                <div class="absolute bottom-2 sm:bottom-3 right-2 sm:right-3">
+                    <span class="bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">{{ car.year }}</span>
+                </div>
+                <button onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist({{ car.id }});"
+                        aria-label="إضافة إلى قائمة الأمنيات"
+                        class="wishlist-btn absolute top-2 sm:top-3 right-2 sm:right-3 w-7 h-7 sm:w-8 sm:h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition-colors z-20"
+                        data-car-id="{{ car.id }}" style="pointer-events: auto;">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 hover:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-2.5 sm:p-4">
+                <div class="font-bold text-gray-900 mb-0.5 sm:mb-1 truncate text-xs sm:text-base group-hover:text-brand transition-colors">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span> <span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-ru="{{ car.model|translate_model:'ru' }}" data-lang-es="{{ car.model|translate_model:'es' }}" data-lang-en="{{ car.model.name|pretty_en }}">{{ car.model|translate_model }}</span>
+                </div>
+                <div class="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-gray-500 mb-2 sm:mb-3 truncate">
+                    <span class="bilingual" data-lang-ar="{{ car.manufacturer.name_ar|default:car.manufacturer.name }}" data-lang-en="{{ car.manufacturer.name|pretty_en }}">{{ car.manufacturer.name_ar|default:car.manufacturer.name }}</span>
+                    {% if car.mileage %}
+                    <span>&bull;</span>
+                    <span>{{ car.mileage|floatformat:0 }} <span class="bilingual" data-lang-ar="كم" data-lang-ru="сколько?" data-lang-es="cuánto" data-lang-en="km">كم</span></span>
+                    {% endif %}
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-brand font-extrabold text-sm sm:text-lg"{% if car.currency %} data-price-src="{{ car.price }}" data-cur-src="{{ car.currency }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">{{ car.currency }}</span>{% else %} data-price-krw="{{ car.price }}">{{ car.price|floatformat:0 }} <span class="text-[9px] sm:text-xs">₩</span>{% endif %}</span>
+                    {% if car.transmission %}
+                    <span class="bilingual text-[9px] sm:text-xs bg-gray-100 text-gray-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full hidden sm:inline" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-en="{{ car.transmission|pretty_en }}">{{ car.transmission|translate_transmission }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    </div>
+    </div>
+</section>
+{% endfor %}
+
 <!-- Our Cars (Site-specific) -->
 {% if site_cars and show_site_cars %}
 <section class="max-w-7xl mx-auto px-3 sm:px-4 mt-8 sm:mt-12">
