@@ -17,9 +17,11 @@ _BLOCKED_UA_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
-# Bots we allow but throttle (Googlebot, Bingbot, etc.)
+# Bots we allow but throttle (Googlebot, Bingbot, etc.). ClaudeBot and Meta's
+# crawler are AI crawlers that were hitting the filtered /cars/ URLs unthrottled.
 _THROTTLED_UA_PATTERNS = re.compile(
-    r'Googlebot|GoogleOther|bingbot|Baiduspider|YandexBot',
+    r'Googlebot|GoogleOther|bingbot|Baiduspider|YandexBot'
+    r'|ClaudeBot|meta-externalagent|Applebot|Amazonbot',
     re.IGNORECASE,
 )
 
