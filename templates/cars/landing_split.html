@@ -230,6 +230,12 @@
           <span>{{ auction_count }} مزاد</span>
         </div>
         {% endif %}
+        {% for m in market_stats %}{% if m.count %}
+        <div class="hero-stat">
+          <span class="hero-stat-dot" style="background:#e11d48;"></span>
+          <span>{{ m.count }} {{ m.label_ar }}</span>
+        </div>
+        {% endif %}{% endfor %}
         {% if site_cars_count %}
         <div class="hero-stat">
           <span class="hero-stat-dot" style="background:#34d399;"></span>
@@ -283,6 +289,15 @@
           </div>
           <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
         </a>{% endif %}
+
+        {% for m in market_stats %}{% if m.count %}<a href="{% url 'car_list' %}?car_type={{ m.name }}" class="card card-auction" style="--card-accent:#e11d48;">
+          <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/></svg></div>
+          <div class="card-body">
+            <div class="card-label" data-ar="{{ m.label_ar }}" data-en="{{ m.label_en }}">{{ m.label_ar }}</div>
+            <div class="card-sub"><span class="card-badge">{{ m.count }}</span><span class="card-sub-text" data-ar="سيارة متاحة" data-en="cars available">سيارة متاحة</span></div>
+          </div>
+          <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+        </a>{% endif %}{% endfor %}
 
         {% if site_cars_count %}
         {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="card card-site">

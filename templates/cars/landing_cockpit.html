@@ -420,6 +420,39 @@
       <div class="ind-dot" style="background: var(--amber); box-shadow: 0 0 8px var(--amber);"></div>
     </div>
 
+    {% for m in market_stats %}{% if m.count %}
+    <!-- centre divider -->
+    <div class="c-divider" aria-hidden="true">
+      <div class="c-divider-dot"></div>
+      <div class="c-divider-line"></div>
+      <div class="c-divider-dot"></div>
+    </div>
+
+    <!-- ── Market gauge ── -->
+    <div class="gauge-wrap">
+      <svg class="gauge-svg" viewBox="0 0 200 200" id="gauge-{{ m.name }}">
+        <circle class="g-bezel" cx="100" cy="100" r="90"
+          stroke-dasharray="423.9 565.49"
+          transform="rotate(135 100 100)"/>
+        <circle class="g-track" cx="100" cy="100" r="80"
+          stroke-dasharray="376.99 502.65"
+          transform="rotate(135 100 100)"/>
+        <circle class="g-glow" cx="100" cy="100" r="80"
+          style="stroke: #e11d48;"
+          transform="rotate(135 100 100)"
+          data-fill-target="{{ m.count }}" data-fill-max="300"/>
+        <circle class="g-fill" cx="100" cy="100" r="80"
+          style="stroke: #e11d48;"
+          transform="rotate(135 100 100)"
+          data-fill-target="{{ m.count }}" data-fill-max="300"/>
+        <text class="g-num"  x="100" y="93" data-count-target="{{ m.count }}">0</text>
+        <text class="g-unit" x="100" y="118">سيارة</text>
+        <text class="g-label" x="100" y="162" style="fill: #e11d48;" data-ar="{{ m.label_ar }}" data-en="{{ m.label_en }}">{{ m.label_ar }}</text>
+      </svg>
+      <div class="ind-dot" style="background: #e11d48; box-shadow: 0 0 8px #e11d48;"></div>
+    </div>
+    {% endif %}{% endfor %}
+
     {% if site_cars_count %}
     <!-- centre divider -->
     <div class="c-divider" aria-hidden="true">
@@ -471,6 +504,13 @@
       </svg>
       المزادات
     </a>{% endif %}
+
+    {% for m in market_stats %}{% if m.count %}<a href="{% url 'car_list' %}?car_type={{ m.name }}" class="dash-btn" style="--c: #e11d48;" data-ar="{{ m.label_ar }}" data-en="{{ m.label_en }}">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 17H3a2 2 0 01-2-2v-4a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2h-2M5 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4zM3 11l2-5h10l2 5"/>
+      </svg>
+      {{ m.label_ar }}
+    </a>{% endif %}{% endfor %}
 
     {% if site_cars_count %}
     {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="dash-btn" style="--c: var(--green);">

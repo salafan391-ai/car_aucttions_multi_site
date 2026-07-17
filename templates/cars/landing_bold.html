@@ -342,6 +342,14 @@
               data-en="{{ auction_count }} Auction Cars">{{ auction_count }} سيارة مزاد</span>
       </div>
       {% endif %}
+      {% for m in market_stats %}{% if m.count %}
+      <div class="stat-pill">
+        <span class="stat-dot" style="background:#e11d48;"></span>
+        <span class="stat-text"
+              data-ar="{{ m.count }} {{ m.label_ar }}"
+              data-en="{{ m.count }} {{ m.label_en }}">{{ m.count }} {{ m.label_ar }}</span>
+      </div>
+      {% endif %}{% endfor %}
       {% if site_cars_count %}
       <div class="stat-pill">
         <span class="stat-dot" style="background:#34d399;"></span>
@@ -382,6 +390,18 @@
           </span>
         </div>
       </a>{% endif %}
+
+      {% for m in market_stats %}{% if m.count %}<a href="{% url 'car_list' %}?car_type={{ m.name }}" class="btn btn-auction" style="background:#e11d48;box-shadow:0 4px 20px rgba(225,29,72,.4),0 1px 4px rgba(0,0,0,.3);">
+        <svg class="btn-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/>
+        </svg>
+        <div class="btn-label">
+          <span class="btn-label-main" data-ar="{{ m.label_ar }}" data-en="{{ m.label_en }}">{{ m.label_ar }}</span>
+          <span class="btn-label-sub" data-ar="استعرض السيارات" data-en="Browse Cars">استعرض السيارات</span>
+        </div>
+      </a>{% endif %}{% endfor %}
 
       {% if site_cars_count %}
       {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="btn btn-site">

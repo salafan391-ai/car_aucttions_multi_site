@@ -168,6 +168,8 @@
     .card:hover .card-arrow { background: var(--gold); transform: translateX(-3px); }
     .card:hover .card-arrow svg { color: var(--dark); }
     .card-arrow svg { width: 13px; height: 13px; color: var(--gold); }
+    .card-market .card-icon svg, .card-market .card-arrow svg { color: #e11d48; }
+    .card-market:hover .card-arrow { background: #e11d48; }
 
     @keyframes fade-in {
       from { opacity: 0; transform: translateY(16px); }
@@ -254,6 +256,15 @@
         </div>
         <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
       </a>{% endif %}
+
+      {% for m in market_stats %}{% if m.count %}<a href="{% url 'car_list' %}?car_type={{ m.name }}" class="card card-market">
+        <div class="card-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/></svg></div>
+        <div>
+          <div class="card-label" data-ar="{{ m.label_ar }}" data-en="{{ m.label_en }}">{{ m.label_ar }}</div>
+          <div class="card-sub"><span class="card-badge">{{ m.count }}</span></div>
+        </div>
+        <div class="card-arrow"><svg fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></div>
+      </a>{% endif %}{% endfor %}
 
       {% if site_cars_count %}
       {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="card">
