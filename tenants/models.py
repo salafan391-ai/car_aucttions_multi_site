@@ -46,6 +46,11 @@ class Tenant(TenantMixin):
         verbose_name="عرض سيارات المزاد",
         help_text="عند التعطيل تختفي قسم سيارات المزاد من الصفحة الرئيسية وقوائم السيارات.",
     )
+    show_japan_market = models.BooleanField(
+        default=False,
+        verbose_name="عرض السيارات اليابانية",
+        help_text="عند التفعيل يظهر تبويب «سيارات يابانية» (سوق كارسنسر الياباني) في قوائم السيارات. معطّل افتراضياً.",
+    )
     show_site_cars = models.BooleanField(
         default=True,
         verbose_name="عرض ‘سياراتنا‘ والسماح بإضافتها",

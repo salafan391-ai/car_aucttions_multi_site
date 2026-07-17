@@ -223,6 +223,11 @@ def _apply_tenant_catalog(qs, tenant):
         qs = qs.exclude(category__name='auction')
     if not getattr(tenant, 'show_encar', True):
         qs = qs.filter(category__name='auction')
+    # Japanese (carsensor) market is hidden unless the tenant opts in — this is
+    # the single chokepoint that keeps japan_market cars out of every list,
+    # facet, count and the home page for tenants that haven't enabled it.
+    if not getattr(tenant, 'show_japan_market', False):
+        qs = qs.exclude(category__name='japan_market')
     cf = getattr(tenant, 'catalog_filter', None) or {}
     if not cf:
         return qs
@@ -1288,10 +1293,12 @@ def _facet_counts_for(request, car_type):
         facet_base = facet_base.filter(category__name='auction')
     elif car_type == 'kbchachacha':
         facet_base = facet_base.filter(category__name='kbchachacha')
+    elif car_type == 'japan':
+        facet_base = facet_base.filter(category__name='japan_market')
     elif car_type == 'cars':
-        facet_base = facet_base.exclude(category__name__in=['auction', 'kbchachacha'])
+        facet_base = facet_base.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
     elif car_type == 'truck':
-        facet_base = facet_base.exclude(category__name__in=['auction', 'kbchachacha']).filter(body__name='truck')
+        facet_base = facet_base.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']).filter(body__name='truck')
     # Shared cache key: catalog is shared + only changes on the daily import.
     cp = {k: sorted(v) for k, v in request.GET.lists() if k not in ('sort', 'page')}
     ch = hashlib.md5(json.dumps(cp, sort_keys=True).encode()).hexdigest()
@@ -1536,24 +1543,29 @@ def car_list(request):
     # applied to qs, so `count_cars` and `count_auction` reflect what the user
     # would see if they switched tabs without changing any filter.
     _live_tab_counts = qs.aggregate(
-        live_count_all=Count('id', filter=~Q(category__name='kbchachacha')),
-        live_count_cars=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
+        live_count_all=Count('id', filter=~Q(category__name__in=['kbchachacha', 'japan_market'])),
+        live_count_cars=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha', 'japan_market'])),
         live_count_auction=Count('id', filter=Q(category__name='auction')),
         live_count_kb=Count('id', filter=Q(category__name='kbchachacha')),
+        live_count_japan=Count('id', filter=Q(category__name='japan_market')),
     )
 
-    # Finally narrow qs by the chosen tab.
+    # Finally narrow qs by the chosen tab. japan_market is its own tab and is
+    # kept out of every other tab.
     if car_type == 'auction':
         qs = qs.filter(category__name='auction')
     elif car_type == 'kbchachacha':
         qs = qs.filter(category__name='kbchachacha')
+    elif car_type == 'japan':
+        qs = qs.filter(category__name='japan_market')
     elif car_type == 'cars':
-        qs = qs.exclude(category__name__in=['auction', 'kbchachacha'])
+        qs = qs.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
     elif car_type == 'truck':
-        qs = qs.exclude(category__name__in=['auction', 'kbchachacha']).filter(body__name='truck')
+        qs = qs.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']).filter(body__name='truck')
     else:
-        # Default / "all" tab — keep KB Cha Cha Cha isolated to its own tab.
-        qs = qs.exclude(category__name='kbchachacha')
+        # Default / "all" tab — keep KB Cha Cha Cha and the Japanese market
+        # isolated to their own tabs.
+        qs = qs.exclude(category__name__in=['kbchachacha', 'japan_market'])
 
     sort = request.GET.get('sort')
     allowed_sorts = ['-created_at', 'price', '-price', '-year', 'year', 'mileage', '-mileage']
@@ -1954,6 +1966,7 @@ def car_list(request):
     count_all = _live_tab_counts['live_count_all']
     count_cars = _live_tab_counts['live_count_cars']
     count_auction = _live_tab_counts['live_count_auction']
+    count_japan = _live_tab_counts['live_count_japan']
     count_kbchachacha = _live_tab_counts['live_count_kb']
     count_truck = tab_counts['count_truck']  # truck tab is gone — left only as compat
 
@@ -2113,6 +2126,7 @@ def car_list(request):
         'count_all': count_all,
         'count_cars': count_cars,
         'count_auction': count_auction,
+        'count_japan': count_japan,
         'count_kbchachacha': count_kbchachacha,
         'kb_count': count_kbchachacha,
         'count_truck': count_truck,
