@@ -232,10 +232,20 @@ class InactiveTenantMiddleware:
             user = getattr(request, "user", None)
             if not (user and user.is_authenticated and user.is_staff) and \
                not request.path_info.startswith(self._ALLOW_PREFIXES):
+                # Tell crawlers to stop hammering a suspended site (they can't
+                # read a 503 robots.txt), so serve an allow-nothing one plainly.
+                if request.path_info == "/robots.txt":
+                    return HttpResponse(
+                        "User-agent: *\nDisallow: /\n", content_type="text/plain",
+                    )
                 from django.shortcuts import render
-                return render(
+                resp = render(
                     request, "tenant_inactive.html", {"tenant": tenant}, status=503,
                 )
+                resp["Retry-After"] = "86400"  # ask crawlers to back off a day
+                # Expected 503 — don't let django.request log it as an ERROR.
+                resp._has_been_logged = True
+                return resp
         return self.get_response(request)
 
 
