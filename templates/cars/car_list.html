@@ -652,6 +652,26 @@
             </div>
         </div>
     </div>
+    {% elif request.GET.car_type == 'japan' %}
+    <!-- ═══════════════ JAPAN HERO ═══════════════ -->
+    <div class="relative overflow-hidden rounded-2xl mb-5 p-5 sm:p-7 text-white" style="background:linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 55%, #7f1d1d));">
+        <div class="flex flex-col sm:flex-row items-center gap-5">
+            {% if hero.japan_imgs %}
+            <div class="flex shrink-0">
+                {% for img in hero.japan_imgs|slice:":4" %}
+                <img src="{{ img|img_small }}" alt="" loading="lazy" class="w-20 h-16 sm:w-28 sm:h-20 object-cover rounded-xl ring-2 ring-white/70 shadow-lg" style="margin-inline-start:{% if not forloop.first %}-1.25rem{% endif %};">
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="flex-1 text-center sm:text-start min-w-0">
+                <h2 class="text-xl sm:text-2xl font-extrabold bilingual" data-lang-ar="سيارات يابانية مستوردة" data-lang-en="Imported Japanese cars" data-lang-es="Coches japoneses importados" data-lang-ru="Импортные авто из Японии">سيارات يابانية مستوردة</h2>
+                <p class="text-sm text-white/85 mt-1 max-w-2xl bilingual" data-lang-ar="سيارات من السوق الياباني (كارسنسر). الأسعار المعروضة هي سعر السيارة، وتبقى رسوم الشحن والجمارك." data-lang-en="Cars from the Japanese market (Carsensor). Prices shown are the car's price; shipping & customs still apply." data-lang-es="Coches del mercado japonés (Carsensor)." data-lang-ru="Автомобили с японского рынка (Carsensor).">سيارات من السوق الياباني (كارسنسر). الأسعار المعروضة هي سعر السيارة، وتبقى رسوم الشحن والجمارك.</p>
+                <div class="flex items-center justify-center sm:justify-start gap-3 mt-3">
+                    {% if hero.japan_added_today %}<div class="bg-white/15 rounded-xl px-3 py-1.5"><span class="font-extrabold text-lg">{{ hero.japan_added_today|intcomma }}</span> <span class="text-xs text-white/80 bilingual" data-lang-ar="أُضيفت اليوم" data-lang-en="added today" data-lang-es="añadidos hoy" data-lang-ru="добавлено сегодня">أُضيفت اليوم</span></div>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
     {% else %}
     <!-- ═══════════════ ENCAR HERO ═══════════════ -->
     <div class="relative overflow-hidden rounded-2xl mb-5 p-5 sm:p-7 text-white" style="background:linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 55%, #1e293b));">

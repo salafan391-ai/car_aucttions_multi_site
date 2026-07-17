@@ -2070,11 +2070,17 @@ def car_list(request):
             _hero_imgs(_auc.filter(manufacturer__name__icontains='genesis', year__gte=2020).order_by('-created_at'))
             or _hero_imgs(_auc.order_by('-created_at'))
         )
-        _enc = ApiCar.objects.exclude(category__name__in=['auction', 'kbchachacha'])
+        # Encar (regular imported) cars have NO category — use the positive
+        # `category IS NULL` filter, NOT exclude(japan/auction). Japanese cars
+        # are the newest and 3x the catalog, so excluding them from a
+        # created_at-ordered scan is a query-timeout trap.
+        _enc = ApiCar.objects.filter(category__isnull=True)
         encar_imgs = (
             _hero_imgs(_enc.filter(is_luxury=True).order_by('-created_at'))
             or _hero_imgs(_enc.order_by('-created_at'))
         )
+        _jpn = ApiCar.objects.filter(category__name='japan_market')
+        japan_imgs = _hero_imgs(_jpn.order_by('-created_at'))
         # Upcoming auctions grouped by name — there can be several auction
         # houses, each with its own next date. Earliest date per name, soonest first.
         from django.db.models import Min as _Min
@@ -2091,14 +2097,17 @@ def car_list(request):
             _a['day_en'] = _WD_EN[_wd]
         _na = upcoming_auctions[0] if upcoming_auctions else None
         hero = {
-            'added_today': ApiCar.objects.filter(created_at__gte=_today_start).count(),
+            'added_today': ApiCar.objects.filter(created_at__gte=_today_start, category__isnull=True).count(),
+            'japan_added_today': _jpn.filter(created_at__gte=_today_start).count(),
             # Genuine updates to EXISTING cars (exclude ones added today, whose
             # updated_at is also today — otherwise it just duplicates "added").
             'updated_today': ApiCar.objects.filter(
-                updated_at__gte=_today_start, created_at__lt=_today_start
+                updated_at__gte=_today_start, created_at__lt=_today_start, category__isnull=True
             ).count(),
             'auction_imgs': auction_imgs,
             'encar_imgs': encar_imgs,
+            'japan_imgs': japan_imgs,
+            'japan_count': _jpn.count(),
             'next_auction_name': _na['auction_name'] if _na else None,
             'next_auction_date': _na['auction_date'] if _na else None,
             'next_auction_day_ar': _na['day_ar'] if _na else None,
