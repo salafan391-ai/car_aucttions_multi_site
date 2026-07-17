@@ -28,7 +28,10 @@ _THROTTLED_UA_PATTERNS = re.compile(
 # Parameters that should only contain simple values (no slashes/paths)
 _VALID_PAGE_RE = re.compile(r'^\d{1,5}$')
 _VALID_ID_RE = re.compile(r'^\d{1,10}$')
-_VALID_CAR_TYPE_RE = re.compile(r'^(auction|cars|auctioncars|truck|kbchachacha|japan)?$', re.IGNORECASE)
+# car_type is either a fixed tab or a dynamic market category name (e.g.
+# japan_market). Category names are internal slugs — lowercase letters,
+# digits and underscores — so allow that safe, bounded shape.
+_VALID_CAR_TYPE_RE = re.compile(r'^[a-z0-9_]{1,32}$', re.IGNORECASE)
 
 MAX_PAGE_NUMBER = 200  # Hard cap – no listing needs 200+ pages
 

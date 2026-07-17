@@ -143,6 +143,64 @@ def _exclude_expired_auctions(qs):
 _CATALOG_DMG_TYPES = ('replaced', 'painted')
 
 
+# ── Dynamic market tabs (category-driven) ──────────────────────────────────
+# A "market" is a cars.Category flagged is_market_tab (e.g. japan_market). Each
+# becomes its own tab, filtered by category name — a fast positive filter.
+# Regular "encar" cars have NO category (the main Cars tab = category IS NULL),
+# which inherently excludes every market, so nothing needs a slow NOT-IN.
+def _market_categories():
+    key = 'market_categories_v1'
+    out = cache.get(key)
+    if out is None:
+        from cars.models import Category
+        out = [
+            {'name': c.name, 'label_ar': c.market_label_ar, 'label_en': c.market_label_en}
+            for c in Category.objects.filter(is_market_tab=True).order_by('tab_order', 'name')
+            if c.name
+        ]
+        cache.set(key, out, 60 * 30)
+    return out
+
+
+def _market_names():
+    return {m['name'] for m in _market_categories()}
+
+
+def _tenant_enabled_markets(tenant):
+    """The market categories this tenant shows as tabs (order-preserving dicts)."""
+    if tenant is None:
+        return []
+    enabled = set(getattr(tenant, 'enabled_markets', None) or [])
+    return [m for m in _market_categories() if m['name'] in enabled]
+
+
+def _tenant_market_names(tenant):
+    """Set of market category names this tenant has enabled."""
+    return {m['name'] for m in _tenant_enabled_markets(tenant)}
+
+
+def _car_type_scope(car_type, enabled_market_names, prefix=''):
+    """Q() selecting the cars for a given tab. Positive filters only (fast):
+    encar = category IS NULL, auction/market = category name, default = encar+auction.
+    `prefix` lets callers build the same scope across a reverse relation, e.g.
+    prefix='apicar__' from a Manufacturer/CarModel queryset."""
+    c = prefix + 'category__name'
+    cnull = prefix + 'category__isnull'
+    body = prefix + 'body__name'
+    if car_type == 'auction':
+        return Q(**{c: 'auction'})
+    if car_type == 'kbchachacha':
+        return Q(**{c: 'kbchachacha'})
+    if car_type and car_type in enabled_market_names:
+        return Q(**{c: car_type})
+    if car_type == 'truck':
+        return Q(**{cnull: True}) & Q(**{body: 'truck'})
+    if car_type == 'cars':
+        return Q(**{cnull: True})
+    # Default / "all" tab — the standard catalog: encar + auctions, no markets.
+    return Q(**{cnull: True}) | Q(**{c: 'auction'})
+
+
 def _tenant_catalog_sig(tenant):
     """Short, stable signature of a tenant's visibility+catalog-filter state, to
     fold into cache keys so filtered/unfiltered variants never collide."""
@@ -154,7 +212,7 @@ def _tenant_catalog_sig(tenant):
     raw = _json.dumps([
         int(getattr(tenant, 'show_auctions', True)),
         int(getattr(tenant, 'show_encar', True)),
-        int(getattr(tenant, 'show_japan_market', False)),
+        sorted(getattr(tenant, 'enabled_markets', None) or []),
         cf,
     ], sort_keys=True, ensure_ascii=False)
     return hashlib.md5(raw.encode('utf-8')).hexdigest()[:10]
@@ -224,11 +282,10 @@ def _apply_tenant_catalog(qs, tenant):
         qs = qs.exclude(category__name='auction')
     if not getattr(tenant, 'show_encar', True):
         qs = qs.filter(category__name='auction')
-    # Japanese (carsensor) market is hidden unless the tenant opts in — this is
-    # the single chokepoint that keeps japan_market cars out of every list,
-    # facet, count and the home page for tenants that haven't enabled it.
-    if not getattr(tenant, 'show_japan_market', False):
-        qs = qs.exclude(category__name='japan_market')
+    # Market categories (japan_market, etc.) are never excluded here — the main
+    # tabs use a positive `category IS NULL` filter that inherently excludes
+    # them (fast), and market tabs only render for enabled markets. A NOT-IN on
+    # a huge market would be a query-timeout trap, so we avoid it entirely.
     cf = getattr(tenant, 'catalog_filter', None) or {}
     if not cf:
         return qs
@@ -310,7 +367,7 @@ def landing(request):
     agg = _apply_tenant_catalog(ApiCar.objects.exclude(
         category__name='auction', auction_date__lt=now
     ), _lt).aggregate(
-        cars_count=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
+        cars_count=Count('id', filter=Q(category__isnull=True)),
         auction_count=Count('id', filter=Q(category__name='auction')),
         kb_count=Count('id', filter=Q(category__name='kbchachacha')),
     )
@@ -420,7 +477,7 @@ def home(request):
         # appeal (premium → luxury → mainstream → other), then newest first.
         latest_cars = list(
             _order_by_appeal(
-                _base_qs.exclude(category__name__in=['auction', 'kbchachacha']),
+                _base_qs.filter(category__isnull=True),
                 '-created_at',
             )
             .only(
@@ -460,16 +517,20 @@ def home(request):
             total=_Count('id'),
             auction_count=_Count('id', filter=Q(category__name='auction')),
             kb_count=_Count('id', filter=Q(category__name='kbchachacha')),
+            cars_count=_Count('id', filter=Q(category__isnull=True)),
         )
         _total         = _agg['total']
         _auction_count = _agg['auction_count']
         _kb_count      = _agg['kb_count']
-        _cars_count    = _total - _auction_count - _kb_count
+        _cars_count    = _agg['cars_count']
 
-        _mfr_ids_set  = set(_base_filter.values_list('manufacturer_id', flat=True).distinct())
-        _body_ids_set = set(_base_filter.values_list('body_id',         flat=True).distinct())
+        # Encar-only base for the home facets (manufacturers/bodies/years) so
+        # market cars never leak into the homepage numbers.
+        _encar_filter = _base_filter.filter(category__isnull=True)
+        _mfr_ids_set  = set(_encar_filter.values_list('manufacturer_id', flat=True).distinct())
+        _body_ids_set = set(_encar_filter.values_list('body_id',         flat=True).distinct())
         _years_set    = list(
-            _base_filter.order_by('-year')
+            _encar_filter.order_by('-year')
             .values_list('year', flat=True)
             .distinct()[:20]
         )
@@ -489,7 +550,7 @@ def home(request):
             Manufacturer.objects.filter(id__in=_mfr_ids_set)
             .annotate(
                 car_count=Count('apicar'),
-                cars_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha'])),
+                cars_count=Count('apicar', filter=Q(apicar__category__isnull=True)),
                 auction_count=Count('apicar', filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now)),
             )
             .order_by('-car_count')[:20]
@@ -1290,16 +1351,9 @@ def _facet_counts_for(request, car_type):
     facet_base = _exclude_expired_auctions(ApiCar.objects.all())
     ftn = getattr(connection, 'tenant', None)
     facet_base = _apply_tenant_catalog(facet_base, ftn)
-    if car_type == 'auction':
-        facet_base = facet_base.filter(category__name='auction')
-    elif car_type == 'kbchachacha':
-        facet_base = facet_base.filter(category__name='kbchachacha')
-    elif car_type == 'japan':
-        facet_base = facet_base.filter(category__name='japan_market')
-    elif car_type == 'cars':
-        facet_base = facet_base.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
-    elif car_type == 'truck':
-        facet_base = facet_base.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']).filter(body__name='truck')
+    _fnames = _tenant_market_names(ftn)
+    if car_type in ('auction', 'kbchachacha', 'cars', 'truck') or car_type in _fnames:
+        facet_base = facet_base.filter(_car_type_scope(car_type, _fnames))
     # Shared cache key: catalog is shared + only changes on the daily import.
     cp = {k: sorted(v) for k, v in request.GET.lists() if k not in ('sort', 'page')}
     ch = hashlib.md5(json.dumps(cp, sort_keys=True).encode()).hexdigest()
@@ -1540,33 +1594,29 @@ def car_list(request):
     _tenant = getattr(connection, 'tenant', None)
     qs = _apply_tenant_catalog(qs, _tenant)
 
+    # Market tabs this tenant has opted into (japan_market, etc.) — drives the
+    # dynamic tabs, counts and narrowing below. Empty for a default tenant.
+    enabled_markets = _tenant_enabled_markets(_tenant)
+    enabled_market_names = {m['name'] for m in enabled_markets}
+
     # Live tab counts — every filter so far (except car_type itself) has been
     # applied to qs, so `count_cars` and `count_auction` reflect what the user
     # would see if they switched tabs without changing any filter.
-    _live_tab_counts = qs.aggregate(
-        live_count_all=Count('id', filter=~Q(category__name__in=['kbchachacha', 'japan_market'])),
-        live_count_cars=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha', 'japan_market'])),
-        live_count_auction=Count('id', filter=Q(category__name='auction')),
-        live_count_kb=Count('id', filter=Q(category__name='kbchachacha')),
-        live_count_japan=Count('id', filter=Q(category__name='japan_market')),
-    )
+    # Positive `category IS NULL` filters (encar has a NULL category) instead of
+    # NOT-IN exclusions — the latter is a timeout trap on huge market categories.
+    _count_kwargs = {
+        'live_count_all': Count('id', filter=Q(category__isnull=True) | Q(category__name='auction')),
+        'live_count_cars': Count('id', filter=Q(category__isnull=True)),
+        'live_count_auction': Count('id', filter=Q(category__name='auction')),
+        'live_count_kb': Count('id', filter=Q(category__name='kbchachacha')),
+    }
+    for i, m in enumerate(enabled_markets):
+        _count_kwargs['live_count_market_%d' % i] = Count('id', filter=Q(category__name=m['name']))
+    _live_tab_counts = qs.aggregate(**_count_kwargs)
 
-    # Finally narrow qs by the chosen tab. japan_market is its own tab and is
-    # kept out of every other tab.
-    if car_type == 'auction':
-        qs = qs.filter(category__name='auction')
-    elif car_type == 'kbchachacha':
-        qs = qs.filter(category__name='kbchachacha')
-    elif car_type == 'japan':
-        qs = qs.filter(category__name='japan_market')
-    elif car_type == 'cars':
-        qs = qs.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
-    elif car_type == 'truck':
-        qs = qs.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']).filter(body__name='truck')
-    else:
-        # Default / "all" tab — keep KB Cha Cha Cha and the Japanese market
-        # isolated to their own tabs.
-        qs = qs.exclude(category__name__in=['kbchachacha', 'japan_market'])
+    # Finally narrow qs by the chosen tab. Each market category is its own tab
+    # and is kept out of every other tab (main tabs are NULL-category only).
+    qs = qs.filter(_car_type_scope(car_type, enabled_market_names))
 
     sort = request.GET.get('sort')
     allowed_sorts = ['-created_at', 'price', '-price', '-year', 'year', 'mileage', '-mileage']
@@ -1721,21 +1771,11 @@ def car_list(request):
             popular_manufacturers = sorted(manufacturers, key=lambda m: m.car_count, reverse=True)
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     else:
-        _mfr_cache_suffix = {'cars': 'cars', 'truck': 'truck', 'kbchachacha': 'kbchachacha', 'japan': 'japan'}.get(car_type, 'all')
+        _mfr_cache_suffix = car_type if (car_type in ('cars', 'truck', 'kbchachacha') or car_type in enabled_market_names) else 'all'
         _mfr_cache_key = f"car_list_v4:manufacturers_{_mfr_cache_suffix}"
         manufacturers = cache.get(_mfr_cache_key)
         if manufacturers is None:
-            if car_type == 'truck':
-                _mfr_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & Q(apicar__body__name='truck')
-            elif car_type == 'kbchachacha':
-                _mfr_count_filter = Q(apicar__category__name='kbchachacha')
-            elif car_type == 'japan':
-                _mfr_count_filter = Q(apicar__category__name='japan_market')
-            elif car_type == 'cars':
-                # Cars tab now covers trucks too — surface their manufacturers in the tree.
-                _mfr_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market'])
-            else:
-                _mfr_count_filter = ~Q(apicar__category__name__in=['kbchachacha', 'japan_market']) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
+            _mfr_count_filter = _car_type_scope(car_type, enabled_market_names, prefix='apicar__')
             manufacturers = list(
                 Manufacturer.objects.annotate(car_count=Count('apicar', filter=_mfr_count_filter))
                 .filter(car_count__gt=0)
@@ -1788,21 +1828,21 @@ def car_list(request):
                 for m in models_qs:
                     setattr(m, 'name_ar', car_models_dict.get(m.name.lower()))
                 cache.set(_models_cache_key, models_qs, 60 * 15)
-        elif car_type == 'japan':
-            _models_cache_key = f"car_list_v2:models_japan_cnt:{_mfr_key_part}"
+        elif car_type in enabled_market_names:
+            _models_cache_key = f"car_list_v2:models_{car_type}_cnt:{_mfr_key_part}"
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
-                _japan_model_ids = list(
+                _mkt_model_ids = list(
                     ApiCar.objects.filter(
-                        category__name='japan_market', manufacturer_id__in=sel_manufacturers
+                        category__name=car_type, manufacturer_id__in=sel_manufacturers
                     )
                     .values_list('model_id', flat=True).distinct()
                 )
                 models_qs = list(
-                    CarModel.objects.filter(id__in=_japan_model_ids)
+                    CarModel.objects.filter(id__in=_mkt_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=Q(apicar__category__name='japan_market') & Q(apicar__manufacturer_id__in=sel_manufacturers),
+                        filter=Q(apicar__category__name=car_type) & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
                     .order_by('-car_count')
                 )
@@ -1814,8 +1854,7 @@ def car_list(request):
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
                 _cars_model_ids = list(
-                    ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers)
-                    .exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
+                    ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers, category__isnull=True)
                     .exclude(body__name='truck')
                     .values_list('model_id', flat=True).distinct()
                 )
@@ -1823,7 +1862,7 @@ def car_list(request):
                     CarModel.objects.filter(id__in=_cars_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & ~Q(apicar__body__name='truck') & Q(apicar__manufacturer_id__in=sel_manufacturers),
+                        filter=Q(apicar__category__isnull=True) & ~Q(apicar__body__name='truck') & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
                     .order_by('-car_count')
                 )
@@ -1835,15 +1874,14 @@ def car_list(request):
             models_qs = cache.get(_models_cache_key)
             if models_qs is None:
                 _truck_model_ids = list(
-                    ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers, body__name='truck')
-                    .exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
+                    ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers, body__name='truck', category__isnull=True)
                     .values_list('model_id', flat=True).distinct()
                 )
                 models_qs = list(
                     CarModel.objects.filter(id__in=_truck_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & Q(apicar__body__name='truck') & Q(apicar__manufacturer_id__in=sel_manufacturers),
+                        filter=Q(apicar__category__isnull=True) & Q(apicar__body__name='truck') & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
                     .order_by('-car_count')
                 )
@@ -1856,7 +1894,7 @@ def car_list(request):
             if models_qs is None:
                 _model_ids = list(
                     ApiCar.objects.filter(manufacturer_id__in=sel_manufacturers)
-                    .exclude(category__name__in=['kbchachacha', 'japan_market'])
+                    .filter(Q(category__isnull=True) | Q(category__name='auction'))
                     .exclude(category__name='auction', auction_date__lt=now)
                     .values_list('model_id', flat=True).distinct()
                 )
@@ -1864,7 +1902,7 @@ def car_list(request):
                     CarModel.objects.filter(id__in=_model_ids)
                     .annotate(car_count=Count(
                         'apicar',
-                        filter=~Q(apicar__category__name__in=['kbchachacha', 'japan_market']) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id__in=sel_manufacturers),
+                        filter=(Q(apicar__category__isnull=True) | Q(apicar__category__name='auction')) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id__in=sel_manufacturers),
                     ))
                     .order_by('-car_count')
                 )
@@ -1879,18 +1917,13 @@ def car_list(request):
         _badges_cache_key = f"car_list_v3:badges_cnt:{_mdl_key_part}:{car_type or 'all'}"
         badges = cache.get(_badges_cache_key)
         if badges is None:
-            if car_type == 'auction':
-                _badge_filter = Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now) & Q(apicar__model_id__in=sel_models)
-            elif car_type == 'kbchachacha':
-                _badge_filter = Q(apicar__category__name='kbchachacha') & Q(apicar__model_id__in=sel_models)
-            elif car_type == 'japan':
-                _badge_filter = Q(apicar__category__name='japan_market') & Q(apicar__model_id__in=sel_models)
-            elif car_type == 'cars':
-                _badge_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & ~Q(apicar__body__name='truck') & Q(apicar__model_id__in=sel_models)
-            elif car_type == 'truck':
-                _badge_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & Q(apicar__body__name='truck') & Q(apicar__model_id__in=sel_models)
-            else:
-                _badge_filter = ~Q(apicar__category__name__in=['kbchachacha', 'japan_market']) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id__in=sel_models)
+            _badge_filter = (
+                _car_type_scope(car_type, enabled_market_names, prefix='apicar__')
+                & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
+                & Q(apicar__model_id__in=sel_models)
+            )
+            if car_type == 'cars':
+                _badge_filter &= ~Q(apicar__body__name='truck')
             badges = list(
                 CarBadge.objects.filter(model_id__in=sel_models)
                 .annotate(
@@ -1911,20 +1944,20 @@ def car_list(request):
         if car_type == 'kbchachacha':
             _static_cache_key = f"car_list_v4:static_filters_kbchachacha:{schema}"
             _base_qs = ApiCar.objects.filter(category__name='kbchachacha')
-        elif car_type == 'japan':
-            _static_cache_key = f"car_list_v4:static_filters_japan:{schema}"
-            _base_qs = ApiCar.objects.filter(category__name='japan_market')
+        elif car_type in enabled_market_names:
+            _static_cache_key = f"car_list_v4:static_filters_{car_type}:{schema}"
+            _base_qs = ApiCar.objects.filter(category__name=car_type)
         elif car_type == 'cars':
             # Cars tab now includes trucks — body_type chip group surfaces
             # 'truck' as one of the selectable filter options.
             _static_cache_key = f"car_list_v4:static_filters_cars:{schema}"
-            _base_qs = ApiCar.objects.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
+            _base_qs = ApiCar.objects.filter(category__isnull=True)
         elif car_type == 'truck':
             _static_cache_key = f"car_list_v4:static_filters_truck:{schema}"
-            _base_qs = ApiCar.objects.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']).filter(body__name='truck')
+            _base_qs = ApiCar.objects.filter(category__isnull=True, body__name='truck')
         else:
             _static_cache_key = f"car_list_v4:static_filters_all:{schema}"
-            _base_qs = ApiCar.objects.exclude(category__name__in=['kbchachacha', 'japan_market']).exclude(category__name='auction', auction_date__lt=now)
+            _base_qs = ApiCar.objects.filter(Q(category__isnull=True) | Q(category__name='auction')).exclude(category__name='auction', auction_date__lt=now)
 
         static_filters = cache.get(_static_cache_key)
         if static_filters is None:
@@ -1983,10 +2016,10 @@ def car_list(request):
     if tab_counts is None:
         _tab_base = ApiCar.objects.exclude(category__name='auction', auction_date__lt=now)
         tab_counts = _tab_base.aggregate(
-            count_all=Count('id', filter=~Q(category__name='kbchachacha')),
+            count_all=Count('id', filter=Q(category__isnull=True) | Q(category__name='auction')),
             count_auction=Count('id', filter=Q(category__name='auction')),
-            count_cars=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
-            count_truck=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha']) & Q(body__name='truck')),
+            count_cars=Count('id', filter=Q(category__isnull=True)),
+            count_truck=Count('id', filter=Q(category__isnull=True) & Q(body__name='truck')),
             count_kbchachacha=Count('id', filter=Q(category__name='kbchachacha')),
         )
         cache.set(_tab_count_key, tab_counts, 60 * 5)
@@ -1995,9 +2028,18 @@ def car_list(request):
     count_all = _live_tab_counts['live_count_all']
     count_cars = _live_tab_counts['live_count_cars']
     count_auction = _live_tab_counts['live_count_auction']
-    count_japan = _live_tab_counts['live_count_japan']
     count_kbchachacha = _live_tab_counts['live_count_kb']
     count_truck = tab_counts['count_truck']  # truck tab is gone — left only as compat
+    # Dynamic market tabs (japan_market, …) with their live counts.
+    market_tabs = [
+        {
+            'name': m['name'],
+            'label_ar': m['label_ar'],
+            'label_en': m['label_en'],
+            'count': _live_tab_counts.get('live_count_market_%d' % i, 0),
+        }
+        for i, m in enumerate(enabled_markets)
+    ]
 
     # Site cars count for the showroom tab — cached 10 min
     # site_cars_count  = admin-uploaded SiteCars (no external_id)  → "سياراتنا" tab
@@ -2023,12 +2065,12 @@ def car_list(request):
         if car_type == 'kbchachacha':
             _pop_mfr_key = f"car_list_v3:popular_manufacturers_kbchachacha:{schema}"
             _pop_mfr_filter = Q(apicar__category__name='kbchachacha')
-        elif car_type == 'japan':
-            _pop_mfr_key = f"car_list_v3:popular_manufacturers_japan:{schema}"
-            _pop_mfr_filter = Q(apicar__category__name='japan_market')
+        elif car_type in enabled_market_names:
+            _pop_mfr_key = f"car_list_v3:popular_manufacturers_{car_type}:{schema}"
+            _pop_mfr_filter = Q(apicar__category__name=car_type)
         else:
             _pop_mfr_key = f"car_list_v3:popular_manufacturers:{schema}"
-            _pop_mfr_filter = ~Q(apicar__category__name__in=['kbchachacha', 'japan_market']) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
+            _pop_mfr_filter = (Q(apicar__category__isnull=True) | Q(apicar__category__name='auction')) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now)
         popular_manufacturers = cache.get(_pop_mfr_key)
         if popular_manufacturers is None:
             popular_manufacturers = list(
@@ -2043,7 +2085,7 @@ def car_list(request):
             )
             cache.set(_pop_mfr_key, popular_manufacturers, 60 * 15)
     # ── Car-list hero data (tenant-wide, cached 10 min — not per-user) ──
-    _hero_key = f"car_list_hero_v2:{schema}"
+    _hero_key = f"car_list_hero_v3:{schema}:{_tenant_catalog_sig(_tenant)}"
     hero = cache.get(_hero_key)
     if hero is None:
         # Anchor "today" to the local timezone, not UTC.
@@ -2079,8 +2121,18 @@ def car_list(request):
             _hero_imgs(_enc.filter(is_luxury=True).order_by('-created_at'))
             or _hero_imgs(_enc.order_by('-created_at'))
         )
-        _jpn = ApiCar.objects.filter(category__name='japan_market')
-        japan_imgs = _hero_imgs(_jpn.order_by('-created_at'))
+        # Per-market hero data (japan_market, …) — one entry per enabled market.
+        _market_hero = []
+        for _m in enabled_markets:
+            _mqs = ApiCar.objects.filter(category__name=_m['name'])
+            _market_hero.append({
+                'name': _m['name'],
+                'label_ar': _m['label_ar'],
+                'label_en': _m['label_en'],
+                'imgs': _hero_imgs(_mqs.order_by('-created_at')),
+                'count': _mqs.count(),
+                'added_today': _mqs.filter(created_at__gte=_today_start).count(),
+            })
         # Upcoming auctions grouped by name — there can be several auction
         # houses, each with its own next date. Earliest date per name, soonest first.
         from django.db.models import Min as _Min
@@ -2098,7 +2150,6 @@ def car_list(request):
         _na = upcoming_auctions[0] if upcoming_auctions else None
         hero = {
             'added_today': ApiCar.objects.filter(created_at__gte=_today_start, category__isnull=True).count(),
-            'japan_added_today': _jpn.filter(created_at__gte=_today_start).count(),
             # Genuine updates to EXISTING cars (exclude ones added today, whose
             # updated_at is also today — otherwise it just duplicates "added").
             'updated_today': ApiCar.objects.filter(
@@ -2106,8 +2157,7 @@ def car_list(request):
             ).count(),
             'auction_imgs': auction_imgs,
             'encar_imgs': encar_imgs,
-            'japan_imgs': japan_imgs,
-            'japan_count': _jpn.count(),
+            'markets': _market_hero,
             'next_auction_name': _na['auction_name'] if _na else None,
             'next_auction_date': _na['auction_date'] if _na else None,
             'next_auction_day_ar': _na['day_ar'] if _na else None,
@@ -2167,7 +2217,8 @@ def car_list(request):
         'count_all': count_all,
         'count_cars': count_cars,
         'count_auction': count_auction,
-        'count_japan': count_japan,
+        'market_tabs': market_tabs,
+        'active_market_name': car_type if car_type in enabled_market_names else None,
         'count_kbchachacha': count_kbchachacha,
         'kb_count': count_kbchachacha,
         'count_truck': count_truck,
@@ -2315,6 +2366,7 @@ def api_models_by_manufacturer(request):
                 ApiCar.objects.filter(manufacturer_id=manufacturer_id), _ttn
             ).values_list('model_id', flat=True))
 
+        _mnames = _tenant_market_names(_ttn)
         if car_type == 'auction':
             model_ids = list(
                 ApiCar.objects.filter(manufacturer_id=manufacturer_id, category__name='auction')
@@ -2330,34 +2382,39 @@ def api_models_by_manufacturer(request):
             )
             qs = CarModel.objects.filter(id__in=model_ids)
             qs = qs.annotate(car_count=Count('apicar', filter=Q(apicar__category__name='kbchachacha')))
+        elif car_type in _mnames:
+            model_ids = list(
+                ApiCar.objects.filter(manufacturer_id=manufacturer_id, category__name=car_type)
+                .values_list('model_id', flat=True).distinct()
+            )
+            qs = CarModel.objects.filter(id__in=model_ids)
+            qs = qs.annotate(car_count=Count('apicar', filter=Q(apicar__category__name=car_type)))
         elif car_type == 'cars':
             model_ids = list(
-                ApiCar.objects.filter(manufacturer_id=manufacturer_id)
-                .exclude(category__name__in=['auction', 'kbchachacha'])
+                ApiCar.objects.filter(manufacturer_id=manufacturer_id, category__isnull=True)
                 .exclude(body__name='truck')
                 .values_list('model_id', flat=True).distinct()
             )
             qs = CarModel.objects.filter(id__in=model_ids)
-            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha']) & ~Q(apicar__body__name='truck')))
+            qs = qs.annotate(car_count=Count('apicar', filter=Q(apicar__category__isnull=True) & ~Q(apicar__body__name='truck')))
         elif car_type == 'truck':
             model_ids = list(
-                ApiCar.objects.filter(manufacturer_id=manufacturer_id, body__name='truck')
-                .exclude(category__name__in=['auction', 'kbchachacha'])
+                ApiCar.objects.filter(manufacturer_id=manufacturer_id, body__name='truck', category__isnull=True)
                 .values_list('model_id', flat=True).distinct()
             )
             qs = CarModel.objects.filter(id__in=model_ids)
-            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha']) & Q(apicar__body__name='truck')))
+            qs = qs.annotate(car_count=Count('apicar', filter=Q(apicar__category__isnull=True) & Q(apicar__body__name='truck')))
         else:
             model_ids = list(
                 ApiCar.objects.filter(manufacturer_id=manufacturer_id)
-                .exclude(category__name='kbchachacha')
+                .filter(Q(category__isnull=True) | Q(category__name='auction'))
                 .exclude(category__name='auction', auction_date__lt=now)
                 .values_list('model_id', flat=True).distinct()
             )
             qs = CarModel.objects.filter(id__in=model_ids)
             qs = qs.annotate(car_count=Count(
                 'apicar',
-                filter=~Q(apicar__category__name='kbchachacha') & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer_id),
+                filter=(Q(apicar__category__isnull=True) | Q(apicar__category__name='auction')) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__manufacturer_id=manufacturer_id),
             ))
 
         if _allowed_models is not None:
@@ -2403,6 +2460,7 @@ def api_badges_by_model(request):
     # at least one matching car are returned.
     car_type = request.GET.get('car_type')
     now = timezone.now()
+    _mnames = _tenant_market_names(getattr(connection, 'tenant', None))
     if car_type == 'auction':
         badge_ids = ApiCar.objects.filter(
             model_id=model_id, category__name='auction'
@@ -2413,23 +2471,28 @@ def api_badges_by_model(request):
             model_id=model_id, category__name='kbchachacha'
         ).values_list('badge_id', flat=True).distinct()
         _badge_count_filter = Q(apicar__category__name='kbchachacha') & Q(apicar__model_id=model_id)
+    elif car_type in _mnames:
+        badge_ids = ApiCar.objects.filter(
+            model_id=model_id, category__name=car_type
+        ).values_list('badge_id', flat=True).distinct()
+        _badge_count_filter = Q(apicar__category__name=car_type) & Q(apicar__model_id=model_id)
     elif car_type == 'cars':
-        badge_ids = ApiCar.objects.filter(model_id=model_id).exclude(
-            category__name__in=['auction', 'kbchachacha']
+        badge_ids = ApiCar.objects.filter(
+            model_id=model_id, category__isnull=True
         ).exclude(body__name='truck').values_list('badge_id', flat=True).distinct()
-        _badge_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha']) & ~Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
+        _badge_count_filter = Q(apicar__category__isnull=True) & ~Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
     elif car_type == 'truck':
         badge_ids = ApiCar.objects.filter(
-            model_id=model_id, body__name='truck'
-        ).exclude(category__name__in=['auction', 'kbchachacha']).values_list('badge_id', flat=True).distinct()
-        _badge_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha']) & Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
+            model_id=model_id, body__name='truck', category__isnull=True
+        ).values_list('badge_id', flat=True).distinct()
+        _badge_count_filter = Q(apicar__category__isnull=True) & Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
     else:
-        badge_ids = ApiCar.objects.filter(model_id=model_id).exclude(
-            category__name='kbchachacha'
+        badge_ids = ApiCar.objects.filter(model_id=model_id).filter(
+            Q(category__isnull=True) | Q(category__name='auction')
         ).exclude(
             category__name='auction', auction_date__lt=now
         ).values_list('badge_id', flat=True).distinct()
-        _badge_count_filter = ~Q(apicar__category__name='kbchachacha') & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id=model_id)
+        _badge_count_filter = (Q(apicar__category__isnull=True) | Q(apicar__category__name='auction')) & ~Q(apicar__category__name='auction', apicar__auction_date__lt=now) & Q(apicar__model_id=model_id)
 
     badges = list(
         CarBadge.objects.filter(id__in=badge_ids)
@@ -2449,16 +2512,19 @@ def api_badges_by_model(request):
 def _car_type_base(car_type, now, **filters):
     """ApiCar queryset scoped to a car_type tab, with extra equality filters.
     Mirrors the car_type branching used by the model/badge API endpoints."""
-    qs = _apply_tenant_catalog(ApiCar.objects.filter(**filters), getattr(connection, 'tenant', None))
+    _tn = getattr(connection, 'tenant', None)
+    qs = _apply_tenant_catalog(ApiCar.objects.filter(**filters), _tn)
     if car_type == 'auction':
         return qs.filter(category__name='auction').exclude(auction_date__lt=now)
     if car_type == 'kbchachacha':
         return qs.filter(category__name='kbchachacha')
+    if car_type and car_type in _tenant_market_names(_tn):
+        return qs.filter(category__name=car_type)
     if car_type == 'cars':
-        return qs.exclude(category__name__in=['auction', 'kbchachacha']).exclude(body__name='truck')
+        return qs.filter(category__isnull=True).exclude(body__name='truck')
     if car_type == 'truck':
-        return qs.filter(body__name='truck').exclude(category__name__in=['auction', 'kbchachacha'])
-    return qs.exclude(category__name='kbchachacha').exclude(category__name='auction', auction_date__lt=now)
+        return qs.filter(category__isnull=True, body__name='truck')
+    return qs.filter(Q(category__isnull=True) | Q(category__name='auction')).exclude(category__name='auction', auction_date__lt=now)
 
 
 def api_model_versions_by_model(request):
@@ -2719,6 +2785,15 @@ def car_detail(request, slug):
     if (_ctf_tenant is not None and not request.user.is_staff
             and not _apply_tenant_catalog(ApiCar.objects.filter(pk=car.pk), _ctf_tenant).exists()):
         raise Http404("not in catalog")
+
+    # Market cars (japan_market, …) are only reachable on tenants that enabled
+    # that market — the main catalog uses a NULL-category filter, so a market
+    # detail page must be gated explicitly (staff bypass).
+    _cat_name = getattr(car.category, 'name', '') or ''
+    if (_ctf_tenant is not None and not request.user.is_staff
+            and _cat_name in _market_names()
+            and _cat_name not in _tenant_market_names(_ctf_tenant)):
+        raise Http404("market not enabled")
 
     ratings = []
     user_rating = None

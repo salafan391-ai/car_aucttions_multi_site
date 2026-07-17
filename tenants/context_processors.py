@@ -156,7 +156,6 @@ def tenant_branding(request):
         "show_watermark": bool(getattr(tenant, 'show_watermark', True)),
         "show_encar": bool(getattr(tenant, 'show_encar', True)),
         "show_auctions": bool(getattr(tenant, 'show_auctions', True)),
-        "show_japan": bool(getattr(tenant, 'show_japan_market', False)),
         "show_site_cars": bool(getattr(tenant, 'show_site_cars', True)),
         "show_parts": bool(getattr(tenant, 'show_parts', True)),
         "show_accessories": bool(getattr(tenant, 'show_accessories', True)),

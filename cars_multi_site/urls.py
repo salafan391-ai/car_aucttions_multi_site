@@ -179,8 +179,16 @@ def sitemap_xml(request):
         # Expired auctions now 404 on their detail page — keep them out of the sitemap.
         from django.utils import timezone as _tz
         api_qs = api_qs.exclude(category__name="auction", auction_date__lt=_tz.now())
+        # Only list reachable cars: encar (NULL category) + auctions + any market
+        # this tenant has enabled. Non-enabled market cars 404, so keep them out.
+        from django.db.models import Q as _Q
+        from cars.views import _apply_tenant_catalog, _tenant_market_names
+        _mkt = list(_tenant_market_names(tenant))
+        _reach = _Q(category__isnull=True) | _Q(category__name="auction")
+        if _mkt:
+            _reach |= _Q(category__name__in=_mkt)
+        api_qs = api_qs.filter(_reach)
         # Respect the tenant's visibility toggles + catalog filter.
-        from cars.views import _apply_tenant_catalog
         api_qs = _apply_tenant_catalog(api_qs, tenant)
         for slug, upd in api_qs.order_by("-updated_at").values_list("slug", "updated_at")[:30000]:
             urls.append({"loc": f"{base}/cars/{slug}/", "lastmod": upd, "changefreq": "weekly", "priority": "0.7"})

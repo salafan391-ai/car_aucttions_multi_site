@@ -802,12 +802,12 @@
                     <span id="tab-count-auction" class="{% if request.GET.car_type == 'auction' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_auction|intcomma }}</span>
                 </a>
                 {% endif %}
-                {% if show_japan %}
-                <a href="?car_type=japan{% if request.GET.q %}&q={{ request.GET.q|qs_value }}{% endif %}" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if request.GET.car_type == 'japan' %}bg-brand text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
-                    <span class="bilingual" data-lang-ar="سيارات يابانية" data-lang-ru="Японские" data-lang-es="Japoneses" data-lang-en="Japanese">سيارات يابانية</span>
-                    <span id="tab-count-japan" class="{% if request.GET.car_type == 'japan' %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ count_japan|intcomma }}</span>
+                {% for m in market_tabs %}
+                <a href="?car_type={{ m.name }}{% if request.GET.q %}&q={{ request.GET.q|qs_value }}{% endif %}" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap {% if request.GET.car_type == m.name %}bg-brand text-white shadow-sm{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-50{% endif %}">
+                    <span class="bilingual" data-lang-ar="{{ m.label_ar }}" data-lang-en="{{ m.label_en }}">{{ m.label_ar }}</span>
+                    <span class="{% if request.GET.car_type == m.name %}bg-white/20 text-white{% else %}bg-gray-100 text-gray-500{% endif %} text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full">{{ m.count|intcomma }}</span>
                 </a>
-                {% endif %}
+                {% endfor %}
                 {% if site_cars_count and show_site_cars %}
                 <a href="{% if ours_url %}{{ ours_url }}{% else %}{% url 'site_car_list' %}{% endif %}" class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:bg-gray-50">
                     <span class="bilingual" data-lang-ar="سياراتنا" data-lang-ru="Наши автомобили" data-lang-es="Nuestros coches" data-lang-en="Our Cars">سياراتنا</span>
