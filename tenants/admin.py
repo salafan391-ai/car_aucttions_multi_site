@@ -58,13 +58,37 @@ class TenantAdminForm(forms.ModelForm):
         label="الثيمات المتاحة في لوحة التحكم",
         help_text="حدد الثيمات التي تظهر لأدمن هذا الموقع في صفحة الإعدادات. اتركها كلها بدون تحديد لاستخدام المجموعة الافتراضية.",
     )
+    enabled_markets = forms.MultipleChoiceField(
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="الأسواق المفعّلة",
+        help_text="فئات الأسواق التي تظهر كتبويب مستقل لهذا الموقع (مثل السوق الياباني). اتركها فارغة لإخفاء كل الأسواق.",
+    )
 
     class Meta:
         model = Tenant
         fields = "__all__"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Market choices come from cars.Category rows flagged as market tabs, so
+        # adding a new market in the Category admin makes it selectable here — no
+        # code change needed.
+        try:
+            from cars.models import Category
+            self.fields['enabled_markets'].choices = [
+                (c.name, c.label_ar or c.name)
+                for c in Category.objects.filter(is_market_tab=True).order_by('tab_order', 'name')
+                if c.name
+            ]
+        except Exception:
+            self.fields['enabled_markets'].choices = []
+
     def clean_dashboard_themes(self):
         return list(self.cleaned_data.get("dashboard_themes") or [])
+
+    def clean_enabled_markets(self):
+        return list(self.cleaned_data.get("enabled_markets") or [])
 
 
 @admin.register(Tenant)
@@ -151,6 +175,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
 
     fieldsets = (
         (None, {"fields": ("schema_name", "name", "is_active", "eid_is_active")}),
+        ("الأسواق (Markets)", {"fields": ("enabled_markets",), "description": "التبويبات المستقلة للأسواق (مثل السوق الياباني). تُدار الفئات نفسها من قسم Categories."}),
         ("Branding", {"fields": ("logo", "favicon", "hero_image", "show_hero", "show_watermark", "show_encar", "show_auctions", "show_site_cars", "show_parts", "show_accessories", "landing_is_active", "landing_design", "template_theme", "dashboard_themes", "site_font", "theme", "primary_color", "secondary_color", "accent_color", "body_bg_color", "car_display")}),
         ("Announcement ticker", {"fields": ("ticker_enabled", "ticker_text", "ticker_color")}),
         ("How we work", {"fields": ("show_how_we_work", "how_we_work_title")}),

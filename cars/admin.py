@@ -291,11 +291,26 @@ class ContactAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'car_count')
+    list_display = ('name', 'label_ar', 'label_en', 'is_market_tab', 'tab_order', 'car_count')
+    list_editable = ('label_ar', 'label_en', 'is_market_tab', 'tab_order')
+    list_filter = ('is_market_tab',)
+    fields = ('name', 'label_ar', 'label_en', 'is_market_tab', 'tab_order')
 
     def car_count(self, obj):
         return ApiCar.objects.filter(category=obj).count()
     car_count.short_description = 'عدد السيارات'
+
+    def _bust_market_cache(self):
+        from django.core.cache import cache
+        cache.delete('market_categories_v1')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        self._bust_market_cache()
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        self._bust_market_cache()
 
 admin.site.register(CarColor)
 
