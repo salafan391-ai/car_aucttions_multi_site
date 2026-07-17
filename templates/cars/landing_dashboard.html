@@ -340,6 +340,16 @@
       </div>
       {% endif %}
 
+      {% for m in market_stats %}{% if m.count %}
+      <div class="stat-card">
+        <span class="stat-dot" style="background:#e11d48"></span>
+        <div>
+          <div class="stat-num" data-target="{{ m.count }}">0</div>
+          <div class="stat-lbl bilingual" data-lang-ar="{{ m.label_ar }}" data-lang-en="{{ m.label_en }}">{{ m.label_ar }}</div>
+        </div>
+      </div>
+      {% endif %}{% endfor %}
+
       {% if site_cars_count %}
       <div class="stat-card">
         <span class="stat-dot stat-dot-site"></span>
@@ -381,6 +391,13 @@
         </svg>
         المزادات
       </a>{% endif %}
+
+      {% for m in market_stats %}{% if m.count %}<a href="{% url 'car_list' %}?car_type={{ m.name }}" class="btn" style="background:#e11d48;color:#fff">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a13 13 0 000 18 13 13 0 000-18z"/>
+        </svg>
+        <span class="bilingual" data-lang-ar="{{ m.label_ar }}" data-lang-en="{{ m.label_en }}">{{ m.label_ar }}</span>
+      </a>{% endif %}{% endfor %}
 
       {% if site_cars_count %}
       {% if show_site_cars %}<a href="{% url 'site_car_list' %}" class="btn btn-site">

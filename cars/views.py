@@ -364,13 +364,24 @@ def landing(request):
     # ── Cache miss only ── the expensive catalog aggregates live here so a warm
     # homepage skips the 179k-row COUNTs (they feed the context, not the key).
     now = timezone.now()
+    # Per-market counts (japan_market, …) for the enabled markets — feeds the
+    # dynamic market stat-card + browse button on every landing design.
+    _enabled_markets = _tenant_enabled_markets(_lt)
+    _agg_kwargs = {
+        'cars_count': Count('id', filter=Q(category__isnull=True)),
+        'auction_count': Count('id', filter=Q(category__name='auction')),
+        'kb_count': Count('id', filter=Q(category__name='kbchachacha')),
+    }
+    for _i, _m in enumerate(_enabled_markets):
+        _agg_kwargs['market_%d' % _i] = Count('id', filter=Q(category__name=_m['name']))
     agg = _apply_tenant_catalog(ApiCar.objects.exclude(
         category__name='auction', auction_date__lt=now
-    ), _lt).aggregate(
-        cars_count=Count('id', filter=Q(category__isnull=True)),
-        auction_count=Count('id', filter=Q(category__name='auction')),
-        kb_count=Count('id', filter=Q(category__name='kbchachacha')),
-    )
+    ), _lt).aggregate(**_agg_kwargs)
+    market_stats = [
+        {'name': _m['name'], 'label_ar': _m['label_ar'], 'label_en': _m['label_en'],
+         'count': agg.get('market_%d' % _i, 0)}
+        for _i, _m in enumerate(_enabled_markets)
+    ]
 
     next_auction = (
         _apply_tenant_catalog(ApiCar.objects.filter(
@@ -415,6 +426,7 @@ def landing(request):
         'auction_count': agg['auction_count'],
         'kb_count': agg['kb_count'],
         'count_kbchachacha': agg['kb_count'],
+        'market_stats': market_stats,
         'next_auction_date': next_auction,
         'next_auction_day_ar': next_auction_day_ar,
         'next_auction_day_en': next_auction_day_en,
