@@ -154,6 +154,7 @@ def _tenant_catalog_sig(tenant):
     raw = _json.dumps([
         int(getattr(tenant, 'show_auctions', True)),
         int(getattr(tenant, 'show_encar', True)),
+        int(getattr(tenant, 'show_japan_market', False)),
         cf,
     ], sort_keys=True, ensure_ascii=False)
     return hashlib.md5(raw.encode('utf-8')).hexdigest()[:10]
