@@ -18,8 +18,27 @@ class Upload(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100,blank=True,null=True)
+    # A "market tab" is a category shown as its own tab in the car list (like the
+    # Japanese market). Regular imported cars have NO category and are the main
+    # "Cars" tab; auctions are special-cased. Everything else is a dynamic market.
+    label_ar = models.CharField(max_length=100, blank=True, default='')
+    label_en = models.CharField(max_length=100, blank=True, default='')
+    is_market_tab = models.BooleanField(default=False, verbose_name="تبويب سوق مستقل")
+    tab_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['tab_order', 'name']
+
     def __str__(self):
-        return self.name
+        return self.name or ''
+
+    @property
+    def market_label_ar(self):
+        return self.label_ar or self.name or ''
+
+    @property
+    def market_label_en(self):
+        return self.label_en or self.label_ar or self.name or ''
 
 class Manufacturer(models.Model):
     name = models.CharField(max_length=100)

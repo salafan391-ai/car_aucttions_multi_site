@@ -51,6 +51,14 @@ class Tenant(TenantMixin):
         verbose_name="عرض السيارات اليابانية",
         help_text="عند التفعيل يظهر تبويب «سيارات يابانية» (سوق كارسنسر الياباني) في قوائم السيارات. معطّل افتراضياً.",
     )
+    # Dynamic market tabs: category names (cars.Category.name where is_market_tab)
+    # this tenant shows as tabs. Empty = none. New market categories are hidden
+    # until added here — managed on the Tenant admin.
+    enabled_markets = models.JSONField(
+        default=list, blank=True,
+        verbose_name="الأسواق المفعّلة",
+        help_text="أسماء فئات الأسواق التي تظهر كتبويبات لهذا الموقع (مثل japan_market). فارغ = لا شيء.",
+    )
     show_site_cars = models.BooleanField(
         default=True,
         verbose_name="عرض ‘سياراتنا‘ والسماح بإضافتها",
