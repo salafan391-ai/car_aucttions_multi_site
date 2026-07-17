@@ -393,9 +393,7 @@
 
       {% for m in market_stats %}{% if m.count %}<a href="{% url 'car_list' %}?car_type={{ m.name }}" class="btn btn-auction" style="background:#e11d48;box-shadow:0 4px 20px rgba(225,29,72,.4),0 1px 4px rgba(0,0,0,.3);">
         <svg class="btn-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M3 17h10M9.5 5.5l9 9-2.5 2.5-9-9 2.5-2.5zm-2 2L5 10l-2 5 2 1.5"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M14 3l2.5 2.5M16.5 5.5L19 8"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a13 13 0 000 18 13 13 0 000-18z"/>
         </svg>
         <div class="btn-label">
           <span class="btn-label-main" data-ar="{{ m.label_ar }}" data-en="{{ m.label_en }}">{{ m.label_ar }}</span>

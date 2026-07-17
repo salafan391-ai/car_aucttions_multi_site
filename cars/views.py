@@ -525,16 +525,25 @@ def home(request):
             category__name='auction', auction_date__lt=now
         ), getattr(connection, 'tenant', None))
 
-        _agg = _base_filter.aggregate(
+        _home_markets = _tenant_enabled_markets(getattr(connection, 'tenant', None))
+        _agg_kw = dict(
             total=_Count('id'),
             auction_count=_Count('id', filter=Q(category__name='auction')),
             kb_count=_Count('id', filter=Q(category__name='kbchachacha')),
             cars_count=_Count('id', filter=Q(category__isnull=True)),
         )
+        for _i, _m in enumerate(_home_markets):
+            _agg_kw['market_%d' % _i] = _Count('id', filter=Q(category__name=_m['name']))
+        _agg = _base_filter.aggregate(**_agg_kw)
         _total         = _agg['total']
         _auction_count = _agg['auction_count']
         _kb_count      = _agg['kb_count']
         _cars_count    = _agg['cars_count']
+        market_stats = [
+            {'name': _m['name'], 'label_ar': _m['label_ar'], 'label_en': _m['label_en'],
+             'count': _agg.get('market_%d' % _i, 0)}
+            for _i, _m in enumerate(_home_markets)
+        ]
 
         # Encar-only base for the home facets (manufacturers/bodies/years) so
         # market cars never leak into the homepage numbers.
@@ -700,6 +709,7 @@ def home(request):
             'cars_count': agg['cars_count'],
             'kb_count': agg['kb_count'],
             'count_kbchachacha': agg['kb_count'],
+            'market_stats': market_stats,
             'total_manufacturers': agg['total_manufacturers'],
             'total_models': agg['total_models'],
             'posts_count': posts_count,
