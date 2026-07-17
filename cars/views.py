@@ -310,7 +310,7 @@ def landing(request):
     agg = _apply_tenant_catalog(ApiCar.objects.exclude(
         category__name='auction', auction_date__lt=now
     ), _lt).aggregate(
-        cars_count=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha', 'japan_market'])),
+        cars_count=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
         auction_count=Count('id', filter=Q(category__name='auction')),
         kb_count=Count('id', filter=Q(category__name='kbchachacha')),
     )
@@ -415,14 +415,12 @@ def home(request):
         ).exclude(category__name='auction', auction_date__lt=now)
         # Respect the tenant's visibility toggles + catalog filter.
         _base_qs = _apply_tenant_catalog(_base_qs, getattr(connection, 'tenant', None))
-        # Japanese-market cars live only in their own tab — never on the home page.
-        _base_qs = _base_qs.exclude(category__name='japan_market')
 
         # Latest cars (non-auction) – limited early. Ordered by manufacturer
         # appeal (premium → luxury → mainstream → other), then newest first.
         latest_cars = list(
             _order_by_appeal(
-                _base_qs.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']),
+                _base_qs.exclude(category__name__in=['auction', 'kbchachacha']),
                 '-created_at',
             )
             .only(
@@ -456,7 +454,7 @@ def home(request):
         from django.db.models import Count as _Count
         _base_filter = _apply_tenant_catalog(ApiCar.objects.exclude(
             category__name='auction', auction_date__lt=now
-        ), getattr(connection, 'tenant', None)).exclude(category__name='japan_market')
+        ), getattr(connection, 'tenant', None))
 
         _agg = _base_filter.aggregate(
             total=_Count('id'),
@@ -491,7 +489,7 @@ def home(request):
             Manufacturer.objects.filter(id__in=_mfr_ids_set)
             .annotate(
                 car_count=Count('apicar'),
-                cars_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market'])),
+                cars_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha'])),
                 auction_count=Count('apicar', filter=Q(apicar__category__name='auction') & ~Q(apicar__auction_date__lt=now)),
             )
             .order_by('-car_count')[:20]
@@ -1987,8 +1985,8 @@ def car_list(request):
         tab_counts = _tab_base.aggregate(
             count_all=Count('id', filter=~Q(category__name='kbchachacha')),
             count_auction=Count('id', filter=Q(category__name='auction')),
-            count_cars=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha', 'japan_market'])),
-            count_truck=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha', 'japan_market']) & Q(body__name='truck')),
+            count_cars=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha'])),
+            count_truck=Count('id', filter=~Q(category__name__in=['auction', 'kbchachacha']) & Q(body__name='truck')),
             count_kbchachacha=Count('id', filter=Q(category__name='kbchachacha')),
         )
         cache.set(_tab_count_key, tab_counts, 60 * 5)
@@ -2072,7 +2070,7 @@ def car_list(request):
             _hero_imgs(_auc.filter(manufacturer__name__icontains='genesis', year__gte=2020).order_by('-created_at'))
             or _hero_imgs(_auc.order_by('-created_at'))
         )
-        _enc = ApiCar.objects.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
+        _enc = ApiCar.objects.exclude(category__name__in=['auction', 'kbchachacha'])
         encar_imgs = (
             _hero_imgs(_enc.filter(is_luxury=True).order_by('-created_at'))
             or _hero_imgs(_enc.order_by('-created_at'))
@@ -2326,20 +2324,20 @@ def api_models_by_manufacturer(request):
         elif car_type == 'cars':
             model_ids = list(
                 ApiCar.objects.filter(manufacturer_id=manufacturer_id)
-                .exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
+                .exclude(category__name__in=['auction', 'kbchachacha'])
                 .exclude(body__name='truck')
                 .values_list('model_id', flat=True).distinct()
             )
             qs = CarModel.objects.filter(id__in=model_ids)
-            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & ~Q(apicar__body__name='truck')))
+            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha']) & ~Q(apicar__body__name='truck')))
         elif car_type == 'truck':
             model_ids = list(
                 ApiCar.objects.filter(manufacturer_id=manufacturer_id, body__name='truck')
-                .exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
+                .exclude(category__name__in=['auction', 'kbchachacha'])
                 .values_list('model_id', flat=True).distinct()
             )
             qs = CarModel.objects.filter(id__in=model_ids)
-            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & Q(apicar__body__name='truck')))
+            qs = qs.annotate(car_count=Count('apicar', filter=~Q(apicar__category__name__in=['auction', 'kbchachacha']) & Q(apicar__body__name='truck')))
         else:
             model_ids = list(
                 ApiCar.objects.filter(manufacturer_id=manufacturer_id)
@@ -2410,12 +2408,12 @@ def api_badges_by_model(request):
         badge_ids = ApiCar.objects.filter(model_id=model_id).exclude(
             category__name__in=['auction', 'kbchachacha']
         ).exclude(body__name='truck').values_list('badge_id', flat=True).distinct()
-        _badge_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & ~Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
+        _badge_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha']) & ~Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
     elif car_type == 'truck':
         badge_ids = ApiCar.objects.filter(
             model_id=model_id, body__name='truck'
-        ).exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']).values_list('badge_id', flat=True).distinct()
-        _badge_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha', 'japan_market']) & Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
+        ).exclude(category__name__in=['auction', 'kbchachacha']).values_list('badge_id', flat=True).distinct()
+        _badge_count_filter = ~Q(apicar__category__name__in=['auction', 'kbchachacha']) & Q(apicar__body__name='truck') & Q(apicar__model_id=model_id)
     else:
         badge_ids = ApiCar.objects.filter(model_id=model_id).exclude(
             category__name='kbchachacha'
@@ -2448,9 +2446,9 @@ def _car_type_base(car_type, now, **filters):
     if car_type == 'kbchachacha':
         return qs.filter(category__name='kbchachacha')
     if car_type == 'cars':
-        return qs.exclude(category__name__in=['auction', 'kbchachacha', 'japan_market']).exclude(body__name='truck')
+        return qs.exclude(category__name__in=['auction', 'kbchachacha']).exclude(body__name='truck')
     if car_type == 'truck':
-        return qs.filter(body__name='truck').exclude(category__name__in=['auction', 'kbchachacha', 'japan_market'])
+        return qs.filter(body__name='truck').exclude(category__name__in=['auction', 'kbchachacha'])
     return qs.exclude(category__name='kbchachacha').exclude(category__name='auction', auction_date__lt=now)
 
 
