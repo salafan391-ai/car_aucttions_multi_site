@@ -192,7 +192,7 @@ class DomainAdmin(admin.ModelAdmin):
         if ip == vps:
             return format_html('<b style="color:#0a8a0a">✓ VPS</b> {}', ip)
         if not ip:
-            return format_html('<span style="color:#999">—</span>')
+            return format_html('<span style="color:#999">{}</span>', '—')
         return format_html('<span style="color:#c60">{}</span>', ip)
 
     @admin.action(description="Activate on VPS (point Cloudflare DNS here)")
