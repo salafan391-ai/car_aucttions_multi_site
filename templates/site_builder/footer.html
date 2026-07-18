@@ -157,6 +157,7 @@
             {% endif %}
         </div>
         <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
+            {% if cr_number or cr_barcode %}<div style="margin-bottom:16px;">{% include "partials/_commercial_registration.html" %}</div>{% endif %}
             &copy; {% now "Y" %} {{ site_name|default:"سيارات" }}. <span class="bilingual" data-lang-ar="جميع الحقوق محفوظة." data-lang-ru="Все права защищены." data-lang-es="Reservados todos los derechos." data-lang-en="All rights reserved.">جميع الحقوق محفوظة.</span>
         </div>
     </div>
