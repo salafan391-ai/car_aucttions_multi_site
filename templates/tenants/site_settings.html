@@ -7,6 +7,17 @@
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-6xl mx-auto">
         <h1 class="text-3xl font-bold mb-6 text-gray-900">إعدادات الموقع</h1>
+        <!-- Settings tabs: filter the cards below by group -->
+        <div id="settings-tabs" class="sticky top-0 z-20 -mx-1 mb-6 bg-gray-50/95 backdrop-blur border-b border-gray-200 py-3 px-1">
+            <div class="flex flex-wrap gap-2">
+                <button type="button" data-stab="general"  class="stab px-4 py-2 rounded-lg text-sm font-bold border-2 transition">عام</button>
+                <button type="button" data-stab="brand"    class="stab px-4 py-2 rounded-lg text-sm font-bold border-2 transition">العلامة التجارية</button>
+                <button type="button" data-stab="contact"  class="stab px-4 py-2 rounded-lg text-sm font-bold border-2 transition">التواصل</button>
+                <button type="button" data-stab="cars"     class="stab px-4 py-2 rounded-lg text-sm font-bold border-2 transition">السيارات والأسعار</button>
+                <button type="button" data-stab="advanced" class="stab px-4 py-2 rounded-lg text-sm font-bold border-2 transition">متقدم</button>
+            </div>
+        </div>
+
         
         {% if messages %}
             {% for message in messages %}
@@ -17,7 +28,7 @@
         {% endif %}
 
         <!-- Dashboard password (enables direct login, not only via the launcher) -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div data-sgroup="advanced" class="bg-white rounded-lg shadow p-6 mb-6">
             <h2 class="text-xl font-bold mb-1 text-gray-900">كلمة مرور لوحة التحكم</h2>
             <p class="text-sm text-gray-500 mb-4">عيّن كلمة مرور لتتمكن من الدخول مباشرةً من صفحة الدخول باسم المستخدم <span class="font-mono font-bold" dir="ltr">{{ user.username }}</span> (بدون الحاجة للدخول عبر منصة الإكسبورت في كل مرة).</p>
             <form method="post" action="{% url 'set_dashboard_password' %}" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
@@ -40,7 +51,7 @@
             {% csrf_token %}
 
             <!-- Basic Info Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="general" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">المعلومات الأساسية</h2>
                 <div class="grid grid-cols-1 gap-4">
                     <div>
@@ -52,7 +63,7 @@
             </div>
             
             <!-- Site theme -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="general" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">ثيم الموقع</h2>
                 <p class="text-xs text-gray-500 mb-4">اختر شكل موقعك — يغيّر التصميم بالكامل. يُطبَّق فوراً بعد الحفظ.</p>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -70,7 +81,7 @@
             </div>
 
             <!-- Landing page -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="general" class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center justify-between mb-1 gap-3 flex-wrap">
                     <h2 class="text-xl font-bold text-gray-900">صفحة الدخول (Landing)</h2>
                     <label class="inline-flex items-center gap-2 cursor-pointer">
@@ -91,7 +102,7 @@
             </div>
 
             <!-- Section labels -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="general" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">تسميات الأقسام</h2>
                 <p class="text-xs text-gray-500 mb-4">غيّر أسماء أقسام السيارات كما تظهر في القوائم والصفحة الرئيسية. اتركها فارغة للاسم الافتراضي. الاسم يظهر بجميع اللغات.</p>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -111,7 +122,7 @@
             </div>
 
             <!-- Pricing markup -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="cars" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">نسبة الزيادة على السعر</h2>
                 <p class="text-xs text-gray-500 mb-4">نسبة تُضاف تلقائياً إلى كل الأسعار المعروضة على موقعك (فوق هامش 1% الأساسي). اتركها 0 لعرض السعر كما هو.</p>
                 <div class="flex items-center gap-2" style="max-width:12rem">
@@ -121,7 +132,7 @@
             </div>
 
             <!-- Auction end time -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="cars" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">وقت انتهاء المزاد</h2>
                 <p class="text-xs text-gray-500 mb-4">الوقت الذي يظهر كموعد انتهاء المزاد على موقعك. يبقى <b>تاريخ</b> المزاد كما هو، ويتغيّر <b>الوقت</b> فقط. اتركه فارغاً لعرض الوقت الأصلي.</p>
                 <div class="flex items-center gap-3 flex-wrap">
@@ -148,7 +159,7 @@
             </script>
 
             <!-- Custom currencies -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="cars" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">عملات إضافية</h2>
                 <p class="text-xs text-gray-500 mb-4">أضف عملات عرض إضافية لمحوّل العملات (مثل KWD أو QAR). سعر الصرف = قيمة العملة مقابل <b>1 وون كوري</b> (مثال: الريال ≈ 0.0025). تظهر فوراً في قائمة العملات على موقعك.</p>
                 <div id="cc-rows" class="space-y-2 mb-3"></div>
@@ -179,7 +190,7 @@
             </div>
 
             <!-- Branding Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="brand" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">العلامة التجارية</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Logo -->
@@ -374,7 +385,7 @@
             </div>
 
             <!-- Contact Info Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="contact" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">معلومات التواصل</h2>
                 
                 <!-- Multiple Phone Numbers Section -->
@@ -480,7 +491,7 @@
             </div>
             
             <!-- Location Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="contact" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">الموقع وساعات العمل</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -522,7 +533,7 @@
             </div>
             
             <!-- About Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="contact" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">عن الشركة</h2>
                 <div class="space-y-4">
                     <div>
@@ -571,7 +582,7 @@
             </div>
             
             <!-- Salespeople Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="contact" class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center justify-between mb-1">
                     <h2 class="text-xl font-bold text-gray-900">مندوبو المبيعات</h2>
                     <button type="button" onclick="addSalesperson()" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition">+ إضافة مندوب</button>
@@ -589,7 +600,7 @@
                                 <input type="file" name="salesperson_photo_id{{ sp.id }}" accept="image/*" class="text-xs w-28">
                             </div>
                             <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="salesperson_name[]" value="{{ sp.name }}" placeholder="الاسم" required
+                                <input type="text" name="salesperson_name[]" value="{{ sp.name }}" placeholder="الاسم"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <input type="text" name="salesperson_role[]" value="{{ sp.role }}" placeholder="المسمّى (مثل: مبيعات)"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -606,7 +617,7 @@
             </div>
             
             <!-- Social Media Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="contact" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">وسائل التواصل الاجتماعي</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -663,7 +674,7 @@
             </div>
 
             <!-- Commercial Registration Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="contact" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">السجل التجاري</h2>
                 <p class="text-sm text-gray-500 mb-4">يظهر في تذييل الموقع كدليل موثوقية (الرقم وصورة الباركود/QR).</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -689,7 +700,7 @@
             </div>
 
             <!-- Footer Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="general" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">تذييل الموقع</h2>
                 <div class="space-y-4">
                     <div>
@@ -706,7 +717,7 @@
             </div>
             
             <!-- Email Settings Section -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="advanced" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4 text-gray-900">إعدادات البريد الإلكتروني</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -743,7 +754,7 @@
             </div>
 
             <!-- Currency Exchange Rates Section (read-only — managed centrally) -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="cars" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">أسعار صرف العملات</h2>
                 <p class="text-sm text-gray-500 mb-4">تُحدَّث هذه الأسعار مركزياً لجميع المواقع تلقائياً (سعر 1 وون كوري KRW بالعملة المختارة).</p>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -772,7 +783,7 @@
 
             <!-- Import cost calculator — fully dynamic: admins define the
                  destinations AND every cost line themselves (no fixed schema). -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="cars" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">حاسبة تكلفة الاستيراد</h2>
                 <p class="text-sm text-gray-500 mb-4">ابنِ الحاسبة بالكامل بنفسك: أضف الوجهات (الدول) وأنشئ بنود التكلفة لكل دولة بالاسم والنوع الذي تريده. تُعرض للمشتري في صفحة تفاصيل السيارة بعملة الدولة المختارة.</p>
 
@@ -897,7 +908,7 @@
             </div>
 
             <!-- Catalog filter (which shared auction/encar cars show on this site) -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="cars" class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">فلترة الكتالوج (السيارات المعروضة)</h2>
                 <p class="text-xs text-gray-500 mb-4">اختر ما يظهر على موقعك — لكل من «المزادات» و«Encar» بشكل مستقل. اترك الحقول فارغة لعرض كل السيارات. «الشركات» و«الموديلات» تعني «اعرض فقط المختار»، و«العيوب» تعني «أخفِ السيارات التي تحتوي عليها».</p>
 
@@ -980,7 +991,7 @@
             </script>
 
             <!-- Buyer contract (عقد وساطة) -->
-            <div class="bg-white rounded-lg shadow p-6">
+            <div data-sgroup="advanced" class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold text-gray-900">عقد المشتري (عقد وساطة)</h2>
                     <label class="inline-flex items-center gap-2 cursor-pointer">
@@ -1160,5 +1171,47 @@ function addSalesperson() {
 function removeSalesperson(button) {
     button.closest('.salesperson-row').remove();
 }
+</script>
+
+<script>
+// Settings tabs — cards are tagged with data-sgroup; show only the active group.
+(function () {
+    var KEY = 'siteSettingsTab';
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.stab'));
+    var cards = Array.prototype.slice.call(document.querySelectorAll('[data-sgroup]'));
+    if (!tabs.length || !cards.length) return;
+
+    var ON  = 'bg-blue-600 text-white border-blue-600 shadow-sm';
+    var OFF = 'bg-white text-gray-600 border-gray-200 hover:border-blue-400 hover:text-blue-600';
+
+    function show(group) {
+        cards.forEach(function (c) {
+            c.style.display = (c.getAttribute('data-sgroup') === group) ? '' : 'none';
+        });
+        tabs.forEach(function (t) {
+            var on = t.getAttribute('data-stab') === group;
+            t.className = 'stab px-4 py-2 rounded-lg text-sm font-bold border-2 transition ' + (on ? ON : OFF);
+        });
+        try { localStorage.setItem(KEY, group); } catch (e) {}
+    }
+
+    tabs.forEach(function (t) {
+        t.addEventListener('click', function () { show(t.getAttribute('data-stab')); });
+    });
+
+    var start = 'general';
+    try { start = localStorage.getItem(KEY) || 'general'; } catch (e) {}
+    if (!tabs.some(function (t) { return t.getAttribute('data-stab') === start; })) start = 'general';
+    show(start);
+
+    // If a field fails validation inside a hidden tab, reveal its tab first.
+    var form = document.querySelector('form[enctype]');
+    if (form) {
+        form.addEventListener('invalid', function (e) {
+            var card = e.target.closest('[data-sgroup]');
+            if (card && card.style.display === 'none') show(card.getAttribute('data-sgroup'));
+        }, true);
+    }
+})();
 </script>
 {% endblock %}
