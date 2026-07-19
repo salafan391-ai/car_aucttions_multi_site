@@ -1765,15 +1765,24 @@ def save_public_car(request, api_car_id):
         messages.info(request, 'هذه السيارة محفوظة لديك بالفعل.')
         return redirect('site_car_detail', pk=existing.pk)
 
-    first_image = ''
-    if isinstance(api_car.images, list) and api_car.images:
-        first = api_car.images[0]
-        if isinstance(first, str):
-            first_image = first
-        elif isinstance(first, dict):
-            first_image = first.get('url') or first.get('image') or ''
-    if not first_image and api_car.image:
-        first_image = api_car.image
+    def _img_url(item):
+        if isinstance(item, str):
+            return item.strip()
+        if isinstance(item, dict):
+            return (item.get('url') or item.get('image') or '').strip()
+        return ''
+
+    # ApiCar.images holds the car's whole photo set (20-80 shots) — carry all of
+    # them over, not just the cover.
+    image_urls = []
+    if isinstance(api_car.images, list):
+        for item in api_car.images:
+            url = _img_url(item)
+            if url and len(url) <= 500 and url not in image_urls:
+                image_urls.append(url)
+    if not image_urls and api_car.image:
+        image_urls = [api_car.image]
+    first_image = image_urls[0] if image_urls else ''
 
     site_car = SiteCar.objects.create(
         title=api_car.title or f"{api_car.manufacturer.name} {api_car.model.name} {api_car.year}",
@@ -1796,6 +1805,11 @@ def save_public_car(request, api_car_id):
         vin=(api_car.vin or '').strip() or None,
         plate_number=(api_car.plate_number or '').strip() or None,
     )
+    if image_urls:
+        SiteCarImage.objects.bulk_create(
+            [SiteCarImage(car=site_car, image_url=u, order=i) for i, u in enumerate(image_urls)],
+            batch_size=100,
+        )
     messages.success(request, 'تم حفظ السيارة في سياراتك.')
     return redirect('site_car_detail', pk=site_car.pk)
 
