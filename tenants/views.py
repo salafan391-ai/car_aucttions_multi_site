@@ -578,8 +578,24 @@ def site_settings(request):
         _sel('auction', 'المزادات', True),
         _sel('encar', 'Encar (السيارات العادية)', False),
     ]
+    # The time upcoming auctions actually end at, shown as the reference the
+    # admin is overriding (most common first).
+    _auction_times = []
+    try:
+        from collections import Counter
+        from cars.models import ApiCar
+        from django.utils import timezone as _tz
+        _rows = (ApiCar.objects
+                 .filter(category__name='auction', auction_date__gte=_tz.now())
+                 .values_list('auction_date', flat=True)[:2000])
+        _counts = Counter(_tz.localtime(d).strftime('%H:%M') for d in _rows if d)
+        _auction_times = [t for t, _ in _counts.most_common(3)]
+    except Exception:
+        _auction_times = []
+
     context = {
         'tenant': tenant,
+        'auction_current_times': _auction_times,
         'phone_numbers': tenant.phone_numbers.all(),
         'phone_types': TenantPhoneNumber.PHONE_TYPES,
         'sales_people_admin': tenant.sales_people.all().order_by('order', 'id'),

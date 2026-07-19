@@ -128,33 +128,22 @@
                     <input type="time" name="auction_end_time" id="auction-end-time"
                         value="{% if tenant.auction_end_time %}{{ tenant.auction_end_time|time:'H:i' }}{% endif %}"
                         class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="max-width:10rem">
-                    <span id="auction-now" class="hidden text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                        الوقت الآن: <b id="auction-now-val" class="font-mono text-gray-700"></b>
+                    {% if auction_current_times %}
+                    <span id="auction-now" class="hidden text-xs text-gray-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        وقت المزادات الحالي:
+                        <b class="font-mono text-gray-800">{% for t in auction_current_times %}{{ t }}{% if not forloop.last %} / {% endif %}{% endfor %}</b>
                     </span>
+                    {% endif %}
                 </div>
             </div>
             <script>
             (function () {
                 var input = document.getElementById('auction-end-time');
                 var box = document.getElementById('auction-now');
-                var val = document.getElementById('auction-now-val');
-                if (!input || !box || !val) return;
-                var timer = null;
-                function tick() {
-                    var d = new Date();
-                    val.textContent = String(d.getHours()).padStart(2, '0') + ':' +
-                                      String(d.getMinutes()).padStart(2, '0') + ':' +
-                                      String(d.getSeconds()).padStart(2, '0');
-                }
-                // Only while adjusting: show the clock on focus, hide when done.
-                input.addEventListener('focus', function () {
-                    tick(); box.classList.remove('hidden');
-                    if (!timer) timer = setInterval(tick, 1000);
-                });
-                input.addEventListener('blur', function () {
-                    box.classList.add('hidden');
-                    if (timer) { clearInterval(timer); timer = null; }
-                });
+                if (!input || !box) return;
+                // Show the auctions' real end time only while adjusting.
+                input.addEventListener('focus', function () { box.classList.remove('hidden'); });
+                input.addEventListener('blur', function () { box.classList.add('hidden'); });
             })();
             </script>
 
