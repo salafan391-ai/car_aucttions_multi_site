@@ -310,6 +310,18 @@ def site_settings(request):
                 pass
         _markup_changed = tenant.price_markup_pct != _markup_before
 
+        # ── How long auction cars stay visible after their auction date ──
+        _grace_before = tenant.auction_grace_hours
+        _gh = (request.POST.get('auction_grace_hours', '') or '').strip()
+        if _gh != '':
+            try:
+                v = int(_gh)
+                if -168 <= v <= 720:
+                    tenant.auction_grace_hours = v
+            except (TypeError, ValueError):
+                pass
+        _grace_changed = tenant.auction_grace_hours != _grace_before
+
         # ── Custom section labels (Encar / Auctions / Our cars) ──
         _labels_before = (tenant.label_encar, tenant.label_auctions, tenant.label_sitecars)
         tenant.label_encar = (request.POST.get('label_encar', '') or '').strip()[:40]
@@ -352,7 +364,8 @@ def site_settings(request):
         # values recompute automatically. Reverting to a *previously used* value
         # would hit its old cached page until TTL — so on any change, drop this
         # tenant's cached car pages (keys are namespaced by its schema name).
-        if _catalog_changed or _theme_changed or _landing_changed or _markup_changed or _labels_changed:
+        if (_catalog_changed or _theme_changed or _landing_changed
+                or _markup_changed or _labels_changed or _grace_changed):
             try:
                 from django.core.cache import cache as _cache
                 if hasattr(_cache, 'delete_pattern'):

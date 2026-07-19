@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import hashlib
 import json
 import logging
@@ -134,10 +134,25 @@ def _get_current_tenant():
     return getattr(connection, 'tenant', None)
 
 
-def _exclude_expired_auctions(qs):
-    """Exclude auction cars whose auction_date has passed."""
-    now = timezone.now()
-    return qs.exclude(category__name='auction', auction_date__lt=now)
+def _auction_cutoff(tenant=None):
+    """The moment an auction car stops showing on THIS site.
+
+    Auction rows are shared by every tenant, so the cutoff is per-tenant:
+    Tenant.auction_grace_hours shifts it (positive keeps cars visible longer
+    after the auction date, negative hides them earlier).
+    """
+    if tenant is None:
+        tenant = getattr(connection, 'tenant', None)
+    try:
+        hours = int(getattr(tenant, 'auction_grace_hours', 0) or 0)
+    except (TypeError, ValueError):
+        hours = 0
+    return timezone.now() - timedelta(hours=hours)
+
+
+def _exclude_expired_auctions(qs, tenant=None):
+    """Exclude auction cars whose auction_date has passed this site's cutoff."""
+    return qs.exclude(category__name='auction', auction_date__lt=_auction_cutoff(tenant))
 
 
 _CATALOG_DMG_TYPES = ('replaced', 'painted')
@@ -213,6 +228,7 @@ def _tenant_catalog_sig(tenant):
         int(getattr(tenant, 'show_auctions', True)),
         int(getattr(tenant, 'show_encar', True)),
         sorted(getattr(tenant, 'enabled_markets', None) or []),
+        int(getattr(tenant, 'auction_grace_hours', 0) or 0),
         cf,
     ], sort_keys=True, ensure_ascii=False)
     return hashlib.md5(raw.encode('utf-8')).hexdigest()[:10]
@@ -2849,7 +2865,7 @@ def car_detail(request, slug):
     # stays reachable from the /expired-auctions archive (links carry
     # ?archived=1) and always for staff.
     if (getattr(car.category, 'name', '') == 'auction' and car.auction_date
-            and car.auction_date < timezone.now()
+            and car.auction_date < _auction_cutoff()
             and request.GET.get('archived') != '1' and not request.user.is_staff):
         raise Http404("auction ended")
 

@@ -120,6 +120,16 @@
                 </div>
             </div>
 
+            <!-- Auction visibility window -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold mb-1 text-gray-900">مدة بقاء سيارات المزاد</h2>
+                <p class="text-xs text-gray-500 mb-4">عدد الساعات التي تبقى فيها سيارة المزاد ظاهرة على موقعك بعد موعد المزاد. <b>0</b> = تختفي فور انتهاء الموعد، <b>24</b> = تبقى يوماً إضافياً، وبالسالب (مثل <b>-6</b>) تختفي قبل الموعد بست ساعات. يؤثر على موقعك فقط.</p>
+                <div class="flex items-center gap-2" style="max-width:12rem">
+                    <input type="number" step="1" min="-168" max="720" name="auction_grace_hours" value="{{ tenant.auction_grace_hours }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <span class="text-sm font-bold text-gray-500">ساعة</span>
+                </div>
+            </div>
+
             <!-- Custom currencies -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-1 text-gray-900">عملات إضافية</h2>
