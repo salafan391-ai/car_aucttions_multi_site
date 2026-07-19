@@ -58,7 +58,7 @@
     "auction": {
         "@type": "Event",
         "name": "مزاد سيارة",
-        "startDate": "{{ car.auction_date|date:'c' }}",
+        "startDate": "{{ car.site_auction_end|date:'c' }}",
         "location": {
             "@type": "Place",
             "name": "السعودية"
@@ -890,7 +890,7 @@
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         <span class="text-sm font-medium bilingual" data-lang-ar="موعد المزاد" data-lang-ru="Дата аукциона" data-lang-es="Fecha de la subasta" data-lang-en="Auction Date">موعد المزاد</span>
                     </div>
-                    <span class="auction-countdown text-sm" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d H:i" }}</span>
+                    <span class="auction-countdown text-sm" data-auction-date="{{ car.site_auction_end|date:'c' }}">{{ car.site_auction_end|date:"Y/m/d H:i" }}</span>
                 </div>
                 {% endif %}
 

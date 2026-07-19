@@ -624,7 +624,7 @@
                 {% if car.category.name == 'auction' and car.auction_date %}
                 <div class="gl-detail-auction-cd">
                     <div class="gl-detail-auction-cd-lbl bilingual" data-lang-ar="ينتهي المزاد خلال" data-lang-en="Auction ends in" data-lang-es="La subasta termina en" data-lang-ru="Аукцион заканчивается через">ينتهي المزاد خلال</div>
-                    <span class="auction-countdown cd-lg" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y-m-d H:i" }}</span>
+                    <span class="auction-countdown cd-lg" data-auction-date="{{ car.site_auction_end|date:'c' }}">{{ car.site_auction_end|date:"Y-m-d H:i" }}</span>
                 </div>
                 {% endif %}
 
@@ -1146,7 +1146,7 @@
                         <span class="gl-detail-spec-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/><path d="M12 13v3l2 1"/></svg></span>
                         <div class="label bilingual" data-lang-ar="موعد المزاد" data-lang-en="Auction Date" data-lang-es="Fecha de subasta" data-lang-ru="Дата аукциона">موعد المزاد</div>
                     </div>
-                    <div class="value"><span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y-m-d H:i" }}</span></div>
+                    <div class="value"><span class="auction-countdown" data-auction-date="{{ car.site_auction_end|date:'c' }}">{{ car.site_auction_end|date:"Y-m-d H:i" }}</span></div>
                 </div>
                 {% endif %}
             </div>

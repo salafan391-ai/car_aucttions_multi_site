@@ -52,16 +52,14 @@ class Tenant(TenantMixin):
         verbose_name="عرض السيارات اليابانية",
         help_text="عند التفعيل يظهر تبويب «سيارات يابانية» (سوق كارسنسر الياباني) في قوائم السيارات. معطّل افتراضياً.",
     )
-    # Shifts the moment an auction car disappears from THIS site only (the cars
-    # themselves are shared across all sites, so the cutoff is per-tenant).
-    auction_grace_hours = models.IntegerField(
-        default=0,
-        validators=[MinValueValidator(-168), MaxValueValidator(720)],
-        verbose_name="مهلة إخفاء سيارات المزاد (ساعات)",
+    # Auction rows are shared by every site, so the displayed end time is
+    # overridden per tenant: same auction date, this time of day.
+    auction_end_time = models.TimeField(
+        null=True, blank=True,
+        verbose_name="وقت انتهاء المزاد",
         help_text=(
-            "عدد الساعات التي تبقى فيها سيارة المزاد ظاهرة بعد موعد المزاد. "
-            "0 = تختفي فور انتهاء الموعد، 24 = تبقى يوماً إضافياً، "
-            "وبالسالب تختفي قبل الموعد. يؤثر على هذا الموقع فقط."
+            "الوقت الذي يظهر كموعد انتهاء المزاد على موقعك (نفس تاريخ المزاد، "
+            "بهذا الوقت). اتركه فارغاً لعرض الوقت الأصلي كما هو."
         ),
     )
     # Dynamic market tabs: category names (cars.Category.name where is_market_tab)

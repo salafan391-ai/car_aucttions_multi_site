@@ -120,15 +120,43 @@
                 </div>
             </div>
 
-            <!-- Auction visibility window -->
+            <!-- Auction end time -->
             <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold mb-1 text-gray-900">مدة بقاء سيارات المزاد</h2>
-                <p class="text-xs text-gray-500 mb-4">عدد الساعات التي تبقى فيها سيارة المزاد ظاهرة على موقعك بعد موعد المزاد. <b>0</b> = تختفي فور انتهاء الموعد، <b>24</b> = تبقى يوماً إضافياً، وبالسالب (مثل <b>-6</b>) تختفي قبل الموعد بست ساعات. يؤثر على موقعك فقط.</p>
-                <div class="flex items-center gap-2" style="max-width:12rem">
-                    <input type="number" step="1" min="-168" max="720" name="auction_grace_hours" value="{{ tenant.auction_grace_hours }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    <span class="text-sm font-bold text-gray-500">ساعة</span>
+                <h2 class="text-xl font-bold mb-1 text-gray-900">وقت انتهاء المزاد</h2>
+                <p class="text-xs text-gray-500 mb-4">الوقت الذي يظهر كموعد انتهاء المزاد على موقعك. يبقى <b>تاريخ</b> المزاد كما هو، ويتغيّر <b>الوقت</b> فقط. اتركه فارغاً لعرض الوقت الأصلي.</p>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <input type="time" name="auction_end_time" id="auction-end-time"
+                        value="{% if tenant.auction_end_time %}{{ tenant.auction_end_time|time:'H:i' }}{% endif %}"
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" style="max-width:10rem">
+                    <span id="auction-now" class="hidden text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                        الوقت الآن: <b id="auction-now-val" class="font-mono text-gray-700"></b>
+                    </span>
                 </div>
             </div>
+            <script>
+            (function () {
+                var input = document.getElementById('auction-end-time');
+                var box = document.getElementById('auction-now');
+                var val = document.getElementById('auction-now-val');
+                if (!input || !box || !val) return;
+                var timer = null;
+                function tick() {
+                    var d = new Date();
+                    val.textContent = String(d.getHours()).padStart(2, '0') + ':' +
+                                      String(d.getMinutes()).padStart(2, '0') + ':' +
+                                      String(d.getSeconds()).padStart(2, '0');
+                }
+                // Only while adjusting: show the clock on focus, hide when done.
+                input.addEventListener('focus', function () {
+                    tick(); box.classList.remove('hidden');
+                    if (!timer) timer = setInterval(tick, 1000);
+                });
+                input.addEventListener('blur', function () {
+                    box.classList.add('hidden');
+                    if (timer) { clearInterval(timer); timer = null; }
+                });
+            })();
+            </script>
 
             <!-- Custom currencies -->
             <div class="bg-white rounded-lg shadow p-6">

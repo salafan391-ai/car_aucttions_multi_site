@@ -176,7 +176,7 @@ class TenantAdmin(TenantAdminMixin, admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("schema_name", "name", "is_active", "eid_is_active")}),
         ("الأسواق (Markets)", {"fields": ("enabled_markets",), "description": "التبويبات المستقلة للأسواق (مثل السوق الياباني). تُدار الفئات نفسها من قسم Categories."}),
-        ("المزادات (Auctions)", {"fields": ("auction_grace_hours",), "description": "سيارات المزاد مشتركة بين كل المواقع — هذه المهلة تغيّر وقت اختفائها على هذا الموقع فقط."}),
+        ("المزادات (Auctions)", {"fields": ("auction_end_time",), "description": "سيارات المزاد مشتركة بين كل المواقع — هذا الوقت يغيّر وقت الانتهاء المعروض على هذا الموقع فقط (نفس التاريخ)."}),
         ("Branding", {"fields": ("logo", "favicon", "hero_image", "show_hero", "show_watermark", "show_encar", "show_auctions", "show_site_cars", "show_parts", "show_accessories", "landing_is_active", "landing_design", "template_theme", "dashboard_themes", "site_font", "theme", "primary_color", "secondary_color", "accent_color", "body_bg_color", "car_display")}),
         ("Announcement ticker", {"fields": ("ticker_enabled", "ticker_text", "ticker_color")}),
         ("How we work", {"fields": ("show_how_we_work", "how_we_work_title")}),

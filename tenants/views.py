@@ -310,17 +310,18 @@ def site_settings(request):
                 pass
         _markup_changed = tenant.price_markup_pct != _markup_before
 
-        # ── How long auction cars stay visible after their auction date ──
-        _grace_before = tenant.auction_grace_hours
-        _gh = (request.POST.get('auction_grace_hours', '') or '').strip()
-        if _gh != '':
-            try:
-                v = int(_gh)
-                if -168 <= v <= 720:
-                    tenant.auction_grace_hours = v
-            except (TypeError, ValueError):
-                pass
-        _grace_changed = tenant.auction_grace_hours != _grace_before
+        # ── Time of day shown as the auction end (same date, this time) ──
+        _grace_before = tenant.auction_end_time
+        if 'auction_end_time' in request.POST:
+            _at = (request.POST.get('auction_end_time') or '').strip()
+            if _at:
+                from django.utils.dateparse import parse_time
+                _parsed = parse_time(_at)
+                if _parsed is not None:
+                    tenant.auction_end_time = _parsed
+            else:
+                tenant.auction_end_time = None
+        _grace_changed = tenant.auction_end_time != _grace_before
 
         # ── Custom section labels (Encar / Auctions / Our cars) ──
         _labels_before = (tenant.label_encar, tenant.label_auctions, tenant.label_sitecars)

@@ -226,6 +226,23 @@ class ApiCar(models.Model):
         return base or f"car-{self.pk}"
 
     @property
+    def site_auction_end(self):
+        """Auction end as THIS site shows it: the original date, but with the
+        time replaced by the tenant's auction_end_time when one is set. The
+        auction row itself is shared, so the override is display-only."""
+        dt = self.auction_date
+        if not dt:
+            return dt
+        from django.db import connection
+        override = getattr(getattr(connection, 'tenant', None), 'auction_end_time', None)
+        if not override:
+            return dt
+        from django.utils import timezone
+        local = timezone.localtime(dt)
+        return local.replace(hour=override.hour, minute=override.minute,
+                             second=0, microsecond=0)
+
+    @property
     def autohub_options(self):
         if (self.auction_name or '').strip().lower() != 'autohub':
             return []

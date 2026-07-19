@@ -926,7 +926,7 @@ section button.bg-white.rounded-full { background:#0b0b14 !important; border:1px
                 {% if car.auction_date %}
                 <div class="flex items-center gap-1 mb-2">
                     <svg class="w-3 h-3 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="auction-countdown" data-auction-date="{{ car.auction_date|date:'c' }}">{{ car.auction_date|date:"Y/m/d H:i" }}</span>
+                    <span class="auction-countdown" data-auction-date="{{ car.site_auction_end|date:'c' }}">{{ car.site_auction_end|date:"Y/m/d H:i" }}</span>
                 </div>
                 {% endif %}
                 <div class="flex justify-between items-center">
