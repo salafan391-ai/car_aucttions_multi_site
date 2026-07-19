@@ -1188,6 +1188,25 @@ def _damaged_main_parts_subq():
         [_MARKER_NON_BODY_RE])
 
 
+# Equipment codes offered as sidebar filters, in display order. Labels come
+# from OPTION_TRANSLATIONS via the translate_option template filter, so they
+# stay bilingual automatically. Doubles as the allowlist for the GET param.
+FILTER_OPTION_CODES = [
+    '010', '014', '005', '058', '022', '034', '029', '057',
+    '032', '068', '059', '023', '063', '051', '021', '056',
+]
+_FILTER_OPTION_SET = set(FILTER_OPTION_CODES)
+_MAX_OPTION_FILTERS = 6
+
+
+def _apply_option_filters(qs, GET):
+    """AND-match the selected equipment codes against options->standard."""
+    codes = [c for c in GET.getlist('options') if c in _FILTER_OPTION_SET]
+    for code in codes[:_MAX_OPTION_FILTERS]:
+        qs = qs.filter(options__standard__contains=[code])
+    return qs
+
+
 def _apply_sidebar_filters(qs, GET, exclude=None):
     """Apply every sidebar filter to qs EXCEPT the one named `exclude`.
 
@@ -1253,6 +1272,8 @@ def _apply_sidebar_filters(qs, GET, exclude=None):
     if exclude != 'trim_detail':
         v = GET.getlist('trim_detail')
         if v: qs = qs.filter(trim_detail__in=v)
+    if exclude != 'options':
+        qs = _apply_option_filters(qs, GET)
     if exclude != 'marker_panel':
         v = [x for x in GET.getlist('marker_panel') if x in _MARKER_PANEL_SET]
         if v:
@@ -1632,6 +1653,9 @@ def car_list(request):
             qs = qs.filter(mileage__lte=int(mileage_max))
         except ValueError:
             pass
+
+    sel_options = [c for c in request.GET.getlist('options') if c in _FILTER_OPTION_SET]
+    qs = _apply_option_filters(qs, request.GET)
 
     # Per-tenant section toggles + catalog filter — drop categories/cars the
     # tenant hides. Applied BEFORE the tab-count aggregate so they report 0.
@@ -2275,6 +2299,8 @@ def car_list(request):
         'sel_badges':        sel_badges,
         'sel_fuels':         request.GET.getlist('fuel'),
         'sel_transmissions': request.GET.getlist('transmission'),
+        'filter_options':    FILTER_OPTION_CODES,
+        'sel_options':       sel_options,
         'sel_body_types':    request.GET.getlist('body_type'),
         'sel_colors':        request.GET.getlist('color'),
         'sel_statuses':      request.GET.getlist('status'),
