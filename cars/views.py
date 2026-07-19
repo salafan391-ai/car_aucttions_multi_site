@@ -1654,8 +1654,12 @@ def car_list(request):
         except ValueError:
             pass
 
-    sel_options = [c for c in request.GET.getlist('options') if c in _FILTER_OPTION_SET]
-    qs = _apply_option_filters(qs, request.GET)
+    # Only encar cars carry an options code list — auction/market rows have none,
+    # so the filter is offered (and applied) on the encar tabs only.
+    _options_tab = car_type in (None, '', 'cars', 'truck')
+    sel_options = [c for c in request.GET.getlist('options') if c in _FILTER_OPTION_SET] if _options_tab else []
+    if _options_tab:
+        qs = _apply_option_filters(qs, request.GET)
 
     # Per-tenant section toggles + catalog filter — drop categories/cars the
     # tenant hides. Applied BEFORE the tab-count aggregate so they report 0.
@@ -2299,7 +2303,7 @@ def car_list(request):
         'sel_badges':        sel_badges,
         'sel_fuels':         request.GET.getlist('fuel'),
         'sel_transmissions': request.GET.getlist('transmission'),
-        'filter_options':    FILTER_OPTION_CODES,
+        'filter_options':    FILTER_OPTION_CODES if _options_tab else [],
         'sel_options':       sel_options,
         'sel_body_types':    request.GET.getlist('body_type'),
         'sel_colors':        request.GET.getlist('color'),
