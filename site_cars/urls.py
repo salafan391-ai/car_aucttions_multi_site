@@ -22,6 +22,7 @@ urlpatterns = [
     path('live-auctions/api/<str:resource>/', views.auction_proxy, name='auction_proxy'),
     path('telegram/status/', views.telegram_status, name='telegram_status'),
     path('telegram/send/', views.telegram_send, name='telegram_send'),
+    path('share-cart/whatsapp-text/', views.cart_whatsapp_text, name='cart_whatsapp_text'),
     path('our-cars/', views.site_car_list, name='site_car_list'),
     path('our-cars/add/', views.site_car_add, name='site_car_add'),
     path('our-cars/<int:pk>/', views.site_car_detail, name='site_car_detail'),

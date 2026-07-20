@@ -2730,6 +2730,103 @@ def _site_car_title(car):
     return " ".join(p for p in parts if p).strip()
 
 
+
+def _share_cards(cars, opts):
+    """Resolve cart entries into the card pieces both Telegram and WhatsApp use.
+
+    Titles/specs/prices always come from the database — the browser-supplied
+    title is never used. Returns raw (unescaped) strings; each channel formats.
+    """
+    import re as _re
+    from cars.models import ApiCar
+    from cars.templatetags.custom_filters import sar_price, share_car_title
+    from .models import SharedCollection
+
+    fields = [f for f in (opts.get("fields") or [])
+              if f in {"year", "mileage", "fuel", "transmission", "color", "body", "engine"}]
+    cur = str(opts.get("currency") or "").strip().upper()[:6]
+
+    cars = [c for c in cars if (c.get("url") or "").strip()][:60]
+    slug_re = _re.compile(r"/cars/([^/?#]+)/?")
+    site_re = _re.compile(r"/our-cars/(\d+)/?")
+    coll_re = _re.compile(r"/c/([A-Za-z0-9_-]{4,20})/?")
+
+    by_slug = {
+        c.slug: c for c in ApiCar.objects.filter(
+            slug__in=[m.group(1) for m in (slug_re.search(c.get("url") or "") for c in cars) if m]
+        ).select_related("manufacturer", "model", "color", "body")
+    }
+    by_site = {str(c.id): c for c in SiteCar.objects.filter(
+        id__in=[m.group(1) for m in (site_re.search(c.get("url") or "") for c in cars) if m])}
+    by_token = {c.token: c for c in SharedCollection.objects.filter(
+        token__in=[m.group(1) for m in (coll_re.search(c.get("url") or "") for c in cars) if m])}
+
+    out = []
+    for c in cars:
+        url = (c.get("url") or "").strip()
+        m = slug_re.search(url)
+        car = by_slug.get(m.group(1)) if m else None
+        site_car = None
+        if car is None:
+            ms = site_re.search(url)
+            site_car = by_site.get(ms.group(1)) if ms else None
+
+        if car is not None:
+            title = share_car_title(car)
+        elif site_car is not None:
+            title = _site_car_title(site_car)
+        else:
+            mc = coll_re.search(url)
+            coll = by_token.get(mc.group(1)) if mc else None
+            title = coll.title if (coll and coll.title) else ""
+
+        krw = c.get("priceKrw")
+        if krw and cur:
+            amount, symbol = _convert_krw(krw, cur)
+            price = f"{amount:,} {symbol}" if amount else ""
+        elif krw:
+            price = f"{sar_price(krw):,} \u0631\u064a\u0627\u0644"
+        else:
+            price = (c.get("price") or "").strip()
+
+        photos = []
+        if opts.get("gallery") and car is not None:
+            photos = [i for i in (getattr(car, "images", None) or []) if isinstance(i, str)][:10]
+
+        out.append({
+            "url": url, "title": title, "price": price,
+            "spec": _car_spec_line(car, fields) if car is not None else "",
+            "image": (c.get("image") or "").strip(), "photos": photos,
+        })
+    return out
+
+
+@section_required("cars")
+@require_POST
+def cart_whatsapp_text(request):
+    """Compose the cart as WhatsApp-ready text using the same card format as
+    Telegram. WhatsApp links can only carry text, so photos are omitted."""
+    if _is_public_schema():
+        return JsonResponse({"error": "public"}, status=400)
+    import json as _json
+    try:
+        body = _json.loads((request.body or b"").decode() or "{}")
+    except ValueError:
+        body = {}
+    cards = _share_cards(body.get("cars") or [], body.get("opts") or {})
+    if not cards:
+        return JsonResponse({"error": "empty"}, status=400)
+    blocks = []
+    for c in cards:
+        blocks.append("\n".join(p for p in [
+            f"\U0001F697 {c['title']}" if c["title"] else "",
+            f"\U0001F4B0 {c['price']}" if c["price"] else "",
+            c["spec"],
+            c["url"],
+        ] if p))
+    return JsonResponse({"text": "\n\n".join(blocks), "count": len(cards)})
+
+
 _SHARE_LABELS = {
     "year": "السنة", "mileage": "الممشى", "fuel": "الوقود",
     "transmission": "ناقل الحركة", "color": "اللون",
@@ -2798,96 +2895,47 @@ def _car_spec_line(car, fields):
 
 @site_admin_required
 def telegram_send(request):
-    """Push the share-cart cars to the dealer's connected Telegram chat."""
+    """Push the share-cart cars to the dealer's connected Telegram chat.
+
+    Card content comes from _share_cards (same composer WhatsApp uses), so the
+    two channels always look alike.
+    """
     if request.method != "POST":
         return JsonResponse({"error": "post"}, status=405)
+    import html as _html
+    import json as _json
     from tenants import telegram_bot as tg
-    from cars.templatetags.custom_filters import sar_price, share_car_title
-    from cars.models import ApiCar
-    import re as _re
+
     tenant = getattr(connection, "tenant", None)
     chat_id = getattr(tenant, "telegram_chat_id", "") if tenant else ""
     if not tg.is_configured():
         return JsonResponse({"error": "not_configured"}, status=400)
     if not chat_id:
         return JsonResponse({"error": "not_connected"}, status=400)
-    import html as _html
-    import json as _json
     try:
-        _body = _json.loads((request.body or b"").decode() or "{}")
+        body = _json.loads((request.body or b"").decode() or "{}")
     except Exception:
-        _body = {}
-    cars = _body.get("cars", [])
-    # Presentation the admin picked for the shared card. Empty = the original
-    # format (title + SAR price + one photo + link).
-    _opts = _body.get("opts") or {}
-    _fields = [f for f in (_opts.get("fields") or [])
-               if f in {"year", "mileage", "fuel", "transmission", "color", "body", "engine"}]
-    _cur = str(_opts.get("currency") or "").strip().upper()[:6]
-    _album = bool(_opts.get("gallery"))
-    cars = [c for c in cars if (c.get("url") or "").strip()]
-    # Always rebuild each title from the car record as "make model transmission
-    # fuel cc" — never trust/echo the raw title captured in the browser.
-    _slug_re = _re.compile(r"/cars/([^/?#]+)/?")
-    _site_re = _re.compile(r"/our-cars/(\d+)/?")
-    _slugs = [m.group(1) for m in (_slug_re.search(c.get("url") or "") for c in cars) if m]
-    _by_slug = {
-        c.slug: c for c in ApiCar.objects.filter(slug__in=_slugs)
-        .select_related("manufacturer", "model", "color", "body")
-    }
-    # The tenant's own cars live behind /our-cars/<pk>/ and were never resolved,
-    # so their titles used to fall through to the raw browser string.
-    _site_ids = [m.group(1) for m in (_site_re.search(c.get("url") or "") for c in cars) if m]
-    _by_site = {str(c.id): c for c in SiteCar.objects.filter(id__in=_site_ids)}
-    # A share-collection link (/c/<token>/) carries its own admin-set title.
-    from .models import SharedCollection
-    _coll_re = _re.compile(r"/c/([A-Za-z0-9_-]{4,20})/?")
-    _tokens = [m.group(1) for m in (_coll_re.search(c.get("url") or "") for c in cars) if m]
-    _by_token = {c.token: c for c in SharedCollection.objects.filter(token__in=_tokens)}
-    sent = 0
-    for c in cars[:60]:
-        url = (c.get("url") or "").strip()
-        m = _slug_re.search(url)
-        car = _by_slug.get(m.group(1)) if m else None
-        site_car = None
-        if car is None:
-            ms = _site_re.search(url)
-            site_car = _by_site.get(ms.group(1)) if ms else None
-        # Titles are ALWAYS rebuilt from structured DB fields. A car we cannot
-        # resolve gets no title at all — the raw browser string is never echoed.
-        if car is not None:
-            title = _html.escape(share_car_title(car))
-        elif site_car is not None:
-            title = _html.escape(_site_car_title(site_car))
-        else:
-            mc = _coll_re.search(url)
-            coll = _by_token.get(mc.group(1)) if mc else None
-            title = _html.escape(coll.title) if (coll and coll.title) else ""
+        body = {}
+    cards = _share_cards(body.get("cars") or [], body.get("opts") or {})
 
-        img = (c.get("image") or "").strip()
-        krw = c.get("priceKrw")
-        if krw and _cur:
-            amount, symbol = _convert_krw(krw, _cur)
-            price = f"{amount:,} {symbol}"
-        else:
-            price = f"{sar_price(krw):,} ﷼" if krw else (c.get("price") or "").strip()
+    sent = 0
+    for c in cards:
         caption = "\n".join(p for p in [
-            f"🚗 <b>{title}</b>" if title else "",
-            f"💰 {price}" if price else "",
-            _car_spec_line(car, _fields),
-            url,
+            f"\U0001F697 <b>{_html.escape(c['title'])}</b>" if c["title"] else "",
+            f"\U0001F4B0 {_html.escape(c['price'])}" if c["price"] else "",
+            _html.escape(c["spec"]) if c["spec"] else "",
+            c["url"],
         ] if p)
-        # Each car is its own photo+caption message; if Telegram can't fetch the
-        # image, fall back to a text message so no car is silently dropped.
-        photos = []
-        if _album and car is not None:
-            photos = [i for i in (getattr(car, "images", None) or []) if isinstance(i, str)][:10]
-        if _album and len(photos) > 1:
-            res = tg.send_media_group(chat_id, photos, caption)
+        # An album when the admin asked for it and we have several photos;
+        # otherwise a single photo, falling back to text so nothing is dropped.
+        if len(c["photos"]) > 1:
+            res = tg.send_media_group(chat_id, c["photos"], caption)
+        elif c["image"]:
+            res = tg.send_photo(chat_id, c["image"], caption)
         else:
-            res = tg.send_photo(chat_id, img, caption) if img else tg.send_message(chat_id, caption)
+            res = tg.send_message(chat_id, caption)
         if res and res.get("ok"):
             sent += 1
-        elif img and (tg.send_message(chat_id, caption) or {}).get("ok"):
+        elif c["image"] and (tg.send_message(chat_id, caption) or {}).get("ok"):
             sent += 1
-    return JsonResponse({"sent": sent, "total": len(cars)})
+    return JsonResponse({"sent": sent, "total": len(cards)})
