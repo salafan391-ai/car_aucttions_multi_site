@@ -254,7 +254,7 @@
     <!-- ── SIDEBAR FILTERS (desktop only) ─────────────────── -->
     <aside id="sidebar-filters" class="hidden lg:block w-64 xl:w-72 shrink-0 sticky top-4 self-start">
         <form method="get" id="filter-form-sidebar" class="bg-white rounded-2xl shadow border border-gray-100 flex flex-col max-h-[calc(100vh-5rem)]"
-              hx-get="" hx-target="#htmx-main" hx-swap="innerHTML" hx-push-url="true" hx-trigger="submit">
+              hx-get="" hx-target="#htmx-main" hx-swap="innerHTML show:window:top" hx-push-url="true" hx-trigger="submit">
             {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
 
             <!-- Header -->
