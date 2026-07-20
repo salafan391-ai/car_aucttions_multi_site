@@ -412,6 +412,22 @@
                     </div>
                 </details>
                 {% endif %}
+
+                {% if filter_options and show_encar %}
+                <!-- Equipment / options (encar cars carry an options code list) -->
+                <details class="filter-group" {% if sel_options %}open{% endif %}>
+                    <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
+                        <span class="bilingual text-xs font-bold text-gray-500 uppercase tracking-wider" data-lang-ar="المواصفات" data-lang-ru="Опции" data-lang-es="Equipamiento" data-lang-en="Options">المواصفات</span>
+                        <svg class="filter-group-chevron w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <input type="search" class="filter-search w-full mb-1.5 px-2.5 py-1 text-[11px] bg-white border border-gray-200 rounded-lg focus:ring-1 ring-brand focus:border-brand outline-none transition" placeholder="بحث..." data-placeholder-ar="بحث..." data-placeholder-en="Search..." data-placeholder-es="Buscar..." data-placeholder-ru="Поиск..." autocomplete="off">
+                    <div class="filter-group-body grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto pb-1">
+                        {% for oc in filter_options %}
+                        <label class="cursor-pointer select-none"><input type="checkbox" name="options" value="{{ oc }}" {% if oc in sel_options %}checked{% endif %} class="sr-only peer"><span class="bilingual flex w-full items-center justify-between gap-1 px-2.5 py-2 text-[13px] sm:text-sm rounded-lg font-semibold border-2 transition-all bg-gray-50 border-gray-200 text-gray-800 hover:border-brand hover:text-brand hover:bg-brand/10 hover:shadow-sm" data-lang-ar="{{ oc|translate_option }}" data-lang-ru="{{ oc|translate_option:'ru' }}" data-lang-es="{{ oc|translate_option:'es' }}" data-lang-en="{{ oc|translate_option_en }}">{{ oc|translate_option }}</span></label>
+                        {% endfor %}
+                    </div>
+                </details>
+                {% endif %}
             </div>
 
             <!-- Drawer footer: actions -->
