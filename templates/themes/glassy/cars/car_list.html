@@ -580,7 +580,7 @@
                             {% for c in colors %}
                             <label>
                                 <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="gl-list-chip-input">
-                                <span class="gl-list-chip bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}{% with fc=facet_counts|get_item:'color'|get_item:c.id %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                                <span class="gl-list-chip"><span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;flex-shrink:0;border:1px solid var(--gl-border);background:{{ c.name|color_to_css }};"></span><span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>{% with fc=facet_counts|get_item:'color'|get_item:c.id %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
