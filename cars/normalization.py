@@ -1,3 +1,4 @@
+import re
 """
 Canonicalization rules for car data.
 
@@ -39,8 +40,20 @@ def normalize_body(value):
     return normalize_name(value, BODY_SYNONYMS)
 
 
+# Japanese feeds describe gearboxes in detail ("6at w/ manual mode (floor shift)",
+# "cvt (column shift)", "5mt (floor shift)"). Collapse them to the same three
+# types Korean data uses, so the filter stays usable and already-translated.
+_DETAILED_TX = re.compile(r"^\d*(at|mt|cvt)\b")
+_TX_BASE = {"at": "automatic", "mt": "manual", "cvt": "cvt"}
+
+
 def normalize_transmission(value):
-    return normalize_name(value, TRANSMISSION_SYNONYMS)
+    v = normalize_name(value, TRANSMISSION_SYNONYMS)
+    if isinstance(v, str):
+        m = _DETAILED_TX.match(v)
+        if m:
+            return _TX_BASE[m.group(1)]
+    return v
 
 
 def normalize_fuel(value):
