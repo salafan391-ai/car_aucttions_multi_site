@@ -55,6 +55,33 @@ MAKES = {
     "スタークラフト": "ستاركرافت", "サリーン": "سالين", "サターン": "ساتورن",
     "オールズモビル": "أولدزموبيل", "ウーズレイ": "وولزلي",
     "ウィネベーゴ": "وينيباجو", "イノチェンティ": "إينوشنتي",
+    # ── makes that only appear in the admin catalogue filter (it lists every
+    #    manufacturer, not just ones with cars) ──
+    "mitsubishi fuso": "ميتسوبيشي فوسو", "mercedes-amg": "مرسيدس AMG", "amg": "AMG",
+    "hino": "هينو", "abarth": "أبارث", "aston martin": "أستون مارتن",
+    "rover": "روفر", "ud trucks": "UD شاحنات", "bmw alpina": "بي إم دبليو ألبينا",
+    "opel": "أوبل", "lancia": "لانشيا", "dmc": "دي إم سي", "artega": "أرتيغا",
+    "other (domestic)": "أخرى (محلية)", "other (import)": "أخرى (مستوردة)",
+    "ram": "رام", "man": "مان", "masta": "ماستا", "international": "إنترناشونال",
+    "clark": "كلارك", "kgm": "كي جي إم", "kg mobility": "كي جي موبيليتي",
+    "renault korea": "رينو كوريا", "dongfeng": "دونغفنغ",
+    "dfsk (dongfeng motors)": "دي إف إس كي", "byd(비야디)": "BYD",
+    "daehan motors": "دايهان موتورز", "daeheung heavy industry": "دايهيونغ للصناعات الثقيلة",
+    "daeheung heavy industries": "دايهيونغ للصناعات الثقيلة",
+    "dongwoo special vehicle": "دونغوو للمركبات الخاصة",
+    "hankook special vehicle": "هانكوك للمركبات الخاصة",
+    "korean special vehicle": "مركبات كورية خاصة",
+    "korean commercial truck": "شاحنات كورية تجارية",
+    "taeyoung precision": "تايونغ", "taeyoung jeonggong": "تايونغ",
+    "ss모터스": "إس إس موتورز", "마이브(kst": "مايف",
+    # Korean-script makes
+    "허머": "همر", "카셈": "كاسم", "중한자동차": "جونغهان", "이스즈": "إيسوزو",
+    "이베코": "إيفيكو", "이네오스": "إينيوس", "어큐라": "أكورا", "애스턴마틴": "أستون مارتن",
+    "알파로메오": "ألفا روميو", "시트로엥": "ستروين", "스카니아": "سكانيا",
+    "스즈키": "سوزوكي", "스마트": "سمارت", "사이언": "سيون", "사브": "ساب",
+    "미쯔오까": "ميتسوكا", "미쯔비시": "ميتسوبيشي", "맥라렌": "ماكلارين",
+    "마이바흐": "مايباخ", "로터스": "لوتس", "동풍자동차": "دونغفنغ",
+    "다이하쓰": "دايهاتسو", "기타": "أخرى",
 }
 
 MODELS = {
