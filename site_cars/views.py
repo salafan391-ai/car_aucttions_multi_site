@@ -2713,6 +2713,23 @@ def telegram_status(request):
     })
 
 
+
+def _site_car_title(car):
+    """Share title for one of the tenant's own cars, rebuilt from structured
+    fields (never SiteCar.title, which is free text an admin typed)."""
+    if not car:
+        return ""
+    from cars.templatetags.custom_filters import pretty_en
+    parts = [pretty_en(car.manufacturer or ""), pretty_en(car.model or "")]
+    if car.year:
+        parts.append(str(car.year))
+    if car.transmission:
+        parts.append(pretty_en(car.transmission))
+    if car.fuel:
+        parts.append(pretty_en(car.fuel))
+    return " ".join(p for p in parts if p).strip()
+
+
 _SHARE_LABELS = {
     "year": "السنة", "mileage": "الممشى", "fuel": "الوقود",
     "transmission": "ناقل الحركة", "color": "اللون",
@@ -2812,17 +2829,41 @@ def telegram_send(request):
     # Always rebuild each title from the car record as "make model transmission
     # fuel cc" — never trust/echo the raw title captured in the browser.
     _slug_re = _re.compile(r"/cars/([^/?#]+)/?")
+    _site_re = _re.compile(r"/our-cars/(\d+)/?")
     _slugs = [m.group(1) for m in (_slug_re.search(c.get("url") or "") for c in cars) if m]
     _by_slug = {
         c.slug: c for c in ApiCar.objects.filter(slug__in=_slugs)
-        .select_related("manufacturer", "model")
+        .select_related("manufacturer", "model", "color", "body")
     }
+    # The tenant's own cars live behind /our-cars/<pk>/ and were never resolved,
+    # so their titles used to fall through to the raw browser string.
+    _site_ids = [m.group(1) for m in (_site_re.search(c.get("url") or "") for c in cars) if m]
+    _by_site = {str(c.id): c for c in SiteCar.objects.filter(id__in=_site_ids)}
+    # A share-collection link (/c/<token>/) carries its own admin-set title.
+    from .models import SharedCollection
+    _coll_re = _re.compile(r"/c/([A-Za-z0-9_-]{4,20})/?")
+    _tokens = [m.group(1) for m in (_coll_re.search(c.get("url") or "") for c in cars) if m]
+    _by_token = {c.token: c for c in SharedCollection.objects.filter(token__in=_tokens)}
     sent = 0
     for c in cars[:60]:
         url = (c.get("url") or "").strip()
         m = _slug_re.search(url)
         car = _by_slug.get(m.group(1)) if m else None
-        title = _html.escape(share_car_title(car) if car else (c.get("title") or "").strip())
+        site_car = None
+        if car is None:
+            ms = _site_re.search(url)
+            site_car = _by_site.get(ms.group(1)) if ms else None
+        # Titles are ALWAYS rebuilt from structured DB fields. A car we cannot
+        # resolve gets no title at all — the raw browser string is never echoed.
+        if car is not None:
+            title = _html.escape(share_car_title(car))
+        elif site_car is not None:
+            title = _html.escape(_site_car_title(site_car))
+        else:
+            mc = _coll_re.search(url)
+            coll = _by_token.get(mc.group(1)) if mc else None
+            title = _html.escape(coll.title) if (coll and coll.title) else ""
+
         img = (c.get("image") or "").strip()
         krw = c.get("priceKrw")
         if krw and _cur:
