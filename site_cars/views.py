@@ -1381,8 +1381,9 @@ def import_happycar_view(request):
                 pass
         if request.POST.get('with_gallery'):
             cmd.append('--with-gallery')
-        if request.POST.get('download_images'):
-            cmd.append('--download-images')
+        # Never --download-images from the dashboard: copying every photo into
+        # storage runs ~1.5 cars/min (hours for a full round) and costs S3.
+        # Galleries store the source URLs instead, which display identically.
         if request.POST.get('delete_missing'):
             cmd.append('--delete-missing')
         if request.POST.get('dry_run'):

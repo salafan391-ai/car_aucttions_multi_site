@@ -235,11 +235,11 @@ class Command(BaseCommand):
         delete_missing = opts["delete_missing"]
         dry_run = opts["dry_run"]
 
-        if with_gallery and not download_images:
+        if download_images:
             self.stdout.write(self.style.WARNING(
-                "--with-gallery is a no-op without --download-images "
-                "(SiteCarImage.image is required). Re-run with both flags "
-                "to populate SiteCarImage rows."
+                "--download-images copies every photo into storage: roughly "
+                "1.5 cars/minute and a storage bill. Omit it to keep the "
+                "source URLs (galleries still display)."
             ))
 
         self.stdout.write(self.style.HTTP_INFO(f"Scraping HappyCar list pages…"))
@@ -390,16 +390,24 @@ class Command(BaseCommand):
         }
 
     def _sync_gallery(self, obj: SiteCar, image_urls: list[str], *, download: bool) -> int:
-        """Download gallery images into SiteCarImage rows. No-op without --download-images
-        because SiteCarImage.image is a required ImageField (URL-only storage isn't supported)."""
-        if not download:
-            return 0
+        """Create SiteCarImage rows for the car's photos.
+
+        URL-only by default: image_url points at the source and display_url
+        falls back to it, so nothing is copied into S3. --download-images
+        stores the bytes instead, which is ~100x slower and costs storage.
+        """
         from site_cars.models import SiteCarImage
         existing_captions = set(obj.gallery.values_list("caption", flat=True))
         added = 0
+        pending = []
         for i, url in enumerate(image_urls):
             caption = f"hc:{url.rsplit('/', 1)[-1]}"
             if caption in existing_captions:
+                continue
+            if not download:
+                if url and len(url) <= 500:
+                    pending.append(SiteCarImage(
+                        car=obj, caption=caption, order=i, image_url=url))
                 continue
             try:
                 data = _scraper.fetch(url, cookie="")
@@ -408,6 +416,9 @@ class Command(BaseCommand):
                 added += 1
             except Exception as exc:  # noqa: BLE001
                 self.stderr.write(f"    image download failed {url}: {exc}")
+        if pending:
+            SiteCarImage.objects.bulk_create(pending, batch_size=100)
+            added += len(pending)
         return added
 
     def _download_main_image(self, obj: SiteCar) -> None:
