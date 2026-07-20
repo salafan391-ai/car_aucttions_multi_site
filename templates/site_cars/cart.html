@@ -74,6 +74,37 @@
         <button type="button" class="sc-btn sc-btn-ghost" onclick="scClear()"><span class="bilingual" data-lang-ar="إفراغ السلة" data-lang-en="Empty cart" data-lang-es="Vaciar" data-lang-ru="Очистить">إفراغ السلة</span></button>
     </div>
 
+    <!-- How each car link is presented when shared (Telegram card) -->
+    <details class="sc-share-box" id="sc-card-box" style="display:none">
+        <summary>🎨 <b>تنسيق بطاقة المشاركة</b>
+            <span style="font-size:.75rem;color:#94a3b8;font-weight:400">(ما يظهر مع كل رابط سيارة — الرابط نفسه لا يتغيّر)</span>
+        </summary>
+        <div class="sc-share-body">
+            <div class="sc-sh-row">
+                <span class="sc-sh-lbl">معلومات إضافية تظهر مع كل سيارة</span>
+                <div class="sc-sh-fields">
+                    <label><input type="checkbox" class="sc-cd-field" value="year"> السنة</label>
+                    <label><input type="checkbox" class="sc-cd-field" value="mileage"> الممشى</label>
+                    <label><input type="checkbox" class="sc-cd-field" value="fuel"> الوقود</label>
+                    <label><input type="checkbox" class="sc-cd-field" value="transmission"> ناقل الحركة</label>
+                    <label><input type="checkbox" class="sc-cd-field" value="color"> اللون</label>
+                    <label><input type="checkbox" class="sc-cd-field" value="engine"> المحرك</label>
+                </div>
+            </div>
+            <div class="sc-sh-row">
+                <label><input type="checkbox" id="sc-cd-gallery"> إرسال عدة صور لكل سيارة (ألبوم)</label>
+            </div>
+            <div class="sc-sh-row">
+                <span class="sc-sh-lbl">عملة السعر</span>
+                <select id="sc-cd-currency">
+                    <option value="">الافتراضي (ريال)</option>
+                    {% for code in share_currencies %}<option value="{{ code }}">{{ code }}</option>{% endfor %}
+                </select>
+            </div>
+            <p style="font-size:.75rem;color:#94a3b8;margin:0">تُحفظ هذه الإعدادات تلقائياً وتُطبّق عند الإرسال لتيليجرام.</p>
+        </div>
+    </details>
+
     <!-- Publish the basket as one shareable page (/c/<token>/) -->
     <details class="sc-share-box" id="sc-share-box" style="display:none">
         <summary>🔗 <b class="bilingual" data-lang-ar="إنشاء صفحة مشاركة واحدة" data-lang-en="Create one share page">إنشاء صفحة مشاركة واحدة</b>
@@ -150,6 +181,8 @@
         actions.style.display = cart.length ? '' : 'none';
         var shBox = document.getElementById('sc-share-box');
         if (shBox) shBox.style.display = cart.length ? '' : 'none';
+        var cdBox = document.getElementById('sc-card-box');
+        if (cdBox) cdBox.style.display = cart.length ? '' : 'none';
         empty.style.display = cart.length ? 'none' : '';
         grid.innerHTML = cart.map(function (c, i) {
             var img = c.image ? '<img src="' + esc(c.image) + '" alt="">' :
@@ -214,6 +247,36 @@
             }
         }).catch(function () {});
 
+    // ---- shared-card format (remembered per browser) ----
+    var CARD_KEY = 'gl_share_card_opts_v1';
+    function cardOpts() {
+        return {
+            fields: Array.prototype.slice.call(document.querySelectorAll('.sc-cd-field:checked'))
+                .map(function (el) { return el.value; }),
+            gallery: document.getElementById('sc-cd-gallery').checked,
+            currency: document.getElementById('sc-cd-currency').value
+        };
+    }
+    function saveCardOpts() { try { localStorage.setItem(CARD_KEY, JSON.stringify(cardOpts())); } catch (e) {} }
+    function loadCardOpts() {
+        var o;
+        try { o = JSON.parse(localStorage.getItem(CARD_KEY)) || {}; } catch (e) { o = {}; }
+        (o.fields || []).forEach(function (f) {
+            var el = document.querySelector('.sc-cd-field[value="' + f + '"]');
+            if (el) el.checked = true;
+        });
+        if (o.gallery) document.getElementById('sc-cd-gallery').checked = true;
+        if (o.currency) document.getElementById('sc-cd-currency').value = o.currency;
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        loadCardOpts();
+        ['.sc-cd-field', '#sc-cd-gallery', '#sc-cd-currency'].forEach(function (sel) {
+            document.querySelectorAll(sel).forEach(function (el) {
+                el.addEventListener('change', saveCardOpts);
+            });
+        });
+    });
+
     window.scTelegram = function (b) {
         if (!TG.connected) {                             // first time → open the deep link to connect
             if (TG.link) window.open(TG.link, '_blank', 'noopener');
@@ -227,7 +290,7 @@
         fetch("{% url 'telegram_send' %}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-            body: JSON.stringify({ cars: cart })
+            body: JSON.stringify({ cars: cart, opts: cardOpts() })
         }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
           .then(function (res) {
             if (res.ok && !res.j.error) {

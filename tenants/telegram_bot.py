@@ -80,6 +80,22 @@ def send_photo(chat_id, photo, caption):
     return _call("sendPhoto", chat_id=chat_id, photo=photo, caption=caption, parse_mode="HTML")
 
 
+def send_media_group(chat_id, photos, caption):
+    """Send up to 10 photos as one album. Only the first item carries the
+    caption — that's how Telegram shows a single caption under an album."""
+    import json as _json
+    media = []
+    for i, url in enumerate((photos or [])[:10]):
+        item = {"type": "photo", "media": url}
+        if i == 0 and caption:
+            item["caption"] = caption
+            item["parse_mode"] = "HTML"
+        media.append(item)
+    if not media:
+        return None
+    return _call("sendMediaGroup", chat_id=chat_id, media=_json.dumps(media))
+
+
 def set_webhook(base_url):
     """base_url e.g. https://general-cars.com — sets the fixed webhook."""
     secret = (getattr(settings, "TELEGRAM_WEBHOOK_SECRET", "") or "").strip()

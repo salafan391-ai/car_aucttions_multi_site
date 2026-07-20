@@ -2713,6 +2713,72 @@ def telegram_status(request):
     })
 
 
+_SHARE_LABELS = {
+    "year": "السنة", "mileage": "الممشى", "fuel": "الوقود",
+    "transmission": "ناقل الحركة", "color": "اللون",
+    "body": "الهيكل", "engine": "المحرك",
+}
+
+
+def _convert_krw(krw, code):
+    """KRW -> the currency an admin picked for shared cards. Mirrors sar_price
+    (global rate x tenant markup) but for any supported code."""
+    from tenants.models import GlobalExchangeRates
+    symbols = {"KRW": "₩", "SAR": "﷼", "USD": "$", "AED": "د.إ", "EUR": "€"}
+    try:
+        krw = float(krw or 0)
+    except (TypeError, ValueError):
+        return 0, symbols.get(code, code)
+    if krw <= 0:
+        return 0, symbols.get(code, code)
+    if code == "KRW":
+        return int(round(krw)), "₩"
+    rate = None
+    try:
+        rates = GlobalExchangeRates.get_solo()
+        rate = float(getattr(rates, f"rate_{code.lower()}", 0) or 0)
+    except Exception:
+        rate = None
+    if not rate:                       # tenant-defined currency
+        for cc in (getattr(getattr(connection, "tenant", None), "custom_currencies", None) or []):
+            if (cc or {}).get("code", "").upper() == code:
+                rate = float(cc.get("rate") or 0)
+                break
+    if not rate:
+        return 0, symbols.get(code, code)
+    try:
+        markup = float(getattr(getattr(connection, "tenant", None), "price_markup_factor", 1.01))
+    except Exception:
+        markup = 1.01
+    return int(round(krw * rate * markup)), symbols.get(code, code)
+
+
+def _car_spec_line(car, fields):
+    """The optional 'spec' line under the price in a shared card."""
+    if not car or not fields:
+        return ""
+    from cars.templatetags.custom_filters import (
+        translate_color, translate_fuel, translate_transmission)
+    parts = []
+    for f in fields:
+        if f == "year" and car.year:
+            parts.append(str(car.year))
+        elif f == "mileage" and car.mileage:
+            parts.append(f"{int(car.mileage):,} كم")
+        elif f == "fuel" and car.fuel:
+            parts.append(translate_fuel(car.fuel))
+        elif f == "transmission" and car.transmission:
+            parts.append(translate_transmission(car.transmission))
+        elif f == "color" and getattr(car, "color", None):
+            parts.append(translate_color(car.color.name))
+        elif f == "body" and getattr(car, "body", None):
+            parts.append(car.body.name or "")
+        elif f == "engine" and car.engine:
+            parts.append(str(car.engine))
+    parts = [p for p in parts if p]
+    return ("📋 " + " · ".join(parts)) if parts else ""
+
+
 @site_admin_required
 def telegram_send(request):
     """Push the share-cart cars to the dealer's connected Telegram chat."""
@@ -2731,9 +2797,17 @@ def telegram_send(request):
     import html as _html
     import json as _json
     try:
-        cars = _json.loads((request.body or b"").decode() or "{}").get("cars", [])
+        _body = _json.loads((request.body or b"").decode() or "{}")
     except Exception:
-        cars = []
+        _body = {}
+    cars = _body.get("cars", [])
+    # Presentation the admin picked for the shared card. Empty = the original
+    # format (title + SAR price + one photo + link).
+    _opts = _body.get("opts") or {}
+    _fields = [f for f in (_opts.get("fields") or [])
+               if f in {"year", "mileage", "fuel", "transmission", "color", "body", "engine"}]
+    _cur = str(_opts.get("currency") or "").strip().upper()[:6]
+    _album = bool(_opts.get("gallery"))
     cars = [c for c in cars if (c.get("url") or "").strip()]
     # Always rebuild each title from the car record as "make model transmission
     # fuel cc" — never trust/echo the raw title captured in the browser.
@@ -2751,15 +2825,26 @@ def telegram_send(request):
         title = _html.escape(share_car_title(car) if car else (c.get("title") or "").strip())
         img = (c.get("image") or "").strip()
         krw = c.get("priceKrw")
-        price = f"{sar_price(krw):,} ﷼" if krw else (c.get("price") or "").strip()
+        if krw and _cur:
+            amount, symbol = _convert_krw(krw, _cur)
+            price = f"{amount:,} {symbol}"
+        else:
+            price = f"{sar_price(krw):,} ﷼" if krw else (c.get("price") or "").strip()
         caption = "\n".join(p for p in [
             f"🚗 <b>{title}</b>" if title else "",
             f"💰 {price}" if price else "",
+            _car_spec_line(car, _fields),
             url,
         ] if p)
         # Each car is its own photo+caption message; if Telegram can't fetch the
         # image, fall back to a text message so no car is silently dropped.
-        res = tg.send_photo(chat_id, img, caption) if img else tg.send_message(chat_id, caption)
+        photos = []
+        if _album and car is not None:
+            photos = [i for i in (getattr(car, "images", None) or []) if isinstance(i, str)][:10]
+        if _album and len(photos) > 1:
+            res = tg.send_media_group(chat_id, photos, caption)
+        else:
+            res = tg.send_photo(chat_id, img, caption) if img else tg.send_message(chat_id, caption)
         if res and res.get("ok"):
             sent += 1
         elif img and (tg.send_message(chat_id, caption) or {}).get("ok"):
