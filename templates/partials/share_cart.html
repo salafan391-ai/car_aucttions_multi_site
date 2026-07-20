@@ -124,7 +124,10 @@ key, so it follows staff across pages, filters and themes.
             var pe = card.querySelector('[data-price-krw]');
             cart.push({
                 url: url,
-                title: txt(card, CFG.name) || (img ? img.getAttribute('alt') : '') || url,
+                // Prefer the server-composed share title. Never fall back to the
+                // image alt — that carries the raw, unnormalised DB title.
+                title: (card.getAttribute('data-share-title') || '').trim()
+                       || txt(card, CFG.name) || url,
                 sub: txt(card, CFG.make),
                 image: img ? img.src : '',
                 price: pe ? pe.textContent.replace(/\s+/g, ' ').trim() : '',

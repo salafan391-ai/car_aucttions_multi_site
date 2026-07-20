@@ -776,7 +776,7 @@
 
                 <div class="gl-list-grid">
                     {% for car in page_obj %}
-                    <a href="{% url 'car_detail' car.slug %}" class="gl-list-card">
+                    <a href="{% url 'car_detail' car.slug %}" class="gl-list-card" data-share-title="{{ car|share_car_title }}">
                         <div class="gl-list-card-img car-img-wm">
                             {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
                             <button type="button"

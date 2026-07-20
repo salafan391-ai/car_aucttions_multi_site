@@ -7,7 +7,7 @@
         {% if car_display == 'dark' %}
         <a href="{% url 'car_detail' car.slug %}" target="_blank"
            class="group block rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-           style="background:#161622; border:1px solid rgba(255,255,255,.08);">
+           style="background:#161622; border:1px solid rgba(255,255,255,.08);" data-share-title="{{ car|share_car_title }}">
             <div class="aspect-4/3 overflow-hidden relative car-img-wm" style="background:#0f0f1a;">
                 {% if car.image %}
                 <img src="{{ car.image|img_thumb }}" alt="{{ car.title }}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" loading="lazy" width="600" height="450" decoding="async">
@@ -66,7 +66,7 @@
 
         {# ════════════ MINIMAL theme ════════════ #}
         {% elif car_display == 'minimal' %}
-        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="group block">
+        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="group block" data-share-title="{{ car|share_car_title }}">
             <div class="aspect-4/3 overflow-hidden relative bg-gray-100 rounded-lg sm:rounded-xl mb-2.5 car-img-wm">
                 {% if car.image %}
                 <img src="{{ car.image|img_thumb }}" alt="{{ car.title }}" class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" loading="lazy" width="600" height="450" decoding="async">
@@ -117,7 +117,7 @@
         {# ════════════ BOLD theme ════════════ #}
         {% elif car_display == 'bold' %}
         <a href="{% url 'car_detail' car.slug %}" target="_blank"
-           class="group block relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[3/4] sm:aspect-[4/5] car-img-wm">
+           class="group block relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[3/4] sm:aspect-[4/5] car-img-wm" data-share-title="{{ car|share_car_title }}">
             {# full-bleed image #}
             {% if car.image %}
             <img src="{{ car.image|img_thumb }}" alt="{{ car.title }}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" width="600" height="450" decoding="async">
@@ -175,7 +175,7 @@
         {% elif car_display == 'cockpit' %}
         <a href="{% url 'car_detail' car.slug %}" target="_blank"
            class="group block rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
-           style="background:#0b0b14; border:1px solid rgba(255,255,255,.07); font-family:'Orbitron','Courier New',monospace;">
+           style="background:#0b0b14; border:1px solid rgba(255,255,255,.07); font-family:'Orbitron','Courier New',monospace;" data-share-title="{{ car|share_car_title }}">
             {# image with scanline + HUD overlays #}
             <div class="relative overflow-hidden car-img-wm" style="aspect-ratio:16/10; background:#05050a;">
                 {% if car.image %}
@@ -281,7 +281,7 @@
 
         {# ════════════ CLASSIC theme (default) ════════════ #}
         {% else %}
-        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200 block">
+        <a href="{% url 'car_detail' car.slug %}" target="_blank" class="group bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-xl overflow-hidden transition-all duration-300 border border-gray-100 hover:border-gray-200 block" data-share-title="{{ car|share_car_title }}">
             <div class="aspect-4/3 bg-gray-100 overflow-hidden relative car-img-wm">
                 {% if car.image %}
                 <img src="{{ car.image|img_thumb }}" alt="{{ car.title }}" class="w-full h-full object-cover cursor-pointer" loading="lazy" width="600" height="450" decoding="async">
