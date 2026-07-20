@@ -1053,6 +1053,13 @@ colors_dict = {
 }
 
 fuel_types_dict = {
+    # ── values seen in the live catalogue that had no Arabic ──
+    'Gasoline + Electric': 'بنزين + كهربائي',
+    'Gasoline Hybrid': 'هايبرد بنزين',
+    'Diesel + Electric': 'ديزل + كهربائي',
+    'Hydrogen/Electric': 'هيدروجين + كهربائي',
+    'Combined Use': 'استخدام مشترك',
+    '－': 'غير محدد',
     'Diesel': 'ديزل',
     'Electric': 'كهربائي',
     'Gasoline': 'بنزين',
