@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Count
 
 from cars.models import ApiCar, CarColor, CarSeatColor
@@ -30,14 +30,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         dry = opts['dry_run']
+        if not dry:
+            # Maintenance run, not a web request: the 25s web timeout would kill
+            # the bulk update/delete partway through.
+            with connection.cursor() as cur:
+                cur.execute("SET statement_timeout = '900s'")
         for Model, field in TARGETS:
             self.stdout.write(self.style.MIGRATE_HEADING(
                 f"\n{Model.__name__} (ApiCar.{field})"))
-            with transaction.atomic():
-                merged, moved = self._merge(Model, field, dry)
-                purged = 0 if opts['no_purge'] else self._purge(Model, field, dry)
-                if dry:
-                    transaction.set_rollback(True)
+            merged, moved = self._merge(Model, field, dry)
+            purged = 0 if opts['no_purge'] else self._purge(Model, field, dry)
             verb = "would merge" if dry else "merged"
             self.stdout.write(
                 f"  {verb} {merged} duplicate rows ({moved} cars repointed), "
@@ -70,9 +72,13 @@ class Command(BaseCommand):
                 f"    {key!r}: keep #{canonical} ({usage.get(canonical, 0)} cars), "
                 f"merge {others} (+{n_cars} cars)")
             if not dry:
-                ApiCar.objects.filter(**{f'{field}_id__in': others}).update(
-                    **{f'{field}_id': canonical})
-                Model.objects.filter(id__in=others).delete()
+                with transaction.atomic(), connection.cursor() as cur:
+                    cur.execute(
+                        f"UPDATE cars_apicar SET {field}_id = %s "
+                        f"WHERE {field}_id = ANY(%s)", [canonical, others])
+                    cur.execute(
+                        f"DELETE FROM {Model._meta.db_table} WHERE id = ANY(%s)",
+                        [others])
             merged += len(others)
             moved += n_cars
         return merged, moved
@@ -83,11 +89,16 @@ class Command(BaseCommand):
         dead = list(Model.objects.exclude(id__in=used).values_list('id', flat=True))
         if not dead:
             return 0
-        if not dry:
-            # Re-check under the same transaction before deleting.
-            still = set(ApiCar.objects.filter(**{f'{field}_id__in': dead})
-                        .values_list(f'{field}_id', flat=True))
-            safe = [i for i in dead if i not in still]
-            Model.objects.filter(id__in=safe).delete()
-            return len(safe)
-        return len(dead)
+        if dry:
+            return len(dead)
+        # Delete in chunks: one 17k-row statement stalls, and the ORM's cascade
+        # collector would load every related row first. A referenced id would
+        # raise a ForeignKeyViolation, so the constraint guards correctness.
+        done = 0
+        for i in range(0, len(dead), 2000):
+            chunk = dead[i:i + 2000]
+            with transaction.atomic(), connection.cursor() as cur:
+                cur.execute(
+                    f"DELETE FROM {Model._meta.db_table} WHERE id = ANY(%s)", [chunk])
+            done += len(chunk)
+        return done
