@@ -19,6 +19,11 @@ def is_corrupt(name):
     blocks = set()
     for ch in name:
         cp = ord(ch)
+        # Latin Extended-A/B and typographic quotes never occur in a real make
+        # name, but are the signature of Mac-Roman/CP1252 double-encoding.
+        # NB: Latin-1 accents (é, ë in "citroën") are 0x00C0-0x00FF — allowed.
+        if 0x0100 <= cp <= 0x024F or 0x2018 <= cp <= 0x201F:
+            return True
         if 0x0400 <= cp <= 0x04FF:
             blocks.add("cyrillic")
         elif 0x0370 <= cp <= 0x03FF:
