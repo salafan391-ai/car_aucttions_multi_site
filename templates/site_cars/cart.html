@@ -19,6 +19,18 @@
     .sc-btn-primary:hover { background: #3730a3; }
     .sc-btn-ghost { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
 
+    .sc-share-box { background:#fff; border:1px solid #eceef2; border-radius:14px; padding:12px 14px; margin-bottom:18px; }
+    .sc-share-box > summary { cursor:pointer; user-select:none; font-size:.9rem; }
+    .sc-share-body { padding-top:12px; display:flex; flex-direction:column; gap:10px; }
+    .sc-share-body input[type=text], .sc-share-body select, #sc-sh-url {
+        border:1px solid #d1d5db; border-radius:10px; padding:8px 10px; font-size:.85rem; width:100%; }
+    #sc-sh-url { font-family:monospace; direction:ltr; background:#f8fafc; }
+    .sc-sh-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    .sc-sh-lbl { font-size:.75rem; font-weight:700; color:#6b7280; width:100%; }
+    .sc-sh-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; width:100%; }
+    .sc-sh-fields label, .sc-sh-row label { font-size:.85rem; display:flex; align-items:center; gap:6px; }
+    #sc-sh-out { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    #sc-sh-out #sc-sh-url { flex:1; min-width:220px; }
     .sc-cart-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
     .sc-card { background: #fff; border: 1px solid #eceef2; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 16px rgba(17,24,39,.05); }
     .sc-card-top { display: flex; gap: 0; }
@@ -62,6 +74,41 @@
         <button type="button" class="sc-btn sc-btn-ghost" onclick="scClear()"><span class="bilingual" data-lang-ar="إفراغ السلة" data-lang-en="Empty cart" data-lang-es="Vaciar" data-lang-ru="Очистить">إفراغ السلة</span></button>
     </div>
 
+    <!-- Publish the basket as one shareable page (/c/<token>/) -->
+    <details class="sc-share-box" id="sc-share-box" style="display:none">
+        <summary>🔗 <b class="bilingual" data-lang-ar="إنشاء صفحة مشاركة واحدة" data-lang-en="Create one share page">إنشاء صفحة مشاركة واحدة</b>
+            <span style="font-size:.75rem;color:#94a3b8;font-weight:400" class="bilingual" data-lang-ar="(رابط واحد يعرض كل السيارات)" data-lang-en="(one link showing every car)">(رابط واحد يعرض كل السيارات)</span>
+        </summary>
+        <div class="sc-share-body">
+            <input type="text" id="sc-sh-title" maxlength="120" placeholder="عنوان المجموعة (اختياري)">
+            <div class="sc-sh-row">
+                <span class="sc-sh-lbl">حقول إضافية لكل سيارة</span>
+                <div class="sc-sh-fields">
+                    {% for key, label in field_choices %}
+                    <label><input type="checkbox" class="sc-sh-field" value="{{ key }}"> {{ label }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="sc-sh-row">
+                <label><input type="checkbox" id="sc-sh-gallery"> عرض عدة صور لكل سيارة</label>
+            </div>
+            <div class="sc-sh-row">
+                <span class="sc-sh-lbl">عملة العرض</span>
+                <select id="sc-sh-currency">
+                    <option value="">حسب اختيار الزائر (الافتراضي)</option>
+                    {% for code in share_currencies %}<option value="{{ code }}">{{ code }}</option>{% endfor %}
+                </select>
+            </div>
+            <button type="button" class="sc-btn sc-btn-primary" onclick="scMakeShare(this)">إنشاء الرابط</button>
+            <div id="sc-sh-out" style="display:none; margin-top:.6rem;">
+                <input id="sc-sh-url" readonly onclick="this.select()">
+                <button type="button" class="sc-btn" onclick="copy(document.getElementById('sc-sh-url').value, this)">نسخ</button>
+                <a id="sc-sh-open" href="#" target="_blank" rel="noopener" class="sc-btn sc-btn-ghost">عرض</a>
+                <button type="button" class="sc-btn sc-btn-tg" style="background:#229ED9;color:#fff" onclick="scShareToTelegram(this)">✈️ إرسال الرابط لتيليجرام</button>
+            </div>
+        </div>
+    </details>
+
     <div class="sc-cart-grid" id="sc-grid"></div>
 
     <div class="sc-cart-empty" id="sc-empty" style="display:none">
@@ -101,6 +148,8 @@
     function render() {
         document.getElementById('sc-count').textContent = cart.length;
         actions.style.display = cart.length ? '' : 'none';
+        var shBox = document.getElementById('sc-share-box');
+        if (shBox) shBox.style.display = cart.length ? '' : 'none';
         empty.style.display = cart.length ? 'none' : '';
         grid.innerHTML = cart.map(function (c, i) {
             var img = c.image ? '<img src="' + esc(c.image) + '" alt="">' :
@@ -193,6 +242,57 @@
             setTimeout(function () { tgLabel('✈️ <span class="bilingual" data-lang-ar="إرسال إلى تيليجرام" data-lang-en="Send to Telegram">إرسال إلى تيليجرام</span>'); }, 2500);
         }).catch(function () { tgLabel('⚠️'); });
     };
+    // ---- publish the basket as one /c/<token>/ page ----
+    var scShareUrl = '';
+    window.scMakeShare = function (btn) {
+        if (!cart.length) return;
+        var fields = Array.prototype.slice
+            .call(document.querySelectorAll('.sc-sh-field:checked'))
+            .map(function (el) { return el.value; });
+        var body = {
+            urls: cart.map(function (c) { return c.url; }),
+            title: (document.getElementById('sc-sh-title').value || '').trim(),
+            fields: fields,
+            gallery: document.getElementById('sc-sh-gallery').checked,
+            currency: document.getElementById('sc-sh-currency').value
+        };
+        var old = btn.textContent; btn.textContent = '⏳'; btn.disabled = true;
+        fetch("{% url 'share_create_from_cart' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+            body: JSON.stringify(body)
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            btn.textContent = old; btn.disabled = false;
+            if (!res.ok || res.j.error) { alert('تعذّر إنشاء الرابط.'); return; }
+            scShareUrl = res.j.url;
+            document.getElementById('sc-sh-url').value = res.j.url;
+            document.getElementById('sc-sh-open').href = res.j.url;
+            document.getElementById('sc-sh-out').style.display = '';
+          }).catch(function () { btn.textContent = old; btn.disabled = false; alert('تعذّر إنشاء الرابط.'); });
+    };
+
+    // Send the share page itself (one link) rather than every car separately.
+    window.scShareToTelegram = function (btn) {
+        if (!scShareUrl) return;
+        if (!TG.connected) {
+            if (TG.link) window.open(TG.link, '_blank', 'noopener');
+            alert('افتح المحادثة مع البوت واضغط «Start» لربط حسابك، ثم عد وأرسل.');
+            return;
+        }
+        var old = btn.textContent; btn.textContent = '⏳'; btn.disabled = true;
+        fetch("{% url 'telegram_send' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+            body: JSON.stringify({ cars: [{ url: scShareUrl, title: (document.getElementById('sc-sh-title').value || 'مجموعة سيارات') }] })
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            btn.disabled = false;
+            btn.textContent = (res.ok && !res.j.error) ? '✓ تم الإرسال' : '⚠️';
+            setTimeout(function () { btn.textContent = old; }, 2500);
+          }).catch(function () { btn.disabled = false; btn.textContent = old; });
+    };
+
     function getCsrf() {
         var m = document.cookie.match(/csrftoken=([^;]+)/);
         return m ? m[1] : '';

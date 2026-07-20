@@ -2516,6 +2516,78 @@ def _share_options(request):
 
 @section_required("cars")
 @require_POST
+def share_create_from_cart(request):
+    """Create a share link straight from the browser cart.
+
+    The cart only knows each car's public URL, so map those back to refs:
+    /cars/<slug>/ -> api:<id>, /our-cars/<pk>/ -> site:<pk>.
+    """
+    if _is_public_schema():
+        return JsonResponse({"error": "public"}, status=400)
+    import json as _json
+    import re as _re
+    from cars.models import ApiCar
+    from .models import SharedCollection
+
+    try:
+        payload = _json.loads((request.body or b"").decode() or "{}")
+    except ValueError:
+        payload = {}
+    urls = [u for u in (payload.get("urls") or []) if isinstance(u, str)][:60]
+    if not urls:
+        return JsonResponse({"error": "empty"}, status=400)
+
+    slugs = [m.group(1) for m in
+             (_re.search(r"/cars/([^/?#]+)/?", u) for u in urls) if m]
+    by_slug = dict(ApiCar.objects.filter(slug__in=slugs).values_list("slug", "id"))
+    site_ids = set(SiteCar.objects.filter(
+        id__in=[m.group(1) for m in
+                (_re.search(r"/our-cars/(\d+)/?", u) for u in urls) if m]
+    ).values_list("id", flat=True))
+
+    refs = []
+    for u in urls:                       # keep the order the admin arranged
+        m = _re.search(r"/cars/([^/?#]+)/?", u)
+        if m and m.group(1) in by_slug:
+            refs.append(f"api:{by_slug[m.group(1)]}")
+            continue
+        m = _re.search(r"/our-cars/(\d+)/?", u)
+        if m and int(m.group(1)) in site_ids:
+            refs.append(f"site:{m.group(1)}")
+    refs = list(dict.fromkeys(refs))     # de-dupe, order preserved
+    if not refs:
+        return JsonResponse({"error": "unresolved"}, status=400)
+
+    sc = SharedCollection.objects.create(
+        title=(payload.get("title") or "").strip()[:120],
+        car_refs=refs,
+        options=_cart_options(payload),
+    )
+    return JsonResponse({
+        "token": sc.token, "count": len(refs),
+        "url": request.build_absolute_uri(
+            reverse("shared_collection", args=[sc.token])),
+    })
+
+
+def _cart_options(payload):
+    """Same shape as _share_options, but from the cart's JSON body."""
+    from .models import SharedCollection
+    valid = {k for k, _ in SharedCollection.FIELD_CHOICES}
+    opts = {}
+    fields = [f for f in (payload.get("fields") or []) if f in valid]
+    if fields:
+        opts["fields"] = fields
+    cur = str(payload.get("currency") or "").strip().upper()[:6]
+    if cur and cur.isalpha():
+        opts["currency"] = cur
+    if payload.get("gallery"):
+        opts["gallery"] = True
+    return opts
+
+
+@section_required("cars")
+@require_POST
 def share_options(request, pk):
     """Update just the presentation options of an existing share link."""
     if _is_public_schema():
@@ -2554,9 +2626,21 @@ def shared_collection(request, token):
 
 @section_required("cars")
 def cart_page(request):
-    """Dedicated 'share cart' page. The cart lives in the browser (localStorage,
-    filled from the car list); this page renders it with each car's own link."""
-    return render(request, "site_cars/cart.html", {})
+    """The 'share cart': the basket lives in the browser (localStorage, filled
+    from the car list). It also hosts the share-link builder, so an admin picks
+    cars once and can copy links, push them to Telegram, or publish a /c/ page."""
+    from .models import SharedCollection
+    tenant = getattr(connection, "tenant", None)
+    currencies = ["KRW", "USD", "SAR", "AED", "EUR"]
+    for c in (getattr(tenant, "custom_currencies", None) or []):
+        code = (c or {}).get("code")
+        if code and code not in currencies:
+            currencies.append(code)
+    return render(request, "site_cars/cart.html", {
+        "collections": SharedCollection.objects.all()[:50],
+        "field_choices": SharedCollection.FIELD_CHOICES,
+        "share_currencies": currencies,
+    })
 
 
 def auctions_live(request):

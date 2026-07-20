@@ -15,6 +15,7 @@ urlpatterns = [
     path('dashboard/share/create/', views.share_create, name='share_create'),
     path('dashboard/share/<int:pk>/delete/', views.share_delete, name='share_delete'),
     path('dashboard/share/<int:pk>/options/', views.share_options, name='share_options'),
+    path('dashboard/share/from-cart/', views.share_create_from_cart, name='share_create_from_cart'),
     path('c/<str:token>/', views.shared_collection, name='shared_collection'),
     path('share-cart/', views.cart_page, name='cart_page'),
     path('live-auctions/', views.auctions_live, name='auctions_live'),
