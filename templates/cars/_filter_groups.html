@@ -1,8 +1,10 @@
 {% load static humanize i18n safe_query custom_filters %}
-{# Shared car-list filter groups, rendered by BOTH the mobile drawer and the
-   desktop sidebar so the two can never drift apart again.
-   gcls    - extra classes per group (desktop draws separators, mobile none)
-   tree_id - unique id for the manufacturer tree in this copy #}
+{% comment %}
+Shared car-list filter groups, rendered by BOTH the mobile drawer and the
+desktop sidebar so the two can never drift apart again.
+  gcls    - extra classes per group (desktop draws separators, mobile none)
+  tree_id - unique id for the manufacturer tree in this copy
+{% endcomment %}
                 <!-- Manufacturer → Model → Badge tree -->
                 <details class="filter-group {{ gcls }}" {% if sel_manufacturers or sel_models or sel_badges %}open{% endif %}>
                     <summary class="flex items-center justify-between cursor-pointer mb-2 select-none">
