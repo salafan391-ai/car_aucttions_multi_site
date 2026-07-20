@@ -304,6 +304,12 @@
                 <span class="text-xs font-medium text-violet-700 bilingual" data-lang-ar="سلة الروابط" data-lang-en="Share links" data-lang-es="Enlaces" data-lang-ru="Ссылки">سلة الروابط</span>
             </a>
             {% endif %}
+            {% if can.cars %}
+            <a href="{% url 'share_builder' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-fuchsia-50 hover:bg-fuchsia-100 transition text-center">
+                <svg class="w-6 h-6 text-fuchsia-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 11-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 115.656 5.656l-1.5 1.5"/></svg>
+                <span class="text-xs font-medium text-fuchsia-700 bilingual" data-lang-ar="مجموعات المشاركة" data-lang-en="Share collections" data-lang-es="Colecciones" data-lang-ru="Коллекции">مجموعات المشاركة</span>
+            </a>
+            {% endif %}
             {% if is_site_admin %}
             <a href="{% url 'send_email' %}" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-cyan-50 hover:bg-cyan-100 transition text-center">
                 <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
