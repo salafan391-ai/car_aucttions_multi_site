@@ -11,6 +11,11 @@ python manage.py run_encar_import
 
 echo "==> [$(date -u)] Import complete"
 
+# Fill Arabic names on anything the import just created. Only touches rows whose
+# name_ar is empty, so existing translations are never disturbed.
+echo "==> Setting Arabic names for new makes/models..."
+python manage.py set_car_arabic_names || echo "==> Arabic name fill failed (non-fatal)"
+
 echo "==> Updating exchange rates..."
 python manage.py update_exchange_rates || echo "==> Exchange rate update failed (non-fatal)"
 
