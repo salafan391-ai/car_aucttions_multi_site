@@ -539,7 +539,34 @@ class SharedCollection(models.Model):
     token = models.CharField(max_length=16, unique=True, db_index=True, editable=False)
     title = models.CharField(max_length=120, blank=True, default="", verbose_name="عنوان")
     car_refs = models.JSONField(default=list, verbose_name="السيارات")
+    # Per-link presentation chosen by the tenant admin:
+    #   {"fields": ["mileage", ...], "currency": "SAR", "gallery": true}
+    # Empty = the original layout (photo, title, year, price).
+    options = models.JSONField(default=dict, blank=True, verbose_name="خيارات العرض")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Extra per-car fields an admin can switch on, in display order.
+    FIELD_CHOICES = [
+        ("mileage", "الممشى"),
+        ("fuel", "الوقود"),
+        ("transmission", "ناقل الحركة"),
+        ("color", "اللون"),
+        ("body", "نوع الهيكل"),
+        ("engine", "المحرك"),
+    ]
+
+    @property
+    def opt_fields(self):
+        want = self.options.get("fields") or []
+        return [k for k, _ in self.FIELD_CHOICES if k in want]
+
+    @property
+    def opt_currency(self):
+        return (self.options.get("currency") or "").upper()
+
+    @property
+    def opt_gallery(self):
+        return bool(self.options.get("gallery"))
 
     class Meta:
         ordering = ["-created_at"]

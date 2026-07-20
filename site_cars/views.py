@@ -2395,26 +2395,36 @@ def _resolve_collection_refs(refs):
     from .models import SiteCar
     api_ids = [r.split(":", 1)[1] for r in refs if r.startswith("api:")]
     site_ids = [r.split(":", 1)[1] for r in refs if r.startswith("site:")]
-    api = {str(c.id): c for c in ApiCar.objects.filter(id__in=api_ids).select_related("manufacturer", "model")}
-    site = {str(c.id): c for c in SiteCar.objects.filter(id__in=site_ids)}
+    api = {str(c.id): c for c in ApiCar.objects.filter(id__in=api_ids)
+           .select_related("manufacturer", "model", "color", "body")}
+    site = {str(c.id): c for c in SiteCar.objects.filter(id__in=site_ids).prefetch_related("gallery")}
     out = []
     for r in refs:  # preserve the chosen order
         kind, _id = (r.split(":", 1) + [""])[:2]
         if kind == "api" and _id in api:
             c = api[_id]
-            img = c.image or (c.images[0] if getattr(c, "images", None) else "")
+            imgs = [i for i in (getattr(c, "images", None) or []) if isinstance(i, str)]
+            img = c.image or (imgs[0] if imgs else "")
             out.append({
                 "ref": r, "kind": "api", "title": c.title,
                 "year": c.year, "price": c.price, "currency": "KRW", "src_currency": "",
-                "image": img, "url": reverse("car_detail", args=[c.slug]) if c.slug else "#",
+                "image": img, "images": ([img] + [i for i in imgs if i != img])[:8],
+                "url": reverse("car_detail", args=[c.slug]) if c.slug else "#",
+                "mileage": c.mileage, "fuel": c.fuel, "transmission": c.transmission,
+                "color": getattr(c.color, "name", "") or "",
+                "body": getattr(c.body, "name", "") or "", "engine": c.engine or "",
             })
         elif kind == "site" and _id in site:
             c = site[_id]
+            main = c.image.url if c.image else (c.external_image_url or "")
+            gal = [g.display_url for g in c.gallery.all() if g.display_url]
             out.append({
                 "ref": r, "kind": "site", "title": c.title,
                 "year": c.year, "price": c.price, "currency": c.currency, "src_currency": c.currency,
-                "image": (c.image.url if c.image else ""),
+                "image": main, "images": ([main] + [g for g in gal if g != main])[:8] if main else gal[:8],
                 "url": reverse("site_car_detail", args=[c.id]),
+                "mileage": c.mileage, "fuel": c.fuel, "transmission": c.transmission,
+                "color": c.color or "", "body": c.body_type or "", "engine": c.engine or "",
             })
     return out
 
@@ -2452,8 +2462,16 @@ def share_builder(request):
         return redirect("site_dashboard")
     from .models import SharedCollection
     collections = SharedCollection.objects.all()[:50]
+    tenant = getattr(connection, "tenant", None)
+    currencies = ["KRW", "USD", "SAR", "AED", "EUR"]
+    for c in (getattr(tenant, "custom_currencies", None) or []):
+        code = (c or {}).get("code")
+        if code and code not in currencies:
+            currencies.append(code)
     return render(request, "site_cars/share_builder.html", {
         "collections": collections,
+        "field_choices": SharedCollection.FIELD_CHOICES,
+        "share_currencies": currencies,
     })
 
 
@@ -2472,8 +2490,42 @@ def share_create(request):
     if not refs:
         messages.error(request, "اختر سيارة واحدة على الأقل.")
         return redirect("share_builder")
-    sc = SharedCollection.objects.create(title=(request.POST.get("title") or "").strip(), car_refs=refs)
+    sc = SharedCollection.objects.create(
+        title=(request.POST.get("title") or "").strip(), car_refs=refs,
+        options=_share_options(request))
     messages.success(request, "تم إنشاء رابط المشاركة.")
+    return redirect(f"{reverse('share_builder')}?new={sc.token}")
+
+
+def _share_options(request):
+    """Presentation options an admin picked for one share link. Anything absent
+    stays out of the dict so the page keeps its original default layout."""
+    from .models import SharedCollection
+    valid = {k for k, _ in SharedCollection.FIELD_CHOICES}
+    opts = {}
+    fields = [f for f in request.POST.getlist("fields") if f in valid]
+    if fields:
+        opts["fields"] = fields
+    cur = (request.POST.get("currency") or "").strip().upper()[:6]
+    if cur and cur.isalpha():
+        opts["currency"] = cur
+    if request.POST.get("gallery"):
+        opts["gallery"] = True
+    return opts
+
+
+@section_required("cars")
+@require_POST
+def share_options(request, pk):
+    """Update just the presentation options of an existing share link."""
+    if _is_public_schema():
+        return redirect('home')
+    from .models import SharedCollection
+    sc = get_object_or_404(SharedCollection, pk=pk)
+    sc.options = _share_options(request)
+    sc.title = (request.POST.get("title") or sc.title).strip()
+    sc.save(update_fields=["options", "title"])
+    messages.success(request, "تم تحديث خيارات العرض.")
     return redirect(f"{reverse('share_builder')}?new={sc.token}")
 
 

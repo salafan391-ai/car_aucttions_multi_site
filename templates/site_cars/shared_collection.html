@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize custom_filters %}
 {% block title %}{{ collection.title|default:"مجموعة سيارات" }} - {{ site_name|default:"سيارات" }}{% endblock %}
 {% block meta_robots %}noindex, nofollow{% endblock %}
 
@@ -16,13 +16,35 @@
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for c in cars %}
         <a href="{{ c.url }}" class="group bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition flex flex-col">
-            <div class="aspect-[4/3] bg-gray-100 overflow-hidden">
+            <div class="aspect-[4/3] bg-gray-100 overflow-hidden relative">
                 {% if c.image %}<img src="{{ c.image }}" alt="{{ c.title }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition">
                 {% else %}<div class="w-full h-full flex items-center justify-center text-gray-300"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 13l2-5a2 2 0 011.9-1.4h10.2A2 2 0 0119 8l2 5M5 17h14M6 17a2 2 0 11-4 0 2 2 0 014 0zm16 0a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>{% endif %}
+                {% if collection.opt_gallery and c.images|length > 1 %}
+                <span class="absolute bottom-2 right-2 text-[10px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">{{ c.images|length }} صور</span>
+                {% endif %}
             </div>
+            {% if collection.opt_gallery and c.images|length > 1 %}
+            <div class="flex gap-1 px-3 pt-2 overflow-x-auto scrollbar-hide">
+                {% for im in c.images|slice:"1:6" %}
+                <img src="{{ im }}" alt="" loading="lazy" class="w-12 h-9 object-cover rounded shrink-0">
+                {% endfor %}
+            </div>
+            {% endif %}
             <div class="p-3 flex flex-col flex-1">
                 <div class="text-sm font-bold text-gray-900 line-clamp-2">{{ c.title }}</div>
                 <div class="text-xs text-gray-400 mt-0.5">{{ c.year }}</div>
+                {% if collection.opt_fields %}
+                <div class="mt-1.5 space-y-0.5 text-[11px] text-gray-500">
+                    {% for f in collection.opt_fields %}
+                        {% if f == 'mileage' and c.mileage %}<div>الممشى: {{ c.mileage|intcomma }} كم</div>{% endif %}
+                        {% if f == 'fuel' and c.fuel %}<div>الوقود: {{ c.fuel|translate_fuel }}</div>{% endif %}
+                        {% if f == 'transmission' and c.transmission %}<div>ناقل الحركة: {{ c.transmission|translate_transmission }}</div>{% endif %}
+                        {% if f == 'color' and c.color %}<div>اللون: {{ c.color|translate_color }}</div>{% endif %}
+                        {% if f == 'body' and c.body %}<div>الهيكل: {{ c.body }}</div>{% endif %}
+                        {% if f == 'engine' and c.engine %}<div>المحرك: {{ c.engine }}</div>{% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <div class="mt-auto pt-2 font-extrabold text-brand text-sm">
                     {% if c.price %}
                     {% if c.kind == 'site' %}<span data-price-src="{{ c.price }}" data-cur-src="{{ c.src_currency }}">{{ c.price|intcomma }} {{ c.currency }}</span>
@@ -39,4 +61,18 @@
     </div>
     {% endif %}
 </section>
+{% endblock %}
+
+{% block extra_js %}
+{% if collection.opt_currency %}
+<script>
+// This share link was created with a fixed display currency, so show prices in
+// it instead of whatever the visitor last picked.
+document.addEventListener('DOMContentLoaded', function () {
+    try {
+        if (typeof setCurrency === 'function') setCurrency('{{ collection.opt_currency }}');
+    } catch (e) { /* currency widget absent — leave prices as rendered */ }
+});
+</script>
+{% endif %}
 {% endblock %}

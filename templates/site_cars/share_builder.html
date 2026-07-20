@@ -34,6 +34,36 @@
                 <input type="hidden" name="refs" id="sb-refs">
                 <input type="text" name="title" placeholder="عنوان المجموعة (اختياري)" maxlength="120"
                        class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm mb-3">
+
+                <details class="mb-3 border border-gray-200 rounded-xl">
+                    <summary class="cursor-pointer select-none px-3 py-2 text-sm font-bold text-gray-700">
+                        خيارات العرض <span class="text-xs font-normal text-gray-400">(اختياري — الافتراضي: صورة، العنوان، السنة، السعر)</span>
+                    </summary>
+                    <div class="px-3 pb-3 space-y-3">
+                        <div>
+                            <div class="text-xs font-bold text-gray-500 mb-1.5">حقول إضافية تظهر لكل سيارة</div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                {% for key, label in field_choices %}
+                                <label class="flex items-center gap-1.5 text-sm">
+                                    <input type="checkbox" name="fields" value="{{ key }}" class="w-4 h-4">
+                                    <span>{{ label }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" name="gallery" class="w-4 h-4">
+                            <span>عرض عدة صور لكل سيارة</span>
+                        </label>
+                        <div>
+                            <div class="text-xs font-bold text-gray-500 mb-1">عملة العرض</div>
+                            <select name="currency" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm">
+                                <option value="">حسب اختيار الزائر (الافتراضي)</option>
+                                {% for code in share_currencies %}<option value="{{ code }}">{{ code }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </details>
                 <button type="submit" id="sb-create" disabled
                         class="w-full bg-brand bg-brand-hover text-white font-bold py-3 rounded-xl text-sm disabled:opacity-40 transition bilingual"
                         data-lang-ar="إنشاء رابط المشاركة" data-lang-en="Create share link" data-lang-es="Crear enlace" data-lang-ru="Создать ссылку">إنشاء رابط المشاركة</button>
@@ -61,6 +91,37 @@
                 {% csrf_token %}
                 <button type="submit" class="text-xs text-red-500 hover:text-red-700 px-1">✕</button>
             </form>
+
+            <details class="w-full border-t border-gray-100 pt-3 mt-1">
+                <summary class="cursor-pointer select-none text-xs font-bold text-gray-600">تخصيص العرض</summary>
+                <form method="post" action="{% url 'share_options' c.pk %}" class="mt-3 space-y-3">
+                    {% csrf_token %}
+                    <input type="text" name="title" value="{{ c.title }}" placeholder="عنوان المجموعة" maxlength="120"
+                           class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+                    <div>
+                        <div class="text-xs font-bold text-gray-500 mb-1.5">حقول إضافية</div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            {% for key, label in field_choices %}
+                            <label class="flex items-center gap-1.5 text-sm">
+                                <input type="checkbox" name="fields" value="{{ key }}" {% if key in c.opt_fields %}checked{% endif %} class="w-4 h-4">
+                                <span>{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="gallery" {% if c.opt_gallery %}checked{% endif %} class="w-4 h-4">
+                        <span>عرض عدة صور لكل سيارة</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <select name="currency" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+                            <option value="">حسب اختيار الزائر</option>
+                            {% for code in share_currencies %}<option value="{{ code }}" {% if c.opt_currency == code %}selected{% endif %}>{{ code }}</option>{% endfor %}
+                        </select>
+                        <button type="submit" class="text-xs font-bold bg-gray-800 text-white px-4 py-2 rounded-lg">حفظ</button>
+                    </div>
+                </form>
+            </details>
         </div>
         {% endfor %}
     </div>
