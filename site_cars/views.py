@@ -2819,8 +2819,8 @@ def cart_whatsapp_text(request):
     blocks = []
     for c in cards:
         blocks.append("\n".join(p for p in [
-            f"\U0001F697 {c['title']}" if c["title"] else "",
-            f"\U0001F4B0 {c['price']}" if c["price"] else "",
+            c["title"],
+            c["price"],
             c["spec"],
             c["url"],
         ] if p))
@@ -2890,7 +2890,7 @@ def _car_spec_line(car, fields):
         elif f == "engine" and car.engine:
             parts.append(str(car.engine))
     parts = [p for p in parts if p]
-    return ("📋 " + " · ".join(parts)) if parts else ""
+    return " · ".join(parts) if parts else ""
 
 
 @site_admin_required
@@ -2921,8 +2921,8 @@ def telegram_send(request):
     sent = 0
     for c in cards:
         caption = "\n".join(p for p in [
-            f"\U0001F697 <b>{_html.escape(c['title'])}</b>" if c["title"] else "",
-            f"\U0001F4B0 {_html.escape(c['price'])}" if c["price"] else "",
+            f"<b>{_html.escape(c['title'])}</b>" if c["title"] else "",
+            _html.escape(c["price"]) if c["price"] else "",
             _html.escape(c["spec"]) if c["spec"] else "",
             c["url"],
         ] if p)
