@@ -45,6 +45,7 @@
     .sc-card-url { flex: 1; min-width: 0; font-size: .68rem; font-family: monospace; direction: ltr; background: #f8f9fb; border: 1px solid #eceef2; color: #6b7280; border-radius: 8px; padding: 6px 8px; }
     .sc-card-copy { font-weight: 800; font-size: .72rem; padding: 6px 11px; border-radius: 8px; border: 0; cursor: pointer; background: #4338ca; color: #fff; white-space: nowrap; }
     .sc-card-open { font-size: .72rem; font-weight: 800; color: #6b7280; text-decoration: none; padding: 0 4px; }
+    .sc-card-wa { font-weight: 800; font-size: .8rem; padding: 6px 9px; border-radius: 8px; cursor: pointer; background: #25D366; color: #fff; border: 0; }
     .sc-card-rm { font-weight: 800; font-size: .8rem; padding: 6px 9px; border-radius: 8px; cursor: pointer; background: #fff; color: #ef4444; border: 1px solid #f1d4d4; }
 
     .sc-cart-empty { text-align: center; padding: 70px 20px; color: #9ca3af; }
@@ -200,6 +201,7 @@
                 '<div class="sc-card-foot">' +
                     '<input class="sc-card-url" readonly value="' + esc(c.url) + '" onclick="this.select()">' +
                     '<button type="button" class="sc-card-copy" data-i="' + i + '">نسخ</button>' +
+                    '<button type="button" class="sc-card-wa" data-i="' + i + '" title="إرسال هذه السيارة لواتساب">💬</button>' +
                     '<a class="sc-card-open" href="' + esc(c.url) + '" target="_blank" rel="noopener">↗</a>' +
                     '<button type="button" class="sc-card-rm" data-i="' + i + '" title="إزالة">✕</button>' +
                 '</div>' +
@@ -207,6 +209,9 @@
         }).join('');
         grid.querySelectorAll('.sc-card-copy').forEach(function (b) {
             b.addEventListener('click', function () { copy(cart[+b.dataset.i].url, b); });
+        });
+        grid.querySelectorAll('.sc-card-wa').forEach(function (b) {
+            b.addEventListener('click', function () { scWhatsAppOne(+b.dataset.i, b); });
         });
         grid.querySelectorAll('.sc-card-rm').forEach(function (b) {
             b.addEventListener('click', function () { cart.splice(+b.dataset.i, 1); save(); render(); });
@@ -355,6 +360,24 @@
             btn.textContent = (res.ok && !res.j.error) ? '✓ تم الإرسال' : '⚠️';
             setTimeout(function () { btn.textContent = old; }, 2500);
           }).catch(function () { btn.disabled = false; btn.textContent = old; });
+    };
+
+    // One car per message: WhatsApp only previews a single link per message,
+    // so sending them individually is what makes each car show its own image.
+    window.scWhatsAppOne = function (i, btn) {
+        var car = cart[i];
+        if (!car) return;
+        var old = btn.innerHTML; btn.innerHTML = '⏳'; btn.disabled = true;
+        fetch("{% url 'cart_whatsapp_text' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+            body: JSON.stringify({ cars: [car], opts: cardOpts() })
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            btn.innerHTML = old; btn.disabled = false;
+            if (!res.ok || !res.j.text) { alert('تعذّر تجهيز الرسالة.'); return; }
+            window.open('https://wa.me/?text=' + encodeURIComponent(res.j.text), '_blank', 'noopener');
+          }).catch(function () { btn.innerHTML = old; btn.disabled = false; });
     };
 
     // Same card format as Telegram, but WhatsApp links carry text only.
