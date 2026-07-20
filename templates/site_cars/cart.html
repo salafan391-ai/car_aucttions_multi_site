@@ -72,7 +72,6 @@
             <b style="color:#229ED9;"></b>
             <a href="#" onclick="if(TG.link){window.open(TG.link,'_blank','noopener');}return false;" style="color:#94a3b8; text-decoration:underline; margin-inline-start:.4rem;" class="bilingual" data-lang-ar="تغيير" data-lang-en="Change" data-lang-es="Cambiar" data-lang-ru="Сменить">تغيير</a>
         </div>
-        <button type="button" class="sc-btn" id="sc-wa-btn" style="background:#25D366;color:#fff" onclick="scWhatsApp(this)">💬 <span class="bilingual" data-lang-ar="إرسال إلى واتساب" data-lang-en="Send to WhatsApp">إرسال إلى واتساب</span></button>
         <button type="button" class="sc-btn sc-btn-ghost" onclick="scClear()"><span class="bilingual" data-lang-ar="إفراغ السلة" data-lang-en="Empty cart" data-lang-es="Vaciar" data-lang-ru="Очистить">إفراغ السلة</span></button>
     </div>
 
@@ -378,23 +377,6 @@
             if (!res.ok || !res.j.text) { alert('تعذّر تجهيز الرسالة.'); return; }
             window.open('https://wa.me/?text=' + encodeURIComponent(res.j.text), '_blank', 'noopener');
           }).catch(function () { btn.innerHTML = old; btn.disabled = false; });
-    };
-
-    // Same card format as Telegram, but WhatsApp links carry text only.
-    window.scWhatsApp = function (btn) {
-        if (!cart.length) return;
-        var old = btn.innerHTML; btn.innerHTML = '⏳'; btn.disabled = true;
-        fetch("{% url 'cart_whatsapp_text' %}", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-            body: JSON.stringify({ cars: cart, opts: cardOpts() })
-        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-          .then(function (res) {
-            btn.innerHTML = old; btn.disabled = false;
-            if (!res.ok || !res.j.text) { alert('تعذّر تجهيز الرسالة.'); return; }
-            // Open the share sheet so the user picks the recipient themselves.
-            window.open('https://wa.me/?text=' + encodeURIComponent(res.j.text), '_blank', 'noopener');
-          }).catch(function () { btn.innerHTML = old; btn.disabled = false; alert('تعذّر تجهيز الرسالة.'); });
     };
 
     function getCsrf() {
