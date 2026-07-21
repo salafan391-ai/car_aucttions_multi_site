@@ -1735,6 +1735,42 @@
 
     {% block extra_js %}{% endblock %}
 
+{% if request.user.is_staff %}
+<script>
+// Staff share buttons use the same composer as the share cart, so a car shared
+// from its detail page looks exactly like one sent from the cart — including
+// the extra fields / currency the admin picked there. Visitors are unaffected:
+// the anchor's own href already carries the standard card.
+(function () {
+    var OPTS_KEY = 'gl_share_card_opts_v1';
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest ? e.target.closest('a[data-share-url]') : null;
+        if (!a || !a.dataset.shareUrl) return;
+        e.preventDefault();
+        var opts = {};
+        try { opts = JSON.parse(localStorage.getItem(OPTS_KEY)) || {}; } catch (err) {}
+        var win = window.open('', '_blank');       // opened on the gesture, so it is not blocked
+        fetch("{% url 'cart_whatsapp_text' %}", {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({
+                cars: [{ url: a.dataset.shareUrl, priceKrw: a.getAttribute('data-wa-krw') || '' }],
+                opts: opts
+            })
+        }).then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (j) {
+            var href = (j && j.text) ? 'https://wa.me/?text=' + encodeURIComponent(j.text) : a.href;
+            if (win) { win.location = href; } else { window.open(href, '_blank', 'noopener'); }
+          }).catch(function () {
+            if (win) { win.location = a.href; } else { window.open(a.href, '_blank', 'noopener'); }
+          });
+    });
+})();
+</script>
+{% endif %}
+
+
     {% comment %}
     Dashboard help assistant, on every page for any staff account. The gate is
     user.is_staff so it matches the endpoint's @staff_required exactly — `can` is
