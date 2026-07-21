@@ -106,7 +106,13 @@
                 <div class="space-y-2 mb-3">
                     {% for item in bill.items.all %}
                     <div class="flex items-center gap-2">
-                        <span class="flex-1 text-sm text-gray-800">{{ item.title|default:item.site_car.title }}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm text-gray-800 truncate">{{ item.title|default:item.site_car.title }}</div>
+                            <input type="text" name="item_vin_{{ item.id }}" value="{{ item.vin|default:item.site_car.vin|default:'' }}"
+                                   maxlength="64" placeholder="رقم الهيكل (VIN)"
+                                   data-placeholder-ar="رقم الهيكل (VIN)" data-placeholder-en="Chassis number (VIN)"
+                                   class="mt-1 w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
                         <input type="number" name="item_price_{{ item.id }}" value="{{ item.price|floatformat:0 }}" min="0"
                                class="w-32 border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-end focus:outline-none focus:ring-2 focus:ring-blue-500">
                         {% if bill.items.all|length > 1 %}

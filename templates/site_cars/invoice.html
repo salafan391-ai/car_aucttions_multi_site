@@ -116,13 +116,17 @@
                         <td class="font-medium">{{ item.title|pretty_en|default:item.site_car.title }}</td>
                         <td class="text-gray-600">
                             {% if item.site_car %}{{ item.site_car.manufacturer }} {{ item.site_car.model }} · {{ item.site_car.year }}{% if item.site_car.color %} · {{ item.site_car.color }}{% endif %}{% if item.site_car.mileage %} · {{ item.site_car.mileage|floatformat:0 }} km{% endif %}{% endif %}
+                            {% firstof item.vin item.site_car.vin as row_vin %}
+                            {% if row_vin %}<div class="font-mono text-xs mt-0.5"><span class="bilingual" data-lang-ar="رقم الهيكل" data-lang-ru="VIN" data-lang-es="VIN" data-lang-en="VIN">رقم الهيكل</span>: {{ row_vin }}</div>{% endif %}
                         </td>
                         <td class="text-end font-mono">{{ item.price|floatformat:0|intcomma }} {{ currency_name }}</td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td class="font-medium">{{ car.title|pretty_en }}</td>
-                        <td class="text-gray-600">{{ car.manufacturer }} {{ car.model }} · {{ car.year }}</td>
+                        <td class="text-gray-600">{{ car.manufacturer }} {{ car.model }} · {{ car.year }}
+                            {% if car.vin %}<div class="font-mono text-xs mt-0.5"><span class="bilingual" data-lang-ar="رقم الهيكل" data-lang-ru="VIN" data-lang-es="VIN" data-lang-en="VIN">رقم الهيكل</span>: {{ car.vin }}</div>{% endif %}
+                        </td>
                         <td class="text-end font-mono">{{ bill.price|floatformat:0|intcomma }} {{ currency_name }}</td>
                     </tr>
                     {% endfor %}

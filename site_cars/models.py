@@ -334,6 +334,9 @@ class SiteBillItem(models.Model):
     bill = models.ForeignKey(SiteBill, on_delete=models.CASCADE, related_name='items', verbose_name="الفاتورة")
     site_car = models.ForeignKey(SiteCar, on_delete=models.SET_NULL, related_name='bill_items', null=True, blank=True, verbose_name="السيارة")
     title = models.CharField(max_length=255, blank=True, default='', verbose_name="البيان")
+    # Snapshot of the car's chassis number at billing time: an invoice is a
+    # record, so editing the car later must not rewrite an issued document.
+    vin = models.CharField(max_length=64, blank=True, default='', verbose_name="رقم الهيكل (VIN)")
     price = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="السعر")
     created_at = models.DateTimeField(auto_now_add=True)
 

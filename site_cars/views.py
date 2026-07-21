@@ -1862,7 +1862,8 @@ def invoice_new(request, pk):
             is_paid=request.POST.get('is_paid') == 'on',
         )
         # First line item (more cars can be added on the edit page).
-        SiteBillItem.objects.create(bill=bill, site_car=car, title=car.title, price=sale_price)
+        SiteBillItem.objects.create(bill=bill, site_car=car, title=car.title,
+                                    vin=car.vin or '', price=sale_price)
 
         if car.status != 'sold':
             car.status = 'sold'
@@ -1904,7 +1905,8 @@ def invoice_edit(request, pk, bill_pk):
                     item_price = int(request.POST.get('item_price') or sc.price or 0)
                 except ValueError:
                     item_price = int(sc.price or 0)
-                SiteBillItem.objects.create(bill=bill, site_car=sc, title=sc.title, price=item_price)
+                SiteBillItem.objects.create(bill=bill, site_car=sc, title=sc.title,
+                                            vin=sc.vin or '', price=item_price)
                 if sc.status != 'sold':
                     sc.status = 'sold'
                     sc.save(update_fields=['status'])
@@ -1939,15 +1941,24 @@ def invoice_edit(request, pk, bill_pk):
             except ValueError:
                 pass
 
-        # Per-item price edits (item_price_<id>).
+        # Per-item price and VIN edits (item_price_<id> / item_vin_<id>).
         for item in bill.items.all():
+            changed = []
             raw = request.POST.get(f'item_price_{item.id}')
             if raw is not None and str(raw).strip() != '':
                 try:
                     item.price = int(raw)
-                    item.save(update_fields=['price'])
+                    changed.append('price')
                 except ValueError:
                     pass
+            raw_vin = request.POST.get(f'item_vin_{item.id}')
+            if raw_vin is not None:
+                vin = raw_vin.strip().upper()[:64]
+                if vin != item.vin:
+                    item.vin = vin
+                    changed.append('vin')
+            if changed:
+                item.save(update_fields=changed)
 
         bill.buyer_name = buyer_name
         bill.buyer_id_number = request.POST.get('buyer_id_number', '').strip()
