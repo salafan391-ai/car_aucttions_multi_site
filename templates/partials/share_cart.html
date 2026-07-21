@@ -89,6 +89,8 @@ key, so it follows staff across pages, filters and themes.
         if (window.glUpdateCartBadge) window.glUpdateCartBadge();
     }
     function markCards() {
+        if (!grid || !grid.isConnected) grid = document.querySelector(CFG.grid);
+        if (!grid) return;
         grid.querySelectorAll('a[href]').forEach(function (c) {
             var u = cardUrl(c); if (u) c.classList.toggle('sc-selected', idx(u) !== -1);
         });
@@ -111,10 +113,13 @@ key, so it follows staff across pages, filters and themes.
     });
 
     // In select mode, clicking a card toggles it in the cart (no navigation).
-    grid.addEventListener('click', function (e) {
+    // Delegated on document: the grid node is replaced by every HTMX filter /
+    // pagination swap, so a listener bound to it would die after one swap.
+    document.addEventListener('click', function (e) {
         if (!mode) return;
-        var card = e.target.closest('a[href]');
-        if (!card || !grid.contains(card)) return;
+        if (!grid || !grid.isConnected) grid = document.querySelector(CFG.grid);
+        var card = e.target.closest ? e.target.closest('a[href]') : null;
+        if (!card || !grid || !grid.contains(card)) return;
         e.preventDefault(); e.stopPropagation();
         var url = cardUrl(card); if (!url) return;
         var at = idx(url);
@@ -140,6 +145,20 @@ key, so it follows staff across pages, filters and themes.
 
     window.scShareClear = function () { cart = []; save(); markCards(); refresh(); };
     load(); markCards(); refresh();
+
+    // The grid AND the toolbar that hosts the toggle both live inside the HTMX
+    // swap region, so after every filter/pagination the captured nodes are gone
+    // (that's why the share button used to vanish when filtering). Re-acquire
+    // them, re-attach the toggle, and restore the selected marks.
+    document.body.addEventListener('htmx:afterSwap', function () {
+        grid = document.querySelector(CFG.grid) || grid;
+        if (grid) grid.classList.toggle('sc-select-mode', mode);
+        var h = CFG.head ? document.querySelector(CFG.head) : null;
+        if (h && toggle.parentNode !== h) h.appendChild(toggle);
+        toggle.classList.toggle('active', mode);
+        markCards();
+        refresh();
+    });
 })();
 </script>
 {% endif %}
