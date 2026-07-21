@@ -2795,7 +2795,7 @@ def _share_cards(cars, opts):
 
         out.append({
             "url": url, "title": title, "price": price,
-            "spec": _car_spec_line(car, fields) if car is not None else "",
+            "spec_lines": _car_spec_lines(car, fields) if car is not None else [],
             "image": (c.get("image") or "").strip(), "photos": photos,
         })
     return out
@@ -2818,12 +2818,14 @@ def cart_whatsapp_text(request):
         return JsonResponse({"error": "empty"}, status=400)
     blocks = []
     for c in cards:
-        blocks.append("\n".join(p for p in [
-            c["title"],
-            c["price"],
-            c["spec"],
-            c["url"],
-        ] if p))
+        lines = []
+        if c["title"]:
+            lines.append(f"السيارة: {c['title']}")
+        if c["price"]:
+            lines.append(f"السعر: {c['price']}")
+        lines.extend(c["spec_lines"])
+        lines.append(c["url"])
+        blocks.append("\n".join(lines))
     return JsonResponse({"text": "\n\n".join(blocks), "count": len(cards)})
 
 
@@ -2867,30 +2869,29 @@ def _convert_krw(krw, code):
     return int(round(krw * rate * markup)), symbols.get(code, code)
 
 
-def _car_spec_line(car, fields):
-    """The optional 'spec' line under the price in a shared card."""
+def _car_spec_lines(car, fields):
+    """One labelled line per selected field, e.g. "الممشى: 256,541 كم"."""
     if not car or not fields:
-        return ""
+        return []
     from cars.templatetags.custom_filters import (
         translate_color, translate_fuel, translate_transmission)
-    parts = []
-    for f in fields:
-        if f == "year" and car.year:
-            parts.append(str(car.year))
-        elif f == "mileage" and car.mileage:
-            parts.append(f"{int(car.mileage):,} كم")
-        elif f == "fuel" and car.fuel:
-            parts.append(translate_fuel(car.fuel))
-        elif f == "transmission" and car.transmission:
-            parts.append(translate_transmission(car.transmission))
-        elif f == "color" and getattr(car, "color", None):
-            parts.append(translate_color(car.color.name))
-        elif f == "body" and getattr(car, "body", None):
-            parts.append(car.body.name or "")
-        elif f == "engine" and car.engine:
-            parts.append(str(car.engine))
-    parts = [p for p in parts if p]
-    return " · ".join(parts) if parts else ""
+    values = {}
+    if car.year:
+        values["year"] = str(car.year)
+    if car.mileage:
+        values["mileage"] = f"{int(car.mileage):,} كم"
+    if car.fuel:
+        values["fuel"] = translate_fuel(car.fuel)
+    if car.transmission:
+        values["transmission"] = translate_transmission(car.transmission)
+    if getattr(car, "color", None):
+        values["color"] = translate_color(car.color.name)
+    if getattr(car, "body", None) and car.body.name:
+        values["body"] = car.body.name
+    if car.engine:
+        values["engine"] = str(car.engine)
+    return [f"{_SHARE_LABELS[f]}: {values[f]}"
+            for f in fields if f in values and values[f]]
 
 
 @site_admin_required
@@ -2920,12 +2921,14 @@ def telegram_send(request):
 
     sent = 0
     for c in cards:
-        caption = "\n".join(p for p in [
-            f"<b>{_html.escape(c['title'])}</b>" if c["title"] else "",
-            _html.escape(c["price"]) if c["price"] else "",
-            _html.escape(c["spec"]) if c["spec"] else "",
-            c["url"],
-        ] if p)
+        lines = []
+        if c["title"]:
+            lines.append(f"السيارة: <b>{_html.escape(c['title'])}</b>")
+        if c["price"]:
+            lines.append(f"السعر: {_html.escape(c['price'])}")
+        lines += [_html.escape(x) for x in c["spec_lines"]]
+        lines.append(c["url"])
+        caption = "\n".join(lines)
         # An album when the admin asked for it and we have several photos;
         # otherwise a single photo, falling back to text so nothing is dropped.
         if len(c["photos"]) > 1:
