@@ -218,3 +218,33 @@ def whatsapp_site_car_message(context, car, site_name=""):
         message_parts.append(f"شكراً - {site_name}")
 
     return quote("\n".join(message_parts), safe='')
+
+@register.simple_tag(takes_context=True)
+def share_card_text(context, car):
+    """URL-encoded share text for a single car, in the same labelled layout the
+    share cart sends to WhatsApp/Telegram:
+
+        السيارة: <composed title>
+        السعر: <price>
+        <link>
+
+    The title is always rebuilt from structured fields (never the raw DB title)
+    and __PRICE__ is filled client-side with the visitor's selected currency.
+    """
+    from django.urls import reverse
+    from cars.templatetags.custom_filters import share_car_title
+
+    lines = []
+    title = share_car_title(car)
+    if title:
+        lines.append(f"السيارة: {title}")
+    if getattr(car, "price", None):
+        lines.append("السعر: __PRICE__")
+    try:
+        request = context.get("request")
+        path = (reverse("car_detail", kwargs={"slug": car.slug}) if car.slug
+                else reverse("car_detail_by_pk", kwargs={"pk": car.pk}))
+        lines.append(request.build_absolute_uri(path) if request else path)
+    except Exception:
+        pass
+    return quote("\n".join(lines), safe="")

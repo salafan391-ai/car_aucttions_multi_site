@@ -99,7 +99,7 @@
             </nav>
             <!-- Share icons -->
             <div class="flex items-center gap-2 shrink-0">
-                <a href="https://wa.me/?text={{ car.year }}%20-%20{{ car.manufacturer.name }}%20{{ car.model.name }}%20-%20__PRICE__%0A{{ request.scheme }}://{{ request.get_host }}{% url 'car_detail' car.slug %}"
+                <a href="https://wa.me/?text={% share_card_text car %}"
                    data-wa-krw="{{ car.price }}"
                    target="_blank" title="مشاركة عبر واتساب" data-title-ar="مشاركة عبر واتساب" data-title-ru="Поделиться через WhatsApp" data-title-es="Compartir vía WhatsApp" data-title-en="Share via WhatsApp"
                    class="w-8 h-8 rounded-full bg-green-500/80 hover:bg-green-500 flex items-center justify-center text-white transition">
