@@ -1388,7 +1388,6 @@ window.glApplySort = function(value) {
             }
         }
         node.classList.toggle('is-open');
-        if (node.classList.contains('gl-mfr-node')) 
     }
 
     // When a manufacturer is selected, focus on it — hide the other
@@ -1434,7 +1433,6 @@ window.glApplySort = function(value) {
             var node = cb.closest('.gl-engine-node');
             if (node && !node.classList.contains('is-open')) toggleNode(node);
         }
-        if (cb.classList.contains('gl-mfr-cb')) 
     });
 })();
 </script>
