@@ -1334,7 +1334,7 @@ window.glApplySort = function(value) {
         var willOpen = !node.classList.contains('is-open');
         if (willOpen && node.dataset.loaded === 'false') {
             if (node.classList.contains('gl-mfr-node')) {
-                loadModels(node).then(function() { node.classList.add('is-open'); });
+                loadModels(node).then(function() { node.classList.add('is-open'); updateMfrVisibility(); });
                 return;
             }
             if (node.classList.contains('gl-model-node')) {
@@ -1351,23 +1351,24 @@ window.glApplySort = function(value) {
             }
         }
         node.classList.toggle('is-open');
+        if (node.classList.contains('gl-mfr-node')) updateMfrVisibility();
     }
 
     // When a manufacturer is selected, focus on it — hide the other
     // manufacturers until it's deselected (any other checked ones stay shown).
     function updateMfrVisibility() {
+        // Focus is tied to the expand arrow, not the checkbox: when a
+        // manufacturer is expanded, hide the rest; collapsing brings them back.
         var nodes = root.querySelectorAll('.gl-mfr-node');
-        var anyChecked = false;
+        var openNode = null;
         nodes.forEach(function(n) {
-            var cb = n.querySelector('.gl-mfr-cb');
-            if (cb && cb.checked) anyChecked = true;
+            if (n.classList.contains('is-open')) openNode = n;
         });
         nodes.forEach(function(n) {
-            var cb = n.querySelector('.gl-mfr-cb');
-            n.style.display = (anyChecked && !(cb && cb.checked)) ? 'none' : '';
+            n.style.display = (openNode && n !== openNode) ? 'none' : '';
         });
     }
-    updateMfrVisibility();  // honor any pre-selected manufacturer on load
+    updateMfrVisibility();  // honor any pre-expanded manufacturer on load
 
     root.addEventListener('click', function(e) {
         var btn = e.target.closest('.gl-list-tree-toggle');
@@ -1386,9 +1387,6 @@ window.glApplySort = function(value) {
             node.querySelectorAll('.gl-list-tree-cb').forEach(function(c) {
                 if (c !== cb) c.checked = false;
             });
-        } else if (cb.classList.contains('gl-mfr-cb')) {
-            var node = cb.closest('.gl-mfr-node');
-            if (node && !node.classList.contains('is-open')) toggleNode(node);
         } else if (cb.classList.contains('gl-model-cb')) {
             var node = cb.closest('.gl-model-node');
             if (node && !node.classList.contains('is-open')) toggleNode(node);
