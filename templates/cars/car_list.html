@@ -509,6 +509,18 @@
     white-space:normal; overflow-wrap:anywhere; word-break:break-word; line-height:1.25;
 }
 .df-tree-count { color:#9ca3af; font-size:.65rem; font-weight:400; flex-shrink:0; }
+/* Visible checkbox on the manufacturer/model tree rows */
+.df-tree-label::before {
+    content:""; width:16px; height:16px; flex-shrink:0;
+    border:2px solid #9ca3af; border-radius:5px; background:#fff; transition:.14s;
+}
+.df-tree-row:hover .df-tree-label::before { border-color:var(--color-primary, #2563eb); }
+.df-tree-row:has(.df-tree-cb:checked) > .df-tree-label::before {
+    border-color:var(--color-primary, #2563eb);
+    background:var(--color-primary, #2563eb) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>") center / 11px 11px no-repeat;
+}
+[data-car-theme="dark"] .df-tree-label::before,
+[data-car-theme="bold"] .df-tree-label::before { border-color:rgba(255,255,255,.35); background:transparent; }
 .df-tree-row:has(.df-tree-cb:checked) {
     background:rgba(37,99,235,.08);
     border-color:var(--color-primary, #2563eb);
@@ -622,11 +634,24 @@
 }
 #filter-form .peer,
 #filter-form-sidebar .peer {
-    position: static; width: 1rem; height: 1rem; margin: 0; padding: 0;
-    overflow: visible; clip: auto; white-space: normal; flex: 0 0 auto;
-    accent-color: var(--color-primary, #2563eb); cursor: pointer;
-    -webkit-appearance: auto; appearance: auto;
+    position: absolute; width: 1px; height: 1px; margin: 0; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); opacity: 0; pointer-events: none;
 }
+/* Custom visible checkbox on each flat option row (native box is unreliable on dark themes) */
+#filter-form .peer + span::before,
+#filter-form-sidebar .peer + span::before {
+    content: ""; width: 16px; height: 16px; flex-shrink: 0;
+    border: 2px solid #9ca3af; border-radius: 5px; background: #fff; transition: .14s;
+}
+#filter-form .peer:checked + span::before,
+#filter-form-sidebar .peer:checked + span::before {
+    border-color: var(--color-primary, #2563eb);
+    background: var(--color-primary, #2563eb) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>") center / 11px 11px no-repeat;
+}
+[data-car-theme="dark"] #filter-form .peer + span::before,
+[data-car-theme="dark"] #filter-form-sidebar .peer + span::before,
+[data-car-theme="bold"] #filter-form .peer + span::before,
+[data-car-theme="bold"] #filter-form-sidebar .peer + span::before { border-color: rgba(255,255,255,.4); background: transparent; }
 #filter-form .peer + span,
 #filter-form-sidebar .peer + span,
 #filter-form .peer + span:hover,
