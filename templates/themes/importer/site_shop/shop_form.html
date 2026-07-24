@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+{% block title %}{% if item %}تعديل{% else %}إضافة{% endif %} {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mod-shop-form-page { padding: 3rem 1.25rem 4rem; max-width: 760px; margin: 0 auto; }
+
+    .mod-shop-back {
+        color: var(--mod-muted); text-decoration: none;
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        font-size: 0.82rem; font-weight: 700;
+        padding: 0.45rem 1rem; border-radius: 999px;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        margin-bottom: 1.5rem;
+        transition: color .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .mod-shop-back:hover { color: var(--mod-brand); border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); box-shadow: var(--mod-shadow); }
+    .mod-shop-back svg { width: 1rem; height: 1rem; }
+
+    .mod-shop-form-head { margin-bottom: 1.75rem; }
+    .mod-shop-form-head h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); margin: 0.75rem 0 0; }
+
+    .mod-shop-form-card {
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow);
+        padding: 2rem 2.25rem;
+    }
+    @media (max-width: 600px) {
+        .mod-shop-form-page { padding: 2rem 1rem 3rem; }
+        .mod-shop-form-card { padding: 1.5rem 1.25rem; }
+    }
+    .mod-shop-field { margin-bottom: 1.1rem; }
+    .mod-shop-form-grid { display: grid; gap: 1rem; }
+    .mod-shop-form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .mod-shop-form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .mod-shop-form-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 600px) {
+        .mod-shop-form-grid.cols-2,
+        .mod-shop-form-grid.cols-3 { grid-template-columns: 1fr; }
+        .mod-shop-form-grid .span-2 { grid-column: span 1; }
+    }
+
+    .mod-shop-form-card label {
+        display: block; color: var(--mod-ink);
+        font-size: 0.82rem; font-weight: 700; margin-bottom: 0.4rem;
+    }
+    .mod-shop-form-card input[type="text"],
+    .mod-shop-form-card input[type="number"],
+    .mod-shop-form-card select,
+    .mod-shop-form-card textarea {
+        width: 100%; box-sizing: border-box;
+        background: var(--mod-surface-2);
+        border: 1px solid var(--mod-line); border-radius: var(--mod-radius-sm);
+        color: var(--mod-ink); padding: 0.8rem 1rem;
+        font-size: 0.95rem; font-family: inherit;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .mod-shop-form-card input:focus,
+    .mod-shop-form-card select:focus,
+    .mod-shop-form-card textarea:focus {
+        outline: none; background: var(--mod-surface);
+        border-color: var(--mod-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 18%, transparent);
+    }
+    .mod-shop-form-card textarea { min-height: 120px; resize: vertical; }
+    .mod-shop-form-card select option { background: var(--mod-surface); color: var(--mod-ink); }
+
+    .mod-shop-checks { display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: flex-end; padding-bottom: 0.4rem; }
+    .mod-shop-checkbox {
+        display: inline-flex; align-items: center; gap: 0.55rem; cursor: pointer;
+        color: var(--mod-ink); font-size: 0.88rem; font-weight: 600;
+    }
+    .mod-shop-checkbox input {
+        appearance: none; -webkit-appearance: none;
+        width: 1.2rem; height: 1.2rem; border-radius: 6px;
+        border: 1px solid var(--mod-line); background: var(--mod-surface-2);
+        cursor: pointer; position: relative; flex-shrink: 0; margin: 0;
+        transition: background .18s ease, border-color .18s ease;
+    }
+    .mod-shop-checkbox input:checked { border-color: transparent; background: var(--mod-grad); }
+    .mod-shop-checkbox input:checked::after {
+        content: ''; position: absolute; left: 6px; top: 2px;
+        width: 4px; height: 9px; border: solid var(--mod-surface);
+        border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+
+    .mod-shop-file {
+        display: block; width: 100%; box-sizing: border-box;
+        padding: 0.9rem 1rem;
+        background: var(--mod-surface-2);
+        border: 1.5px dashed var(--mod-line); border-radius: var(--mod-radius-sm);
+        color: var(--mod-muted);
+        font-size: 0.85rem; font-family: inherit; cursor: pointer;
+        transition: border-color .18s ease, background .18s ease, color .18s ease;
+    }
+    .mod-shop-file:hover { border-color: var(--mod-brand); color: var(--mod-brand); background: color-mix(in srgb, var(--mod-brand) 6%, var(--mod-surface)); }
+    .mod-shop-file::-webkit-file-upload-button,
+    .mod-shop-file::file-selector-button {
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: 999px; color: var(--mod-brand);
+        padding: 0.4rem 0.95rem; font-size: 0.78rem; font-weight: 700;
+        cursor: pointer; margin-inline-end: 0.85rem; font-family: inherit;
+        transition: border-color .18s ease, background .18s ease;
+    }
+    .mod-shop-current-img {
+        margin-bottom: 0.75rem; display: inline-block; border: 1px solid var(--mod-line); padding: 4px;
+        border-radius: var(--mod-radius-sm); background: var(--mod-surface-2);
+    }
+    .mod-shop-current-img img { display: block; width: 6rem; height: 6rem; object-fit: cover; border-radius: calc(var(--mod-radius-sm) - 4px); }
+
+    .mod-shop-gallery-current { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .mod-shop-gallery-item {
+        position: relative; border: 1px solid var(--mod-line); padding: 4px;
+        border-radius: var(--mod-radius-sm); background: var(--mod-surface-2);
+        transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .mod-shop-gallery-item:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); box-shadow: var(--mod-shadow); }
+    .mod-shop-gallery-item img { display: block; width: 5rem; height: 5rem; object-fit: cover; border-radius: calc(var(--mod-radius-sm) - 4px); }
+    .mod-shop-gallery-remove {
+        position: absolute; top: -0.5rem; inset-inline-end: -0.5rem;
+        width: 1.5rem; height: 1.5rem; border-radius: 999px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        color: var(--mod-danger); cursor: pointer; padding: 0;
+        font-size: 0.9rem; line-height: 1; box-shadow: var(--mod-shadow);
+        transition: border-color .18s ease;
+    }
+    .mod-shop-gallery-remove:hover { border-color: var(--mod-danger); }
+
+    .mod-shop-submit {
+        margin-top: 0.5rem; padding: 0.95rem 2rem;
+        background: var(--mod-grad); color: #fff;
+        border: none; border-radius: 999px; cursor: pointer;
+        font-size: 0.95rem; font-weight: 800; font-family: inherit;
+        box-shadow: 0 12px 28px -10px color-mix(in srgb, var(--mod-brand) 60%, transparent);
+        transition: filter .18s ease, transform .18s ease;
+    }
+    .mod-shop-submit:hover { filter: brightness(1.06); transform: translateY(-1px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="mod-shop-form-page">
+    <a href="{% url 'shop_manage' %}?kind={{ kind }}" class="mod-shop-back">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        <span class="bilingual" data-lang-ar="رجوع" data-lang-en="Back">رجوع</span>
+    </a>
+
+    <div class="mod-shop-form-head">
+        <div class="mod-eyebrow">{{ kind_label_ar }}</div>
+        <h1>
+            <span class="bilingual" data-lang-ar="{% if item %}تعديل{% else %}إضافة{% endif %}" data-lang-en="{% if item %}Edit{% else %}Add{% endif %}">{% if item %}تعديل{% else %}إضافة{% endif %}</span>
+            — {{ kind_label_ar }}
+        </h1>
+    </div>
+
+    {% if messages %}{% for m in messages %}<div class="mod-alert {% if m.tags == 'error' %}error{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+    <form method="post" enctype="multipart/form-data" action="{% if item %}{% url 'shop_edit' item.pk %}{% else %}{% url 'shop_add' %}?kind={{ kind }}{% endif %}" class="mod-shop-form-card">
+        {% csrf_token %}
+        <input type="hidden" name="kind" value="{{ kind }}">
+
+        <div class="mod-shop-field">
+            <label class="bilingual" data-lang-ar="الاسم *" data-lang-en="Name *">الاسم *</label>
+            <input type="text" name="name" required value="{{ item.name|default:'' }}">
+        </div>
+
+        <div class="mod-shop-form-grid cols-2">
+            <div>
+                <label class="bilingual" data-lang-ar="الفئة" data-lang-en="Category">الفئة</label>
+                <input type="text" name="category" list="mod-cat-options" value="{{ item.category|default:'' }}">
+                <datalist id="mod-cat-options">{% for c in category_options %}<option value="{{ c }}">{% endfor %}</datalist>
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</label>
+                <input type="text" name="brand" value="{{ item.brand|default:'' }}">
+            </div>
+        </div>
+
+        <div class="mod-shop-form-grid cols-2" style="margin-top:1rem;">
+            <div>
+                <label class="bilingual" data-lang-ar="رقم القطعة" data-lang-en="Part number (MPN/OEM)">رقم القطعة</label>
+                <input type="text" name="part_number" value="{{ item.part_number|default:'' }}" placeholder="MPN / OEM"
+                       data-placeholder-ar="MPN / OEM" data-placeholder-en="MPN / OEM">
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="المصدر" data-lang-en="Origin">المصدر</label>
+                <select name="origin">
+                    <option value="" {% if not item.origin %}selected{% endif %} class="bilingual" data-lang-ar="غير محدد" data-lang-en="Unspecified">غير محدد</option>
+                    <option value="genuine" {% if item.origin == 'genuine' %}selected{% endif %} class="bilingual" data-lang-ar="أصلي / وكالة" data-lang-en="Genuine / OEM">أصلي / وكالة</option>
+                    <option value="aftermarket" {% if item.origin == 'aftermarket' %}selected{% endif %} class="bilingual" data-lang-ar="تجاري / بديل" data-lang-en="Aftermarket">تجاري / بديل</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mod-shop-form-grid cols-3" style="margin-top:1rem;">
+            <div class="span-2">
+                <label class="bilingual" data-lang-ar="السعر" data-lang-en="Price">السعر</label>
+                <input type="number" name="price" value="{{ item.price|default:'' }}" placeholder="اتركه فارغاً = عند الطلب"
+                       data-placeholder-ar="اتركه فارغاً = عند الطلب" data-placeholder-en="Leave empty = on request">
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="العملة" data-lang-en="Currency">العملة</label>
+                <select name="currency">
+                    <option value="SAR" {% if item.currency == 'SAR' or not item %}selected{% endif %}>SAR</option>
+                    <option value="AED" {% if item.currency == 'AED' %}selected{% endif %}>AED</option>
+                    <option value="USD" {% if item.currency == 'USD' %}selected{% endif %}>USD</option>
+                    <option value="EUR" {% if item.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                    <option value="KRW" {% if item.currency == 'KRW' %}selected{% endif %}>KRW</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mod-shop-form-grid cols-2" style="margin-top:1rem;">
+            <div>
+                <label class="bilingual" data-lang-ar="الحالة" data-lang-en="Condition">الحالة</label>
+                <select name="condition">
+                    <option value="new" {% if item.condition == 'new' or not item %}selected{% endif %} class="bilingual" data-lang-ar="جديد" data-lang-en="New">جديد</option>
+                    <option value="used" {% if item.condition == 'used' %}selected{% endif %} class="bilingual" data-lang-ar="مستعمل" data-lang-en="Used">مستعمل</option>
+                </select>
+            </div>
+            <div class="mod-shop-checks">
+                <label class="mod-shop-checkbox"><input type="checkbox" name="in_stock" {% if item.in_stock or not item %}checked{% endif %}> <span class="bilingual" data-lang-ar="متوفر" data-lang-en="In stock">متوفر</span></label>
+                <label class="mod-shop-checkbox"><input type="checkbox" name="is_featured" {% if item.is_featured %}checked{% endif %}> <span class="bilingual" data-lang-ar="مميّز" data-lang-en="Featured">مميّز</span></label>
+            </div>
+        </div>
+
+        <div class="mod-shop-form-grid cols-2" style="margin-top:1rem;">
+            <div>
+                <label class="bilingual" data-lang-ar="يناسب الماركة" data-lang-en="Fits make">يناسب الماركة</label>
+                <input type="text" name="fits_make" value="{{ item.fits_make|default:'' }}">
+            </div>
+            <div>
+                <label class="bilingual" data-lang-ar="يناسب الموديل" data-lang-en="Fits model">يناسب الموديل</label>
+                <input type="text" name="fits_model" value="{{ item.fits_model|default:'' }}">
+            </div>
+        </div>
+
+        <div class="mod-shop-field" style="margin-top:1rem;">
+            <label class="bilingual" data-lang-ar="الوصف" data-lang-en="Description">الوصف</label>
+            <textarea name="description" rows="4">{{ item.description|default:'' }}</textarea>
+        </div>
+
+        <div class="mod-shop-field">
+            <label class="bilingual" data-lang-ar="الصورة الرئيسية" data-lang-en="Main image">الصورة الرئيسية</label>
+            {% if item.image %}<div class="mod-shop-current-img"><img src="{{ item.image.url }}" alt=""></div>{% endif %}
+            <input type="file" name="image" accept="image/*" class="mod-shop-file">
+        </div>
+
+        <div class="mod-shop-field">
+            <label class="bilingual" data-lang-ar="صور إضافية (معرض)" data-lang-en="Gallery images">صور إضافية (معرض)</label>
+            {% if item.images.all %}
+            <div class="mod-shop-gallery-current">
+                {% for g in item.images.all %}
+                <div class="mod-shop-gallery-item">
+                    <img src="{{ g.image.url }}" alt="">
+                    <button type="button" onclick="document.getElementById('del-img-{{ g.pk }}').submit()" class="mod-shop-gallery-remove" aria-label="Remove">×</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <input type="file" name="gallery" accept="image/*" multiple class="mod-shop-file">
+        </div>
+
+        <button type="submit" class="mod-shop-submit bilingual" data-lang-ar="حفظ" data-lang-en="Save">حفظ</button>
+    </form>
+
+    {% if item %}
+    {% for g in item.images.all %}
+    <form id="del-img-{{ g.pk }}" method="post" action="{% url 'shop_delete_image' item.pk g.pk %}" style="display:none;">{% csrf_token %}</form>
+    {% endfor %}
+    {% endif %}
+</section>
+{% endblock %}

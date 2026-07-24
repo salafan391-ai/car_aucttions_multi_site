@@ -146,7 +146,25 @@ def tenant_branding(request):
     except Exception:
         _sales_people = []
 
+    # Nav availability — only surface the "Our Cars" / "Sold" / "Damaged" dropdown
+    # items when the tenant actually has such cars. Cheap EXISTS, cached with the
+    # branding dict. own_qs = admin-uploaded stock; damaged_qs = HappyCar imports.
+    _nav_has_ours = False
+    _nav_has_sold = False
+    _nav_has_damaged = False
+    try:
+        from site_cars.models import own_qs, damaged_qs, exclude_expired_damaged
+        _own = own_qs()
+        _nav_has_ours = _own.exclude(status='sold').exists()
+        _nav_has_sold = _own.filter(status='sold').exists()
+        _nav_has_damaged = exclude_expired_damaged(damaged_qs()).exists()
+    except Exception:
+        pass
+
     result = {
+        "nav_has_ours": _nav_has_ours,
+        "nav_has_sold": _nav_has_sold,
+        "nav_has_damaged": _nav_has_damaged,
         "site_name": tenant.name or "سيارات",
         "site_logo": _file_url(getattr(tenant, 'logo', None)),
         "site_favicon": _file_url(getattr(tenant, 'favicon', None)),

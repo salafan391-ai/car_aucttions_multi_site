@@ -1,0 +1,45 @@
+{% load custom_filters humanize %}
+<section class="mod-section-block">
+    <h2>
+        <small class="bilingual" data-lang-ar="القيمة" data-lang-en="Value" data-lang-es="Valor" data-lang-ru="Ценность">القيمة</small>
+        <span class="bilingual" data-lang-ar="مقارنة بسعر السيارة الجديدة" data-lang-en="Compared to New" data-lang-es="Comparado con uno nuevo" data-lang-ru="Сравнение с новым">مقارنة بسعر السيارة الجديدة</span>
+    </h2>
+    <div class="mod-pc-hero">
+        <div class="mod-pc-hero-lbl bilingual" data-lang-ar="أوفر من سعر الجديد بـ" data-lang-en="Cheaper than new by" data-lang-es="Más barato que nuevo en" data-lang-ru="Дешевле нового на">أوفر من سعر الجديد بـ</div>
+        <div class="mod-pc-hero-val" data-price-krw="{{ price_comparison.savings_krw }}">{{ price_comparison.savings_krw|floatformat:0 }} <span class="cur">₩</span></div>
+    </div>
+    <div class="mod-pc-bar-wrap">
+        <div class="mod-pc-bar">
+            <div class="mod-pc-bar-fill" style="width:{{ price_comparison.percent }}%;">
+                <span>{{ price_comparison.percent }}%</span>
+            </div>
+        </div>
+        <div class="mod-pc-bar-legend">
+            <span class="now bilingual" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Actual" data-lang-ru="Текущая">السعر الحالي</span>
+            <span class="new bilingual" data-lang-ar="سعر الجديد" data-lang-en="New" data-lang-es="Nuevo" data-lang-ru="Новый">سعر الجديد</span>
+        </div>
+    </div>
+    <div class="mod-pc-cols">
+        <div class="mod-pc-col">
+            <div class="mod-pc-col-lbl bilingual" data-lang-ar="سعر الجديد" data-lang-en="New price" data-lang-es="Precio nuevo" data-lang-ru="Цена нового">سعر الجديد</div>
+            <div class="mod-pc-col-val" data-price-krw="{{ price_comparison.newcar_krw }}">{{ price_comparison.newcar_krw|floatformat:0 }} ₩</div>
+        </div>
+        <div class="mod-pc-col current">
+            <div class="mod-pc-col-lbl bilingual" data-lang-ar="السعر الحالي" data-lang-en="Current" data-lang-es="Precio actual" data-lang-ru="Текущая цена">السعر الحالي</div>
+            <div class="mod-pc-col-val"><span data-price-krw="{{ price_comparison.current_krw }}">{{ price_comparison.current_krw|floatformat:0 }}</span> ₩ ({{ price_comparison.percent }}%)</div>
+        </div>
+    </div>
+    <div class="mod-pc-rows">
+        <div class="mod-pc-row"><span class="k bilingual" data-lang-ar="السعر الأساسي للفئة" data-lang-en="Grade base price" data-lang-es="Precio base" data-lang-ru="Базовая цена">السعر الأساسي للفئة</span><span data-price-krw="{{ price_comparison.grade_base_krw }}">{{ price_comparison.grade_base_krw|floatformat:0 }} ₩</span></div>
+        {% if price_comparison.options %}
+        <div class="mod-pc-row"><span class="k"><span class="bilingual" data-lang-ar="الخيارات المختارة" data-lang-en="Selected options" data-lang-es="Opciones" data-lang-ru="Опции">الخيارات المختارة</span> ({{ price_comparison.options|length }})</span><span data-price-krw="{{ price_comparison.options_total_krw }}">{{ price_comparison.options_total_krw|floatformat:0 }} ₩</span></div>
+        {% for o in price_comparison.options %}
+        <div class="mod-pc-row sub"><span class="bilingual" data-lang-ar="{{ o.name|oc:'ar' }}" data-lang-en="{{ o.name|oc:'en' }}" data-lang-es="{{ o.name|oc:'es' }}" data-lang-ru="{{ o.name|oc:'ru' }}">{{ o.name|oc:'ar' }}</span><span data-price-krw="{{ o.price_krw }}">{{ o.price_krw|floatformat:0 }} ₩</span></div>
+        {% endfor %}
+        {% endif %}
+    </div>
+    <div class="mod-pc-notes">
+        <div class="bilingual" data-lang-ar="• قد يختلف سعر الجديد عن سعر التسليم الفعلي." data-lang-en="• The new-car price may differ from the actual delivery price." data-lang-es="• El precio nuevo puede diferir del precio real." data-lang-ru="• Цена нового может отличаться от фактической.">• قد يختلف سعر الجديد عن سعر التسليم الفعلي.</div>
+        <div class="bilingual" data-lang-ar="• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة." data-lang-en="• Based on the grade plus selected options." data-lang-es="• Basado en la versión y las opciones." data-lang-ru="• Рассчитано по комплектации и опциям.">• يُحتسب سعر الجديد بناءً على الفئة والخيارات المختارة.</div>
+    </div>
+</section>

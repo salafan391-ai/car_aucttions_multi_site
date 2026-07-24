@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}حذف — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mod-shop-del-page { padding: 4rem 1.25rem; min-height: 60vh; display: flex; align-items: center; justify-content: center; }
+    .mod-shop-del-card {
+        width: 100%; max-width: 440px; text-align: center;
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: calc(var(--mod-radius) + 6px);
+        box-shadow: var(--mod-shadow-lg);
+        padding: 2.5rem 2.25rem;
+    }
+    .mod-shop-del-icon {
+        width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 999px;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--mod-danger);
+        background: color-mix(in srgb, var(--mod-danger) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--mod-danger) 30%, transparent);
+    }
+    .mod-shop-del-icon svg { width: 1.75rem; height: 1.75rem; }
+    .mod-shop-del-card h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+    .mod-shop-del-name { color: var(--mod-muted); font-size: 0.9rem; margin: 0 0 1.75rem; font-weight: 600; }
+    .mod-shop-del-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .mod-shop-del-cancel {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: 0.75rem 1.5rem; border-radius: 999px;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        color: var(--mod-muted); text-decoration: none;
+        font-size: 0.88rem; font-weight: 700;
+        transition: color .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .mod-shop-del-cancel:hover { color: var(--mod-brand); border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); box-shadow: var(--mod-shadow); }
+    .mod-shop-del-confirm {
+        padding: 0.75rem 1.75rem; border-radius: 999px; border: none; cursor: pointer;
+        color: #fff; background: var(--mod-danger);
+        font-size: 0.88rem; font-weight: 800; font-family: inherit;
+        box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--mod-danger) 60%, transparent);
+        transition: filter .18s ease, transform .18s ease;
+    }
+    .mod-shop-del-confirm:hover { filter: brightness(1.06); transform: translateY(-1px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="mod-shop-del-page">
+    <div class="mod-shop-del-card">
+        <div class="mod-shop-del-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <h1 class="bilingual" data-lang-ar="تأكيد الحذف" data-lang-en="Confirm delete">تأكيد الحذف</h1>
+        <p class="mod-shop-del-name">{{ item.name }}</p>
+        <div class="mod-shop-del-actions">
+            <a href="{% url 'shop_manage' %}?kind={{ kind }}" class="mod-shop-del-cancel bilingual" data-lang-ar="إلغاء" data-lang-en="Cancel">إلغاء</a>
+            <form method="post" action="{% url 'shop_delete' item.pk %}">{% csrf_token %}
+                <button type="submit" class="mod-shop-del-confirm bilingual" data-lang-ar="حذف" data-lang-en="Delete">حذف</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

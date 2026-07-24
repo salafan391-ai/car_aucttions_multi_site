@@ -1,0 +1,567 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}{% if is_auctions_tab %}سيارات مصدومة{% else %}سياراتنا{% endif %} — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mod-page { padding-block: 3rem 4rem; }
+
+    /* ── Hero ── */
+    .mod-hero {
+        display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-end;
+        margin-bottom: 1.75rem;
+    }
+    .mod-hero-text { flex: 1; min-width: 260px; }
+    .mod-hero h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); margin: 0.65rem 0 0.4rem; }
+    .mod-hero p { color: var(--mod-muted); font-size: 0.95rem; margin: 0; line-height: 1.6; }
+
+    /* ── Source tabs (segmented pill) ── */
+    .mod-tabs-row {
+        display: inline-flex; gap: 0.3rem; flex-wrap: wrap;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: 999px; padding: 0.3rem;
+        box-shadow: var(--mod-shadow);
+        margin-bottom: 1rem;
+    }
+    .mod-tab {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.55rem 1.2rem; border-radius: 999px;
+        color: var(--mod-muted); text-decoration: none;
+        font-size: 0.86rem; font-weight: 700;
+        transition: all 0.2s ease;
+    }
+    .mod-tab:hover { color: var(--mod-ink); background: var(--mod-surface-2); }
+    .mod-tab.active { background: var(--mod-grad); color: #fff; }
+    .mod-tab-count {
+        background: color-mix(in srgb, var(--mod-brand) 12%, transparent);
+        color: var(--mod-brand);
+        padding: 0.08rem 0.55rem; border-radius: 999px;
+        font-size: 0.72rem; font-weight: 700;
+    }
+    .mod-tab.active .mod-tab-count { background: color-mix(in srgb, #fff 22%, transparent); color: #fff; }
+
+    /* ── Status pills ── */
+    .mod-status-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .mod-status-tab {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        padding: 0.45rem 1.05rem; border-radius: 999px; text-decoration: none;
+        font-size: 0.8rem; font-weight: 600;
+        border: 1px solid var(--mod-line); color: var(--mod-muted);
+        background: var(--mod-surface);
+        transition: all 0.2s ease;
+    }
+    .mod-status-tab:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+    .mod-status-tab.active {
+        background: color-mix(in srgb, var(--mod-brand) 10%, var(--mod-surface));
+        border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line));
+        color: var(--mod-brand);
+    }
+
+    /* ── Filter form ── */
+    .mod-filter-form {
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow);
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 2rem;
+    }
+    .mod-filter-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .mod-filter-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 700px) { .mod-filter-grid .span-2 { grid-column: span 1; } }
+    .mod-filter-form label {
+        display: block; color: var(--mod-ink);
+        font-size: 0.76rem; font-weight: 700;
+        margin-bottom: 0.4rem;
+    }
+    .mod-filter-form input,
+    .mod-filter-form select {
+        width: 100%; box-sizing: border-box;
+        background: var(--mod-surface-2); border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius-sm);
+        color: var(--mod-ink); padding: 0.62rem 0.85rem;
+        font-size: 0.88rem; font-family: inherit;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .mod-filter-form input:focus,
+    .mod-filter-form select:focus {
+        outline: none; background: var(--mod-surface);
+        border-color: var(--mod-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 16%, transparent);
+    }
+    .mod-filter-form select option { background: var(--mod-surface); color: var(--mod-ink); }
+    .mod-filter-actions {
+        display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;
+        padding-top: 1.25rem; margin-top: 1.25rem; border-top: 1px solid var(--mod-line);
+    }
+    .mod-filter-count { margin-inline-start: auto; color: var(--mod-muted); font-size: 0.82rem; font-weight: 600; }
+
+    /* ── Car grid ── */
+    .mod-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .mod-grid .mod-card { overflow: hidden; position: relative; }
+    .mod-card-link { display: block; text-decoration: none; color: inherit; }
+    .mod-card-img { aspect-ratio: 4/3; background: var(--mod-surface-2); overflow: hidden; position: relative; }
+    .mod-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.45s cubic-bezier(.22,1,.36,1); }
+    .mod-card:hover .mod-card-img img { transform: scale(1.05); }
+    .mod-card-img-placeholder {
+        width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        color: color-mix(in srgb, var(--mod-brand) 30%, transparent);
+    }
+    .mod-card-img-placeholder svg { width: 4rem; height: 4rem; }
+
+    /* Overlays on photos use fixed scrims (constant photo backdrop). */
+    .mod-card-badge {
+        position: absolute; top: 0.75rem;
+        padding: 0.28rem 0.7rem; border-radius: 999px;
+        font-size: 0.68rem; font-weight: 700;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.35);
+        color: var(--mod-brand);
+    }
+    .mod-card-badge.featured { color: var(--mod-brand); inset-inline-end: 0.75rem; }
+    .mod-card-badge.status { inset-inline-start: 0.75rem; }
+    .mod-card-badge.status-sold { color: var(--mod-danger); }
+    .mod-card-badge.status-pending { color: var(--mod-warn); }
+    .mod-card-badge.status-damaged { color: var(--mod-warn); }
+    .mod-card-badge.accidents {
+        top: 0.75rem; inset-inline: 0; margin: 0 auto;
+        width: max-content; color: var(--mod-danger);
+    }
+    .mod-card-photos {
+        position: absolute; bottom: 0.75rem; inset-inline-end: 0.75rem;
+        background: rgba(0, 0, 0, 0.55); color: #fff;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        padding: 0.22rem 0.6rem; border-radius: 999px;
+        font-size: 0.68rem; font-weight: 600;
+    }
+
+    .mod-card-body { padding: 1.15rem 1.3rem 1.3rem; }
+    .mod-card-make { color: var(--mod-brand); font-size: 0.72rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .mod-card-name {
+        color: var(--mod-ink); font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em;
+        margin: 0 0 0.35rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .mod-card-reg { color: var(--mod-muted); font-size: 0.74rem; margin-bottom: 0.65rem; }
+    .mod-card-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.85rem; }
+    .mod-card-price {
+        color: var(--mod-brand); font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em;
+        padding-top: 0.75rem; border-top: 1px solid var(--mod-line);
+    }
+    .mod-card-foot { color: var(--mod-muted); font-size: 0.76rem; margin-top: 0.5rem; line-height: 1.55; }
+
+    /* ── Admin actions on the card ── */
+    .mod-card-admin {
+        position: absolute; top: 0.75rem; inset-inline-start: 0.75rem;
+        display: flex; gap: 0.4rem; opacity: 0; z-index: 5;
+        transition: opacity 0.25s ease;
+    }
+    .mod-card:hover .mod-card-admin,
+    .mod-card:focus-within .mod-card-admin { opacity: 1; }
+    .mod-card-admin a, .mod-card-admin .disabled-action {
+        width: 2.1rem; height: 2.1rem; border-radius: 999px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(255, 255, 255, 0.92); color: rgba(13, 21, 38, 0.72);
+        text-decoration: none;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.35);
+        transition: all 0.2s ease;
+    }
+    .mod-card-admin a:hover { color: var(--mod-brand); }
+    .mod-card-admin a.danger:hover { color: var(--mod-danger); }
+    .mod-card-admin .disabled-action { opacity: 0.45; cursor: not-allowed; }
+    .mod-card-admin svg { width: 0.95rem; height: 0.95rem; }
+
+    /* ── Status quick-toggle ── */
+    .mod-card-status-btn {
+        position: absolute; bottom: 4.25rem; inset-inline-start: 0.75rem;
+        z-index: 5; opacity: 0; transition: opacity 0.25s ease;
+    }
+    .mod-card:hover .mod-card-status-btn,
+    .mod-card:focus-within .mod-card-status-btn { opacity: 1; }
+    .mod-card-status-toggle {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.35rem 0.8rem; border-radius: 999px;
+        background: rgba(255, 255, 255, 0.92); border: 0;
+        color: rgba(13, 21, 38, 0.78); cursor: pointer; font-family: inherit;
+        font-size: 0.7rem; font-weight: 700;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.35);
+        transition: color 0.2s ease;
+    }
+    .mod-card-status-toggle:hover { color: var(--mod-brand); }
+    .mod-card-status-toggle .dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; flex-shrink: 0; }
+    .dot.dot-available { background: var(--mod-ok); }
+    .dot.dot-pending { background: var(--mod-warn); }
+    .dot.dot-sold { background: var(--mod-danger); }
+    .mod-card-status-toggle svg { width: 0.6rem; height: 0.6rem; }
+    .mod-status-menu {
+        position: absolute; bottom: calc(100% + 0.4rem); inset-inline-start: 0;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius-sm); box-shadow: var(--mod-shadow-lg);
+        min-width: 10rem; padding: 0.3rem; overflow: hidden;
+    }
+    .mod-status-menu.hidden { display: none; }
+    .mod-status-menu button {
+        width: 100%; text-align: start;
+        padding: 0.55rem 0.85rem; border-radius: 9px;
+        background: transparent; border: 0; cursor: pointer;
+        font-family: inherit; font-size: 0.78rem; font-weight: 600;
+        color: var(--mod-muted);
+        display: flex; align-items: center; gap: 0.5rem;
+        transition: all 0.15s ease;
+    }
+    .mod-status-menu button:hover {
+        background: color-mix(in srgb, var(--mod-brand) 9%, transparent);
+        color: var(--mod-brand);
+    }
+    .mod-status-menu button.is-current { color: var(--mod-brand); font-weight: 800; }
+
+    /* ── Empty state ── */
+    .mod-empty {
+        text-align: center; color: var(--mod-muted);
+        padding: 5rem 2rem; grid-column: 1/-1;
+        border: 1px dashed var(--mod-line);
+        border-radius: var(--mod-radius);
+        background: var(--mod-surface);
+        font-size: 0.95rem;
+    }
+    .mod-empty svg { width: 3rem; height: 3rem; margin: 0 auto 1rem; color: color-mix(in srgb, var(--mod-brand) 35%, transparent); }
+
+    /* ── Pagination ── */
+    .mod-pager { display: flex; justify-content: center; gap: 0.4rem; margin-top: 3rem; flex-wrap: wrap; }
+    .mod-pager a, .mod-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 0.85rem;
+        border: 1px solid var(--mod-line); border-radius: 999px;
+        background: var(--mod-surface);
+        color: var(--mod-muted);
+        text-decoration: none; font-size: 0.84rem; font-weight: 600;
+        transition: all 0.18s ease;
+    }
+    .mod-pager a:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+    .mod-pager .current { background: var(--mod-grad); color: #fff; border-color: transparent; }
+    .mod-pager .disabled { opacity: 0.45; }
+    .mod-pager-info {
+        width: 100%; text-align: center; color: var(--mod-muted);
+        font-size: 0.76rem; font-weight: 600; margin-top: 0.5rem;
+        border: none; background: transparent; height: auto;
+    }
+
+    @media (max-width: 600px) {
+        .mod-page { padding-block: 2rem 3rem; }
+        .mod-tab { padding: 0.5rem 0.9rem; font-size: 0.78rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="mod-page">
+    <div class="mod-wrap">
+        <div class="mod-hero">
+            <div class="mod-hero-text">
+                <div class="mod-eyebrow bilingual" data-lang-ar="مجموعتنا" data-lang-en="Our Collection" data-lang-es="Nuestra colección" data-lang-ru="Наша коллекция">مجموعتنا</div>
+                <h1>
+                    {% if is_auctions_tab %}
+                    <span class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-en="Damaged Cars" data-lang-es="Coches dañados" data-lang-ru="Поврежденные авто">سيارات مصدومة</span>
+                    {% else %}
+                    <span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</span>
+                    {% endif %}
+                </h1>
+                <p>
+                    {% if is_auctions_tab %}
+                    <span class="bilingual" data-lang-ar="سيارات مستوردة بحالة ضرر من كوريا" data-lang-en="Cars imported from Korea in damaged condition" data-lang-es="Coches importados de Corea en estado dañado" data-lang-ru="Авто, импортированные из Кореи в поврежденном состоянии">سيارات مستوردة بحالة ضرر من كوريا</span>
+                    {% else %}
+                    <span class="bilingual" data-lang-ar="سيارات للبيع المباشر من {{ site_name|default:'موقعنا' }}" data-lang-en="Direct-sale cars from {{ site_name|default:'our site' }}" data-lang-es="Coches en venta directa de {{ site_name|default:'nuestro sitio' }}" data-lang-ru="Авто в прямой продаже от {{ site_name|default:'нашего сайта' }}">سيارات للبيع المباشر من {{ site_name|default:"موقعنا" }}</span>
+                    {% endif %}
+                </p>
+            </div>
+            {% if user.is_staff and not is_auctions_tab %}
+            <a href="{% url 'site_car_add' %}" class="mod-btn mod-btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir coche" data-lang-ru="Добавить авто">أضف سيارة</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="mod-tabs-row">
+            <a href="?source=mine" class="mod-tab {% if not is_auctions_tab %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто">سياراتنا</span>
+                <span class="mod-tab-count">{{ mine_total }}</span>
+            </a>
+            <a href="?source=auctions" class="mod-tab {% if is_auctions_tab %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-en="Damaged" data-lang-es="Dañados" data-lang-ru="Повреждённые">سيارات مصدومة</span>
+                <span class="mod-tab-count">{{ auctions_total }}</span>
+            </a>
+        </div>
+
+        <div class="mod-status-row">
+            <a href="?source={{ current_source }}&status=active" class="mod-status-tab {% if current_status == 'active' or not current_status %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="المتاحة" data-lang-en="Available" data-lang-es="Disponibles" data-lang-ru="Доступные">المتاحة</span>
+                · {{ active_count }}
+            </a>
+            <a href="?source={{ current_source }}&status=sold" class="mod-status-tab {% if current_status == 'sold' %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="المباعة" data-lang-en="Sold" data-lang-es="Vendidos" data-lang-ru="Проданные">المباعة</span>
+                · {{ sold_count }}
+            </a>
+            <a href="?source={{ current_source }}&status=all" class="mod-status-tab {% if current_status == 'all' %}active{% endif %}">
+                <span class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</span>
+            </a>
+        </div>
+
+        <form method="get" class="mod-filter-form">
+            <input type="hidden" name="source" value="{{ current_source }}">
+            <input type="hidden" name="status" value="{{ current_status }}">
+            <div class="mod-filter-grid">
+                <div class="span-2">
+                    <label class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>
+                    <input type="text" name="q" value="{{ filter_q }}"
+                        placeholder="—"
+                        data-placeholder-ar="العنوان أو الموديل أو رقم التسجيل"
+                        data-placeholder-en="Title, model, or registration"
+                        data-placeholder-es="Título, modelo o matrícula"
+                        data-placeholder-ru="Название, модель или рег. номер">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الشركة" data-lang-en="Make" data-lang-es="Marca" data-lang-ru="Марка">الشركة</label>
+                    <select name="make">
+                        <option value="" class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All makes" data-lang-es="Todas" data-lang-ru="Все марки">كل الماركات</option>
+                        {% for m in makes %}
+                        <option value="{{ m }}" {% if filter_make == m %}selected{% endif %}>{{ m|pretty_en }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">الوقود</label>
+                    <select name="fuel">
+                        <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</option>
+                        {% for f in fuels %}
+                        <option value="{{ f }}" {% if filter_fuel == f %}selected{% endif %}>{{ f|pretty_en }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Коробка">ناقل الحركة</label>
+                    <select name="transmission">
+                        <option value="" class="bilingual" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todos" data-lang-ru="Все">الكل</option>
+                        {% for t in transmissions %}
+                        <option value="{{ t }}" {% if filter_transmission == t %}selected{% endif %}>{{ t|pretty_en }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="الترتيب" data-lang-en="Sort" data-lang-es="Orden" data-lang-ru="Сорт.">الترتيب</label>
+                    <select name="sort">
+                        <option value="-created_at" {% if current_sort == "-created_at" %}selected{% endif %} class="bilingual" data-lang-ar="الأحدث" data-lang-en="Newest" data-lang-es="Recientes" data-lang-ru="Новые">الأحدث</option>
+                        <option value="-year" {% if current_sort == "-year" %}selected{% endif %} class="bilingual" data-lang-ar="السنة (الأحدث)" data-lang-en="Year ↓" data-lang-es="Año ↓" data-lang-ru="Год ↓">السنة (الأحدث)</option>
+                        <option value="year" {% if current_sort == "year" %}selected{% endif %} class="bilingual" data-lang-ar="السنة (الأقدم)" data-lang-en="Year ↑" data-lang-es="Año ↑" data-lang-ru="Год ↑">السنة (الأقدم)</option>
+                        <option value="price" {% if current_sort == "price" %}selected{% endif %} class="bilingual" data-lang-ar="السعر (الأقل)" data-lang-en="Price ↑" data-lang-es="Precio ↑" data-lang-ru="Цена ↑">السعر (الأقل)</option>
+                        <option value="-price" {% if current_sort == "-price" %}selected{% endif %} class="bilingual" data-lang-ar="السعر (الأعلى)" data-lang-en="Price ↓" data-lang-es="Precio ↓" data-lang-ru="Цена ↓">السعر (الأعلى)</option>
+                        <option value="mileage" {% if current_sort == "mileage" %}selected{% endif %} class="bilingual" data-lang-ar="الكم (الأقل)" data-lang-en="Km ↑" data-lang-es="Km ↑" data-lang-ru="Км ↑">الكم (الأقل)</option>
+                        <option value="-mileage" {% if current_sort == "-mileage" %}selected{% endif %} class="bilingual" data-lang-ar="الكم (الأعلى)" data-lang-en="Km ↓" data-lang-es="Km ↓" data-lang-ru="Км ↓">الكم (الأعلى)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="من سنة" data-lang-en="From Year" data-lang-es="Desde" data-lang-ru="С года">من سنة</label>
+                    <input type="number" name="year_min" value="{{ filter_year_min }}" min="1990" max="2030">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="إلى سنة" data-lang-en="To Year" data-lang-es="Hasta" data-lang-ru="По год">إلى سنة</label>
+                    <input type="number" name="year_max" value="{{ filter_year_max }}" min="1990" max="2030">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="أقل سعر (₩)" data-lang-en="Min ₩" data-lang-es="Mín ₩" data-lang-ru="Мин ₩">أقل سعر (₩)</label>
+                    <input type="number" name="price_min" value="{{ filter_price_min }}" min="0">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="أعلى سعر (₩)" data-lang-en="Max ₩" data-lang-es="Máx ₩" data-lang-ru="Макс ₩">أعلى سعر (₩)</label>
+                    <input type="number" name="price_max" value="{{ filter_price_max }}" min="0">
+                </div>
+                <div>
+                    <label class="bilingual" data-lang-ar="أقصى كم" data-lang-en="Max Km" data-lang-es="Km máx" data-lang-ru="Макс км">أقصى كم</label>
+                    <input type="number" name="km_max" value="{{ filter_km_max }}" min="0">
+                </div>
+            </div>
+            <div class="mod-filter-actions">
+                <button type="submit" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تطبيق" data-lang-en="Apply" data-lang-es="Aplicar" data-lang-ru="Применить">تطبيق</button>
+                <a href="?source={{ current_source }}&status={{ current_status }}" class="mod-btn bilingual" data-lang-ar="إعادة تعيين" data-lang-en="Reset" data-lang-es="Restablecer" data-lang-ru="Сбросить">إعادة تعيين</a>
+                <span class="mod-filter-count bilingual" data-lang-ar="{{ paginator.count }} نتيجة" data-lang-en="{{ paginator.count }} Results" data-lang-es="{{ paginator.count }} Resultados" data-lang-ru="{{ paginator.count }} результ.">{{ paginator.count }} نتيجة</span>
+            </div>
+        </form>
+
+        <div class="mod-grid">
+            {% for car in site_cars %}
+            <div class="mod-card">
+                <a href="{% url 'site_car_detail' car.id %}" class="mod-card-link">
+                    <div class="mod-card-img car-img-wm">
+                        {% if car.image %}
+                            <img src="{{ car.image.url }}" alt="{{ car.title }}" loading="lazy">
+                        {% elif car.gallery.first %}
+                            <img src="{{ car.gallery.first.display_url }}" alt="{{ car.title }}" loading="lazy">
+                        {% elif car.external_image_url %}
+                            <img src="{{ car.external_image_url }}" alt="{{ car.title }}" loading="lazy">
+                        {% else %}
+                            <div class="mod-card-img-placeholder">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </div>
+                        {% endif %}
+
+                        {% if car.is_featured %}
+                        <div class="mod-card-badge featured bilingual" data-lang-ar="مميزة" data-lang-en="Featured" data-lang-es="Destacada" data-lang-ru="Избранное">مميزة</div>
+                        {% endif %}
+
+                        {% if car.status == 'sold' %}
+                        <div class="mod-card-badge status status-sold bilingual" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продано">تم البيع</div>
+                        {% elif car.source_status == '폐차' %}
+                        <div class="mod-card-badge status status-damaged bilingual" data-lang-ar="تشليح" data-lang-en="Scrap" data-lang-es="Desguace" data-lang-ru="Утиль">تشليح</div>
+                        {% elif car.source_status == '구제' %}
+                        <div class="mod-card-badge status status-damaged bilingual" data-lang-ar="مصدوم" data-lang-en="Damaged" data-lang-es="Dañado" data-lang-ru="Повреждён">مصدوم</div>
+                        {% elif car.source_status == '부품' %}
+                        <div class="mod-card-badge status status-damaged bilingual" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Piezas" data-lang-ru="Запчасти">قطع غيار</div>
+                        {% elif car.status == 'pending' %}
+                        <div class="mod-card-badge status status-pending bilingual" data-lang-ar="قيد الانتظار" data-lang-en="Pending" data-lang-es="Pendiente" data-lang-ru="В ожидании">قيد الانتظار</div>
+                        {% endif %}
+
+                        {% if car.claims_count > 0 %}
+                        <div class="mod-card-badge accidents">
+                            ⚠ <span class="bilingual" data-lang-ar="{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}" data-lang-en="{% if car.claims_count == 1 %}1 accident{% else %}{{ car.claims_count }} accidents{% endif %}" data-lang-es="{% if car.claims_count == 1 %}1 accidente{% else %}{{ car.claims_count }} accidentes{% endif %}" data-lang-ru="{% if car.claims_count == 1 %}1 авария{% else %}{{ car.claims_count }} аварий{% endif %}">{% if car.claims_count == 1 %}حادث واحد{% else %}{{ car.claims_count }} حوادث{% endif %}</span>
+                        </div>
+                        {% endif %}
+
+                        {% with photo_count=car.gallery.count %}
+                        {% if photo_count %}
+                        <div class="mod-card-photos bilingual" data-lang-ar="{{ photo_count }} صور" data-lang-en="{{ photo_count }} photos" data-lang-es="{{ photo_count }} fotos" data-lang-ru="{{ photo_count }} фото">{{ photo_count }} صور</div>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                    <div class="mod-card-body">
+                        {% if car.manufacturer %}
+                        <div class="mod-card-make bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-ru="{{ car.manufacturer|translate_manufacturer:'ru' }}" data-lang-es="{{ car.manufacturer|translate_manufacturer:'es' }}" data-lang-en="{{ car.manufacturer|pretty_en }}">{{ car.manufacturer|translate_manufacturer }}</div>
+                        {% endif %}
+                        <div class="mod-card-name">{% card_title car %}</div>
+                        {% if car.registration_no %}<div class="mod-card-reg">#{{ car.registration_no }}</div>{% endif %}
+                        <div class="mod-card-meta">
+                            {% if car.year %}<span class="mod-chip">{{ car.year }}</span>{% endif %}
+                            {% if car.transmission %}<span class="mod-chip bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|pretty_en }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>{% endif %}
+                            {% if car.fuel %}<span class="mod-chip bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|pretty_en }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>{% endif %}
+                            {% if car.mileage %}<span class="mod-chip bilingual" data-lang-ar="{{ car.mileage|floatformat:0 }} كم" data-lang-en="{{ car.mileage|floatformat:0 }} km" data-lang-es="{{ car.mileage|floatformat:0 }} km" data-lang-ru="{{ car.mileage|floatformat:0 }} км">{{ car.mileage|floatformat:0 }} كم</span>{% endif %}
+                            {% if car.engine_cc %}<span class="mod-chip">{{ car.engine_cc|floatformat:"0g" }}cc</span>{% endif %}
+                        </div>
+                        <div class="mod-card-price" data-price-src="{{ car.price }}" data-cur-src="{{ car.currency|default:'KRW' }}">{{ car.price|floatformat:0 }} {{ car.currency|default:'KRW' }}</div>
+                        {% if car.location or car.auction_end %}
+                        <div class="mod-card-foot">
+                            {% if car.location %}<div class="bilingual" data-lang-ar="📍 {{ car.location|translate_location }}" data-lang-ru="📍 {{ car.location|translate_location:'ru' }}" data-lang-es="📍 {{ car.location|translate_location:'es' }}" data-lang-en="📍 {{ car.location|translate_location:'en' }}">📍 {{ car.location|translate_location }}</div>{% endif %}
+                            {% if car.auction_end %}<div>🕐 <span class="auction-countdown" data-auction-date="{{ car.auction_end|date:'c' }}">{{ car.auction_end|date:"H:i Y.m.d" }}</span></div>{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+
+                {% if user.is_staff and not is_auctions_tab %}
+                <div class="mod-card-admin">
+                    <a href="{% url 'site_car_edit' car.id %}" title="Edit" aria-label="Edit">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                    {% if car.status != 'sold' %}
+                    <a href="{% url 'site_car_delete' car.id %}" class="danger" title="Delete" aria-label="Delete">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </a>
+                    {% else %}
+                    <span class="disabled-action" title="Sold cars cannot be deleted">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="mod-card-status-btn">
+                    <button type="button" class="mod-card-status-toggle" onclick="modToggleStatusMenu(this, event)">
+                        <span class="dot {% if car.status == 'available' %}dot-available{% elif car.status == 'pending' %}dot-pending{% else %}dot-sold{% endif %}"></span>
+                        <span>{{ car.get_status_display }}</span>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div class="mod-status-menu hidden">
+                        <form action="{% url 'site_car_change_status' car.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" name="status" value="available" class="{% if car.status == 'available' %}is-current{% endif %}">
+                                <span class="dot dot-available"></span>
+                                <span class="bilingual" data-lang-ar="متاح" data-lang-en="Available" data-lang-es="Disponible" data-lang-ru="Доступно">متاح</span>
+                            </button>
+                            <button type="submit" name="status" value="pending" class="{% if car.status == 'pending' %}is-current{% endif %}">
+                                <span class="dot dot-pending"></span>
+                                <span class="bilingual" data-lang-ar="قيد الانتظار" data-lang-en="Pending" data-lang-es="Pendiente" data-lang-ru="В ожидании">قيد الانتظار</span>
+                            </button>
+                            <button type="submit" name="status" value="sold" class="{% if car.status == 'sold' %}is-current{% endif %}">
+                                <span class="dot dot-sold"></span>
+                                <span class="bilingual" data-lang-ar="تم البيع" data-lang-en="Sold" data-lang-es="Vendido" data-lang-ru="Продано">تم البيع</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="mod-empty">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <p class="bilingual" data-lang-ar="لا توجد سيارات معروضة حالياً" data-lang-en="No cars currently listed" data-lang-es="No hay coches en la lista actualmente" data-lang-ru="Нет выставленных авто">لا توجد سيارات معروضة حالياً</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if paginator.num_pages > 1 %}
+        <nav class="mod-pager" aria-label="Pagination">
+            {% if page_obj.has_previous %}
+            <a href="?{{ qs_base }}&page=1">«</a>
+            <a href="?{{ qs_base }}&page={{ page_obj.previous_page_number }}" class="bilingual" data-lang-ar="السابق" data-lang-en="Prev" data-lang-es="Ant" data-lang-ru="Назад">السابق</a>
+            {% else %}
+            <span class="disabled">«</span>
+            {% endif %}
+            {% for p in paginator.page_range %}
+                {% if p == page_obj.number %}
+                <span class="current">{{ p }}</span>
+                {% elif p == 1 or p == paginator.num_pages or p|add:"-2" <= page_obj.number and p|add:"2" >= page_obj.number %}
+                <a href="?{{ qs_base }}&page={{ p }}">{{ p }}</a>
+                {% elif p == 2 or p|add:"1" == paginator.num_pages %}
+                <span class="disabled">…</span>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <a href="?{{ qs_base }}&page={{ page_obj.next_page_number }}" class="bilingual" data-lang-ar="التالي" data-lang-en="Next" data-lang-es="Sig" data-lang-ru="Далее">التالي</a>
+            <a href="?{{ qs_base }}&page={{ paginator.num_pages }}">»</a>
+            {% else %}
+            <span class="disabled">»</span>
+            {% endif %}
+            <span class="mod-pager-info bilingual"
+                  data-lang-ar="صفحة {{ page_obj.number }} من {{ paginator.num_pages }} · {{ paginator.count }} نتيجة"
+                  data-lang-en="Page {{ page_obj.number }} of {{ paginator.num_pages }} · {{ paginator.count }} results"
+                  data-lang-es="Página {{ page_obj.number }} de {{ paginator.num_pages }} · {{ paginator.count }} resultados"
+                  data-lang-ru="Стр. {{ page_obj.number }} из {{ paginator.num_pages }} · {{ paginator.count }} результатов">
+                صفحة {{ page_obj.number }} من {{ paginator.num_pages }} · {{ paginator.count }} نتيجة
+            </span>
+        </nav>
+        {% endif %}
+    </div>
+</section>
+
+{% if user.is_staff %}
+<script>
+function modToggleStatusMenu(btn, ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    document.querySelectorAll('.mod-status-menu').forEach(function(menu) {
+        if (menu !== btn.nextElementSibling) menu.classList.add('hidden');
+    });
+    btn.nextElementSibling.classList.toggle('hidden');
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.mod-status-menu') && !e.target.closest('.mod-card-status-toggle')) {
+        document.querySelectorAll('.mod-status-menu').forEach(function(menu) { menu.classList.add('hidden'); });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

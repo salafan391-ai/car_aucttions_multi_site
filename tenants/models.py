@@ -203,6 +203,7 @@ class Tenant(TenantMixin):
         ('desert', '🏜️ Desert (صحراوي — رملي دافئ)'),
         ('market', '🛒 Market (سوق — بحث أولاً، أخضر)'),
         ('export', '🚢 Export (تصدير — ليلي محيطي، ذهبي/تركوازي)'),
+        ('importer', '🔥 Importer (المستورد — برتقالي/إردوازي داكن)'),
     ]
     # Full theme catalog for the dashboard picker (key, label, description).
     # The super admin chooses per tenant which of these their admins see.
@@ -212,6 +213,7 @@ class Tenant(TenantMixin):
         ('modern',    'عصري', 'كوري حديث وأنيق'),
         ('market',    'سوق', 'واجهة بحث أولاً بطابع سوق السيارات — أخضر'),
         ('export',    'تصدير', 'ليلي محيطي بطابع رحلة الشحن من بوسان — ذهبي وتركوازي'),
+        ('importer',  'المستورد', 'هوية معرض السيارات المستوردة — برتقالي جريء وواجهة إردوازية داكنة'),
         ('luxury',    'فخم', 'ذهبي/أسود بطابع راقٍ'),
         ('general',   'جنرال', 'أبيض كحلي/أحمر'),
         ('editorial', 'مجلة', 'أبيض/أسود/قرمزي بطابع صحفي'),

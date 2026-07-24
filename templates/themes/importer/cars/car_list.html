@@ -1,0 +1,1709 @@
+{% extends "base.html" %}
+{% load static humanize custom_filters %}
+
+{% block title %}Collection — {{ site_name|default:"سيارات" }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ── K-Modern car list ── */
+    .mod-listing-page { padding: 2.5rem 0 4.5rem; }
+
+    .mod-listing-toolbar {
+        display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+        padding-bottom: 1.75rem; border-bottom: 1px solid var(--mod-line); margin-bottom: 2rem;
+    }
+    .mod-listing-head { flex: 1; min-width: 280px; font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 800; letter-spacing: -0.02em; color: var(--mod-ink); }
+    .mod-listing-head small { display: block; color: var(--mod-brand); font-size: 0.78rem; font-weight: 800; letter-spacing: 0; margin-bottom: 0.35rem; }
+
+    /* Pill segmented control */
+    .mod-seg {
+        display: inline-flex; gap: 0.25rem; padding: 0.3rem;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: 999px; box-shadow: var(--mod-shadow);
+    }
+    .mod-seg-tab {
+        padding: 0.5rem 1.1rem; border-radius: 999px;
+        color: var(--mod-muted); text-decoration: none;
+        font-size: 0.84rem; font-weight: 700; white-space: nowrap;
+        transition: color .18s ease, background .18s ease;
+    }
+    .mod-seg-tab:hover { color: var(--mod-ink); background: var(--mod-surface-2); }
+    .mod-seg-tab.active { background: var(--mod-grad); color: #fff; }
+
+    .mod-listing-layout { display: grid; gap: 2rem; grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+    @media (max-width: 900px) { .mod-listing-layout { grid-template-columns: 1fr; } }
+
+    /* ── Filter sidebar (clean card) ── */
+    .mod-filter-side {
+        padding: 1.5rem; align-self: start; position: sticky; top: 4.5rem;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius); box-shadow: var(--mod-shadow);
+    }
+    .mod-filter-title { font-size: 1rem; font-weight: 800; color: var(--mod-ink); margin: 0 0 1.25rem; }
+
+    .mod-ffield { margin-bottom: 1.25rem; }
+    .mod-flabel {
+        display: block; color: var(--mod-ink);
+        font-size: 0.82rem; font-weight: 700; margin-bottom: 0.45rem;
+    }
+    .mod-finput, .mod-fselect {
+        width: 100%; background: var(--mod-surface-2);
+        border: 1px solid var(--mod-line); border-radius: var(--mod-radius-sm);
+        color: var(--mod-ink); padding: 0.65rem 0.85rem; font-size: 0.9rem;
+        font-family: inherit; box-sizing: border-box;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .mod-finput:focus, .mod-fselect:focus {
+        outline: none; background: var(--mod-surface);
+        border-color: var(--mod-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 18%, transparent);
+    }
+    .mod-fselect option { background: var(--mod-surface); color: var(--mod-ink); }
+    .mod-range-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .mod-filter-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .mod-filter-actions .mod-btn { flex: 1; }
+
+    /* Desktop only: pin the sidebar action bar as a footer so Apply/Reset stay
+       visible while only the filter list scrolls. Scoped to >900px so the
+       off-canvas mobile drawer (handled in the max-width:900px block) is
+       unaffected and keeps its full-height slide-in behaviour. */
+    @media (min-width: 901px) {
+        .mod-filter-side {
+            display: flex; flex-direction: column;
+            max-height: calc(100vh - 2rem);
+        }
+        .mod-filter-scroll {
+            flex: 1 1 auto; min-height: 0; overflow-y: auto;
+        }
+        .mod-filter-actions {
+            flex: 0 0 auto;
+            margin-top: 0;
+            padding-top: 0.85rem;
+            background: var(--mod-surface);
+            border-top: 1px solid var(--mod-line);
+        }
+    }
+
+    /* Multi-select chip checkboxes */
+    .mod-fchips {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+        gap: 0.4rem;
+        padding: 0.15rem;
+    }
+    .mod-fchips > label { display: flex; position: relative; }
+    .mod-fchip-input {
+        position: absolute; top: 0; inset-inline-start: 0;
+        width: 1px; height: 1px;
+        margin: 0; padding: 0; border: 0;
+        overflow: hidden; clip: rect(0 0 0 0);
+        opacity: 0; pointer-events: none;
+    }
+    .mod-fchip {
+        flex: 1; display: inline-flex; align-items: center; justify-content: space-between;
+        gap: 0.4rem;
+        padding: 0.5rem 0.7rem; border: 1px solid var(--mod-line); border-radius: 999px;
+        background: var(--mod-surface-2);
+        color: var(--mod-muted); cursor: pointer; user-select: none;
+        font-size: 0.78rem; font-weight: 600;
+        transition: all 0.15s ease; text-align: start;
+    }
+    .mod-fchip:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+    .mod-fchip-input:checked + .mod-fchip {
+        background: color-mix(in srgb, var(--mod-brand) 12%, transparent);
+        border-color: var(--mod-brand);
+        color: var(--mod-brand); font-weight: 700;
+    }
+    .mod-fchip-input:focus-visible + .mod-fchip { outline: 2px solid var(--mod-brand); outline-offset: 2px; }
+
+    /* Collapsible filter section header */
+    .mod-ffield-toggle .mod-flabel {
+        display: flex; align-items: center; justify-content: space-between;
+        cursor: pointer; user-select: none;
+        margin-bottom: 0.6rem; gap: 0.5rem;
+        transition: color 0.2s ease;
+    }
+    .mod-ffield-toggle .mod-flabel:hover { color: var(--mod-brand); }
+    .mod-ffield-toggle .mod-toggle-icon {
+        width: 0.8rem; height: 0.8rem;
+        transition: transform 0.25s ease;
+        flex-shrink: 0; color: var(--mod-muted);
+    }
+    .mod-ffield-toggle.is-collapsed .mod-toggle-icon { transform: rotate(-90deg); }
+    [dir="rtl"] .mod-ffield-toggle.is-collapsed .mod-toggle-icon { transform: rotate(90deg); }
+    .mod-ffield-toggle.is-collapsed > .mod-fchips,
+    .mod-ffield-toggle.is-collapsed > .mod-tree,
+    .mod-ffield-toggle.is-collapsed > .mod-range-pair { display: none; }
+
+    /* Hierarchical tree filter: make → model → badge */
+    .mod-tree { display: flex; flex-direction: column; gap: 0.3rem; max-height: 360px; overflow-y: auto; padding: 0.15rem; }
+    .mod-tree::-webkit-scrollbar { width: 6px; }
+    .mod-tree::-webkit-scrollbar-track { background: transparent; }
+    .mod-tree::-webkit-scrollbar-thumb { background: var(--mod-line); border-radius: 3px; }
+    .mod-tree-node { display: flex; flex-direction: column; }
+    .mod-tree-row {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.45rem 0.6rem; border: 1px solid var(--mod-line); border-radius: 10px;
+        color: var(--mod-muted); transition: all 0.15s ease;
+        background: transparent; position: relative;
+    }
+    .mod-tree-row:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-ink); }
+    .mod-tree-label {
+        flex: 1; display: flex; align-items: center; gap: 0.4rem;
+        cursor: pointer; user-select: none; min-width: 0; margin: 0;
+        position: relative;
+    }
+    .mod-tree-cb {
+        position: absolute; top: 0; inset-inline-start: 0;
+        width: 1px; height: 1px;
+        margin: 0; padding: 0; border: 0;
+        overflow: hidden; clip: rect(0 0 0 0);
+        opacity: 0; pointer-events: none;
+    }
+    .mod-tree-name {
+        font-size: 0.82rem; font-weight: 600;
+        white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.25;
+    }
+    .mod-tree-row:has(.mod-tree-cb:checked) {
+        background: color-mix(in srgb, var(--mod-brand) 10%, transparent);
+        border-color: var(--mod-brand);
+        color: var(--mod-brand);
+    }
+    .mod-tree-toggle {
+        width: 1.5rem; height: 1.5rem; flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--mod-line); background: var(--mod-surface);
+        color: var(--mod-muted); cursor: pointer;
+        transition: all 0.2s ease; padding: 0; font-family: inherit;
+        border-radius: 999px;
+    }
+    .mod-tree-toggle:hover { border-color: var(--mod-brand); color: var(--mod-brand); background: color-mix(in srgb, var(--mod-brand) 10%, transparent); }
+    .mod-tree-toggle svg { width: 0.7rem; height: 0.7rem; transition: transform 0.25s ease; pointer-events: none; }
+    .mod-tree-node.is-open > .mod-tree-row .mod-tree-toggle { background: var(--mod-grad); color: #fff; border-color: transparent; }
+    .mod-tree-node.is-open > .mod-tree-row .mod-tree-toggle svg { transform: rotate(180deg); }
+    .mod-tree-children {
+        display: none;
+        padding: 0.3rem 0 0.1rem; padding-inline-start: 0.7rem;
+        border-inline-start: 1px dashed var(--mod-line);
+        margin-inline-start: 0.45rem; margin-top: 0.25rem;
+        flex-direction: column; gap: 0.3rem;
+    }
+    .mod-tree-node.is-open > .mod-tree-children { display: flex; }
+    .mod-tree-hint { color: var(--mod-muted); font-size: 0.72rem; padding: 0.35rem 0.55rem; opacity: 0.75; }
+
+    /* Active filter chips above results */
+    .mod-active-filters { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.25rem; }
+    .mod-active-chip {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.4rem 0.8rem; border-radius: 999px;
+        background: color-mix(in srgb, var(--mod-brand) 9%, transparent);
+        border: 1px solid color-mix(in srgb, var(--mod-brand) 25%, transparent);
+        color: var(--mod-brand); font-size: 0.78rem; font-weight: 600;
+        text-decoration: none; transition: all 0.15s ease;
+    }
+    .mod-active-chip:hover { background: color-mix(in srgb, var(--mod-brand) 16%, transparent); border-color: var(--mod-brand); }
+    .mod-active-chip .x { color: var(--mod-muted); font-size: 0.95rem; line-height: 1; }
+    .mod-active-clear {
+        padding: 0.4rem 0.9rem; border-radius: 999px;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        color: var(--mod-muted); font-size: 0.75rem; font-weight: 700;
+        text-decoration: none; transition: all 0.15s ease;
+        display: inline-flex; align-items: center;
+    }
+    .mod-active-clear:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+
+    /* Results head + sort */
+    .mod-results-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; color: var(--mod-muted); font-size: 0.85rem; }
+    .mod-results-info { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .mod-results-info > span:first-child { color: var(--mod-ink); font-weight: 700; }
+    .mod-sort { display: inline-flex; align-items: center; gap: 0.6rem; }
+    .mod-sort-label { color: var(--mod-muted); font-size: 0.78rem; font-weight: 700; }
+    .mod-sort-select {
+        background: var(--mod-surface); color: var(--mod-ink);
+        border: 1px solid var(--mod-line); border-radius: 999px;
+        padding: 0.5rem 0.9rem; font-family: inherit; font-size: 0.82rem; font-weight: 600;
+        cursor: pointer;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .mod-sort-select:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); }
+    .mod-sort-select:focus { outline: none; border-color: var(--mod-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 18%, transparent); }
+    .mod-sort-select option { background: var(--mod-surface); color: var(--mod-ink); }
+
+    /* ── Car grid ── */
+    .mod-car-grid {
+        display: grid; gap: 1.25rem;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+    .mod-car-card {
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow);
+        overflow: hidden;
+        text-decoration: none; color: inherit; display: block;
+        transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .22s ease;
+    }
+    .mod-car-card:hover {
+        transform: translateY(-3px); box-shadow: var(--mod-shadow-lg);
+        border-color: color-mix(in srgb, var(--mod-brand) 35%, var(--mod-line));
+    }
+    .mod-car-img { aspect-ratio: 4/3; background: var(--mod-surface-2); overflow: hidden; position: relative; }
+    .mod-car-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+    .mod-car-card:hover .mod-car-img img { transform: scale(1.04); }
+    .mod-wishlist-btn {
+        position: absolute; top: 0.75rem; inset-inline-end: 0.75rem; z-index: 5;
+        width: 38px; height: 38px; border-radius: 999px;
+        /* white scrim over the photo — readable in both modes */
+        background: rgba(255,255,255,0.92); border: 1px solid rgba(13,21,38,0.1);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.25s ease; pointer-events: auto;
+        box-shadow: 0 4px 12px rgba(13,21,38,0.18);
+    }
+    .mod-wishlist-btn:hover { background: #fff; border-color: var(--mod-brand); transform: scale(1.06); }
+    .mod-wishlist-btn svg { width: 17px; height: 17px; color: rgba(13,21,38,0.6); transition: color 0.25s ease; }
+    .mod-wishlist-btn:hover svg { color: var(--mod-brand); }
+    .mod-wishlist-btn.active svg { color: var(--mod-danger); fill: var(--mod-danger); }
+    .mod-car-body { padding: 1.1rem 1.25rem 1.25rem; }
+    .mod-car-make { color: var(--mod-muted); font-size: 0.78rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .mod-car-name { color: var(--mod-ink); font-size: 1.08rem; font-weight: 800; letter-spacing: -0.01em; margin: 0 0 0.45rem; }
+    .mod-car-trim {
+        display: inline-flex; align-items: center; margin-bottom: 0.6rem;
+        padding: 0.2rem 0.6rem; border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--mod-brand) 22%, transparent);
+        color: var(--mod-brand); font-size: 0.7rem; font-weight: 700;
+        background: color-mix(in srgb, var(--mod-brand) 9%, transparent);
+    }
+    .mod-car-price {
+        font-size: 1.25rem; font-weight: 800; margin-bottom: 0.65rem;
+        width: fit-content;
+        background: var(--mod-grad);
+        -webkit-background-clip: text; background-clip: text;
+        color: transparent;
+    }
+    .mod-car-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-top: 0.75rem; border-top: 1px solid var(--mod-line); }
+    .mod-chip-ico { flex-shrink: 0; width: 0.85rem; height: 0.85rem; color: var(--mod-brand); display: inline-flex; }
+    .mod-chip-ico svg { width: 100%; height: 100%; display: block; }
+
+    .mod-empty { text-align: center; color: var(--mod-muted); padding: 4.5rem 1rem; grid-column: 1/-1; }
+
+    /* Pill pagination */
+    .mod-pager { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 3rem; }
+    .mod-pager a, .mod-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.6rem; height: 2.6rem; padding: 0 0.9rem;
+        border: 1px solid var(--mod-line); border-radius: 999px;
+        background: var(--mod-surface); color: var(--mod-muted);
+        text-decoration: none; font-size: 0.88rem; font-weight: 700;
+        transition: all 0.18s ease;
+    }
+    .mod-pager a:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); transform: translateY(-1px); box-shadow: var(--mod-shadow); }
+    .mod-pager .current { background: var(--mod-grad); color: #fff; border-color: transparent; }
+
+    /* Mobile filter drawer */
+    .mod-filter-trigger-bar {
+        display: none;
+        align-items: center; gap: 0.75rem;
+        padding: 0.85rem 1.1rem; margin-bottom: 1.25rem;
+        border: 1px solid var(--mod-line); border-radius: 999px;
+        background: var(--mod-surface); box-shadow: var(--mod-shadow);
+        color: var(--mod-ink); cursor: pointer;
+        font-family: inherit; width: 100%;
+        font-size: 0.85rem; font-weight: 700;
+    }
+    .mod-filter-trigger-bar:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+    .mod-filter-trigger-bar .badge {
+        margin-inline-start: auto; padding: 0.1rem 0.55rem;
+        background: var(--mod-grad); color: #fff;
+        border-radius: 999px; font-size: 0.7rem;
+    }
+    .mod-filter-trigger-bar svg { width: 1rem; height: 1rem; }
+    .mod-filter-backdrop {
+        position: fixed; inset: 0; background: rgba(13,21,38,0.45);
+        z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    .mod-filter-backdrop.open { opacity: 1; pointer-events: auto; }
+    .mod-filter-close {
+        display: none;
+        position: absolute; top: 1rem; inset-inline-end: 1rem;
+        width: 2.5rem; height: 2.5rem; border-radius: 999px;
+        border: 1px solid var(--mod-line);
+        background: var(--mod-surface-2); color: var(--mod-muted); cursor: pointer;
+        font-size: 1.3rem; font-family: inherit;
+        align-items: center; justify-content: center;
+        transition: all 0.18s ease;
+    }
+    .mod-filter-close:hover { border-color: var(--mod-brand); color: var(--mod-brand); }
+
+    /* Page-scroll lock used while the filter drawer is open. Position-fixes the
+       body so iOS doesn't keep scrolling underneath, while leaving the drawer's
+       own overflow:auto free to receive touch events. */
+    body.mod-modal-open {
+        position: fixed; left: 0; right: 0;
+        width: 100%;
+    }
+
+    @media (max-width: 900px) {
+        .mod-filter-trigger-bar { display: flex; }
+        .mod-filter-close { display: flex; }
+        /* Drawer = flex column. Form is the scrolling middle region; the action
+           bar sits below it as a sibling so it doesn't move with form scroll. */
+        .mod-filter-side {
+            position: fixed; left: 0; right: 0; top: 0;
+            height: 100vh; height: 100dvh;
+            margin: 0; border-radius: 0;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            z-index: 100;
+            padding: 0;
+            border: 0; border-top: 1px solid var(--mod-line);
+            box-shadow: var(--mod-shadow-lg);
+        }
+        .mod-filter-side.open { transform: translateY(0); }
+        .mod-filter-title {
+            margin: 0; padding: 1.25rem 1.1rem 0.85rem;
+            flex-shrink: 0;
+        }
+        .mod-filter-scroll {
+            flex: 1 1 auto; min-height: 0;
+            overflow-x: hidden; overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 0 1.1rem 1rem;
+        }
+        .mod-filter-actions {
+            flex-shrink: 0; margin: 0;
+            padding: 0.85rem 1.1rem calc(0.85rem + env(safe-area-inset-bottom));
+            background: var(--mod-surface);
+            border-top: 1px solid var(--mod-line);
+            display: flex; gap: 0.6rem;
+        }
+        .mod-filter-actions .mod-btn { padding: 0.85rem; font-size: 0.85rem; flex: 1; }
+        .mod-filter-close { z-index: 1; }
+
+        /* Mobile-tuned filter sections */
+        .mod-ffield { margin-bottom: 0.5rem; }
+        .mod-ffield-toggle .mod-flabel {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.95rem 0.15rem; margin-bottom: 0;
+            border-bottom: 1px solid var(--mod-line);
+            font-size: 0.92rem;
+            color: var(--mod-ink);
+            min-height: 2.75rem;
+        }
+        .mod-ffield-toggle .mod-flabel:hover { color: var(--mod-brand); }
+        .mod-ffield-toggle:not(.is-collapsed) .mod-flabel {
+            margin-bottom: 0.85rem;
+            color: var(--mod-brand);
+        }
+        .mod-toggle-icon { width: 1rem; height: 1rem; flex-shrink: 0; }
+
+        /* Body padding under expanded sections */
+        .mod-ffield-toggle:not(.is-collapsed) > .mod-fchips,
+        .mod-ffield-toggle:not(.is-collapsed) > .mod-tree,
+        .mod-ffield-toggle:not(.is-collapsed) > .mod-range-pair { padding-bottom: 0.85rem; }
+
+        /* Larger touch targets on chip rows */
+        .mod-fchips { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 0; }
+        .mod-fchip { padding: 0.7rem 0.6rem; font-size: 0.8rem; min-height: 2.6rem; }
+
+        /* Tree fills the drawer; the drawer itself scrolls */
+        .mod-tree { max-height: none; overflow-y: visible; padding: 0; gap: 0.35rem; }
+        .mod-tree-row { padding: 0.7rem 0.7rem; min-height: 2.75rem; }
+        .mod-tree-name { font-size: 0.88rem; }
+        .mod-tree-toggle { width: 1.85rem; height: 1.85rem; }
+        .mod-tree-toggle svg { width: 0.85rem; height: 0.85rem; }
+        .mod-tree-children { padding-inline-start: 0.85rem; margin-inline-start: 0.4rem; gap: 0.35rem; }
+
+        /* Range inputs sized for touch */
+        .mod-range-pair { gap: 0.5rem; }
+        .mod-finput { padding: 0.75rem 0.75rem; font-size: 0.9rem; }
+    }
+
+    @media (min-width: 481px) and (max-width: 900px) {
+        .mod-fchips { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
+    }
+
+    @media (max-width: 700px) {
+        .mod-listing-page { padding: 1.5rem 0 3rem; }
+        .mod-listing-toolbar { padding-bottom: 1.25rem; margin-bottom: 1.25rem; gap: 0.75rem; }
+        .mod-listing-head { font-size: 1.35rem; min-width: 0; flex: 1 1 100%; }
+        .mod-listing-head small { font-size: 0.7rem; margin-bottom: 0.25rem; }
+        .mod-seg { width: 100%; }
+        .mod-seg-tab { flex: 1; padding: 0.5rem 0.5rem; font-size: 0.76rem; text-align: center; }
+
+        .mod-filter-trigger-bar {
+            padding: 0.7rem 0.9rem; margin-bottom: 0.85rem;
+            font-size: 0.8rem;
+            justify-content: center;
+        }
+        .mod-filter-trigger-bar svg { width: 0.85rem; height: 0.85rem; }
+
+        .mod-active-filters { gap: 0.3rem; margin-bottom: 0.85rem; }
+        .mod-active-chip, .mod-active-clear { padding: 0.3rem 0.6rem; font-size: 0.72rem; }
+
+        .mod-results-head {
+            flex-direction: row;
+            align-items: center; justify-content: space-between;
+            gap: 0.65rem;
+            margin-bottom: 1rem;
+            padding: 0; border: 0; background: transparent;
+            font-size: 0.78rem;
+        }
+        .mod-results-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.15rem; font-size: 0.78rem;
+            min-width: 0; flex: 1;
+        }
+        .mod-results-info > span:nth-child(2) {
+            color: var(--mod-muted); opacity: 0.8;
+            font-size: 0.68rem;
+        }
+        .mod-sort {
+            display: inline-flex; flex-shrink: 0;
+            align-items: center; gap: 0;
+            padding: 0; border: 0;
+        }
+        .mod-sort-label { display: none; }
+        .mod-sort-select {
+            padding: 0.4rem 0.7rem; font-size: 0.74rem;
+            min-width: 0; max-width: 9.5rem;
+            text-overflow: ellipsis;
+        }
+
+        .mod-car-grid { gap: 1rem; grid-template-columns: 1fr; }
+    }
+
+    /* ── Car-list hero (auction / encar) ── */
+    .mod-hero-strip {
+        display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+        padding: 1.5rem 1.75rem; margin-bottom: 1.75rem;
+        border: 1px solid color-mix(in srgb, var(--mod-brand) 25%, var(--mod-line));
+        border-radius: var(--mod-radius);
+        background: linear-gradient(135deg,
+            color-mix(in srgb, var(--mod-brand) 10%, var(--mod-surface)),
+            color-mix(in srgb, var(--mod-brand-2) 8%, var(--mod-surface)));
+        box-shadow: var(--mod-shadow);
+    }
+    .mod-hero-imgs { display: flex; flex-shrink: 0; }
+    .mod-hero-imgs img {
+        width: 7rem; height: 5rem; object-fit: cover; border-radius: 12px;
+        border: 2px solid var(--mod-surface); box-shadow: var(--mod-shadow);
+    }
+    .mod-hero-imgs img + img { margin-inline-start: -1.4rem; }
+    .mod-hero-body { flex: 1; min-width: 0; }
+    .mod-hero-eyebrow { color: var(--mod-brand); font-size: 0.78rem; font-weight: 800; }
+    .mod-hero-timer { font-size: 2rem; font-weight: 800; color: var(--mod-ink); font-variant-numeric: tabular-nums; margin-top: 0.3rem; letter-spacing: -0.01em; }
+    .mod-hero-title { font-size: 1.5rem; color: var(--mod-ink); margin: 0.1rem 0 0; }
+    .mod-hero-sub { color: var(--mod-muted); font-size: 0.88rem; line-height: 1.65; margin-top: 0.5rem; max-width: 46rem; }
+    .mod-hero-chips, .mod-hero-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .mod-hero-chip, .mod-hero-stat {
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: 999px; padding: 0.35rem 0.85rem; font-size: 0.78rem;
+        color: var(--mod-ink); box-shadow: var(--mod-shadow);
+    }
+    .mod-hero-stat b { color: var(--mod-brand); font-size: 1rem; font-weight: 800; }
+    @media (max-width: 700px) {
+        .mod-hero-strip { flex-direction: column; align-items: center; text-align: center; padding: 1.1rem 1rem; gap: 0.85rem; }
+        .mod-hero-imgs { justify-content: center; max-width: 100%; }
+        .mod-hero-imgs img { width: 4.4rem; height: 3.3rem; }
+        .mod-hero-imgs img + img { margin-inline-start: -1rem; }
+        .mod-hero-body { width: 100%; }
+        .mod-hero-eyebrow { font-size: 0.68rem; }
+        .mod-hero-timer { font-size: 1.5rem; }
+        .mod-hero-title { font-size: 1.2rem; }
+        .mod-hero-sub { font-size: 0.78rem; margin-inline: auto; }
+        .mod-hero-chips, .mod-hero-stats { justify-content: center; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       IMPORTER DESIGN OVERRIDES — bold orange / warm-slate identity.
+       Restyles the storefront components to the dealer-banner design.
+       ═══════════════════════════════════════════════════════════ */
+    input[type="checkbox"], input[type="radio"] { accent-color: var(--mod-brand); }
+
+    /* ── Car cards ── */
+    .mod-car-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+    .mod-car-card {
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius); overflow: hidden; box-shadow: var(--mod-shadow);
+        display: flex; flex-direction: column; text-decoration: none;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .mod-car-card:hover { transform: translateY(-4px); box-shadow: var(--mod-shadow-lg);
+        border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); }
+    .mod-car-img { position: relative; aspect-ratio: 16 / 10;
+        background: linear-gradient(160deg, #33414f, #1e2833); overflow: hidden; }
+    .mod-car-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+    .mod-car-card:hover .mod-car-img img { transform: scale(1.05); }
+    .mod-wishlist-btn {
+        position: absolute; top: 10px; inset-inline-end: 10px; width: 34px; height: 34px;
+        border-radius: 50%; background: rgba(255,255,255,.92); color: #1b242e;
+        display: grid; place-items: center; border: 0; cursor: pointer; z-index: 3;
+        box-shadow: 0 2px 8px rgba(0,0,0,.18); transition: .15s;
+    }
+    .mod-wishlist-btn svg { width: 18px; height: 18px; }
+    .mod-wishlist-btn:hover { background: #fff; color: var(--mod-brand); }
+    .mod-wishlist-btn.is-active, .mod-wishlist-btn.active, .mod-wishlist-btn.in-wishlist { color: var(--mod-brand); }
+    .mod-car-body { padding: 14px 15px 15px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+    .mod-car-make { color: var(--mod-muted); font-weight: 700; font-size: .82rem;
+        display: flex; align-items: center; gap: .35rem; }
+    .mod-card-logo { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+    .mod-car-name { margin: 0; font-size: 1.06rem; font-weight: 800; line-height: 1.25; color: var(--mod-ink); letter-spacing: -.01em; }
+    .mod-car-trim { color: var(--mod-muted); font-size: .8rem; font-weight: 600; margin-top: -2px;
+        background: none !important; border: 0 !important; padding: 0 !important; border-radius: 0 !important; text-align: start; }
+    .mod-car-meta { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 2px; }
+    .mod-car-meta .mod-chip { background: var(--mod-surface-2); border: 1px solid var(--mod-line); color: var(--mod-muted);
+        font-weight: 600; font-size: .76rem; padding: .28rem .58rem; border-radius: 8px; gap: .3rem; }
+    .mod-car-meta .mod-chip-ico svg { width: 13px; height: 13px; }
+    .mod-car-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+        gap: 10px; padding-top: 12px; border-top: 1px solid var(--mod-line); }
+    .mod-car-price-wrap { display: flex; flex-direction: column; gap: 1px; }
+    .mod-car-price { font-weight: 900; font-size: 1.24rem; color: var(--mod-ink); letter-spacing: -.02em; }
+    .mod-car-foot .auction-countdown { font-size: .72rem; font-weight: 700; color: var(--mod-brand); }
+    .mod-car-cta { background: color-mix(in srgb, var(--mod-brand) 12%, transparent); color: var(--mod-brand);
+        font-weight: 800; font-size: .84rem; padding: .5rem .9rem; border-radius: 10px; white-space: nowrap; transition: .15s; }
+    .mod-car-card:hover .mod-car-cta { background: var(--mod-brand); color: #fff; }
+
+    /* ── Filter rail ── */
+    .mod-filter-side { background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius); box-shadow: var(--mod-shadow); }
+    .mod-filter-title { font-weight: 900; letter-spacing: -.01em; }
+    .mod-flabel { font-weight: 800; font-size: .92rem; color: var(--mod-ink); }
+    .mod-finput, .mod-fnum, .mod-filter-side input[type="number"], .mod-filter-side input[type="search"] {
+        border: 1px solid var(--mod-line); border-radius: 10px; background: var(--mod-bg); color: var(--mod-ink); }
+    .mod-finput:focus, .mod-filter-side input:focus {
+        border-color: var(--mod-brand); outline: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 18%, transparent); }
+    .fc-badge { background: color-mix(in srgb, var(--mod-brand) 12%, transparent); color: var(--mod-brand);
+        font-weight: 700; font-size: .7rem; padding: 1px 7px; border-radius: 100px; margin-inline-start: .35rem; }
+    /* Filter options as real checkbox rows (visible box + option icon) */
+    .mod-fchip { border: 1px solid var(--mod-line); background: var(--mod-surface); border-radius: 10px;
+        color: var(--mod-ink); font-weight: 700; justify-content: flex-start; gap: 0.5rem; padding: 0.5rem 0.65rem; }
+    .mod-fchip::before {
+        content: ""; width: 17px; height: 17px; flex-shrink: 0;
+        border: 2px solid color-mix(in srgb, var(--mod-muted) 55%, var(--mod-line));
+        border-radius: 5px; background: var(--mod-surface); transition: 0.14s; }
+    .mod-fchip:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); }
+    .mod-fchip:hover::before { border-color: var(--mod-brand); }
+    .mod-fchip-input:checked + .mod-fchip { border-color: var(--mod-brand);
+        background: color-mix(in srgb, var(--mod-brand) 10%, transparent); color: var(--mod-brand); }
+    .mod-fchip-input:checked + .mod-fchip::before { border-color: var(--mod-brand);
+        background: var(--mod-brand) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>") center / 11px 11px no-repeat; }
+    .mod-fchip .fopt-ico { display: inline-flex; align-items: center; flex-shrink: 0; color: var(--mod-muted); }
+    .mod-fchip .fopt-ico svg { width: 15px; height: 15px; }
+    .mod-fchip-input:checked + .mod-fchip .fopt-ico { color: var(--mod-brand); }
+    .mod-tree-name { font-weight: 700; }
+    .mod-tree-node.is-open > .mod-tree-row .mod-tree-name { color: var(--mod-brand); }
+    /* Count badge at the end of each tree row */
+    .mod-tree-count { margin-inline-start: auto; flex-shrink: 0; opacity: .8; }
+    /* Manufacturer logo (or lettered placeholder) in the brand rows */
+    .mod-tree-logo { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; border-radius: 5px; }
+    .mod-tree-logo-ph { display: inline-grid; place-items: center; background: var(--mod-surface-2);
+        color: var(--mod-muted); font-size: 0.72rem; font-weight: 800; }
+    /* Inherited logo on children (models, versions…) — smaller & softer */
+    .mod-tree-children .mod-tree-logo { width: 20px; height: 20px; opacity: 0.8; }
+    /* Visible checkbox on manufacturer + model (+ deeper) tree rows */
+    .mod-tree-label::before {
+        content: ""; width: 17px; height: 17px; flex-shrink: 0;
+        border: 2px solid color-mix(in srgb, var(--mod-muted) 55%, var(--mod-line));
+        border-radius: 5px; background: var(--mod-surface); transition: 0.14s; }
+    .mod-tree-row:hover .mod-tree-label::before { border-color: var(--mod-brand); }
+    .mod-tree-row:has(.mod-tree-cb:checked) > .mod-tree-label::before {
+        border-color: var(--mod-brand);
+        background: var(--mod-brand) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>") center / 11px 11px no-repeat; }
+    /* Focus mode at every level: expanding a node hides its siblings (brands,
+       then models, then versions…) until it's collapsed again. */
+    #lux-tree-root:has(> .mod-tree-node.is-open) > .mod-tree-node:not(.is-open),
+    .mod-tree-children:has(> .mod-tree-node.is-open) > .mod-tree-node:not(.is-open) { display: none; }
+    /* Per-filter lookup input (injected into groups with many options) */
+    .mod-fsearch { position: relative; margin: 0 0 0.55rem; }
+    .mod-fsearch svg { position: absolute; inset-inline-start: 0.65rem; top: 50%; transform: translateY(-50%);
+        width: 0.9rem; height: 0.9rem; color: var(--mod-muted); pointer-events: none; }
+    .mod-fsearch input { width: 100%; padding: 0.5rem 0.7rem; padding-inline-start: 2rem;
+        border: 1px solid var(--mod-line); border-radius: 9px; background: var(--mod-bg); color: var(--mod-ink);
+        font-family: inherit; font-size: 0.82rem; font-weight: 600; }
+    .mod-fsearch input:focus { border-color: var(--mod-brand); outline: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 15%, transparent); }
+    .mod-fsearch input:focus + svg { color: var(--mod-brand); }
+    /* Hide the lookup when its filter section is collapsed */
+    .mod-ffield-toggle.is-collapsed .mod-fsearch { display: none; }
+
+    /* "Back to all brands" link — shown only while a manufacturer is focused. */
+    .mod-tree-back { display: none; }
+    #lux-tree-root:has(> .mod-mfr-node.is-open) .mod-tree-back {
+        display: flex; align-items: center; gap: 0.4rem; width: 100%;
+        padding: 0.55rem 0.7rem; margin-bottom: 0.55rem;
+        border: 1px dashed color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line));
+        border-radius: 10px; background: color-mix(in srgb, var(--mod-brand) 6%, transparent);
+        color: var(--mod-brand); font-weight: 800; font-size: 0.85rem; cursor: pointer;
+        font-family: inherit; text-align: start; }
+    .mod-tree-back:hover { background: color-mix(in srgb, var(--mod-brand) 12%, transparent); }
+    .mod-tree-back svg { width: 0.95rem; height: 0.95rem; }
+
+    /* ── Active filter chips ── */
+    .mod-active-chip { background: color-mix(in srgb, var(--mod-brand) 12%, transparent); color: var(--mod-brand);
+        border: 0; border-radius: 100px; font-weight: 700; padding: .35rem .5rem .35rem .85rem; }
+    .mod-active-chip .x { color: var(--mod-brand); }
+    .mod-active-chip:hover { background: color-mix(in srgb, var(--mod-brand) 20%, transparent); }
+
+    /* ── Segmented tabs / results head / sort / pager ── */
+    .mod-seg { background: var(--mod-surface); border: 1px solid var(--mod-line); border-radius: 100px; }
+    .mod-seg-tab.active { background: var(--mod-brand); color: #fff; }
+    .mod-results-info { font-weight: 800; color: var(--mod-ink); }
+    .mod-sort-select { border: 1px solid var(--mod-line); border-radius: 10px; background: var(--mod-surface); font-weight: 700; color: var(--mod-ink); }
+    .mod-filter-trigger-bar { background: var(--mod-brand); color: #fff; border: 0; border-radius: 12px; font-weight: 800; }
+    .mod-filter-trigger-bar .badge { background: #fff; color: var(--mod-brand); }
+    .mod-pager a, .mod-pager span { border: 1px solid var(--mod-line); border-radius: 10px; color: var(--mod-ink); }
+    .mod-pager .current { background: var(--mod-brand); color: #fff; border-color: var(--mod-brand); }
+    .mod-pager a:hover { border-color: var(--mod-brand); color: var(--mod-brand); }
+
+    /* Apply / reset buttons in the drawer footer */
+    .mod-filter-side button[type="submit"], .mod-filter-apply, .mod-apply-btn {
+        background: var(--mod-brand) !important; color: #fff !important; border: 0 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mod-listing-page">
+    <div class="mod-wrap">
+        {% if hero %}
+        {% if request.GET.car_type == 'auction' %}
+        <!-- ═══ AUCTION HERO ═══ -->
+        <div class="mod-hero-strip">
+            {% if hero.auction_imgs %}
+            <div class="mod-hero-imgs">
+                {% for img in hero.auction_imgs|slice:":4" %}<img src="{{ img|img_small }}" alt="" loading="lazy">{% endfor %}
+            </div>
+            {% endif %}
+            <div class="mod-hero-body">
+                <div class="mod-hero-eyebrow">{% if hero.next_auction_name %}{{ hero.next_auction_name }} · {% endif %}<span class="bilingual" data-lang-ar="مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}" data-lang-en="{% if hero.next_auction_day_en %}{{ hero.next_auction_day_en }} {% endif %}Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزاد{% if hero.next_auction_day_ar %} {{ hero.next_auction_day_ar }}{% endif %}</span>{% if hero.next_auction_date %} · {{ hero.next_auction_date|date:"Y/m/d" }}{% endif %}</div>
+                {% if hero.next_auction_date %}
+                <div class="mod-hero-timer" data-auction-hero-timer data-date="{{ hero.next_auction_date|date:'c' }}">—</div>
+                {% else %}
+                <h2 class="mod-hero-title bilingual" data-lang-ar="مزادات السيارات" data-lang-en="Car Auctions" data-lang-es="Subastas" data-lang-ru="Автоаукционы">مزادات السيارات</h2>
+                {% endif %}
+                <p class="mod-hero-sub bilingual" data-lang-ar="نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة." data-lang-en="Auction cars are refreshed daily. Add an amount on top of the listed price to raise your bid and win the car." data-lang-es="Los coches de subasta se actualizan a diario. Añade una cantidad para ganar la puja." data-lang-ru="Автомобили аукциона обновляются ежедневно. Добавьте сумму к цене, чтобы выиграть торги.">نُحدّث سيارات المزاد يومياً. أضِف مبلغاً إلى السعر المعروض لترفع مزايدتك وتفوز بالسيارة.</p>
+                {% if hero.upcoming_auctions|length > 1 %}
+                <div class="mod-hero-chips">
+                    {% for a in hero.upcoming_auctions %}<span class="mod-hero-chip">{{ a.auction_name }} <span class="bilingual" style="color:var(--mod-muted);" data-lang-ar="{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}" data-lang-en="{{ a.day_en }} {{ a.auction_date|date:'Y/m/d' }}">{{ a.day_ar }} {{ a.auction_date|date:'Y/m/d' }}</span></span>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- ═══ ENCAR HERO ═══ -->
+        <div class="mod-hero-strip">
+            {% if hero.encar_imgs %}
+            <div class="mod-hero-imgs">
+                {% for img in hero.encar_imgs|slice:":4" %}<img src="{{ img|img_small }}" alt="" loading="lazy">{% endfor %}
+            </div>
+            {% endif %}
+            <div class="mod-hero-body">
+                <h2 class="mod-hero-title bilingual" data-lang-ar="سيارات كورية مستوردة" data-lang-en="Imported Korean cars" data-lang-es="Coches coreanos importados" data-lang-ru="Импортные авто из Кореи">سيارات كورية مستوردة</h2>
+                <p class="mod-hero-sub bilingual" data-lang-ar="الأسعار المعروضة هي السعر الفعلي للسيارة، وتبقى رسوم إضافية (شحن وجمارك). استخدم حاسبة الاستيراد لمعرفة التكلفة الكاملة." data-lang-en="Prices shown are the car's actual price; additional costs (shipping & customs) still apply. Use the import calculator for the full landed cost." data-lang-es="Los precios son el precio real del coche; aún hay costos adicionales (envío y aduana)." data-lang-ru="Указанные цены — реальная цена авто; остаются доп. расходы (доставка и таможня).">الأسعار المعروضة هي السعر الفعلي للسيارة، وتبقى رسوم إضافية (شحن وجمارك). استخدم حاسبة الاستيراد لمعرفة التكلفة الكاملة.</p>
+                <div class="mod-hero-stats">
+                    <div class="mod-hero-stat"><b>{{ hero.added_today|intcomma }}</b> <span class="bilingual" data-lang-ar="أُضيفت اليوم" data-lang-en="added today" data-lang-es="añadidos hoy" data-lang-ru="добавлено сегодня">أُضيفت اليوم</span></div>
+                    {% if hero.updated_today %}<div class="mod-hero-stat"><b>{{ hero.updated_today|intcomma }}</b> <span class="bilingual" data-lang-ar="حُدّثت اليوم" data-lang-en="updated today" data-lang-es="actualizados hoy" data-lang-ru="обновлено сегодня">حُدّثت اليوم</span></div>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="mod-listing-toolbar">
+            <div class="mod-listing-head">
+                <small class="bilingual" data-lang-ar="المجموعة" data-lang-en="The Collection" data-lang-es="La colección" data-lang-ru="Коллекция">المجموعة</small>
+                {% if request.GET.q %}<span class="bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</span> · "{{ request.GET.q }}"{% else %}<span class="bilingual" data-lang-ar="جميع السيارات" data-lang-en="All Vehicles" data-lang-es="Todos los vehículos" data-lang-ru="Все автомобили">جميع السيارات</span>{% endif %}
+            </div>
+            <div class="mod-seg">
+                <a href="?{% if request.GET.q %}q={{ request.GET.q }}{% endif %}" class="mod-seg-tab bilingual {% if not request.GET.car_type %}active{% endif %}" data-lang-ar="الكل" data-lang-en="All" data-lang-es="Todo" data-lang-ru="Все">الكل</a>
+                <a href="?car_type=cars{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="mod-seg-tab bilingual {% if request.GET.car_type == 'cars' %}active{% endif %}" data-lang-ar="سيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Автомобили">سيارات</a>
+                <a href="?car_type=auction{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="mod-seg-tab bilingual {% if request.GET.car_type == 'auction' %}active{% endif %}" data-lang-ar="مزادات" data-lang-en="Auction" data-lang-es="Subasta" data-lang-ru="Аукцион">مزادات</a>
+                <a href="{% if ours_url %}{{ ours_url }}{% else %}{% url 'site_car_list' %}{% endif %}" class="mod-seg-tab bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши автомобили">سياراتنا</a>
+            </div>
+        </div>
+
+        <button type="button" class="mod-filter-trigger-bar" onclick="modOpenFilters()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.3-4.3M10.5 17a6.5 6.5 0 110-13 6.5 6.5 0 010 13z"/></svg>
+            <span class="bilingual" data-lang-ar="ابحث عن سيارتك المثالية" data-lang-en="Find Your Perfect Car" data-lang-es="Encuentra tu coche ideal" data-lang-ru="Найдите свой идеальный авто">ابحث عن سيارتك المثالية</span>
+            {% if sel_manufacturers or sel_models or sel_badges or sel_marker_panels or sel_marker_types or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.q or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max %}
+            <span class="badge">●</span>
+            {% endif %}
+        </button>
+
+        <div class="mod-filter-backdrop" id="lux-filter-backdrop" onclick="modCloseFilters()"></div>
+
+        <div class="mod-listing-layout">
+            <aside class="mod-filter-side" id="lux-side">
+                <button type="button" class="mod-filter-close" onclick="modCloseFilters()" aria-label="Close">×</button>
+                <h3 class="mod-filter-title bilingual" data-lang-ar="تصفية" data-lang-en="Refine" data-lang-es="Refinar" data-lang-ru="Фильтр">تصفية</h3>
+                <form method="get" id="lux-filter-form" class="mod-filter-scroll">
+                    {% if request.GET.car_type %}<input type="hidden" name="car_type" value="{{ request.GET.car_type }}">{% endif %}
+                    {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+
+                    <div class="mod-ffield">
+                        <label class="mod-flabel bilingual" data-lang-ar="بحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">بحث</label>
+                        <input type="search" name="q" value="{{ request.GET.q|default:'' }}" data-placeholder-ar="الماركة، الموديل…" data-placeholder-en="Make, model…" data-placeholder-es="Marca, modelo…" data-placeholder-ru="Марка, модель…" placeholder="الماركة، الموديل…" class="mod-finput">
+                    </div>
+
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_manufacturers and not sel_models and not sel_badges %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="الشركة المصنعة" data-lang-en="Manufacturer" data-lang-es="Fabricante" data-lang-ru="Производитель">
+                            <span>الشركة المصنعة</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-tree" id="lux-tree-root" data-car-type="{{ request.GET.car_type|default:'' }}">
+                            <button type="button" class="mod-tree-back" onclick="this.closest('#lux-tree-root').querySelectorAll('.mod-tree-node.is-open').forEach(function(n){n.classList.remove('is-open');});">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+                                <span class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands" data-lang-es="Todas las marcas" data-lang-ru="Все бренды">كل الماركات</span>
+                            </button>
+                            {% for m in manufacturers %}{% with mfr_id_str=m.id|stringformat:"d" %}
+                            <div class="mod-tree-node mod-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-logo="{{ m.logo|default:'' }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
+                                <div class="mod-tree-row">
+                                    <label class="mod-tree-label">
+                                        <input type="checkbox" name="manufacturer" value="{{ m.id }}" {% if mfr_id_str in sel_manufacturers %}checked{% endif %} class="mod-tree-cb mod-mfr-cb">
+                                        {% if m.logo %}<img class="mod-tree-logo" src="{{ m.logo }}" alt="" loading="lazy">{% else %}<span class="mod-tree-logo mod-tree-logo-ph" aria-hidden="true">{{ m|translate_manufacturer:'en'|first|upper }}</span>{% endif %}
+                                        <span class="mod-tree-name bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
+                                        {% with fc=facet_counts|get_item:'manufacturer'|get_item:m.id %}<span class="fc-badge mod-tree-count"{% if not fc %} hidden{% endif %}>{{ fc|intcomma }}</span>{% endwith %}
+                                    </label>
+                                    <button type="button" class="mod-tree-toggle" aria-label="Toggle">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+                                    </button>
+                                </div>
+                                <div class="mod-tree-children">
+                                    {% for mod in models %}{% if mod.manufacturer_id == m.id %}{% with mod_id_str=mod.id|stringformat:"d" %}
+                                    <div class="mod-tree-node mod-model-node{% if mod_id_str in sel_models %} is-open{% endif %}" data-model-id="{{ mod.id }}" data-loaded="false">
+                                        <div class="mod-tree-row">
+                                            <label class="mod-tree-label">
+                                                <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="mod-tree-cb mod-model-cb">
+                                                {% if m.logo %}<img class="mod-tree-logo" src="{{ m.logo }}" alt="" loading="lazy">{% endif %}
+                                                <span class="mod-tree-name bilingual" data-lang-ar="{{ mod|translate_model }}" data-lang-en="{{ mod|translate_model:'en' }}" data-lang-es="{{ mod|translate_model:'en' }}" data-lang-ru="{{ mod|translate_model:'en' }}">{{ mod|translate_model }}</span>
+                                                {% with fc=facet_counts|get_item:'model'|get_item:mod.id %}<span class="fc-badge mod-tree-count"{% if not fc %} hidden{% endif %}>{{ fc|intcomma }}</span>{% endwith %}
+                                            </label>
+                                            <button type="button" class="mod-tree-toggle" aria-label="Toggle">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+                                            </button>
+                                        </div>
+                                        <div class="mod-tree-children"></div>
+                                    </div>
+                                    {% endwith %}{% endif %}{% endfor %}
+                                </div>
+                            </div>
+                            {% endwith %}{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mod-ffield mod-ffield-toggle{% if not request.GET.year_from and not request.GET.year_to %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="السنة" data-lang-en="Year" data-lang-es="Año" data-lang-ru="Год">
+                            <span>السنة</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-range-pair">
+                            <input type="number" name="year_from" value="{{ request.GET.year_from|default:'' }}" data-placeholder-ar="من" data-placeholder-en="From" data-placeholder-es="Desde" data-placeholder-ru="От" placeholder="من" class="mod-finput">
+                            <input type="number" name="year_to" value="{{ request.GET.year_to|default:'' }}" data-placeholder-ar="إلى" data-placeholder-en="To" data-placeholder-es="Hasta" data-placeholder-ru="До" placeholder="إلى" class="mod-finput">
+                        </div>
+                    </div>
+
+                    <div class="mod-ffield mod-ffield-toggle{% if not request.GET.price_min and not request.GET.price_max %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="السعر (بعملتك)" data-lang-en="Price (your currency)" data-lang-es="Precio (tu moneda)" data-lang-ru="Цена (в вашей валюте)">
+                            <span>السعر (بعملتك)</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-range-pair">
+                            <input type="number" inputmode="numeric" data-price-filter="min" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="mod-finput">
+                            <input type="hidden" name="price_min" value="{{ request.GET.price_min|default:'' }}">
+                            <input type="number" inputmode="numeric" data-price-filter="max" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="mod-finput">
+                            <input type="hidden" name="price_max" value="{{ request.GET.price_max|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div class="mod-ffield mod-ffield-toggle{% if not request.GET.mileage_min and not request.GET.mileage_max %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="المسافة (كم)" data-lang-en="Mileage (km)" data-lang-es="Kilometraje (km)" data-lang-ru="Пробег (км)">
+                            <span>المسافة (كم)</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-range-pair">
+                            <input type="number" name="mileage_min" value="{{ request.GET.mileage_min|default:'' }}" data-placeholder-ar="الأدنى" data-placeholder-en="Min" data-placeholder-es="Mín" data-placeholder-ru="Мин" placeholder="الأدنى" class="mod-finput">
+                            <input type="number" name="mileage_max" value="{{ request.GET.mileage_max|default:'' }}" data-placeholder-ar="الأقصى" data-placeholder-en="Max" data-placeholder-es="Máx" data-placeholder-ru="Макс" placeholder="الأقصى" class="mod-finput">
+                        </div>
+                    </div>
+
+                    {% if transmissions %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_transmissions %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="ناقل الحركة" data-lang-en="Transmission" data-lang-es="Transmisión" data-lang-ru="Передача">
+                            <span>ناقل الحركة</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-fchips">
+                            {% for t in transmissions %}
+                            <label>
+                                <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip"><span class="fopt-ico">{{ t|opt_icon:'trans' }}</span><span class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}</span>{% with fc=facet_counts|get_item:'transmission'|get_item:t %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if marker_types and request.GET.car_type != 'kbchachacha' %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_marker_types %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="استبعاد حسب نوع الضرر" data-lang-en="Exclude by damage type" data-lang-es="Excluir por tipo de daño" data-lang-ru="Исключить по типу повреждения">
+                            <span>استبعاد حسب نوع الضرر</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <p class="bilingual" style="margin:.1rem 0 .55rem; font-size:.72rem; line-height:1.5; color:var(--gl-muted);" data-lang-ar="إخفاء المزادات التي بها قطع من النوع المختار (الرقم = عدد المخفية)" data-lang-en="Hides auctions that have any part of the chosen type (number = how many are hidden)" data-lang-es="Oculta subastas con piezas del tipo elegido" data-lang-ru="Скрывает аукционы с деталями выбранного типа">إخفاء المزادات التي بها قطع من النوع المختار (الرقم = عدد المخفية)</p>
+                        <div class="mod-fchips">
+                            {% for key, ar, en in marker_types %}
+                            <label>
+                                <input type="checkbox" name="marker_type" value="{{ key }}" {% if key in sel_marker_types %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip bilingual" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_type'|get_item:key %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.GET.car_type == 'auction' or request.GET.car_type == 'cars' or request.GET.car_type == 'truck' or not request.GET.car_type %}
+                    <div class="mod-ffield">
+                        <label class="mod-flabel bilingual" data-lang-ar="حالة السيارة" data-lang-en="Car condition" data-lang-es="Estado del coche" data-lang-ru="Состояние">حالة السيارة</label>
+                        <div class="mod-fchips">
+                            {% if request.GET.car_type == 'auction' %}
+                            <label>
+                                <input type="checkbox" name="clean_main" value="1" {% if sel_clean_main %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip bilingual" data-lang-ar="القطع الأساسية سليمة" data-lang-en="No replaced main parts" data-lang-es="Sin piezas principales reemplazadas" data-lang-ru="Без замены основных деталей">القطع الأساسية سليمة{% with fc=facet_counts|get_item:'clean_main' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% else %}
+                            <label>
+                                <input type="checkbox" name="no_accident" value="1" {% if sel_no_accident %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip bilingual" data-lang-ar="بدون حوادث أو قطع مُبدّلة" data-lang-en="No accidents or replaced parts" data-lang-es="Sin accidentes ni piezas reemplazadas" data-lang-ru="Без ДТП и замен деталей">بدون حوادث أو قطع مُبدّلة{% with fc=facet_counts|get_item:'no_accident' %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if request.GET.car_type == 'auction' and marker_panels %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_marker_panels %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="استبعاد قطع مستبدلة" data-lang-en="Exclude replaced parts" data-lang-es="Excluir piezas reemplazadas" data-lang-ru="Исключить заменённые детали">
+                            <span>استبعاد قطع مستبدلة</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <p class="bilingual" style="margin:.1rem 0 .55rem; font-size:.72rem; line-height:1.5; color:var(--gl-muted);" data-lang-ar="تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)" data-lang-en="Hides auctions where the chosen panel was replaced (number = how many are hidden)" data-lang-es="Oculta subastas donde el panel fue reemplazado" data-lang-ru="Скрывает аукционы с заменённой деталью">تُخفى المزادات التي استُبدلت فيها القطعة المختارة (الرقم = عدد المخفية)</p>
+                        <div class="mod-fchips">
+                            {% for key, ar, en in marker_panels %}
+                            <label>
+                                <input type="checkbox" name="marker_panel" value="{{ key }}" {% if key in sel_marker_panels %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip bilingual" data-lang-ar="{{ ar }}" data-lang-en="{{ en }}" data-lang-es="{{ en }}" data-lang-ru="{{ en }}">{{ ar }}{% with fc=facet_counts|get_item:'marker_panel'|get_item:key %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if fuels %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_fuels %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="الوقود" data-lang-en="Fuel" data-lang-es="Combustible" data-lang-ru="Топливо">
+                            <span>الوقود</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-fchips">
+                            {% for f in fuels %}
+                            <label>
+                                <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip"><span class="fopt-ico">{{ f|opt_icon:'fuel' }}</span><span class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}</span>{% with fc=facet_counts|get_item:'fuel'|get_item:f %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if colors %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_colors %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="اللون" data-lang-en="Color" data-lang-es="Color" data-lang-ru="Цвет">
+                            <span>اللون</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-fchips">
+                            {% for c in colors %}
+                            <label>
+                                <input type="checkbox" name="color" value="{{ c.id }}" {% if c.id|stringformat:"d" in sel_colors %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip"><span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;flex-shrink:0;border:1px solid var(--mod-line);background:{{ c.name|color_to_css }};"></span><span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>{% with fc=facet_counts|get_item:'color'|get_item:c.id %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if seat_counts %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_seat_counts %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="عدد المقاعد" data-lang-en="Seats" data-lang-es="Asientos" data-lang-ru="Места">
+                            <span>عدد المقاعد</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-fchips">
+                            {% for s in seat_counts %}
+                            <label>
+                                <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip"><span class="fopt-ico">{{ s|opt_icon:'seat' }}</span>{{ s|floatformat:"0" }}{% with fc=facet_counts|get_item:'seat_count'|get_item:s %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if seat_colors %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_seat_colors %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="لون المقاعد" data-lang-en="Seat color" data-lang-es="Color de asientos" data-lang-ru="Цвет сидений">
+                            <span>لون المقاعد</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-fchips">
+                            {% for sc in seat_colors %}
+                            <label>
+                                <input type="checkbox" name="seat_color" value="{{ sc.id }}" {% if sc.id|stringformat:"d" in sel_seat_colors %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip"><span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;flex-shrink:0;border:1px solid var(--mod-line);background:{{ sc.name|color_to_css }};"></span><span class="bilingual" data-lang-ar="{{ sc.name|translate_color }}" data-lang-en="{{ sc.name|pretty_en }}" data-lang-es="{{ sc.name|translate_color:'es' }}" data-lang-ru="{{ sc.name|translate_color:'ru' }}">{{ sc.name|translate_color }}</span>{% with fc=facet_counts|get_item:'seat_color'|get_item:sc.id %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if auction_names %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_auction_names %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="اسم المزاد" data-lang-en="Auction house" data-lang-es="Subasta" data-lang-ru="Аукцион">
+                            <span>اسم المزاد</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-fchips">
+                            {% for an in auction_names %}
+                            <label>
+                                <input type="checkbox" name="auction_name" value="{{ an }}" {% if an in sel_auction_names %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip">{{ an }}{% with fc=facet_counts|get_item:'auction_name'|get_item:an %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if body_types %}
+                    <div class="mod-ffield mod-ffield-toggle{% if not sel_body_types %} is-collapsed{% endif %}">
+                        <label class="mod-flabel bilingual" data-lang-ar="نوع الهيكل" data-lang-en="Body Type" data-lang-es="Carrocería" data-lang-ru="Кузов">
+                            <span>نوع الهيكل</span>
+                            <svg class="mod-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </label>
+                        <div class="mod-fchips">
+                            {% for b in body_types %}
+                            <label>
+                                <input type="checkbox" name="body_type" value="{{ b }}" {% if b in sel_body_types %}checked{% endif %} class="mod-fchip-input">
+                                <span class="mod-fchip"><span class="fopt-ico">{{ b|opt_icon:'body' }}</span><span class="bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}</span>{% with fc=facet_counts|get_item:'body_type'|get_item:b %}<span class="fc-badge" style="opacity:.55;font-size:.7em;font-weight:700;margin-inline-start:.3em;"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </form>
+                <div class="mod-filter-actions">
+                    <button type="submit" form="lux-filter-form" class="mod-btn mod-btn-primary bilingual" data-lang-ar="تطبيق" data-lang-en="Apply" data-lang-es="Aplicar" data-lang-ru="Применить">تطبيق</button>
+                    <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="mod-btn mod-btn-ghost bilingual" data-lang-ar="مسح" data-lang-en="Reset" data-lang-es="Restablecer" data-lang-ru="Сброс">مسح</a>
+                </div>
+            </aside>
+
+            <div>
+                {% if sel_manufacturers or sel_models or sel_badges or sel_marker_panels or sel_marker_types or sel_model_versions or sel_engine_groups or sel_fuels or sel_transmissions or sel_colors or sel_body_types or request.GET.year_from or request.GET.year_to or request.GET.price_min or request.GET.price_max or request.GET.mileage_min or request.GET.mileage_max or request.GET.q %}
+                <div class="mod-active-filters">
+                    {% for m in manufacturers %}{% if m.id|stringformat:"d" in sel_manufacturers %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'manufacturer' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for f in sel_fuels %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'fuel' or v != f %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% for t in sel_transmissions %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'transmission' or v != t %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% for m in models %}{% if m.id|stringformat:"d" in sel_models %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'model' or v != m.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ m|translate_model }}" data-lang-en="{{ m|translate_model:'en' }}">{{ m|translate_model }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for b in badges %}{% if b.id|stringformat:"d" in sel_badges %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'badge' or v != b.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip">{{ b.name }} <span class="x">×</span></a>
+                    {% endif %}{% endfor %}
+                    {% for mv in sel_model_versions %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'model_version' or v != mv %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip"><bdi>{{ mv|pretty_en }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for eg in sel_engine_groups %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'engine_group' or v != eg %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip"><bdi>{{ eg|pretty_en }}</bdi> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for mp in sel_marker_panels %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_panel' or v != mp %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip"><span class="bilingual" data-lang-ar="بدون {{ mp|panel_label }}" data-lang-en="No {{ mp|panel_label }}" data-lang-es="Sin {{ mp|panel_label }}" data-lang-ru="Без {{ mp|panel_label }}">بدون {{ mp|panel_label }}</span> <span class="x">×</span></a>
+                    {% endfor %}
+                    {% for key, ar, en in marker_types %}{% if key in sel_marker_types %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'marker_type' or v != key %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip"><span class="bilingual" data-lang-ar="بدون {{ ar }}" data-lang-en="No {{ en }}" data-lang-es="Sin {{ en }}" data-lang-ru="Без {{ en }}">بدون {{ ar }}</span> <span class="x">×</span></a>
+                    {% endif %}{% endfor %}
+                    {% for c in colors %}{% if c.id|stringformat:"d" in sel_colors %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'color' or v != c.id|stringformat:'s' %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ c.name|translate_color }}" data-lang-en="{{ c.name|translate_color:'en' }}" data-lang-es="{{ c.name|translate_color:'es' }}" data-lang-ru="{{ c.name|translate_color:'ru' }}">{{ c.name|translate_color }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endif %}{% endfor %}
+                    {% for b in sel_body_types %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% for v in vlist %}{% if k != 'page' %}{% if k != 'body_type' or v != b %}{{ k }}={{ v }}&{% endif %}{% endif %}{% endfor %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}</span>
+                        <span class="x">×</span>
+                    </a>
+                    {% endfor %}
+                    {% if request.GET.year_from %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_from' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="من {{ request.GET.year_from }}" data-lang-en="from {{ request.GET.year_from }}">من {{ request.GET.year_from }}</span> <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.year_to %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'year_to' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="mod-active-chip">
+                        <span class="bilingual" data-lang-ar="إلى {{ request.GET.year_to }}" data-lang-en="to {{ request.GET.year_to }}">إلى {{ request.GET.year_to }}</span> <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.price_min %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_min' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="mod-active-chip">
+                        ≥ {{ request.GET.price_min }}₩ <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.price_max %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'price_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="mod-active-chip">
+                        ≤ {{ request.GET.price_max }}₩ <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.mileage_min %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_min' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="mod-active-chip">
+                        ≥ {{ request.GET.mileage_min }}km <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.mileage_max %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'mileage_max' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="mod-active-chip">
+                        ≤ {{ request.GET.mileage_max }}km <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    {% if request.GET.q %}
+                    <a href="?{% for k,vlist in request.GET.lists %}{% if k != 'q' and k != 'page' %}{% for v in vlist %}{{ k }}={{ v }}&{% endfor %}{% endif %}{% endfor %}" class="mod-active-chip">
+                        "{{ request.GET.q }}" <span class="x">×</span>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'car_list' %}{% if request.GET.car_type %}?car_type={{ request.GET.car_type }}{% endif %}" class="mod-active-clear bilingual" data-lang-ar="مسح الكل" data-lang-en="Clear All" data-lang-es="Limpiar todo" data-lang-ru="Очистить все">مسح الكل</a>
+                </div>
+                {% endif %}
+
+                <div class="mod-results-head">
+                    <div class="mod-results-info">
+                        <span class="bilingual" data-lang-ar="{{ page_obj.paginator.count|intcomma }} نتيجة" data-lang-en="{{ page_obj.paginator.count|intcomma }} vehicles" data-lang-es="{{ page_obj.paginator.count|intcomma }} vehículos" data-lang-ru="{{ page_obj.paginator.count|intcomma }} автомобилей">{{ page_obj.paginator.count|intcomma }} نتيجة</span>
+                        {% if page_obj.paginator.num_pages > 1 %}
+                        <span class="bilingual" data-lang-ar="صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}" data-lang-en="Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}" data-lang-es="Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}" data-lang-ru="Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+                        {% endif %}
+                    </div>
+                    <label class="mod-sort">
+                        <span class="mod-sort-label bilingual" data-lang-ar="الترتيب" data-lang-en="Sort" data-lang-es="Ordenar" data-lang-ru="Сортировка">الترتيب</span>
+                        <select class="mod-sort-select" onchange="modApplySort(this.value)">
+                            <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %} class="bilingual" data-lang-ar="الأحدث" data-lang-en="Newest" data-lang-es="Más reciente" data-lang-ru="Новейшие">الأحدث</option>
+                            <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %} class="bilingual" data-lang-ar="السعر · الأرخص" data-lang-en="Price · Low to High" data-lang-es="Precio · Asc" data-lang-ru="Цена · по возр.">السعر · الأرخص</option>
+                            <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %} class="bilingual" data-lang-ar="السعر · الأغلى" data-lang-en="Price · High to Low" data-lang-es="Precio · Desc" data-lang-ru="Цена · по убыв.">السعر · الأغلى</option>
+                            <option value="-year" {% if request.GET.sort == '-year' %}selected{% endif %} class="bilingual" data-lang-ar="السنة · الأحدث" data-lang-en="Year · Newest" data-lang-es="Año · Reciente" data-lang-ru="Год · новые">السنة · الأحدث</option>
+                            <option value="mileage" {% if request.GET.sort == 'mileage' %}selected{% endif %} class="bilingual" data-lang-ar="المسافة · الأقل" data-lang-en="Mileage · Low to High" data-lang-es="Km · Asc" data-lang-ru="Пробег · по возр.">المسافة · الأقل</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="mod-car-grid">
+                    {% for car in page_obj %}
+                    <a href="{% url 'car_detail' car.slug %}" class="mod-car-card" data-share-title="{{ car|share_car_title }}">
+                        <div class="mod-car-img car-img-wm">
+                            {% if car.image %}<img src="{{ car.image|img_small }}" alt="{{ car.title }}" loading="lazy">{% elif car.images and car.images|length > 0 %}<img src="{{ car.images.0|img_small }}" alt="{{ car.title }}" loading="lazy">{% endif %}
+                            <button type="button"
+                                    onclick="event.preventDefault(); event.stopPropagation(); toggleModWishlist({{ car.id }});"
+                                    class="mod-wishlist-btn wishlist-btn"
+                                    data-car-id="{{ car.id }}"
+                                    aria-label="Wishlist">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                            </button>
+                            {% if car.inspection_report_url %}<span title="تقرير فحص أداء المركبة متوفر" class="absolute {% if car.status == 'sold' %}top-9{% else %}top-2{% endif %} left-2 w-6 h-6 rounded-full flex items-center justify-center shadow z-10" style="background:rgba(255,255,255,.92)"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m1 7H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V17a2 2 0 01-2 2z"/></svg></span>{% endif %}
+                        </div>
+                        <div class="mod-car-body">
+                            <div class="mod-car-make">
+                                {% if car.manufacturer.logo %}<img class="mod-card-logo" src="{{ car.manufacturer.logo }}" alt="" loading="lazy">{% endif %}
+                                {% if car.manufacturer %}<span class="bilingual" data-lang-ar="{{ car.manufacturer|translate_manufacturer }}" data-lang-en="{{ car.manufacturer|translate_manufacturer:'en' }}">{{ car.manufacturer|translate_manufacturer }}</span>{% endif %}
+                                {% if car.year %} · {{ car.year }}{% endif %}
+                            </div>
+                            <h3 class="mod-car-name">
+                                {% if car.model %}<span class="bilingual" data-lang-ar="{{ car.model|translate_model }}" data-lang-en="{{ car.model|translate_model:'en' }}">{{ car.model|translate_model }}</span>{% else %}{{ car.title }}{% endif %}
+                            </h3>
+                            {% if car|car_trim %}<div class="mod-car-trim"><bdi>{{ car|car_trim }}</bdi></div>{% endif %}
+                            <div class="mod-car-meta">
+                                {% if car.mileage %}
+                                <span class="mod-chip">
+                                    <span class="mod-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 1118 0"/><path d="M12 17l3.5-5"/><circle cx="12" cy="17" r="1.2"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.mileage|intcomma }} كم" data-lang-en="{{ car.mileage|intcomma }} km" data-lang-es="{{ car.mileage|intcomma }} km" data-lang-ru="{{ car.mileage|intcomma }} км">{{ car.mileage|intcomma }} كم</span>
+                                </span>
+                                {% endif %}
+                                {% if car.transmission %}
+                                <span class="mod-chip">
+                                    <span class="mod-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.transmission|translate_transmission }}" data-lang-en="{{ car.transmission|translate_transmission:'en' }}" data-lang-es="{{ car.transmission|translate_transmission:'es' }}" data-lang-ru="{{ car.transmission|translate_transmission:'ru' }}">{{ car.transmission|translate_transmission }}</span>
+                                </span>
+                                {% endif %}
+                                {% if car.fuel %}
+                                <span class="mod-chip">
+                                    <span class="mod-chip-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16"/><path d="M3 21h14"/><path d="M15 9h2a2 2 0 012 2v6a1.5 1.5 0 003 0V8l-3-3"/></svg></span>
+                                    <span class="bilingual" data-lang-ar="{{ car.fuel|translate_fuel }}" data-lang-en="{{ car.fuel|translate_fuel:'en' }}" data-lang-es="{{ car.fuel|translate_fuel:'es' }}" data-lang-ru="{{ car.fuel|translate_fuel:'ru' }}">{{ car.fuel|translate_fuel }}</span>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="mod-car-foot">
+                                <div class="mod-car-price-wrap">
+                                    {% if car.price %}<div class="mod-car-price" data-price-krw="{{ car.price }}">{{ car.price|intcomma }} ₩</div>{% endif %}
+                                    {% if car.auction_date %}<span class="auction-countdown" data-auction-date="{{ car.site_auction_end|date:'c' }}">{{ car.auction_date|date:"Y/m/d" }}</span>{% endif %}
+                                </div>
+                                <span class="mod-car-cta bilingual" data-lang-ar="التفاصيل" data-lang-en="Details" data-lang-es="Detalles" data-lang-ru="Детали">التفاصيل</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    {% if auction_break %}
+                    <div class="mod-empty">
+                        <div style="font-size:2.4rem; line-height:1; margin-bottom:.7rem;">🔨⏳</div>
+                        <div class="bilingual" style="font-weight:900; font-size:1.2rem; margin-bottom:.45rem;" data-lang-ar="انتهى المزاد الحالي" data-lang-en="The current auction has ended" data-lang-es="La subasta actual ha terminado" data-lang-ru="Текущий аукцион завершён">انتهى المزاد الحالي</div>
+                        <div class="bilingual" style="max-width:34rem; margin:0 auto; line-height:1.9;" data-lang-ar="نقوم الآن بتجهيز سيارات المزاد الجديد وستُعرض هنا فور رفعها — ترقّبونا!" data-lang-en="We're preparing the next auction's cars — they'll appear here as soon as they're uploaded. Stay tuned!" data-lang-es="Estamos preparando la próxima subasta — pronto aquí." data-lang-ru="Готовим новый аукцион — скоро здесь!">نقوم الآن بتجهيز سيارات المزاد الجديد وستُعرض هنا فور رفعها — ترقّبونا!</div>
+                        {% if last_auction_end %}<div class="bilingual" style="font-size:.78rem; opacity:.65; margin-top:.5rem;" data-lang-ar="آخر مزاد انتهى بتاريخ {{ last_auction_end|date:'Y/m/d' }}" data-lang-en="Last auction ended {{ last_auction_end|date:'Y/m/d' }}" data-lang-es="Última subasta: {{ last_auction_end|date:'Y/m/d' }}" data-lang-ru="Аукцион завершился {{ last_auction_end|date:'Y/m/d' }}">آخر مزاد انتهى بتاريخ {{ last_auction_end|date:'Y/m/d' }}</div>{% endif %}
+                        <div style="margin-top:1.1rem; display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap;">
+                            <a href="{% url 'car_list' %}" class="bilingual" style="background:var(--color-primary,#4338ca); color:#fff; font-weight:800; font-size:.85rem; padding:.6rem 1.2rem; border-radius:12px; text-decoration:none;" data-lang-ar="تصفّح سيارات المعارض" data-lang-en="Browse showroom cars" data-lang-es="Ver coches" data-lang-ru="Смотреть авто">تصفّح سيارات المعارض</a>
+                            <a href="{% url 'expired_auctions' %}" class="bilingual" style="border:1px solid currentColor; opacity:.75; font-weight:800; font-size:.85rem; padding:.6rem 1.2rem; border-radius:12px; text-decoration:none;" data-lang-ar="أرشيف المزادات السابقة" data-lang-en="Past auctions archive" data-lang-es="Subastas pasadas" data-lang-ru="Прошлые аукционы">أرشيف المزادات السابقة</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mod-empty bilingual" data-lang-ar="لا توجد سيارات تطابق بحثك." data-lang-en="No vehicles match your search." data-lang-es="No hay vehículos que coincidan." data-lang-ru="Нет автомобилей по вашему запросу.">لا توجد سيارات تطابق بحثك.</div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if page_obj.has_other_pages %}
+                {% spaceless %}
+                <nav class="mod-pager">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% for k, vlist in request.GET.lists %}{% if k != 'page' %}{% for v in vlist %}&{{ k }}={{ v }}{% endfor %}{% endif %}{% endfor %}">‹ Prev</a>
+                    {% endif %}
+                    {% for n in page_obj.paginator.page_range %}
+                        {% if n == page_obj.number %}
+                        <span class="current">{{ n }}</span>
+                        {% elif n >= page_obj.number|add:'-2' and n <= page_obj.number|add:'2' %}
+                        <a href="?page={{ n }}{% for k, vlist in request.GET.lists %}{% if k != 'page' %}{% for v in vlist %}&{{ k }}={{ v }}{% endfor %}{% endif %}{% endfor %}">{{ n }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for k, vlist in request.GET.lists %}{% if k != 'page' %}{% for v in vlist %}&{{ k }}={{ v }}{% endfor %}{% endif %}{% endfor %}">Next ›</a>
+                    {% endif %}
+                </nav>
+                {% endspaceless %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var lockedScroll = 0;
+    window.modOpenFilters = function() {
+        document.getElementById('lux-side').classList.add('open');
+        document.getElementById('lux-filter-backdrop').classList.add('open');
+        // Lock the page scroll without using body{overflow:hidden}, which can
+        // suppress touch events on fixed drawers on iOS Safari.
+        lockedScroll = window.scrollY || window.pageYOffset || 0;
+        document.body.classList.add('mod-modal-open');
+        document.body.style.top = '-' + lockedScroll + 'px';
+    };
+    window.modCloseFilters = function() {
+        document.getElementById('lux-side').classList.remove('open');
+        document.getElementById('lux-filter-backdrop').classList.remove('open');
+        document.body.classList.remove('mod-modal-open');
+        document.body.style.top = '';
+        if (lockedScroll) window.scrollTo(0, lockedScroll);
+    };
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('lux-side')?.classList.contains('open')) {
+            modCloseFilters();
+        }
+    });
+})();
+</script>
+
+<script>
+(function() {
+    document.querySelectorAll('.mod-ffield-toggle > .mod-flabel').forEach(function(label) {
+        label.addEventListener('click', function(e) {
+            // Avoid intercepting clicks on inputs nested in the label.
+            if (e.target.closest('input, select, textarea, button, a')) return;
+            label.closest('.mod-ffield-toggle').classList.toggle('is-collapsed');
+        });
+    });
+})();
+
+window.modApplySort = function(value) {
+    var params = new URLSearchParams(window.location.search);
+    if (value) { params.set('sort', value); } else { params.delete('sort'); }
+    params.delete('page');
+    window.location.search = params.toString();
+};
+</script>
+
+<script>
+(function() {
+    var root = document.getElementById('lux-tree-root');
+    if (!root) return;
+    var carType = root.dataset.carType || '';
+    var qsCarType = carType ? '&car_type=' + encodeURIComponent(carType) : '';
+
+    function fetchJSON(url) {
+        return fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : []; })
+            .catch(function() { return []; });
+    }
+
+    function curLang() {
+        try { return localStorage.getItem('site_lang') || 'ar'; } catch (e) { return 'ar'; }
+    }
+
+    // Current multi-select values for a filter param, from the URL.
+    function selectedSet(name) {
+        return new Set(new URLSearchParams(window.location.search).getAll(name));
+    }
+
+    function makeToggleSvg() {
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2.5');
+        var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('stroke-linejoin', 'round');
+        p.setAttribute('d', 'M6 9l6 6 6-6');
+        svg.appendChild(p);
+        return svg;
+    }
+
+    function buildNode(opts) {
+        // opts: { kind:'model'|'version'|'engine'|'badge', id, value, dataKey,
+        //         inputName, name, langs, leaf, checked }
+        var val = (opts.value != null ? opts.value : opts.id);
+        var node = document.createElement('div');
+        node.className = 'mod-tree-node mod-' + opts.kind + '-node';
+        node.dataset[opts.dataKey || (opts.kind + 'Id')] = val;
+        if (!opts.leaf) node.dataset.loaded = 'false';
+
+        var row = document.createElement('div');
+        row.className = 'mod-tree-row';
+
+        var label = document.createElement('label');
+        label.className = 'mod-tree-label';
+
+        var input = document.createElement('input');
+        input.type = 'checkbox';
+        input.name = opts.inputName || opts.kind;
+        input.value = val;
+        input.className = 'mod-tree-cb mod-' + opts.kind + '-cb';
+        if (opts.checked) input.checked = true;
+
+        var name = document.createElement('span');
+        name.className = 'mod-tree-name';
+        if (opts.langs) {
+            name.classList.add('bilingual');
+            if (opts.langs.ar) name.setAttribute('data-lang-ar', opts.langs.ar);
+            if (opts.langs.en) name.setAttribute('data-lang-en', opts.langs.en);
+            if (opts.langs.es) name.setAttribute('data-lang-es', opts.langs.es);
+            if (opts.langs.ru) name.setAttribute('data-lang-ru', opts.langs.ru);
+        }
+        var lang = curLang();
+        name.textContent = (opts.langs && opts.langs[lang]) || opts.name;
+
+        label.appendChild(input);
+        if (opts.logo) {
+            var lg = document.createElement('img');
+            lg.className = 'mod-tree-logo';
+            lg.src = opts.logo; lg.alt = ''; lg.loading = 'lazy';
+            label.appendChild(lg);
+        }
+        label.appendChild(name);
+        if (opts.count != null && opts.count !== '') {
+            var cnt = document.createElement('span');
+            cnt.className = 'fc-badge mod-tree-count';
+            cnt.textContent = (typeof opts.count === 'number') ? opts.count.toLocaleString() : opts.count;
+            if (!opts.count) cnt.hidden = true;
+            label.appendChild(cnt);
+        }
+        row.appendChild(label);
+
+        if (!opts.leaf) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'mod-tree-toggle';
+            btn.setAttribute('aria-label', 'Toggle');
+            btn.appendChild(makeToggleSvg());
+            row.appendChild(btn);
+
+            var children = document.createElement('div');
+            children.className = 'mod-tree-children';
+            node.appendChild(row);
+            node.appendChild(children);
+        } else {
+            node.appendChild(row);
+        }
+        return node;
+    }
+
+    // The manufacturer logo carried onto every descendant row (model, version…).
+    function mfrLogo(node) {
+        var m = node && node.closest && node.closest('.mod-mfr-node');
+        return (m && m.dataset.logo) || '';
+    }
+
+    function loadModels(mfrNode) {
+        var mid = mfrNode.dataset.mfrId;
+        var children = mfrNode.querySelector(':scope > .mod-tree-children');
+        if (!children) return Promise.resolve();
+        var existingSelected = new Map();
+        children.querySelectorAll(':scope > .mod-model-node').forEach(function(n) {
+            existingSelected.set(n.dataset.modelId, n);
+        });
+
+        var hint = document.createElement('div');
+        hint.className = 'mod-tree-hint bilingual';
+        hint.setAttribute('data-lang-ar', 'جارٍ التحميل…');
+        hint.setAttribute('data-lang-en', 'Loading…');
+        hint.setAttribute('data-lang-es', 'Cargando…');
+        hint.setAttribute('data-lang-ru', 'Загрузка…');
+        hint.textContent = 'جارٍ التحميل…';
+        children.appendChild(hint);
+
+        return fetchJSON('/api/models/?manufacturer_id=' + encodeURIComponent(mid) + qsCarType + '&lang=' + curLang())
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(m) {
+                    var idStr = String(m.id);
+                    if (existingSelected.has(idStr)) return;
+                    var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
+                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: selectedSet('model').has(String(m.id)), count: m.car_count, logo: mfrNode.dataset.logo }));
+                });
+                if (!children.children.length) {
+                    var empty = document.createElement('div');
+                    empty.className = 'mod-tree-hint bilingual';
+                    empty.setAttribute('data-lang-ar', 'لا توجد موديلات');
+                    empty.setAttribute('data-lang-en', 'No models');
+                    empty.setAttribute('data-lang-es', 'Sin modelos');
+                    empty.setAttribute('data-lang-ru', 'Нет моделей');
+                    empty.textContent = 'لا توجد موديلات';
+                    children.appendChild(empty);
+                }
+                mfrNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
+
+    function _treeHint(children) {
+        var h = document.createElement('div');
+        h.className = 'mod-tree-hint bilingual';
+        h.setAttribute('data-lang-ar', 'جارٍ التحميل…');
+        h.setAttribute('data-lang-en', 'Loading…');
+        h.setAttribute('data-lang-es', 'Cargando…');
+        h.setAttribute('data-lang-ru', 'Загрузка…');
+        h.textContent = 'جارٍ التحميل…';
+        children.appendChild(h);
+        return h;
+    }
+    function _treeEmptyIfNone(children) {
+        if (!children.children.length) {
+            var e = document.createElement('div');
+            e.className = 'mod-tree-hint bilingual';
+            e.setAttribute('data-lang-ar', 'لا توجد نتائج');
+            e.setAttribute('data-lang-en', 'None');
+            e.setAttribute('data-lang-es', 'Ninguno');
+            e.setAttribute('data-lang-ru', 'Нет');
+            e.textContent = 'لا توجد نتائج';
+            children.appendChild(e);
+        }
+    }
+
+    // model → model versions (with year-range suffix)
+    function loadVersions(modelNode) {
+        var mid = modelNode.dataset.modelId;
+        var children = modelNode.querySelector(':scope > .mod-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/model-versions/?model_id=' + encodeURIComponent(mid) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(v) {
+                    var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
+                    children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, leaf: false, checked: selectedSet('model_version').has(v.value), logo: mfrLogo(modelNode) }));
+                });
+                _treeEmptyIfNone(children);
+                modelNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
+
+    // model version → engine groups
+    function loadEngines(versionNode) {
+        var modelNode = versionNode.closest('.mod-model-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode.dataset.version || '';
+        var children = versionNode.querySelector(':scope > .mod-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/engine-groups/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(en) {
+                    children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, leaf: false, checked: selectedSet('engine_group').has(en.value), logo: mfrLogo(versionNode) }));
+                });
+                _treeEmptyIfNone(children);
+                versionNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
+
+    // engine group → badges (trims)
+    function loadBadges(engineNode) {
+        var modelNode = engineNode.closest('.mod-model-node');
+        var versionNode = engineNode.closest('.mod-version-node');
+        var mid = modelNode ? modelNode.dataset.modelId : '';
+        var mv = versionNode ? (versionNode.dataset.version || '') : '';
+        var eg = engineNode.dataset.engine || '';
+        var children = engineNode.querySelector(':scope > .mod-tree-children');
+        if (!children) return Promise.resolve();
+        var hint = _treeHint(children);
+        return fetchJSON('/api/badges-by-engine/?model_id=' + encodeURIComponent(mid) + '&model_version=' + encodeURIComponent(mv) + '&engine_group=' + encodeURIComponent(eg) + qsCarType)
+            .then(function(arr) {
+                hint.remove();
+                arr.forEach(function(b) {
+                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, leaf: true, checked: selectedSet('badge').has(String(b.id)), logo: mfrLogo(engineNode) }));
+                });
+                _treeEmptyIfNone(children);
+                engineNode.dataset.loaded = 'true';
+                if (curLang() !== 'ar' && typeof applyLang === 'function') applyLang(curLang());
+            });
+    }
+
+    function toggleNode(node) {
+        var willOpen = !node.classList.contains('is-open');
+        if (willOpen && node.dataset.loaded === 'false') {
+            if (node.classList.contains('mod-mfr-node')) {
+                loadModels(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('mod-model-node')) {
+                loadVersions(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('mod-version-node')) {
+                loadEngines(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+            if (node.classList.contains('mod-engine-node')) {
+                loadBadges(node).then(function() { node.classList.add('is-open'); });
+                return;
+            }
+        }
+        node.classList.toggle('is-open');
+    }
+
+    // Toggle button click — expand/collapse + lazy-load.
+    root.addEventListener('click', function(e) {
+        var btn = e.target.closest('.mod-tree-toggle');
+        if (!btn) return;
+        e.preventDefault();
+        var node = btn.closest('.mod-tree-node');
+        if (node) toggleNode(node);
+    });
+
+    // When a parent is unchecked, also uncheck its descendants so they aren't submitted.
+    root.addEventListener('change', function(e) {
+        var cb = e.target;
+        if (!cb.classList || !cb.classList.contains('mod-tree-cb')) return;
+        if (!cb.checked) {
+            var node = cb.closest('.mod-tree-node');
+            if (!node) return;
+            node.querySelectorAll('.mod-tree-cb').forEach(function(c) {
+                if (c !== cb) c.checked = false;
+            });
+        } else if (cb.classList.contains('mod-mfr-cb')) {
+            // Auto-expand on first selection so the user sees its children.
+            var node = cb.closest('.mod-mfr-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('mod-model-cb')) {
+            var node = cb.closest('.mod-model-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('mod-version-cb')) {
+            var node = cb.closest('.mod-version-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        } else if (cb.classList.contains('mod-engine-cb')) {
+            var node = cb.closest('.mod-engine-node');
+            if (node && !node.classList.contains('is-open')) toggleNode(node);
+        }
+        // No auto-submit at any level — selection applies on the Apply button.
+    });
+
+    // On initial load, populate any pre-opened (server-rendered is-open)
+    // manufacturer/model nodes whose lazy children aren't loaded yet, so the
+    // restored selection path is visible. Manufacturers load models; models then
+    // load versions. Deeper levels (version/engine) are not server-pre-rendered.
+    root.querySelectorAll('.mod-mfr-node.is-open[data-loaded="false"]').forEach(function(mfrNode) {
+        loadModels(mfrNode).then(function() {
+            mfrNode.querySelectorAll(':scope > .mod-tree-children > .mod-model-node.is-open[data-loaded="false"]').forEach(function(modelNode) {
+                loadVersions(modelNode);
+            });
+        });
+    });
+})();
+</script>
+
+<script>
+function toggleModWishlist(carId) {
+    var btn = document.querySelector('.mod-wishlist-btn[data-car-id="' + carId + '"]');
+    if (!btn) return;
+    fetch('/wishlist/toggle/' + carId + '/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) {
+            window.location.href = data.redirect || ('/login/?next=' + encodeURIComponent(window.location.pathname));
+            return;
+        }
+        if (data.in_wishlist) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+        if (window.updateWishlistCount) window.updateWishlistCount();
+    })
+    .catch(function(err) { console.error('Wishlist error:', err); });
+}
+</script>
+
+<script>
+// Auction hero countdown
+(function () {
+    var el = document.querySelector('[data-auction-hero-timer]');
+    if (!el || !el.dataset.date) return;
+    var target = new Date(el.dataset.date).getTime();
+    if (isNaN(target)) { el.textContent = ''; return; }
+    function pad(n) { return ('0' + n).slice(-2); }
+    function tick() {
+        var diff = target - Date.now();
+        if (diff <= 0) { el.textContent = '—'; return; }
+        var days = Math.floor(diff / 864e5),
+            h = Math.floor(diff % 864e5 / 36e5),
+            m = Math.floor(diff % 36e5 / 6e4),
+            s = Math.floor(diff % 6e4 / 1e3);
+        el.textContent = (days > 0 ? days + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+    tick();
+    setInterval(tick, 1000);
+})();
+</script>
+
+<script>
+/* Per-filter lookup: inject a small search box into option groups (and every
+   tree level — brands, models, versions…) that have enough entries, and hide
+   non-matching options as the user types. */
+(function () {
+    function attach(container, itemSel, opts) {
+        if (container.dataset.fsearch) return;
+        if (container.querySelectorAll(itemSel).length < 6) return;
+        container.dataset.fsearch = '1';
+        var wrap = document.createElement('div');
+        wrap.className = 'mod-fsearch';
+        var input = document.createElement('input');
+        input.type = 'search';
+        input.setAttribute('placeholder', opts.ph);
+        input.setAttribute('aria-label', opts.ph);
+        wrap.appendChild(input);
+        wrap.insertAdjacentHTML('beforeend', "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/></svg>");
+        opts.mount(wrap);
+        input.addEventListener('input', function () {
+            var q = input.value.trim().toLowerCase();
+            if (opts.onType) opts.onType();
+            container.querySelectorAll(itemSel).forEach(function (it) {
+                var nameEl = opts.nameSel ? it.querySelector(opts.nameSel) : null;
+                var t = (nameEl ? nameEl.textContent : (it.textContent || '')).toLowerCase();
+                it.style.display = (!q || t.indexOf(q) !== -1) ? '' : 'none';
+            });
+        });
+    }
+    // Chip groups (fuel, color, body, seat, auction…)
+    document.querySelectorAll('.mod-fchips').forEach(function (grid) {
+        attach(grid, ':scope > label', {
+            ph: 'ابحث…',
+            mount: function (wrap) { grid.parentNode.insertBefore(wrap, grid); }
+        });
+    });
+    var tree = document.getElementById('lux-tree-root');
+    if (!tree) return;
+    // Top-level manufacturers
+    attach(tree, ':scope > .mod-mfr-node', {
+        ph: 'ابحث عن ماركة…',
+        nameSel: '.mod-tree-name',
+        mount: function (wrap) {
+            var back = tree.querySelector('.mod-tree-back');
+            tree.insertBefore(wrap, back ? back.nextSibling : tree.firstChild);
+        },
+        onType: function () {
+            tree.querySelectorAll('.mod-tree-node.is-open').forEach(function (n) { n.classList.remove('is-open'); });
+        }
+    });
+    // Dynamically-loaded children (models → versions → engines…) — add a lookup
+    // to each level's container once it fills up.
+    function childLookup(box) {
+        attach(box, ':scope > .mod-tree-node', {
+            ph: 'ابحث…',
+            nameSel: '.mod-tree-name',
+            mount: function (wrap) { box.insertBefore(wrap, box.firstChild); },
+            onType: function () {
+                box.querySelectorAll(':scope > .mod-tree-node.is-open').forEach(function (n) { n.classList.remove('is-open'); });
+            }
+        });
+    }
+    new MutationObserver(function (muts) {
+        var boxes = [];
+        muts.forEach(function (m) {
+            for (var i = 0; i < m.addedNodes.length; i++) {
+                var n = m.addedNodes[i];
+                if (n.nodeType === 1 && n.classList && n.classList.contains('mod-tree-node')) {
+                    var box = n.parentNode;
+                    if (box && box.classList.contains('mod-tree-children') && boxes.indexOf(box) === -1) boxes.push(box);
+                }
+            }
+        });
+        boxes.forEach(childLookup);
+    }).observe(tree, { childList: true, subtree: true });
+})();
+</script>
+{% include "partials/share_cart.html" with grid_sel=".mod-car-grid" head_sel=".mod-results-head" name_sel=".mod-car-name" make_sel=".mod-car-make" %}
+{% endblock %}

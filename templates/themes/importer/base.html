@@ -1,0 +1,1053 @@
+{% load static tailwind_tags django_htmx custom_filters %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root" data-theme="importer">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}</title>
+    {% if site_favicon %}<link rel="icon" href="{{ site_favicon }}">{% endif %}
+
+    <meta name="description" content="{% block meta_description %}{% if seo_description %}{{ seo_description }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{% if seo_keywords %}{{ seo_keywords }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+
+    <meta property="og:title" content="{% block og_title %}{% if seo_title %}{{ seo_title }}{% else %}{{ site_name|default:"سيارات" }}{% endif %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ site_name|default:"سيارات" }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{% if site_logo %}{% absolute_url site_logo %}{% elif site_hero_image %}{% absolute_url site_hero_image %}{% else %}{% absolute_url '/static/images/og-image.jpg' %}{% endif %}{% endblock %}">
+
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+
+    <!-- Global business structured data (every page) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoDealer",
+      "name": "{{ site_name|escapejs }}",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
+      {% if site_logo %}"logo": "{{ site_logo }}",
+      "image": "{{ site_logo }}",{% endif %}
+      "description": "{{ seo_description|escapejs }}",
+      {% if site_phone %}"telephone": "{{ site_phone|escapejs }}",{% endif %}
+      {% if site_address %}"address": {"@type": "PostalAddress","streetAddress": "{{ site_address|escapejs }}","addressCountry": "SA"},{% endif %}
+      "areaServed": {"@type": "Country", "name": "SA"}{% if social_links %},
+      "sameAs": [{% for s in social_links %}{% if not forloop.first %},{% endif %}"{{ s|escapejs }}"{% endfor %}]{% endif %}
+    }
+    </script>
+
+    {% tailwind_css %}
+    {% htmx_script %}
+
+    <script>
+    /* Apply saved/preferred mode before paint to avoid flash.
+       Importer theme is LIGHT by default; `mod-dark` opts into dark. */
+    (function () {
+        try {
+            var saved = localStorage.getItem('site_theme_mode');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark)) {
+                document.documentElement.classList.add('mod-dark');
+            }
+        } catch (e) {}
+    })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Only the weights the theme actually uses (inline CSS: 600/700/800; body 400).
+         Trimmed from 10 font files to 7 → faster first paint, less FOUT. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ════════════════════════════════════════════════════════════
+           IMPORTER THEME — "المستورد"
+           Bold Korean-import dealer identity: warm off-white surfaces,
+           a signature dark-slate hero band, and one vivid orange accent
+           (banner-derived). Heavy tight headings, pill buttons, rounded
+           cards. Light by default; `:root.mod-dark` switches to dark.
+           Brand color follows the tenant's primary_color (default orange).
+           All page templates must color through these tokens only.
+           ════════════════════════════════════════════════════════════ */
+        :root {
+            --mod-bg:        #f7f6f3;   /* page background — warm off-white     */
+            --mod-surface:   #ffffff;   /* cards / panels                       */
+            --mod-surface-2: #f0eee9;   /* subtle wells, hovers, chips          */
+            --mod-ink:       #1b242e;   /* primary text — slate ink             */
+            --mod-muted:     #5f6b78;   /* secondary text                       */
+            --mod-line:      #e4e2dd;   /* hairline borders — warm              */
+            --mod-brand:     {{ primary_color|default:'#f26a21' }};
+            /* Gradient partner: tenant accent color; tenants still on the stock
+               accent default (#3b82f6) keep the signature deep-orange sheen. */
+            --mod-brand-2:   {% if accent_color and accent_color != '#3b82f6' %}{{ accent_color }}{% else %}#db5a16{% endif %};
+            --mod-grad:      linear-gradient(135deg, var(--mod-brand), var(--mod-brand-2));
+            /* Signature dark-slate hero band (committed in both modes) */
+            --mod-hero-a:    #2e3a48;
+            --mod-hero-b:    #1c2530;
+            --mod-ok:        #1e9e6a;
+            --mod-warn:      #f59e0b;
+            --mod-danger:    #ef4444;
+            --mod-radius:    14px;
+            --mod-radius-sm: 10px;
+            --mod-shadow:    0 8px 24px -12px rgba(20, 28, 38, 0.16);
+            --mod-shadow-lg: 0 24px 60px -24px rgba(20, 28, 38, 0.26);
+            /* For default-markup dashboard pages rendered under this base */
+            --color-primary:   {{ primary_color|default:'#f26a21' }};
+            --color-secondary: {{ secondary_color|default:primary_color|default:'#db5a16' }};
+        }
+        :root.mod-dark {
+            --mod-bg:        #141a20;
+            --mod-surface:   #1c242d;
+            --mod-surface-2: #26313d;
+            --mod-ink:       #eaedf0;
+            --mod-muted:     #9aa6b2;
+            --mod-line:      #2c3742;
+            --mod-hero-a:    #222d38;
+            --mod-hero-b:    #12181e;
+            --mod-shadow:    0 8px 24px -12px rgba(0, 0, 0, 0.5);
+            --mod-shadow-lg: 0 24px 60px -24px rgba(0, 0, 0, 0.65);
+        }
+
+        /* Brand utilities the shared dashboard templates rely on */
+        .bg-brand { background-color: var(--color-primary); }
+        .bg-brand-hover:hover { background-color: var(--color-secondary); }
+        .text-brand { color: var(--color-primary); }
+        .border-brand { border-color: var(--color-primary); }
+        .bg-brand\/10 { background-color: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+        .focus\:ring-brand:focus { --tw-ring-color: var(--color-primary); }
+
+        html, body { background: var(--mod-bg); color: var(--mod-ink); }
+        body {
+            /* !important: the shared lang_currency_script sets an inline
+               per-language font (Tajawal etc.) on <body> meant for the default
+               theme; author !important outranks inline styles, so the modern
+               font holds across language switches. */
+            font-family: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif !important;
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.02em; }
+        a { color: inherit; }
+        ::selection { background: color-mix(in srgb, var(--mod-brand) 25%, transparent); }
+
+        /* ── Shared layout helpers ── */
+        .mod-wrap { max-width: 1320px; margin: 0 auto; padding: 0 1.25rem; }
+        .mod-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            font-size: 0.74rem; font-weight: 700; color: var(--mod-brand);
+            background: color-mix(in srgb, var(--mod-brand) 9%, transparent);
+            border: 1px solid color-mix(in srgb, var(--mod-brand) 22%, transparent);
+            padding: 0.35rem 0.85rem; border-radius: 999px;
+        }
+        .mod-section-title { font-size: clamp(1.45rem, 3vw, 2rem); margin: 0.6rem 0 0.4rem; }
+        .mod-section-sub { color: var(--mod-muted); font-size: 0.95rem; margin: 0; }
+
+        /* ── Buttons ── */
+        .mod-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+            padding: 0.7rem 1.4rem; border-radius: 999px;
+            font-family: inherit; font-size: 0.9rem; font-weight: 700;
+            color: var(--mod-ink); background: var(--mod-surface);
+            border: 1px solid var(--mod-line); cursor: pointer; text-decoration: none;
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+        }
+        .mod-btn:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); transform: translateY(-1px); box-shadow: var(--mod-shadow); }
+        .mod-btn svg { width: 1rem; height: 1rem; }
+        .mod-btn-primary {
+            color: #fff; background: var(--mod-grad); border: none;
+            box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--mod-brand) 60%, transparent);
+        }
+        .mod-btn-primary:hover { filter: brightness(1.06); box-shadow: 0 14px 30px -10px color-mix(in srgb, var(--mod-brand) 70%, transparent); }
+        .mod-btn-ghost { background: transparent; border-color: transparent; }
+        .mod-btn-ghost:hover { background: var(--mod-surface-2); box-shadow: none; }
+
+        /* ── Cards ── */
+        .mod-card {
+            background: var(--mod-surface);
+            border: 1px solid var(--mod-line);
+            border-radius: var(--mod-radius);
+            box-shadow: var(--mod-shadow);
+            transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease, border-color .22s ease;
+        }
+        .mod-card:hover { transform: translateY(-3px); box-shadow: var(--mod-shadow-lg); }
+        .mod-chip {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            font-size: 0.74rem; font-weight: 600; color: var(--mod-muted);
+            background: var(--mod-surface-2); border: 1px solid var(--mod-line);
+            padding: 0.28rem 0.7rem; border-radius: 999px;
+        }
+
+        /* ── Navbar ── */
+        .mod-nav {
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--mod-surface) 82%, transparent);
+            backdrop-filter: saturate(160%) blur(12px);
+            -webkit-backdrop-filter: saturate(160%) blur(12px);
+            border-bottom: 1px solid var(--mod-line);
+        }
+        .mod-nav-inner {
+            max-width: 1320px; margin: 0 auto;
+            display: flex; align-items: center; gap: 1.5rem;
+            padding: 0.3rem 1.25rem;
+        }
+        .mod-brand {
+            display: flex; align-items: center; gap: 0.65rem;
+            color: var(--mod-ink); text-decoration: none;
+            font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em;
+        }
+        .mod-brand img { height: 58px; width: auto; display: block; }
+        .mod-nav-links { display: flex; gap: 0.25rem; flex: 1; }
+        .mod-nav-link {
+            color: var(--mod-muted); text-decoration: none;
+            font-size: 0.88rem; font-weight: 600;
+            padding: 0.5rem 0.95rem; border-radius: 999px;
+            transition: color .18s ease, background .18s ease;
+        }
+        .mod-nav-link:hover { color: var(--mod-ink); background: var(--mod-surface-2); }
+        .mod-nav-link.active { color: var(--mod-brand); background: color-mix(in srgb, var(--mod-brand) 10%, transparent); }
+
+        .mod-nav-actions { display: flex; gap: 0.5rem; align-items: center; }
+        .mod-nav-action {
+            color: var(--mod-ink); text-decoration: none;
+            font-size: 0.84rem; font-weight: 700;
+            padding: 0.5rem 1.05rem; border-radius: 999px;
+            border: 1px solid var(--mod-line);
+            transition: all .18s ease;
+            display: inline-flex; align-items: center; gap: 0.45rem;
+        }
+        .mod-nav-action:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+        .mod-nav-action.primary { color: #fff; background: var(--mod-grad); border: none; }
+        .mod-nav-action.primary:hover { filter: brightness(1.06); color: #fff; }
+        .mod-nav-action svg { width: 0.9rem; height: 0.9rem; }
+
+        .mod-nav-toggle {
+            display: none;
+            width: 2.5rem; height: 2.5rem; border-radius: 12px;
+            align-items: center; justify-content: center;
+            background: var(--mod-surface-2); border: 1px solid var(--mod-line);
+            color: var(--mod-ink); cursor: pointer; padding: 0; font-family: inherit;
+            transition: all .18s ease;
+        }
+        .mod-nav-toggle svg { width: 1.15rem; height: 1.15rem; }
+        .mod-nav-toggle .mod-icon-close { display: none; }
+        .mod-nav-mobile-open .mod-nav-toggle .mod-icon-burger { display: none; }
+        .mod-nav-mobile-open .mod-nav-toggle .mod-icon-close { display: block; }
+
+        @media (max-width: 768px) {
+            .mod-nav-inner { gap: 0.6rem; padding: 0.35rem 1rem; }
+            .mod-brand { font-size: 0.98rem; }
+            .mod-brand img { height: 48px; }
+            .mod-nav-links, .mod-nav-actions { display: none; }
+            .mod-mode-toggle-mobile { display: inline-flex; flex-shrink: 0; }
+            .mod-nav-toggle { display: inline-flex; margin-inline-start: auto; flex-shrink: 0; }
+            /* Expanded mobile menu: links + actions flow inside the nav as
+               full-width rows (no absolute stacking → no overlap). */
+            .mod-nav-mobile-open .mod-nav-inner { flex-wrap: wrap; }
+            .mod-nav-mobile-open .mod-nav-links,
+            .mod-nav-mobile-open .mod-nav-actions {
+                display: flex; flex-direction: column; gap: 0.35rem; align-items: stretch;
+                flex-basis: 100%; order: 10;
+            }
+            .mod-nav-mobile-open .mod-nav-links { padding-top: 0.5rem; border-top: 1px solid var(--mod-line); }
+            .mod-nav-mobile-open .mod-nav-actions { padding-bottom: 0.5rem; }
+            .mod-nav-mobile-open .mod-nav-actions .mod-switcher { width: 100%; }
+            .mod-nav-mobile-open .mod-nav-actions .mod-switcher-btn { width: 100%; justify-content: center; }
+        }
+
+        main.mod-main { flex: 1; }
+
+        /* ── Dropdown menus (lang/currency) ──
+           The shared lang_currency_script partial toggles `.lux-menu-active`
+           on items — keep that exact class styled here. */
+        .mod-switcher { position: relative; }
+        .mod-switcher-btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.5rem 0.9rem; border-radius: 999px;
+            background: var(--mod-surface-2); color: var(--mod-muted);
+            border: 1px solid var(--mod-line); cursor: pointer;
+            font-family: inherit; font-size: 0.8rem; font-weight: 600;
+            transition: all .18s ease;
+        }
+        .mod-switcher-btn:hover { color: var(--mod-brand); border-color: color-mix(in srgb, var(--mod-brand) 40%, var(--mod-line)); }
+        .mod-menu {
+            position: absolute; top: calc(100% + 0.5rem); right: 0;
+            min-width: 180px;
+            background: var(--mod-surface); border: 1px solid var(--mod-line);
+            border-radius: var(--mod-radius-sm);
+            box-shadow: var(--mod-shadow-lg);
+            padding: 0.4rem; z-index: 60;
+            overflow: hidden;
+        }
+        .mod-menu.hidden { display: none; }
+        .mod-menu-item {
+            display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+            width: 100%; padding: 0.55rem 0.8rem; border-radius: 9px;
+            background: transparent; border: 0; cursor: pointer;
+            color: var(--mod-muted); font-family: inherit; font-size: 0.85rem; font-weight: 600;
+            text-align: right;
+            transition: all .15s ease;
+        }
+        .mod-menu-item:hover { background: var(--mod-surface-2); color: var(--mod-ink); }
+        .mod-menu-item.lux-menu-active { color: var(--mod-brand); background: color-mix(in srgb, var(--mod-brand) 10%, transparent); }
+        .mod-menu-item .lang-check-icon,
+        .mod-menu-item .currency-check-icon { color: var(--mod-brand); font-size: 0.75rem; }
+        .mod-menu-item .lang-check-icon.hidden,
+        .mod-menu-item .currency-check-icon.hidden { display: none; }
+
+        /* ── Mode toggle ── */
+        .mod-mode-toggle {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 2.35rem; height: 2.35rem; padding: 0; border-radius: 999px;
+            background: var(--mod-surface-2); color: var(--mod-muted);
+            border: 1px solid var(--mod-line); cursor: pointer;
+            font-family: inherit; transition: all .18s ease;
+        }
+        .mod-mode-toggle:hover { color: var(--mod-brand); border-color: color-mix(in srgb, var(--mod-brand) 40%, var(--mod-line)); }
+        .mod-mode-toggle svg { width: 1rem; height: 1rem; }
+        .mod-mode-toggle .mod-mode-icon-dark { display: inline-flex; }   /* light mode → offer moon */
+        .mod-mode-toggle .mod-mode-icon-light { display: none; }
+        .mod-dark .mod-mode-toggle .mod-mode-icon-dark { display: none; }
+        .mod-dark .mod-mode-toggle .mod-mode-icon-light { display: inline-flex; } /* dark mode → offer sun */
+        .mod-mode-toggle-mobile { display: none; }
+
+        /* ── Forms (auth/contact pages + form cards) ── */
+        .mod-auth-page { padding: 4rem 1.25rem; min-height: 70vh; display: flex; align-items: center; justify-content: center; }
+        .mod-auth-card {
+            width: 100%; max-width: 460px;
+            background: var(--mod-surface);
+            border: 1px solid var(--mod-line);
+            border-radius: calc(var(--mod-radius) + 6px);
+            box-shadow: var(--mod-shadow-lg);
+            padding: 2.75rem 2.25rem;
+        }
+        .mod-auth-card.wide { max-width: 760px; }
+        .mod-auth-head { text-align: center; margin-bottom: 2.25rem; }
+        .mod-auth-title { font-size: 1.7rem; margin: 0.65rem 0 0.4rem; }
+        .mod-auth-sub { color: var(--mod-muted); font-size: 0.9rem; margin: 0; }
+
+        .mod-field-row { margin-bottom: 1.1rem; }
+        .mod-field-row label {
+            /* inline-block so a trailing required-asterisk span stays on the
+               same line; the width:100% input below still wraps to its own */
+            display: inline-block; color: var(--mod-ink);
+            font-size: 0.82rem; font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+        .mod-field-row .req { color: var(--mod-danger); }
+        .mod-field-row input,
+        .mod-field-row textarea,
+        .mod-field-row select {
+            width: 100%; background: var(--mod-surface-2);
+            border: 1px solid var(--mod-line); border-radius: var(--mod-radius-sm);
+            color: var(--mod-ink); padding: 0.8rem 1rem; font-size: 0.95rem;
+            font-family: inherit; box-sizing: border-box;
+            transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .mod-field-row input:focus,
+        .mod-field-row textarea:focus,
+        .mod-field-row select:focus {
+            outline: none; background: var(--mod-surface);
+            border-color: var(--mod-brand);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 18%, transparent);
+        }
+        .mod-field-row textarea { resize: vertical; min-height: 140px; }
+        .mod-row-2 { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 600px) { .mod-row-2 { grid-template-columns: 1fr; } }
+
+        .mod-submit {
+            width: 100%; padding: 0.95rem; margin-top: 1.25rem;
+            background: var(--mod-grad); color: #fff;
+            border: none; border-radius: 999px; cursor: pointer;
+            font-size: 0.95rem; font-weight: 800; font-family: inherit;
+            box-shadow: 0 12px 28px -10px color-mix(in srgb, var(--mod-brand) 60%, transparent);
+            transition: filter .18s ease, transform .18s ease;
+        }
+        .mod-submit:hover { filter: brightness(1.06); transform: translateY(-1px); }
+
+        .mod-form-foot { text-align: center; color: var(--mod-muted); font-size: 0.87rem; margin-top: 1.5rem; }
+        .mod-form-foot a { color: var(--mod-brand); text-decoration: none; font-weight: 700; }
+        .mod-form-foot a:hover { text-decoration: underline; }
+
+        .mod-alert {
+            border: 1px solid color-mix(in srgb, var(--mod-brand) 30%, transparent);
+            border-inline-start: 3px solid var(--mod-brand);
+            background: color-mix(in srgb, var(--mod-brand) 7%, var(--mod-surface));
+            color: var(--mod-ink); padding: 0.9rem 1.1rem; border-radius: var(--mod-radius-sm);
+            margin-bottom: 1.25rem; font-size: 0.87rem;
+        }
+        .mod-alert.error {
+            border-color: color-mix(in srgb, var(--mod-danger) 35%, transparent);
+            border-inline-start-color: var(--mod-danger);
+            background: color-mix(in srgb, var(--mod-danger) 7%, var(--mod-surface));
+        }
+        .mod-alert p { margin: 0.25rem 0; }
+
+        .mod-info-grid {
+            display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            margin-bottom: 2.25rem;
+        }
+        .mod-info-card {
+            padding: 1.4rem; text-align: center;
+            background: var(--mod-surface); border: 1px solid var(--mod-line);
+            border-radius: var(--mod-radius);
+        }
+        .mod-info-label { color: var(--mod-brand); font-size: 0.72rem; font-weight: 800; margin-bottom: 0.45rem; }
+        .mod-info-value { color: var(--mod-ink); font-size: 0.95rem; word-break: break-word; }
+        .mod-info-value a { color: inherit; text-decoration: none; }
+        .mod-info-value a:hover { color: var(--mod-brand); }
+
+        /* ── Footer ── */
+        .mod-footer {
+            background: var(--mod-surface);
+            border-top: 1px solid var(--mod-line);
+            padding: 3.5rem 1.25rem 2rem;
+            color: var(--mod-muted);
+            margin-top: 3rem;
+        }
+        .mod-footer-grid {
+            max-width: 1320px; margin: 0 auto;
+            display: grid; gap: 2.5rem;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+        }
+        @media (max-width: 768px) { .mod-footer-grid { grid-template-columns: 1fr 1fr; } }
+        .mod-footer-col h4 { color: var(--mod-ink); font-size: 0.85rem; font-weight: 800; margin: 0 0 0.9rem; }
+        .mod-footer-col a {
+            color: var(--mod-muted); text-decoration: none; display: block;
+            padding: 0.3rem 0; font-size: 0.87rem; transition: color .18s ease;
+        }
+        .mod-footer-col a:hover { color: var(--mod-brand); }
+        .mod-footer-about { color: var(--mod-muted); font-size: 0.9rem; line-height: 1.75; margin: 0 0 1.25rem; max-width: 32em; }
+        .mod-footer-brand {
+            display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.9rem;
+            color: var(--mod-ink); font-size: 1.05rem; font-weight: 800;
+        }
+        .mod-footer-brand img { height: 34px; }
+        .mod-footer-bottom {
+            max-width: 1320px; margin: 2.5rem auto 0; padding-top: 1.5rem;
+            border-top: 1px solid var(--mod-line);
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+            color: var(--mod-muted); font-size: 0.78rem;
+        }
+        .mod-social { display: flex; gap: 0.6rem; }
+        .mod-social a {
+            width: 2.35rem; height: 2.35rem; border-radius: 999px;
+            background: var(--mod-surface-2); border: 1px solid var(--mod-line);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--mod-muted); text-decoration: none; padding: 0;
+            transition: all .18s ease;
+        }
+        .mod-social a:hover { color: #fff; background: var(--mod-grad); border-color: transparent; }
+        .mod-social svg { width: 1rem; height: 1rem; }
+
+        /* ═══════════════════════════════════════════════════════════
+           IMPORTER — header lockup, orange phone CTA, dark-slate footer
+           ═══════════════════════════════════════════════════════════ */
+        .imp-brand { gap: 0.6rem; }
+        .imp-brand-mark { display: inline-grid; place-items: center; width: 44px; height: 30px; color: var(--mod-brand); flex-shrink: 0; }
+        .imp-brand-mark svg { width: 44px; height: 30px; }
+        .imp-brand-txt { display: flex; flex-direction: column; line-height: 1.12; }
+        .imp-brand-txt b { font-size: 1.02rem; font-weight: 900; color: var(--mod-ink); letter-spacing: -0.01em; }
+        .imp-brand-txt small { font-size: 0.68rem; font-weight: 700; color: var(--mod-muted); }
+        .mod-brand img { max-height: 46px; }
+
+        .imp-call {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--mod-brand); color: #fff; font-weight: 800; font-size: 0.85rem;
+            padding: 0.5rem 0.9rem; border-radius: 11px; text-decoration: none; white-space: nowrap;
+            box-shadow: 0 6px 16px -8px var(--mod-brand);
+        }
+        .imp-call:hover { background: var(--mod-brand-2); color: #fff; }
+        .imp-call svg { width: 1rem; height: 1rem; }
+        .imp-call .num { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; }
+        @media (max-width: 980px) { .imp-call .num { display: none; } }
+
+        /* Dark-slate footer (committed in both light and dark modes) */
+        .mod-footer { background: #1b2330 !important; border-top: 0 !important; color: rgba(255,255,255,0.62) !important; }
+        :root[data-theme="dark"] .mod-footer, .mod-dark .mod-footer { background: #0e1318 !important; }
+        .mod-footer-col h4 { color: #fff !important; }
+        .mod-footer-col a { color: rgba(255,255,255,0.66) !important; }
+        .mod-footer-col a:hover { color: var(--mod-brand) !important; }
+        .mod-footer-about { color: rgba(255,255,255,0.55) !important; }
+        .mod-footer-brand { color: #fff !important; }
+        .mod-footer-brand .imp-brand-txt b { color: #fff !important; }
+        .mod-footer-brand .imp-brand-txt small { color: rgba(255,255,255,0.5) !important; }
+        .mod-footer-bottom { border-top-color: rgba(255,255,255,0.12) !important; color: rgba(255,255,255,0.45) !important; }
+        .mod-social a { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.14) !important; color: rgba(255,255,255,0.8) !important; }
+        .mod-social a:hover { background: var(--mod-brand) !important; border-color: transparent !important; color: #fff !important; }
+
+        /* Footer contact items: icon + label + value */
+        .imp-fcontact a, .imp-fcontact div { display: flex !important; align-items: center; gap: 0.6rem; padding: 0.4rem 0 !important; }
+        .imp-fcontact .ic { width: 34px; height: 34px; border-radius: 9px; background: rgba(255,255,255,0.08);
+            display: grid; place-items: center; flex-shrink: 0; color: var(--mod-brand); }
+        .imp-fcontact .ic.snap { background: #FFFC00; color: #000; }
+        .imp-fcontact .ic svg { width: 17px; height: 17px; }
+        .imp-fcontact .tx { display: flex; flex-direction: column; line-height: 1.2; }
+        .imp-fcontact .tx small { color: rgba(255,255,255,0.4); font-size: 0.68rem; font-weight: 600; }
+        .imp-fcontact .tx span { color: rgba(255,255,255,0.85); font-weight: 700; font-size: 0.86rem; }
+
+        /* Cars dropdown menu (hover on desktop, tap/focus on mobile) */
+        .imp-navdd { position: relative; }
+        .imp-navdd-trigger { display: inline-flex !important; align-items: center; gap: 0.3rem; }
+        .imp-navdd-trigger .imp-chev { width: 0.8rem; height: 0.8rem; transition: transform 0.15s ease; }
+        .imp-navdd:hover .imp-navdd-trigger .imp-chev,
+        .imp-navdd:focus-within .imp-navdd-trigger .imp-chev { transform: rotate(180deg); }
+        .imp-navdd-menu {
+            position: absolute; top: 100%; inset-inline-end: 0; min-width: 210px;
+            background: var(--mod-surface); border: 1px solid var(--mod-line); border-radius: 13px;
+            box-shadow: var(--mod-shadow-lg); padding: 0.4rem; margin-top: 0.55rem;
+            display: flex; flex-direction: column; gap: 2px; z-index: 60;
+            opacity: 0; visibility: hidden; transform: translateY(-6px);
+            transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+        }
+        .imp-navdd-menu::before { content: ""; position: absolute; top: -0.6rem; inset-inline: 0; height: 0.6rem; }
+        .imp-navdd:hover .imp-navdd-menu, .imp-navdd:focus-within .imp-navdd-menu {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        .imp-navdd-menu a {
+            display: flex; align-items: center; gap: 0.55rem; padding: 0.6rem 0.75rem; border-radius: 9px;
+            font-weight: 700; font-size: 0.9rem; color: var(--mod-ink); text-decoration: none; white-space: nowrap; transition: 0.12s;
+        }
+        .imp-navdd-menu a:hover { background: color-mix(in srgb, var(--mod-brand) 10%, transparent); color: var(--mod-brand); }
+        .imp-navdd-menu a .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mod-brand); flex-shrink: 0; opacity: 0.55; }
+        @media (max-width: 900px) {
+            .imp-navdd-menu { position: static; opacity: 1; visibility: visible; transform: none;
+                box-shadow: none; border: 0; margin: 0.2rem 0 0.2rem 0.5rem; padding: 0; min-width: 0; }
+            .imp-navdd-menu::before { display: none; }
+            .imp-navdd-trigger .imp-chev { display: none; }
+        }
+
+        /* Settings gear dropdown (lang / currency / mode / staff actions) */
+        .imp-set-trigger { cursor: pointer; }
+        .imp-set-trigger svg { width: 1.15rem; height: 1.15rem; }
+        .imp-set-menu { inset-inline-end: 0; inset-inline-start: auto; min-width: 244px; padding: 0.6rem; }
+        .imp-set-sec { padding: 0.3rem 0.15rem 0.55rem; }
+        .imp-set-h { font-size: 0.68rem; font-weight: 800; color: var(--mod-muted); text-transform: uppercase;
+            letter-spacing: 0.04em; margin-bottom: 0.45rem; padding-inline-start: 0.15rem; }
+        .imp-set-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+        .imp-set-chip {
+            display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.34rem 0.6rem; border-radius: 8px;
+            border: 1px solid var(--mod-line); background: var(--mod-surface); color: var(--mod-ink);
+            font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: inherit; transition: 0.12s; }
+        .imp-set-chip:hover { border-color: var(--mod-brand); color: var(--mod-brand); }
+        .imp-set-chip .lang-check-icon:not(.hidden),
+        .imp-set-chip .currency-check-icon:not(.hidden) { color: var(--mod-brand); }
+        .imp-set-row {
+            display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.55rem 0.5rem; border-radius: 9px;
+            border: 0; background: none; color: var(--mod-ink); font-weight: 700; font-size: 0.88rem; cursor: pointer;
+            font-family: inherit; text-decoration: none; text-align: start; transition: 0.12s; }
+        .imp-set-row:hover { background: color-mix(in srgb, var(--mod-brand) 10%, transparent); color: var(--mod-brand); }
+        .imp-set-row svg { width: 1.05rem; height: 1.05rem; flex-shrink: 0; }
+        .imp-set-primary { color: var(--mod-brand); }
+        .imp-set-div { height: 1px; background: var(--mod-line); margin: 0.4rem 0.2rem; }
+
+        /* Profile / admin avatar menu */
+        .imp-avatar { gap: 0.35rem; padding: 0.25rem 0.55rem 0.25rem 0.4rem; }
+        .imp-avatar-badge { width: 26px; height: 26px; border-radius: 50%; background: var(--mod-grad); color: #fff;
+            display: grid; place-items: center; font-weight: 800; font-size: 0.8rem; flex-shrink: 0; }
+        .imp-avatar.is-admin .imp-avatar-badge { box-shadow: 0 0 0 2px color-mix(in srgb, var(--mod-brand) 40%, transparent); }
+        .imp-avatar .imp-chev { width: 0.72rem; height: 0.72rem; opacity: 0.7; transition: transform 0.15s ease; }
+        .imp-navdd:hover .imp-avatar .imp-chev, .imp-navdd:focus-within .imp-avatar .imp-chev { transform: rotate(180deg); }
+        .imp-profile-menu { min-width: 224px; }
+        .imp-profile-head { display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.5rem 0.6rem; }
+        .imp-avatar-lg { width: 40px; height: 40px; border-radius: 50%; background: var(--mod-grad); color: #fff;
+            display: grid; place-items: center; font-weight: 800; font-size: 1.05rem; flex-shrink: 0; }
+        .imp-profile-id b { display: block; font-weight: 800; font-size: 0.92rem; color: var(--mod-ink); }
+        .imp-profile-id small { color: var(--mod-brand); font-weight: 700; font-size: 0.72rem; }
+
+        @media (max-width: 900px) { .imp-set-menu { min-width: 0; } }
+    </style>
+    {% block extra_head %}{% endblock %}
+    {% include "partials/site_font.html" %}
+    {% if site_logo and show_watermark %}
+    <style>
+        :root { --site-logo-url: url("{{ site_logo }}"); }
+        .car-img-wm { position: relative; }
+        .car-img-wm::after { content: ""; position: absolute; inset: 0; background-image: var(--site-logo-url); background-repeat: no-repeat; background-position: center center; background-size: 50% auto; opacity: 0.4; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); z-index: 5; }
+    </style>
+    {% endif %}
+</head>
+<body hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
+{% include "partials/ticker.html" %}
+
+<nav class="mod-nav" id="mod-nav">
+    <div class="mod-nav-inner">
+        <a href="{% url 'home' %}" class="mod-brand imp-brand">
+            {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% else %}<span class="imp-brand-mark" aria-hidden="true"><svg viewBox="0 0 120 80"><path d="M8 58 C25 40 50 32 78 34 C96 35 108 40 114 48" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M20 58 C34 46 54 42 74 44 C90 45 100 50 106 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".55"/><circle cx="42" cy="60" r="9" fill="none" stroke="currentColor" stroke-width="5"/><circle cx="90" cy="60" r="9" fill="none" stroke="currentColor" stroke-width="5"/></svg></span>{% endif %}
+            <span class="imp-brand-txt"><b>{{ site_name|default:"سيارات" }}</b><small class="bilingual" data-lang-ar="للسيارات المستوردة" data-lang-en="Imported Cars" data-lang-es="Autos importados" data-lang-ru="Импортные авто">للسيارات المستوردة</small></span>
+        </a>
+        <button type="button" class="mod-nav-toggle" onclick="document.getElementById('mod-nav').classList.toggle('mod-nav-mobile-open')" aria-label="Menu">
+            <svg class="mod-icon-burger" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+            <svg class="mod-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/></svg>
+        </button>
+        <button type="button" class="mod-mode-toggle mod-mode-toggle-mobile" onclick="modToggleMode()" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <span class="mod-mode-icon-dark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
+            <span class="mod-mode-icon-light" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg></span>
+        </button>
+        <div class="mod-nav-links">
+            <a href="{% url 'home' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'home' %}active{% endif %}" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <div class="imp-navdd">
+                <a href="{% url 'car_list' %}" class="mod-nav-link imp-navdd-trigger bilingual {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات <svg class="imp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></a>
+                <div class="imp-navdd-menu">
+                    {% if show_encar %}<a href="{% url 'car_list' %}?car_type=cars" class="bilingual" data-lang-ar="بيع مباشر" data-lang-en="Direct Sale" data-lang-es="Venta directa" data-lang-ru="Прямая продажа"><span class="dot"></span>بيع مباشر</a>{% endif %}
+                    {% if show_auctions %}<a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="مزادات كوريا" data-lang-en="Korea Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы"><span class="dot"></span>مزادات كوريا</a>{% endif %}
+                    {% if show_site_cars and nav_has_ours %}<a href="{% url 'site_car_list' %}" class="bilingual" data-lang-ar="سياراتنا" data-lang-en="Our Cars" data-lang-es="Nuestros coches" data-lang-ru="Наши авто"><span class="dot"></span>سياراتنا</a>{% endif %}
+                    {% if show_site_cars and nav_has_sold %}<a href="{% url 'site_car_list' %}?status=sold" class="bilingual" data-lang-ar="سيارات مباعة" data-lang-en="Sold Cars" data-lang-es="Vendidos" data-lang-ru="Проданные"><span class="dot"></span>سيارات مباعة</a>{% endif %}
+                    {% if show_site_cars and nav_has_damaged %}<a href="{% url 'site_car_list' %}?source=auctions" class="bilingual" data-lang-ar="سيارات مصدومة" data-lang-en="Damaged Cars" data-lang-es="Dañados" data-lang-ru="Повреждённые"><span class="dot"></span>سيارات مصدومة</a>{% endif %}
+                    <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="كل السيارات" data-lang-en="All Cars" data-lang-es="Todos" data-lang-ru="Все авто"><span class="dot"></span>كل السيارات</a>
+                </div>
+            </div>
+            {% if show_parts %}<a href="{% url 'parts_list' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'parts_list' %}active{% endif %}" data-lang-ar="قطع غيار" data-lang-en="Parts" data-lang-es="Repuestos" data-lang-ru="Запчасти">قطع غيار</a>{% endif %}
+            {% if show_accessories %}<a href="{% url 'accessories_list' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'accessories_list' %}active{% endif %}" data-lang-ar="إكسسوارات" data-lang-en="Accessories" data-lang-es="Accesorios" data-lang-ru="Аксессуары">إكسسوارات</a>{% endif %}
+            <a href="{% url 'contact' %}" class="mod-nav-link bilingual {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" data-lang-ar="تواصل معنا" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل معنا</a>
+        </div>
+        <div class="mod-nav-actions">
+            {% if site_phone %}
+            <a href="tel:{{ site_phone }}" class="imp-call">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.5-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.4 0 .8-.3 1l-2.2 2.3Z"/></svg>
+                <span class="num">{{ site_phone }}</span>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'wishlist' %}" class="mod-nav-action" aria-label="المفضلة" title="المفضلة">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 6C19 16.5 12 21 12 21Z"/></svg>
+            </a>
+
+            <!-- Settings gear: language / currency / theme / staff actions -->
+            <div class="imp-navdd imp-set">
+                <button type="button" class="mod-nav-action imp-set-trigger" aria-label="الإعدادات" title="الإعدادات">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+                </button>
+                <div class="imp-navdd-menu imp-set-menu">
+                    <div class="imp-set-sec">
+                        <div class="imp-set-h bilingual" data-lang-ar="اللغة" data-lang-en="Language" data-lang-es="Idioma" data-lang-ru="Язык">اللغة</div>
+                        <div class="imp-set-chips">
+                            <button type="button" data-lang-code="ar" onclick="setLang('ar')" class="lang-menu-item imp-set-chip">🇸🇦 عربي <span class="lang-check-icon hidden">✓</span></button>
+                            <button type="button" data-lang-code="en" onclick="setLang('en')" class="lang-menu-item imp-set-chip">🇬🇧 EN <span class="lang-check-icon hidden">✓</span></button>
+                            <button type="button" data-lang-code="es" onclick="setLang('es')" class="lang-menu-item imp-set-chip">🇪🇸 ES <span class="lang-check-icon hidden">✓</span></button>
+                            <button type="button" data-lang-code="ru" onclick="setLang('ru')" class="lang-menu-item imp-set-chip">🇷🇺 RU <span class="lang-check-icon hidden">✓</span></button>
+                        </div>
+                    </div>
+                    <div class="imp-set-sec">
+                        <div class="imp-set-h bilingual" data-lang-ar="العملة" data-lang-en="Currency" data-lang-es="Moneda" data-lang-ru="Валюта">العملة</div>
+                        <div class="imp-set-chips">
+                            <button type="button" data-currency-code="SAR" onclick="setCurrency('SAR')" class="currency-menu-item imp-set-chip">﷼ SAR <span class="currency-check-icon hidden">✓</span></button>
+                            <button type="button" data-currency-code="USD" onclick="setCurrency('USD')" class="currency-menu-item imp-set-chip">$ USD <span class="currency-check-icon hidden">✓</span></button>
+                            <button type="button" data-currency-code="KRW" onclick="setCurrency('KRW')" class="currency-menu-item imp-set-chip">₩ KRW <span class="currency-check-icon hidden">✓</span></button>
+                            <button type="button" data-currency-code="AED" onclick="setCurrency('AED')" class="currency-menu-item imp-set-chip">د.إ AED <span class="currency-check-icon hidden">✓</span></button>
+                            <button type="button" data-currency-code="EUR" onclick="setCurrency('EUR')" class="currency-menu-item imp-set-chip">€ EUR <span class="currency-check-icon hidden">✓</span></button>
+                            {% for c in custom_currencies %}<button type="button" data-currency-code="{{ c.code }}" onclick="setCurrency('{{ c.code }}')" class="currency-menu-item imp-set-chip">{{ c.symbol }} {{ c.code }} <span class="currency-check-icon hidden">✓</span></button>{% endfor %}
+                        </div>
+                    </div>
+                    <button type="button" class="imp-set-row" onclick="modToggleMode()">
+                        <span class="mod-mode-icon-dark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></span>
+                        <span class="mod-mode-icon-light" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg></span>
+                        <span class="bilingual" data-lang-ar="تبديل المظهر" data-lang-en="Toggle theme" data-lang-es="Cambiar tema" data-lang-ru="Сменить тему">تبديل المظهر</span>
+                    </button>
+                </div>
+            </div>
+
+            {% if user.is_authenticated %}
+            <div class="imp-navdd imp-set">
+                <button type="button" class="mod-nav-action imp-set-trigger imp-avatar{% if user.is_staff %} is-admin{% endif %}" aria-label="الحساب" title="{{ user.get_full_name|default:user.username }}">
+                    <span class="imp-avatar-badge">{{ user.get_full_name|default:user.username|first|upper }}</span>
+                    <svg class="imp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="imp-navdd-menu imp-set-menu imp-profile-menu">
+                    <div class="imp-profile-head">
+                        <span class="imp-avatar-lg">{{ user.get_full_name|default:user.username|first|upper }}</span>
+                        <div class="imp-profile-id">
+                            <b>{{ user.get_full_name|default:user.username }}</b>
+                            {% if user.is_staff %}<small class="bilingual" data-lang-ar="مدير الموقع" data-lang-en="Site admin" data-lang-es="Administrador" data-lang-ru="Администратор">مدير الموقع</small>{% else %}<small class="bilingual" data-lang-ar="عضو" data-lang-en="Member" data-lang-es="Miembro" data-lang-ru="Участник">عضو</small>{% endif %}
+                        </div>
+                    </div>
+                    {% if user.is_staff %}
+                    <div class="imp-set-div"></div>
+                    <a href="{% url 'site_dashboard' %}" class="imp-set-row">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                        <span class="bilingual" data-lang-ar="لوحة التحكم" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة التحكم</span>
+                    </a>
+                    <a href="{% url 'site_car_add' %}" class="imp-set-row imp-set-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        <span class="bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir coche" data-lang-ru="Добавить машину">أضف سيارة</span>
+                    </a>
+                    {% endif %}
+                    <div class="imp-set-div"></div>
+                    <a href="{% url 'account' %}" class="imp-set-row">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                        <span class="bilingual" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</span>
+                    </a>
+                    <a href="{% url 'logout' %}" class="imp-set-row">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                        <span class="bilingual" data-lang-ar="تسجيل الخروج" data-lang-en="Sign Out" data-lang-es="Cerrar sesión" data-lang-ru="Выйти">تسجيل الخروج</span>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" class="mod-nav-action bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</a>
+            <a href="{% url 'register' %}" class="mod-nav-action primary bilingual" data-lang-ar="حساب جديد" data-lang-en="Register" data-lang-es="Registro" data-lang-ru="Регистрация">حساب جديد</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main class="mod-main">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="mod-footer">
+    <div class="mod-footer-grid">
+        <div class="mod-footer-col">
+            <div class="mod-footer-brand imp-brand">
+                {% if site_logo %}<img src="{{ site_logo }}" alt="{{ site_name }}">{% else %}<span class="imp-brand-mark" aria-hidden="true"><svg viewBox="0 0 120 80"><path d="M8 58 C25 40 50 32 78 34 C96 35 108 40 114 48" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M20 58 C34 46 54 42 74 44 C90 45 100 50 106 56" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity=".55"/><circle cx="42" cy="60" r="9" fill="none" stroke="currentColor" stroke-width="5"/><circle cx="90" cy="60" r="9" fill="none" stroke="currentColor" stroke-width="5"/></svg></span>{% endif %}
+                <span class="imp-brand-txt"><b>{{ site_name|default:"سيارات" }}</b><small class="bilingual" data-lang-ar="للسيارات المستوردة" data-lang-en="Imported Cars" data-lang-es="Autos importados" data-lang-ru="Импортные авто">للسيارات المستوردة</small></span>
+            </div>
+            <p class="mod-footer-about">{{ site_about|default:"سيارات كورية مستعملة بحالة ممتازة — فحص شامل، شحن سريع، وتخليص جمركي كامل حتى باب بيتك." }}</p>
+            {% if site_instagram or site_facebook or site_twitter or site_youtube or site_tiktok or site_snapchat or site_telegram or site_whatsapp_channe or site_telegram_group or site_whatsapp_group %}
+            <div class="mod-social">
+                {% if site_instagram %}<a href="{{ site_instagram }}" target="_blank" rel="noopener" aria-label="Instagram"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4 1 .5.4.8.8 1 1.4.2.4.4 1 .4 2.2.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-1 1.4-.4.5-.8.8-1.4 1-.4.2-1 .4-2.2.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-1-.5-.4-.8-.8-1-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 1-1.4.4-.5.8-.8 1.4-1 .4-.2 1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 3.6c-3.4 0-6.2 2.8-6.2 6.2s2.8 6.2 6.2 6.2 6.2-2.8 6.2-6.2-2.8-6.2-6.2-6.2zm0 10.2c-2.2 0-4-1.8-4-4s1.8-4 4-4 4 1.8 4 4-1.8 4-4 4zm6.4-10.5c-.8 0-1.4.6-1.4 1.4s.6 1.4 1.4 1.4 1.4-.6 1.4-1.4-.6-1.4-1.4-1.4z"/></svg></a>{% endif %}
+                {% if site_facebook %}<a href="{{ site_facebook }}" target="_blank" rel="noopener" aria-label="Facebook"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.5-4.5-10-10-10S2 6.5 2 12c0 5 3.7 9.1 8.4 9.9V14.9H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2V8.6h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7C18.3 21.1 22 17 22 12z"/></svg></a>{% endif %}
+                {% if site_twitter %}<a href="{{ site_twitter }}" target="_blank" rel="noopener" aria-label="Twitter"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>{% endif %}
+                {% if site_youtube %}<a href="{{ site_youtube }}" target="_blank" rel="noopener" aria-label="YouTube"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M23.5 6.2c-.3-1-1-1.8-2-2-1.8-.5-9.5-.5-9.5-.5s-7.7 0-9.5.5c-1 .3-1.8 1-2 2C0 8 0 12 0 12s0 4 .5 5.8c.3 1 1 1.8 2 2 1.8.5 9.5.5 9.5.5s7.7 0 9.5-.5c1-.3 1.8-1 2-2C24 16 24 12 24 12s0-4-.5-5.8zM9.6 15.6V8.4l6.4 3.6-6.4 3.6z"/></svg></a>{% endif %}
+                {% if site_tiktok %}<a href="{{ site_tiktok }}" target="_blank" rel="noopener" aria-label="TikTok"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>{% endif %}
+                {% if site_snapchat %}<a href="{{ site_snapchat }}" target="_blank" rel="noopener" aria-label="Snapchat"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12.001 0C8.889 0 6.299 2.29 6.299 5.12c0 .28.023.555.067.824l-.84.044c-.38.02-.72.22-.91.54-.19.32-.2.71-.02 1.04l.56 1.02c-.47.35-.94.82-1.28 1.44-.23.42-.35.88-.35 1.35 0 .63.19 1.22.52 1.72-.08.25-.2.59-.36.97-.44 1.07-1.1 2.12-2.05 2.48-.25.09-.42.33-.42.6 0 .06.01.12.03.18.11.38.47.63.87.63.05 0 .1 0 .15-.01.52-.07 1.02-.13 1.49-.13.22 0 .43.01.64.04.53.07 1 .35 1.39.77.7.76 1.67 1.18 2.68 1.18.17 0 .35-.01.52-.04.34-.06.69-.09 1.04-.09.35 0 .7.03 1.04.09.17.03.35.04.52.04 1.01 0 1.98-.42 2.68-1.18.39-.42.86-.7 1.39-.77.21-.03.42-.04.64-.04.47 0 .97.06 1.49.13.05.01.1.01.15.01.4 0 .76-.25.87-.63.02-.06.03-.12.03-.18 0-.27-.17-.51-.42-.6-.95-.36-1.61-1.41-2.05-2.48-.16-.38-.28-.72-.36-.97.33-.5.52-1.09.52-1.72 0-.47-.12-.93-.35-1.35-.34-.62-.81-1.09-1.28-1.44l.56-1.02c.18-.33.17-.72-.02-1.04-.19-.32-.53-.52-.91-.54l-.84-.044c.044-.269.067-.544.067-.824C17.701 2.29 15.111 0 12.001 0z"/></svg></a>{% endif %}
+                {% if site_telegram %}<a href="{{ site_telegram }}" target="_blank" rel="noopener" aria-label="Telegram"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M22.162 2.343c-.247-.134-.55-.118-.78.038L1.86 12.06c-.307.167-.46.513-.387.84.073.327.333.574.664.64l4.09.947 1.643 4.98c.109.33.416.537.76.537.072 0 .146-.008.219-.024.354-.092.62-.392.67-.75l.682-6.054 7.45 5.123c.26.178.59.193.86.038.27-.156.43-.447.41-.756l-.69-13.78c-.02-.302-.172-.575-.427-.737z"/></svg></a>{% endif %}
+                {% if site_telegram_group %}<a href="{{ site_telegram_group }}" target="_blank" rel="noopener" aria-label="Telegram Group" title="مجموعة تيليجرام"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M22.162 2.343c-.247-.134-.55-.118-.78.038L1.86 12.06c-.307.167-.46.513-.387.84.073.327.333.574.664.64l4.09.947 1.643 4.98c.109.33.416.537.76.537.072 0 .146-.008.219-.024.354-.092.62-.392.67-.75l.682-6.054 7.45 5.123c.26.178.59.193.86.038.27-.156.43-.447.41-.756l-.69-13.78c-.02-.302-.172-.575-.427-.737z"/></svg></a>{% endif %}
+                {% if site_whatsapp_channel %}<a href="{{ site_whatsapp_channel }}" target="_blank" rel="noopener" aria-label="WhatsApp Channel" title="قناة واتساب"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></a>{% endif %}
+                {% if site_whatsapp_group %}<a href="{{ site_whatsapp_group }}" target="_blank" rel="noopener" aria-label="WhatsApp Group" title="مجموعة واتساب"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg></a>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mod-footer-col">
+            <h4 class="bilingual" data-lang-ar="تصفح" data-lang-en="Browse" data-lang-es="Explorar" data-lang-ru="Просмотр">تصفح</h4>
+            <a href="{% url 'home' %}" class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</a>
+            <a href="{% url 'car_list' %}" class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</a>
+            <a href="{% url 'car_list' %}?car_type=auction" class="bilingual" data-lang-ar="المزادات" data-lang-en="Auctions" data-lang-es="Subastas" data-lang-ru="Аукционы">المزادات</a>
+            <a href="{% url 'account' %}" class="bilingual" data-lang-ar="حسابي" data-lang-en="My Account" data-lang-es="Mi cuenta" data-lang-ru="Мой счет">حسابي</a>
+            <a href="{% url 'wishlist' %}" class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</a>
+        </div>
+
+        <div class="mod-footer-col imp-fcontact">
+            <h4 class="bilingual" data-lang-ar="تواصل" data-lang-en="Contact" data-lang-es="Contacto" data-lang-ru="Контакты">تواصل</h4>
+            {% if site_phone %}<a href="tel:{{ site_phone }}"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.5-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.4 0 .8-.3 1l-2.2 2.3Z"/></svg></span><span class="tx"><small class="bilingual" data-lang-ar="اتصال" data-lang-en="Call" data-lang-es="Llamar" data-lang-ru="Звонок">اتصال</small><span>{{ site_phone }}</span></span></a>{% endif %}
+            {% if site_whatsapp %}<a href="https://wa.me/{{ site_whatsapp }}" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.1.1-.3 0-.4l-.7-1.7c-.2-.4-.4-.4-.5-.4h-.5a1 1 0 0 0-.7.3A3 3 0 0 0 6.4 10c0 1.8 1.3 3.5 1.5 3.7.2.3 2.6 4 6.3 5.3 2 .9 2 .6 2.4.6.5 0 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1Z"/></svg></span><span class="tx"><small>واتساب</small><span>{{ site_whatsapp }}</span></span></a>{% endif %}
+            {% if site_email %}<a href="mailto:{{ site_email }}"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><span class="tx"><small class="bilingual" data-lang-ar="البريد" data-lang-en="Email" data-lang-es="Correo" data-lang-ru="Почта">البريد</small><span>{{ site_email }}</span></span></a>{% endif %}
+            {% if site_snapchat %}<a href="{{ site_snapchat }}" target="_blank" rel="noopener"><span class="ic snap"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2.6 0 4.4 1.9 4.5 4.6 0 .6 0 1.2-.1 1.7.3.2.7.2 1 .1.3-.1.6-.2.9-.2.5 0 1 .3 1 .9 0 .7-.9 1-1.6 1.3-.5.2-1 .4-1 .8.4 1.4 1.9 2.9 3.4 3.3.4.1.6.4.6.7 0 .7-1.4 1.1-2.3 1.3-.2 0-.3.3-.4.6-.1.4-.2.8-.7.8-.4 0-.8-.2-1.4-.2-.9 0-1.4.1-2.1.9-.7.7-1.6 1.4-3.3 1.4s-2.6-.7-3.3-1.4c-.7-.8-1.2-.9-2.1-.9-.6 0-1 .2-1.4.2-.5 0-.6-.4-.7-.8-.1-.3-.2-.6-.4-.6-.9-.2-2.3-.6-2.3-1.3 0-.3.2-.6.6-.7 1.5-.4 3-1.9 3.4-3.3 0-.4-.5-.6-1-.8-.7-.3-1.6-.6-1.6-1.3 0-.6.5-.9 1-.9.3 0 .6.1.9.2.3.1.7.1 1-.1-.1-.5-.1-1.1-.1-1.7C7.6 3.9 9.4 2 12 2Z"/></svg></span><span class="tx"><small>سناب شات</small><span>{{ site_snapchat }}</span></span></a>{% endif %}
+            <a href="{% url 'contact' %}" class="bilingual" data-lang-ar="تواصل معنا" data-lang-en="Contact Form" data-lang-es="Formulario" data-lang-ru="Форма">تواصل معنا</a>
+        </div>
+
+        <div class="mod-footer-col">
+            <h4 class="bilingual" data-lang-ar="الحساب" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">الحساب</h4>
+            {% if user.is_authenticated %}
+            {% if user.is_staff %}
+            <a href="{% url 'site_dashboard' %}" class="bilingual" data-lang-ar="لوحة التحكم" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة التحكم</a>
+            {% endif %}
+            <a href="{% url 'logout' %}" class="bilingual" data-lang-ar="خروج" data-lang-en="Sign Out" data-lang-es="Cerrar sesión" data-lang-ru="Выйти">خروج</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</a>
+            <a href="{% url 'register' %}" class="bilingual" data-lang-ar="حساب جديد" data-lang-en="Register" data-lang-es="Registro" data-lang-ru="Регистрация">حساب جديد</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="mod-footer-bottom">
+        <span class="bilingual" data-lang-ar="© {% now 'Y' %} {{ site_name|default:'سيارات' }}. جميع الحقوق محفوظة." data-lang-en="© {% now 'Y' %} {{ site_name|default:'Motors' }}. All rights reserved." data-lang-es="© {% now 'Y' %} {{ site_name|default:'Motors' }}. Todos los derechos reservados." data-lang-ru="© {% now 'Y' %} {{ site_name|default:'Motors' }}. Все права защищены.">© {% now "Y" %} {{ site_name|default:"سيارات" }}. جميع الحقوق محفوظة.</span>
+        {% if site_address %}<span>{{ site_address }}</span>{% endif %}
+    </div>
+</footer>
+
+{% include "partials/lang_currency_script.html" %}
+{% include "partials/label_overrides.html" %}
+{% include "partials/loading_bar.html" %}
+
+<script>
+function modToggleMode() {
+    var root = document.documentElement;
+    var nowDark = !root.classList.contains('mod-dark');
+    root.classList.toggle('mod-dark', nowDark);
+    try { localStorage.setItem('site_theme_mode', nowDark ? 'dark' : 'light'); } catch (e) {}
+}
+
+function getCookie(name) {
+    let v = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(function(c) {
+            c = c.trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(c.substring(name.length + 1));
+            }
+        });
+    }
+    return v;
+}
+
+function toggleWishlist(carId) {
+    fetch('/wishlist/toggle/' + carId + '/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.error) {
+            window.location.href = data.redirect || '/login/?next=' + encodeURIComponent(window.location.pathname);
+        } else {
+            location.reload();
+        }
+    })
+    .catch(function(e) { console.error(e); });
+}
+</script>
+
+<!-- ── Auction Countdown Engine (same behaviour as the default theme) ── -->
+<style>
+    .auction-countdown { display:inline-flex; align-items:center; gap:5px; font-variant-numeric:tabular-nums; font-weight:800; border-radius:999px; padding:5px 14px; font-size:0.95rem; border:1.5px solid currentColor; transition:background .4s, color .4s; }
+    .auction-countdown .cd-unit { display:inline-flex; flex-direction:column; align-items:center; line-height:1.05; }
+    .auction-countdown .cd-unit small { font-size:0.48em; font-weight:600; opacity:0.85; line-height:1; margin-top:1px; }
+    .auction-countdown .cd-sep { opacity:0.45; font-weight:600; }
+    .auction-countdown.cd-lg { font-size:1.6rem; padding:10px 16px; gap:9px; border-width:2px; border-radius:16px; width:100%; justify-content:center; }
+    .auction-countdown.cd-lg .cd-unit small { font-size:0.4em; }
+    .countdown-ok     { background:var(--mod-brand); color:#fff; border-color:var(--mod-brand); }
+    .countdown-soon   { background:var(--mod-brand); color:#fff; border-color:var(--mod-brand); }
+    .countdown-urgent { background:var(--mod-danger); color:#fff; border-color:var(--mod-danger); animation:mod-pulse-red 1s ease-in-out infinite; box-shadow:0 0 18px color-mix(in srgb, var(--mod-danger) 55%, transparent); }
+    .auction-ended    { background:var(--mod-surface-2); color:var(--mod-muted); border-color:transparent; }
+    .auction-ended-badge { font-size:0.8rem; font-weight:700; }
+    /* Detail header "auction ends in" banner */
+    .mod-auction-cd { margin-top:1rem; padding:1rem 1rem 1.1rem; border:1px solid color-mix(in srgb, var(--mod-brand) 45%, transparent); border-radius:var(--mod-radius-sm); background:color-mix(in srgb, var(--mod-brand) 8%, var(--mod-surface)); text-align:center; }
+    .mod-auction-cd-lbl { color:var(--mod-brand); font-size:.74rem; font-weight:800; margin-bottom:.6rem; }
+    @keyframes mod-pulse-red { 0%,100% { opacity:1; } 50% { opacity:0.65; } }
+</style>
+<script>
+(function () {
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function renderCountdown(el, targetMs) {
+        var curLang = localStorage.getItem('site_lang') || 'ar';
+        var U = curLang === 'en'
+            ? { d:'d', h:'h', m:'m', s:'s', ended:'Auction ended' }
+            : { d:'ي', h:'س', m:'د', s:'ث', ended:'انتهى المزاد' };
+        var diff = targetMs - Date.now();
+        if (diff <= 0) { el.innerHTML = '<span class="auction-ended-badge">' + U.ended + '</span>'; el.classList.add('auction-ended'); return false; }
+        var t = Math.floor(diff/1000), days = Math.floor(t/86400), hours = Math.floor((t%86400)/3600), mins = Math.floor((t%3600)/60), secs = t%60;
+        var urgency = diff < 3600000 ? 'countdown-urgent' : diff < 86400000 ? 'countdown-soon' : 'countdown-ok';
+        el.classList.remove('countdown-urgent','countdown-soon','countdown-ok'); el.classList.add(urgency);
+        if (days > 0) {
+            el.innerHTML = '<span class="cd-unit">'+days+'<small>'+U.d+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(hours)+'<small>'+U.h+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(mins)+'<small>'+U.m+'</small></span>';
+        } else {
+            el.innerHTML = '<span class="cd-unit">'+pad(hours)+'<small>'+U.h+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(mins)+'<small>'+U.m+'</small></span><span class="cd-sep">:</span><span class="cd-unit">'+pad(secs)+'<small>'+U.s+'</small></span>';
+        }
+        return true;
+    }
+    function initCountdowns() {
+        document.querySelectorAll('[data-auction-date]').forEach(function (el) {
+            var iso = el.getAttribute('data-auction-date'); if (!iso) return;
+            var targetMs = new Date(iso).getTime(); if (isNaN(targetMs)) return;
+            if (!renderCountdown(el, targetMs)) return;
+            var timer = setInterval(function () { if (!renderCountdown(el, targetMs)) clearInterval(timer); }, 1000);
+        });
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initCountdowns); } else { initCountdowns(); }
+    window.initAuctionCountdowns = initCountdowns;
+})();
+</script>
+{% block extra_js %}{% endblock %}
+
+{% block mobile_bottom_nav %}
+<style>
+    @media (min-width: 768px) { .mod-bottom-nav { display: none !important; } }
+    @media (max-width: 767px) {
+        body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+    }
+
+    .mod-bottom-nav {
+        position: fixed; left: 0.75rem; right: 0.75rem; bottom: 0.75rem; z-index: 60;
+        padding: 0.5rem 0.6rem calc(0.5rem + env(safe-area-inset-bottom, 0px) / 2);
+        background: color-mix(in srgb, var(--mod-surface) 86%, transparent);
+        backdrop-filter: saturate(160%) blur(14px);
+        -webkit-backdrop-filter: saturate(160%) blur(14px);
+        border: 1px solid var(--mod-line);
+        border-radius: 22px;
+        box-shadow: var(--mod-shadow-lg);
+    }
+    .mod-bottom-nav-row {
+        display: grid; grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
+        align-items: end; gap: 0.25rem;
+        max-width: 540px; margin: 0 auto;
+    }
+    .mod-bn-link {
+        display: inline-flex; flex-direction: column; align-items: center; gap: 0.2rem;
+        padding: 0.4rem 0.25rem; min-width: 0;
+        color: var(--mod-muted); text-decoration: none;
+        font-size: 0.62rem; font-weight: 700;
+        position: relative;
+        transition: color 0.2s ease;
+    }
+    .mod-bn-link svg { width: 1.35rem; height: 1.35rem; transition: transform 0.2s ease; }
+    .mod-bn-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .mod-bn-link:active svg { transform: scale(0.92); }
+    .mod-bn-link:hover, .mod-bn-link.active { color: var(--mod-brand); }
+    .mod-bn-link.active::after {
+        content: ""; position: absolute; top: -0.15rem; left: 50%; transform: translateX(-50%);
+        width: 1.3rem; height: 3px; border-radius: 3px; background: var(--mod-grad);
+    }
+    .mod-bn-fab-wrap {
+        position: relative; display: flex; flex-direction: column;
+        align-items: center; gap: 0.2rem;
+        margin-top: -1.7rem;
+    }
+    .mod-bn-fab {
+        width: 3.4rem; height: 3.4rem; border-radius: 999px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--mod-grad); color: #fff;
+        border: 3px solid var(--mod-bg);
+        box-shadow: 0 10px 26px -8px color-mix(in srgb, var(--mod-brand) 65%, transparent);
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+    .mod-bn-fab:active { transform: scale(0.94); }
+    .mod-bn-fab svg { width: 1.4rem; height: 1.4rem; }
+    .mod-bn-fab-label {
+        color: var(--mod-brand);
+        font-size: 0.6rem; font-weight: 800;
+        white-space: nowrap; max-width: 100%;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+    .mod-bn-badge {
+        position: absolute; top: 0.05rem; right: calc(50% - 1.2rem);
+        min-width: 1rem; height: 1rem; padding: 0 0.25rem;
+        background: var(--mod-danger); color: #fff;
+        font-size: 0.6rem; font-weight: 700;
+        display: inline-flex; align-items: center; justify-content: center;
+        border: 1px solid var(--mod-surface);
+        border-radius: 999px;
+    }
+</style>
+
+<nav class="mod-bottom-nav" aria-label="Mobile navigation">
+    <div class="mod-bottom-nav-row">
+        <a href="{% url 'home' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+            <span class="bilingual" data-lang-ar="الرئيسية" data-lang-en="Home" data-lang-es="Inicio" data-lang-ru="Главная">الرئيسية</span>
+        </a>
+
+        <a href="{% url 'car_list' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'car_list' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14l1-3a2 2 0 011.7-1.4L8 9l1.5-3a2 2 0 011.7-1H15a2 2 0 011.7 1L18 9l2.3.6A2 2 0 0122 11.6V14"/><path d="M2 14h20v3a1 1 0 01-1 1h-1a2 2 0 01-4 0H8a2 2 0 01-4 0H3a1 1 0 01-1-1v-3z"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/></svg>
+            <span class="bilingual" data-lang-ar="السيارات" data-lang-en="Cars" data-lang-es="Coches" data-lang-ru="Авто">السيارات</span>
+        </a>
+
+        {% if user.is_staff %}
+        <div class="mod-bn-fab-wrap">
+            <a href="{% url 'site_car_add' %}" class="mod-bn-fab" aria-label="Add Car">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </a>
+            <span class="mod-bn-fab-label bilingual" data-lang-ar="أضف سيارة" data-lang-en="Add Car" data-lang-es="Añadir" data-lang-ru="Добавить">أضف سيارة</span>
+        </div>
+        {% elif site_whatsapp %}
+        {% load whatsapp_tags %}
+        {% whatsapp_site_inquiry_message site_name as wa_site_inquiry_msg %}
+        <div class="mod-bn-fab-wrap">
+            <a href="https://wa.me/{{ site_whatsapp|format_whatsapp_number }}?text={{ wa_site_inquiry_msg }}" target="_blank" rel="noopener" class="mod-bn-fab" aria-label="WhatsApp" style="background: linear-gradient(135deg, #34d265, #1f9b46);">
+                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.37 0-4.567-.7-6.42-1.9l-.148-.1-3.12 1.046 1.046-3.12-.1-.148A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+            </a>
+            <span class="mod-bn-fab-label bilingual" style="color:#1f9b46;" data-lang-ar="واتساب" data-lang-en="WhatsApp" data-lang-es="WhatsApp" data-lang-ru="WhatsApp">واتساب</span>
+        </div>
+        {% else %}
+        <div class="mod-bn-fab-wrap">
+            <a href="{% url 'car_list' %}" class="mod-bn-fab" aria-label="Find your car">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M21 21l-4.3-4.3"/></svg>
+            </a>
+            <span class="mod-bn-fab-label bilingual" data-lang-ar="ابحث" data-lang-en="Search" data-lang-es="Buscar" data-lang-ru="Поиск">ابحث</span>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'wishlist' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'wishlist' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-9-10.5A5.5 5.5 0 0112 5a5.5 5.5 0 019 5.5C19 15.5 12 21 12 21z"/></svg>
+            <span class="bilingual" data-lang-ar="المفضلة" data-lang-en="Wishlist" data-lang-es="Favoritos" data-lang-ru="Избранное">المفضلة</span>
+            <span class="mod-bn-badge" id="wishlist-count" style="display:none">0</span>
+        </a>
+
+        {% if user.is_authenticated %}
+        {% if user.is_staff %}
+        <a href="{% url 'site_dashboard' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'site_dashboard' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            <span class="bilingual" data-lang-ar="لوحة" data-lang-en="Dashboard" data-lang-es="Panel" data-lang-ru="Панель">لوحة</span>
+        </a>
+        {% else %}
+        <a href="{% url 'account' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20a7 7 0 0114 0"/></svg>
+            <span class="bilingual" data-lang-ar="حسابي" data-lang-en="Account" data-lang-es="Cuenta" data-lang-ru="Аккаунт">حسابي</span>
+        </a>
+        {% endif %}
+        {% else %}
+        <a href="{% url 'login' %}" class="mod-bn-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12H4M11 8l-4 4 4 4"/><path d="M14 4h5a1 1 0 011 1v14a1 1 0 01-1 1h-5"/></svg>
+            <span class="bilingual" data-lang-ar="دخول" data-lang-en="Sign In" data-lang-es="Acceso" data-lang-ru="Вход">دخول</span>
+        </a>
+        {% endif %}
+    </div>
+</nav>
+
+<script>
+(function () {
+    fetch('/wishlist/count/', { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+            if (!d || typeof d.count !== 'number' || d.count <= 0) return;
+            var b = document.getElementById('wishlist-count');
+            if (b) { b.textContent = d.count > 99 ? '99+' : d.count; b.style.display = 'inline-flex'; }
+        })
+        .catch(function () {});
+})();
+</script>
+{% endblock mobile_bottom_nav %}
+
+<!-- ── Hover / touch prefetch ──────────────────────────────────────────
+     Navigation is full-reload (no SPA), and every click hits the origin
+     (~0.45s TTFB, not edge-cached). This warms the destination page on
+     hover (desktop) or touchstart (mobile) so it's already in the browser
+     cache by the time the link is clicked → navigation feels instant.
+     Pure network warming — touches none of the page's init JS, so there is
+     no listener-stacking / timer-leak risk. ~1KB. -->
+<script>
+(function () {
+    var conn = navigator.connection;
+    if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return;
+    var seen = Object.create(null);
+    function target(node) {
+        var a = node && node.closest ? node.closest('a') : null;
+        if (!a || !a.href || a.target === '_blank' || a.hasAttribute('download')) return null;
+        if (a.origin !== location.origin) return null;            // external / tel: / mailto: / wa.me
+        if (a.href.split('#')[0] === location.href.split('#')[0]) return null; // same page / in-page anchor
+        if (/\/(logout|accounts\/logout)\/?$/.test(a.pathname)) return null;   // side-effecting GET
+        if (seen[a.href]) return null;
+        return a.href;
+    }
+    function warm(href) {
+        seen[href] = 1;
+        var l = document.createElement('link');
+        l.rel = 'prefetch'; l.as = 'document'; l.href = href;
+        document.head.appendChild(l);
+    }
+    var hoverTimer;
+    document.addEventListener('mouseover', function (e) {
+        var href = target(e.target); if (!href) return;
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(function () { warm(href); }, 55); // ignore quick mouse sweeps
+    }, { passive: true });
+    document.addEventListener('mouseout', function () { clearTimeout(hoverTimer); }, { passive: true });
+    document.addEventListener('touchstart', function (e) {
+        var href = target(e.target); if (href) warm(href);
+    }, { passive: true });
+})();
+</script>
+{% comment %}
+Dashboard help assistant. Each theme ships a standalone base.html that shadows
+templates/base.html via TenantThemeLoader, so the include must be repeated here —
+otherwise the assistant only ever appears for tenants on the `default` theme.
+Gate is user.is_staff to match the endpoint's @staff_required exactly.
+{% endcomment %}
+{% if user.is_staff %}{% include "assistant/widget.html" %}{% endif %}
+</body>
+</html>

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}إدارة {{ kind_label_ar }} — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mod-shop-page { padding-block: 3rem 4rem; }
+
+    .mod-shop-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+    .mod-shop-head h1 { font-size: clamp(1.5rem, 3.5vw, 2rem); margin: 0; }
+
+    /* ── Kind tabs (segmented pill) ── */
+    .mod-shop-tabs {
+        display: inline-flex; gap: 0.3rem; flex-wrap: wrap;
+        background: var(--mod-surface); border: 1px solid var(--mod-line);
+        border-radius: 999px; padding: 0.3rem;
+        box-shadow: var(--mod-shadow);
+        margin-bottom: 1.25rem;
+    }
+    .mod-shop-tab {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.55rem 1.2rem; border-radius: 999px;
+        color: var(--mod-muted); text-decoration: none;
+        font-size: 0.86rem; font-weight: 700;
+        transition: all 0.2s ease;
+    }
+    .mod-shop-tab:hover { color: var(--mod-ink); background: var(--mod-surface-2); }
+    .mod-shop-tab.active { background: var(--mod-grad); color: #fff; }
+
+    /* ── Search ── */
+    .mod-shop-search { display: flex; gap: 0.6rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .mod-shop-search input {
+        flex: 1; max-width: 22rem; box-sizing: border-box;
+        background: var(--mod-surface-2); border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius-sm); color: var(--mod-ink);
+        padding: 0.62rem 0.95rem; font-size: 0.88rem; font-family: inherit;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+    .mod-shop-search input:focus {
+        outline: none; background: var(--mod-surface); border-color: var(--mod-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--mod-brand) 16%, transparent);
+    }
+
+    /* ── Table ── */
+    .mod-shop-table-wrap {
+        background: var(--mod-surface);
+        border: 1px solid var(--mod-line);
+        border-radius: var(--mod-radius);
+        box-shadow: var(--mod-shadow);
+        overflow: hidden;
+    }
+    .mod-shop-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .mod-shop-table thead th {
+        text-align: start; padding: 0.85rem 1rem;
+        color: var(--mod-muted); font-size: 0.72rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.04em;
+        background: var(--mod-surface-2); border-bottom: 1px solid var(--mod-line);
+    }
+    .mod-shop-table th.center { text-align: center; }
+    .mod-shop-table th.end { text-align: end; }
+    .mod-shop-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--mod-line); vertical-align: middle; }
+    .mod-shop-table tbody tr:last-child td { border-bottom: 0; }
+    .mod-shop-table tbody tr:hover { background: color-mix(in srgb, var(--mod-brand) 4%, transparent); }
+    @media (max-width: 700px) { .mod-shop-hide-sm { display: none; } }
+
+    .mod-shop-item-cell { display: flex; align-items: center; gap: 0.75rem; }
+    .mod-shop-item-thumb { width: 3rem; height: 3rem; border-radius: var(--mod-radius-sm); background: var(--mod-surface-2); overflow: hidden; flex-shrink: 0; border: 1px solid var(--mod-line); }
+    .mod-shop-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .mod-shop-item-name {
+        color: var(--mod-ink); font-weight: 700; text-decoration: none;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 16rem; display: inline-block;
+        transition: color 0.18s ease;
+    }
+    .mod-shop-item-name:hover { color: var(--mod-brand); }
+    .mod-shop-price-val { font-weight: 700; color: var(--mod-ink); }
+
+    .mod-shop-stock-btn {
+        font-size: 0.72rem; font-weight: 700; padding: 0.28rem 0.75rem; border-radius: 999px;
+        cursor: pointer; font-family: inherit; border: 1px solid transparent;
+        transition: filter 0.18s ease;
+    }
+    .mod-shop-stock-btn:hover { filter: brightness(0.97); }
+    .mod-shop-stock-btn.ok {
+        color: var(--mod-ok);
+        background: color-mix(in srgb, var(--mod-ok) 12%, transparent);
+        border-color: color-mix(in srgb, var(--mod-ok) 28%, transparent);
+    }
+    .mod-shop-stock-btn.out {
+        color: var(--mod-muted);
+        background: var(--mod-surface-2);
+        border-color: var(--mod-line);
+    }
+
+    .mod-shop-row-actions { white-space: nowrap; text-align: end; }
+    .mod-shop-row-actions a { text-decoration: none; font-weight: 700; font-size: 0.82rem; }
+    .mod-shop-row-actions .edit { color: var(--mod-brand); }
+    .mod-shop-row-actions .del { color: var(--mod-danger); margin-inline-start: 0.85rem; }
+    .mod-shop-row-actions a:hover { text-decoration: underline; }
+
+    .mod-shop-empty-row { padding: 3.5rem 1rem; text-align: center; color: var(--mod-muted); }
+
+    /* ── Pagination ── */
+    .mod-shop-pager { display: flex; justify-content: center; gap: 0.4rem; margin-top: 2rem; flex-wrap: wrap; }
+    .mod-shop-pager a, .mod-shop-pager span {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 2.5rem; height: 2.5rem; padding: 0 0.85rem;
+        border: 1px solid var(--mod-line); border-radius: 999px;
+        background: var(--mod-surface); color: var(--mod-muted);
+        text-decoration: none; font-size: 0.84rem; font-weight: 600;
+        transition: all 0.18s ease;
+    }
+    .mod-shop-pager a:hover { border-color: color-mix(in srgb, var(--mod-brand) 45%, var(--mod-line)); color: var(--mod-brand); }
+    .mod-shop-pager .current { background: var(--mod-grad); color: #fff; border-color: transparent; }
+
+    @media (max-width: 600px) { .mod-shop-page { padding-block: 2rem 3rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="mod-shop-page">
+    <div class="mod-wrap">
+
+        <div class="mod-shop-head">
+            <h1 class="bilingual" data-lang-ar="إدارة المتجر" data-lang-en="Shop management" data-lang-es="Gestión de tienda" data-lang-ru="Управление магазином">إدارة المتجر</h1>
+            <a href="{% url 'shop_add' %}?kind={{ kind }}" class="mod-btn mod-btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+                <span class="bilingual" data-lang-ar="إضافة جديد" data-lang-en="Add new">إضافة جديد</span>
+            </a>
+        </div>
+
+        <!-- Kind tabs -->
+        <div class="mod-shop-tabs">
+            <a href="?kind=part" class="mod-shop-tab {% if is_part %}active{% endif %} bilingual" data-lang-ar="قطع الغيار" data-lang-en="Parts">قطع الغيار</a>
+            <a href="?kind=accessory" class="mod-shop-tab {% if not is_part %}active{% endif %} bilingual" data-lang-ar="الإكسسوارات" data-lang-en="Accessories">الإكسسوارات</a>
+        </div>
+
+        <form method="get" class="mod-shop-search">
+            <input type="hidden" name="kind" value="{{ kind }}">
+            <input type="text" name="q" value="{{ q }}" placeholder="بحث…"
+                   data-placeholder-ar="بحث…" data-placeholder-en="Search…" data-placeholder-es="Buscar…" data-placeholder-ru="Поиск…">
+            <button class="mod-btn bilingual" data-lang-ar="بحث" data-lang-en="Search">بحث</button>
+        </form>
+
+        <div class="mod-shop-table-wrap">
+            <table class="mod-shop-table">
+                <thead>
+                    <tr>
+                        <th class="bilingual" data-lang-ar="المنتج" data-lang-en="Item">المنتج</th>
+                        <th class="mod-shop-hide-sm bilingual" data-lang-ar="الماركة" data-lang-en="Brand">الماركة</th>
+                        <th class="bilingual" data-lang-ar="السعر" data-lang-en="Price">السعر</th>
+                        <th class="center bilingual" data-lang-ar="الحالة" data-lang-en="Status">الحالة</th>
+                        <th class="end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>
+                            <div class="mod-shop-item-cell">
+                                <div class="mod-shop-item-thumb">
+                                    {% if item.image %}<img src="{{ item.image.url }}" alt="">{% endif %}
+                                </div>
+                                <a href="{{ item.get_absolute_url }}" class="mod-shop-item-name">{{ item.name }}</a>
+                            </div>
+                        </td>
+                        <td class="mod-shop-hide-sm" style="color:var(--mod-muted);">{{ item.brand|default:"—" }}</td>
+                        <td class="mod-shop-price-val">{% if item.price %}<bdi dir="ltr">{{ item.price|intcomma }} {{ item.currency }}</bdi>{% else %}—{% endif %}</td>
+                        <td class="center">
+                            <form method="post" action="{% url 'shop_toggle_stock' item.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="mod-shop-stock-btn {% if item.in_stock %}ok{% else %}out{% endif %} bilingual"
+                                        data-lang-ar="{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}" data-lang-en="{% if item.in_stock %}In stock{% else %}Out{% endif %}">{% if item.in_stock %}متوفر{% else %}غير متوفر{% endif %}</button>
+                            </form>
+                        </td>
+                        <td class="mod-shop-row-actions">
+                            <a href="{% url 'shop_edit' item.pk %}" class="edit bilingual" data-lang-ar="تعديل" data-lang-en="Edit">تعديل</a>
+                            <a href="{% url 'shop_delete' item.pk %}" class="del bilingual" data-lang-ar="حذف" data-lang-en="Delete">حذف</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="mod-shop-empty-row bilingual" data-lang-ar="لا توجد منتجات بعد" data-lang-en="No items yet">لا توجد منتجات بعد</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if items.paginator.num_pages > 1 %}
+        <nav class="mod-shop-pager" aria-label="Pagination">
+            {% if items.has_previous %}<a href="?kind={{ kind }}&page={{ items.previous_page_number }}&q={{ q }}">‹</a>{% endif %}
+            <span class="current">{{ items.number }} / {{ items.paginator.num_pages }}</span>
+            {% if items.has_next %}<a href="?kind={{ kind }}&page={{ items.next_page_number }}&q={{ q }}">›</a>{% endif %}
+        </nav>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
