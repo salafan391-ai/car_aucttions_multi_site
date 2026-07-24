@@ -10,6 +10,10 @@ Required vars:
   car_type (str, passed through to /api/models and /api/badges)
 {% endcomment %}
 <div class="df-tree" id="{{ tree_id }}" data-car-type="{{ car_type|default:'' }}">
+    <button type="button" class="df-tree-back" onclick="this.closest('.df-tree').querySelectorAll('.df-tree-node.is-open').forEach(function(n){n.classList.remove('is-open');});">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+        <span class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands" data-lang-es="Todas las marcas" data-lang-ru="Все бренды">كل الماركات</span>
+    </button>
     {% for m in manufacturers %}{% if m.car_count %}{% with mfr_id_str=m.id|stringformat:"d" %}
     <div class="df-tree-node df-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-logo="{{ m.logo|default:'' }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
         <div class="df-tree-row">

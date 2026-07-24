@@ -659,6 +659,19 @@
 [data-car-theme="bold"] #filter-form-sidebar .peer:checked + span {
     color: #fff !important;
 }
+
+/* Manufacturer focus mode: expanding a brand hides the others until collapsed */
+.df-tree:has(> .df-mfr-node.is-open) > .df-mfr-node:not(.is-open),
+.df-tree-children:has(> .df-tree-node.is-open) > .df-tree-node:not(.is-open) { display: none; }
+.df-tree-back { display: none; }
+.df-tree:has(> .df-mfr-node.is-open) .df-tree-back {
+    display: flex; align-items: center; gap: .4rem; width: 100%;
+    padding: .5rem .6rem; margin-bottom: .5rem; border: 1px dashed var(--color-primary, #2563eb);
+    border-radius: .6rem; background: rgba(37,99,235,.06); color: var(--color-primary, #2563eb);
+    font-weight: 800; font-size: .82rem; cursor: pointer; font-family: inherit; text-align: start;
+}
+.df-tree-back:hover { background: rgba(37,99,235,.12); }
+.df-tree-back svg { width: .95rem; height: .95rem; }
 </style>
 {% endblock %}
 

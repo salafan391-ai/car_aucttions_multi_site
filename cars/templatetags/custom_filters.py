@@ -797,3 +797,48 @@ def sar_price(krw):
     except Exception:
         markup = 1.01
     return int(round(krw * rate * markup))
+
+
+# ── Filter-option icons (importer theme) ───────────────────────────────
+# Small inline SVGs shown next to each checkbox in the sidebar filters.
+from django.utils.safestring import mark_safe as _mark_safe
+
+_OI = {
+    'pump': "<path d='M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16'/><path d='M3 21h14'/><path d='M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3'/>",
+    'bolt': "<path d='M13 2 4 14h6l-1 8 9-12h-6l1-8z'/>",
+    'leaf': "<path d='M4 20c0-8 6-14 16-14 0 10-6 16-16 14z'/><path d='M4 20c4-4 8-6 12-8'/>",
+    'drop': "<path d='M12 3s6 5.5 6 10a6 6 0 0 1-12 0c0-4.5 6-10 6-10z'/>",
+    'gear': "<circle cx='12' cy='12' r='3.2'/><path d='M12 4v3M12 17v3M4 12h3M17 12h3M6.3 6.3l2 2M15.7 15.7l2 2M6.3 17.7l2-2M15.7 8.3l2-2'/>",
+    'car': "<path d='M3 13l2-5a2 2 0 0 1 2-1.4h10A2 2 0 0 1 19 8l2 5v5h-3v-2H6v2H3z'/><circle cx='7.5' cy='16' r='1.4'/><circle cx='16.5' cy='16' r='1.4'/>",
+    'suv': "<path d='M3 12l1.5-5A2 2 0 0 1 6.4 5.6H17a2 2 0 0 1 1.9 1.4L21 12v6h-3v-2H6v2H3z'/><circle cx='7.5' cy='16' r='1.5'/><circle cx='16.5' cy='16' r='1.5'/><path d='M9 6v6'/>",
+    'truck': "<path d='M3 6h11v11H3zM14 9h4l3 3v5h-7z'/><circle cx='7' cy='18' r='1.5'/><circle cx='17' cy='18' r='1.5'/>",
+    'van': "<path d='M3 7h13a2 2 0 0 1 2 2l3 4v4H3z'/><circle cx='7.5' cy='17' r='1.5'/><circle cx='16.5' cy='17' r='1.5'/>",
+    'seat': "<path d='M5 18v-3a2 2 0 0 1 2-2h7l3-8 2 .6-3 9.4H7'/>",
+}
+def _svg(k):
+    return _mark_safe(f"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'>{_OI.get(k,'')}</svg>")
+
+@register.filter
+def opt_icon(value, kind=''):
+    v = (str(value) if value is not None else '').lower()
+    if kind == 'fuel':
+        if 'hybrid' in v or ('electric' in v and any(f in v for f in ('gasoline', 'diesel', 'lpg', 'cng'))):
+            return _svg('leaf')
+        if v == 'electric':
+            return _svg('bolt')
+        if 'hydrogen' in v:
+            return _svg('drop')
+        return _svg('pump')
+    if kind == 'trans':
+        return _svg('gear')
+    if kind == 'seat':
+        return _svg('seat')
+    if kind == 'body':
+        if 'suv' in v or v == 'rv' or 'sports' in v or '스포츠' in v:
+            return _svg('suv')
+        if 'truck' in v or 'commercial' in v or '대형' in v:
+            return _svg('truck')
+        if 'van' in v or 'bus' in v or 'minivan' in v or '승합' in v:
+            return _svg('van')
+        return _svg('car')
+    return ''

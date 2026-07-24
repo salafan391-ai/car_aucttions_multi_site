@@ -502,6 +502,56 @@
         .lux-hero-sub { font-size: 0.78rem; margin-inline: auto; }
         .lux-hero-chips, .lux-hero-stats { justify-content: center; }
     }
+
+    /* ═══════════ FILTER UPGRADES (checkboxes · icons · focus · lookup · logos) ═══════════ */
+    input[type="checkbox"], input[type="radio"] { accent-color: var(--lux-gold); }
+
+    /* Visible checkbox on chips */
+    .lux-chip { justify-content: flex-start; gap: 0.5rem; }
+    .lux-chip::before { content: ""; width: 16px; height: 16px; flex-shrink: 0;
+        border: 1px solid var(--lux-text-dim); background: transparent; transition: 0.14s; }
+    .lux-chip:hover::before { border-color: var(--lux-gold); }
+    .lux-chip-input:checked + .lux-chip::before { border-color: var(--lux-gold);
+        background: var(--lux-gold) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230a0a0a' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>") center / 11px 11px no-repeat; }
+    .lux-chip .fopt-ico { display: inline-flex; align-items: center; flex-shrink: 0; color: var(--lux-text-dim); }
+    .lux-chip .fopt-ico svg { width: 15px; height: 15px; }
+    .lux-chip-input:checked + .lux-chip .fopt-ico { color: var(--lux-gold-bright); }
+    .lux-chip .lux-chip-count, .lux-chip .fc-badge { margin-inline-start: auto; }
+
+    /* Visible checkbox on tree rows */
+    .lux-tree-label::before { content: ""; width: 16px; height: 16px; flex-shrink: 0;
+        border: 1px solid var(--lux-text-dim); background: transparent; transition: 0.14s; }
+    .lux-tree-row:hover .lux-tree-label::before { border-color: var(--lux-gold); }
+    .lux-tree-row:has(.lux-tree-cb:checked) > .lux-tree-label::before { border-color: var(--lux-gold);
+        background: var(--lux-gold) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230a0a0a' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>") center / 11px 11px no-repeat; }
+
+    /* Tree count + manufacturer logo */
+    .lux-tree-count { margin-inline-start: auto; flex-shrink: 0; }
+    .lux-tree-logo { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+    .lux-tree-logo-ph { display: inline-grid; place-items: center; width: 22px; height: 22px;
+        background: rgba(201,164,90,0.12); color: var(--lux-text-dim); font-size: 0.7rem; font-weight: 800; }
+    .lux-tree-children .lux-tree-logo { width: 19px; height: 19px; opacity: 0.8; }
+
+    /* Focus mode + back link */
+    #lux-tree-root:has(> .lux-mfr-node.is-open) > .lux-mfr-node:not(.is-open),
+    .lux-tree-children:has(> .lux-tree-node.is-open) > .lux-tree-node:not(.is-open) { display: none; }
+    .lux-tree-back { display: none; }
+    #lux-tree-root:has(> .lux-mfr-node.is-open) .lux-tree-back {
+        display: flex; align-items: center; gap: 0.4rem; width: 100%; padding: 0.5rem 0.6rem; margin-bottom: 0.5rem;
+        border: 1px dashed var(--lux-gold); background: rgba(201,164,90,0.08); color: var(--lux-gold-bright);
+        font-weight: 700; font-size: 0.75rem; letter-spacing: 0.05em; cursor: pointer; font-family: inherit; text-align: start; }
+    .lux-tree-back:hover { background: rgba(201,164,90,0.16); }
+    .lux-tree-back svg { width: 0.95rem; height: 0.95rem; }
+
+    /* Per-filter lookup */
+    .lux-fsearch { position: relative; margin: 0 0 0.5rem; }
+    .lux-fsearch input { width: 100%; padding: 0.45rem 0.6rem; padding-inline-start: 1.9rem;
+        border: 1px solid var(--lux-line); background: transparent; color: var(--lux-text);
+        font-family: inherit; font-size: 0.78rem; letter-spacing: 0.05em; }
+    .lux-fsearch input:focus { border-color: var(--lux-gold); outline: none; }
+    .lux-fsearch svg { position: absolute; inset-inline-start: 0.6rem; top: 50%; transform: translateY(-50%);
+        width: 0.85rem; height: 0.85rem; color: var(--lux-text-dim); pointer-events: none; }
+    .lux-field-toggle.is-collapsed .lux-fsearch { display: none; }
 </style>
 
 <div class="lux-page">
@@ -592,12 +642,18 @@
                             <svg class="lux-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                         </label>
                         <div class="lux-tree" id="lux-tree-root" data-car-type="{{ request.GET.car_type|default:'' }}">
+                            <button type="button" class="lux-tree-back" onclick="this.closest('#lux-tree-root').querySelectorAll('.lux-tree-node.is-open').forEach(function(n){n.classList.remove('is-open');});">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+                                <span class="bilingual" data-lang-ar="كل الماركات" data-lang-en="All brands" data-lang-es="Todas las marcas" data-lang-ru="Все бренды">كل الماركات</span>
+                            </button>
                             {% for m in manufacturers %}{% with mfr_id_str=m.id|stringformat:"d" %}
-                            <div class="lux-tree-node lux-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
+                            <div class="lux-tree-node lux-mfr-node{% if mfr_id_str in sel_manufacturers %} is-open{% endif %}" data-mfr-id="{{ m.id }}" data-logo="{{ m.logo|default:'' }}" data-loaded="{% if mfr_id_str in sel_manufacturers %}true{% else %}false{% endif %}">
                                 <div class="lux-tree-row">
                                     <label class="lux-tree-label">
                                         <input type="checkbox" name="manufacturer" value="{{ m.id }}" {% if mfr_id_str in sel_manufacturers %}checked{% endif %} class="lux-tree-cb lux-mfr-cb">
+                                        {% if m.logo %}<img class="lux-tree-logo" src="{{ m.logo }}" alt="" loading="lazy">{% else %}<span class="lux-tree-logo lux-tree-logo-ph" aria-hidden="true">{{ m|translate_manufacturer:'en'|first|upper }}</span>{% endif %}
                                         <span class="lux-tree-name bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
+                                        {% with fc=facet_counts|get_item:'manufacturer'|get_item:m.id %}<span class="fc-badge lux-tree-count"{% if not fc %} hidden{% endif %}>{{ fc|intcomma }}</span>{% endwith %}
                                     </label>
                                     <button type="button" class="lux-tree-toggle" aria-label="Toggle">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
@@ -609,7 +665,9 @@
                                         <div class="lux-tree-row">
                                             <label class="lux-tree-label">
                                                 <input type="checkbox" name="model" value="{{ mod.id }}" {% if mod_id_str in sel_models %}checked{% endif %} class="lux-tree-cb lux-model-cb">
+                                                {% if m.logo %}<img class="lux-tree-logo" src="{{ m.logo }}" alt="" loading="lazy">{% endif %}
                                                 <span class="lux-tree-name bilingual" data-lang-ar="{{ mod|translate_model }}" data-lang-en="{{ mod|translate_model:'en' }}" data-lang-es="{{ mod|translate_model:'en' }}" data-lang-ru="{{ mod|translate_model:'en' }}">{{ mod|translate_model }}</span>
+                                                {% with fc=facet_counts|get_item:'model'|get_item:mod.id %}<span class="fc-badge lux-tree-count"{% if not fc %} hidden{% endif %}>{{ fc|intcomma }}</span>{% endwith %}
                                             </label>
                                             <button type="button" class="lux-tree-toggle" aria-label="Toggle">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
@@ -669,7 +727,7 @@
                             {% for t in transmissions %}
                             <label>
                                 <input type="checkbox" name="transmission" value="{{ t }}" {% if t in sel_transmissions %}checked{% endif %} class="lux-chip-input">
-                                <span class="lux-chip bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}{% with fc=facet_counts|get_item:'transmission'|get_item:t %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                                <span class="lux-chip"><span class="fopt-ico">{{ t|opt_icon:'trans' }}</span><span class="bilingual" data-lang-ar="{{ t|translate_transmission }}" data-lang-en="{{ t|translate_transmission:'en' }}" data-lang-es="{{ t|translate_transmission:'es' }}" data-lang-ru="{{ t|translate_transmission:'ru' }}">{{ t|translate_transmission }}</span>{% with fc=facet_counts|get_item:'transmission'|get_item:t %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -741,7 +799,7 @@
                             {% for f in fuels %}
                             <label>
                                 <input type="checkbox" name="fuel" value="{{ f }}" {% if f in sel_fuels %}checked{% endif %} class="lux-chip-input">
-                                <span class="lux-chip bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}{% with fc=facet_counts|get_item:'fuel'|get_item:f %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                                <span class="lux-chip"><span class="fopt-ico">{{ f|opt_icon:'fuel' }}</span><span class="bilingual" data-lang-ar="{{ f|translate_fuel }}" data-lang-en="{{ f|translate_fuel:'en' }}" data-lang-es="{{ f|translate_fuel:'es' }}" data-lang-ru="{{ f|translate_fuel:'ru' }}">{{ f|translate_fuel }}</span>{% with fc=facet_counts|get_item:'fuel'|get_item:f %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -775,7 +833,7 @@
                             {% for s in seat_counts %}
                             <label>
                                 <input type="checkbox" name="seat_count" value="{{ s }}" {% if s in sel_seat_counts %}checked{% endif %} class="lux-chip-input">
-                                <span class="lux-chip">{{ s|floatformat:"0" }}{% with fc=facet_counts|get_item:'seat_count'|get_item:s %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                                <span class="lux-chip"><span class="fopt-ico">{{ s|opt_icon:'seat' }}</span>{{ s|floatformat:"0" }}{% with fc=facet_counts|get_item:'seat_count'|get_item:s %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -826,7 +884,7 @@
                             {% for b in body_types %}
                             <label>
                                 <input type="checkbox" name="body_type" value="{{ b }}" {% if b in sel_body_types %}checked{% endif %} class="lux-chip-input">
-                                <span class="lux-chip bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}{% with fc=facet_counts|get_item:'body_type'|get_item:b %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
+                                <span class="lux-chip"><span class="fopt-ico">{{ b|opt_icon:'body' }}</span><span class="bilingual" data-lang-ar="{{ b|translate_body }}" data-lang-en="{{ b|translate_body:'en' }}" data-lang-es="{{ b|translate_body:'es' }}" data-lang-ru="{{ b|translate_body:'ru' }}">{{ b|translate_body }}</span>{% with fc=facet_counts|get_item:'body_type'|get_item:b %}<span class="fc-badge lux-chip-count"{% if not fc %} hidden{% endif %}>{{ fc }}</span>{% endwith %}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -1159,7 +1217,9 @@ window.luxApplySort = function(value) {
         var lang = curLang();
         name.textContent = (opts.langs && opts.langs[lang]) || opts.name;
 
-        label.appendChild(input); label.appendChild(name);
+        label.appendChild(input);
+        if (opts.logo) { var lg = document.createElement('img'); lg.className = 'lux-tree-logo'; lg.src = opts.logo; lg.alt = ''; lg.loading = 'lazy'; label.appendChild(lg); }
+        label.appendChild(name);
 
         if (typeof opts.count === 'number') {
             var cnt = document.createElement('span');
@@ -1187,6 +1247,7 @@ window.luxApplySort = function(value) {
         return node;
     }
 
+    function mfrLogo(node) { var m = node && node.closest && node.closest('.lux-mfr-node'); return (m && m.dataset.logo) || ''; }
     function loadModels(mfrNode) {
         var mid = mfrNode.dataset.mfrId;
         var children = mfrNode.querySelector(':scope > .lux-tree-children');
@@ -1212,7 +1273,7 @@ window.luxApplySort = function(value) {
                     var idStr = String(m.id);
                     if (existingSelected.has(idStr)) return;
                     var langs = { ar: m.name_ar || m.name, en: m.name_en || m.name, es: m.name_en || m.name, ru: m.name_en || m.name };
-                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: selectedSet('model').has(String(m.id)) }));
+                    children.appendChild(buildNode({ kind: 'model', id: m.id, name: m.name, langs: langs, leaf: false, checked: selectedSet('model').has(String(m.id)), count: m.car_count, logo: mfrNode.dataset.logo }));
                 });
                 if (!children.children.length) {
                     var empty = document.createElement('div');
@@ -1263,7 +1324,7 @@ window.luxApplySort = function(value) {
                 arr.forEach(function(v) {
                     if (!v.car_count) return;
                     var label = v.value + (v.year_range ? ' (' + v.year_range + ')' : '');
-                    children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, checked: selectedSet('model_version').has(v.value) }));
+                    children.appendChild(buildNode({ kind: 'version', inputName: 'model_version', dataKey: 'version', value: v.value, name: label, count: v.car_count, leaf: false, checked: selectedSet('model_version').has(v.value), logo: mfrLogo(modelNode) }));
                 });
                 _treeEmptyIfNone(children);
                 modelNode.dataset.loaded = 'true';
@@ -1283,7 +1344,7 @@ window.luxApplySort = function(value) {
                 hint.remove();
                 arr.forEach(function(en) {
                     if (!en.car_count) return;
-                    children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, checked: selectedSet('engine_group').has(en.value) }));
+                    children.appendChild(buildNode({ kind: 'engine', inputName: 'engine_group', dataKey: 'engine', value: en.value, name: en.value, count: en.car_count, leaf: false, checked: selectedSet('engine_group').has(en.value), logo: mfrLogo(versionNode) }));
                 });
                 _treeEmptyIfNone(children);
                 versionNode.dataset.loaded = 'true';
@@ -1305,7 +1366,7 @@ window.luxApplySort = function(value) {
                 hint.remove();
                 arr.forEach(function(b) {
                     if (!b.car_count) return;
-                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: selectedSet('badge').has(String(b.id)) }));
+                    children.appendChild(buildNode({ kind: 'badge', id: b.id, name: b.name, count: b.car_count, leaf: true, checked: selectedSet('badge').has(String(b.id)), logo: mfrLogo(engineNode) }));
                 });
                 _treeEmptyIfNone(children);
                 engineNode.dataset.loaded = 'true';
@@ -1421,6 +1482,62 @@ function toggleLuxWishlist(carId) {
     }
     tick();
     setInterval(tick, 1000);
+})();
+</script>
+
+<script>
+/* Per-filter lookup (luxury) */
+(function () {
+    function attach(container, itemSel, opts) {
+        if (container.dataset.fsearch) return;
+        if (container.querySelectorAll(itemSel).length < 6) return;
+        container.dataset.fsearch = '1';
+        var wrap = document.createElement('div'); wrap.className = 'lux-fsearch';
+        var input = document.createElement('input'); input.type = 'search';
+        input.setAttribute('placeholder', opts.ph); input.setAttribute('aria-label', opts.ph);
+        wrap.appendChild(input);
+        wrap.insertAdjacentHTML('beforeend', "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/></svg>");
+        opts.mount(wrap);
+        input.addEventListener('input', function () {
+            var q = input.value.trim().toLowerCase();
+            if (opts.onType) opts.onType();
+            container.querySelectorAll(itemSel).forEach(function (it) {
+                var nameEl = opts.nameSel ? it.querySelector(opts.nameSel) : null;
+                var t = (nameEl ? nameEl.textContent : (it.textContent || '')).toLowerCase();
+                it.style.display = (!q || t.indexOf(q) !== -1) ? '' : 'none';
+            });
+        });
+    }
+    document.querySelectorAll('.lux-chips').forEach(function (grid) {
+        attach(grid, ':scope > label', { ph: 'ابحث…', mount: function (w) { grid.parentNode.insertBefore(w, grid); } });
+    });
+    var tree = document.getElementById('lux-tree-root');
+    if (!tree) return;
+    attach(tree, ':scope > .lux-mfr-node', {
+        ph: 'ابحث عن ماركة…', nameSel: '.lux-tree-name',
+        mount: function (w) { var b = tree.querySelector('.lux-tree-back'); tree.insertBefore(w, b ? b.nextSibling : tree.firstChild); },
+        onType: function () { tree.querySelectorAll('.lux-tree-node.is-open').forEach(function (n) { n.classList.remove('is-open'); }); }
+    });
+    function childLookup(box) {
+        attach(box, ':scope > .lux-tree-node', {
+            ph: 'ابحث…', nameSel: '.lux-tree-name',
+            mount: function (w) { box.insertBefore(w, box.firstChild); },
+            onType: function () { box.querySelectorAll(':scope > .lux-tree-node.is-open').forEach(function (n) { n.classList.remove('is-open'); }); }
+        });
+    }
+    new MutationObserver(function (muts) {
+        var boxes = [];
+        muts.forEach(function (m) {
+            for (var i = 0; i < m.addedNodes.length; i++) {
+                var n = m.addedNodes[i];
+                if (n.nodeType === 1 && n.classList && n.classList.contains('lux-tree-node')) {
+                    var box = n.parentNode;
+                    if (box && box.classList.contains('lux-tree-children') && boxes.indexOf(box) === -1) boxes.push(box);
+                }
+            }
+        });
+        boxes.forEach(childLookup);
+    }).observe(tree, { childList: true, subtree: true });
 })();
 </script>
 {% include "partials/share_cart.html" with grid_sel=".lux-grid" head_sel=".lux-results-head" name_sel=".lux-card-name" make_sel=".lux-card-make" %}
