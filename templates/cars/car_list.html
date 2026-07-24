@@ -526,7 +526,7 @@
 .df-tree-toggle:hover { border-color:var(--color-primary, #2563eb); color:var(--color-primary, #2563eb); background:rgba(37,99,235,.06); }
 .df-tree-toggle svg { width:.7rem; height:.7rem; transition:transform .25s ease; pointer-events:none; }
 .df-tree-node.is-open > .df-tree-row .df-tree-toggle { background:var(--color-primary, #2563eb); color:#fff; border-color:var(--color-primary, #2563eb); }
-.df-tree-node.is-open > .df-tree-row .df-tree-toggle svg { transform:rotate(45deg); }
+.df-tree-node.is-open > .df-tree-row .df-tree-toggle svg { transform:rotate(180deg); }
 .df-tree-children {
     display:none; flex-direction:column; gap:.25rem;
     padding:.3rem 0 .1rem .55rem;
@@ -921,12 +921,11 @@ function toggleFilterValue(key, value) {
     svg.setAttribute('fill', 'none');
     svg.setAttribute('stroke', 'currentColor');
     svg.setAttribute('stroke-width', '2.5');
-    [['12','5','12','19'], ['5','12','19','12']].forEach(function(c) {
-      var l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      l.setAttribute('x1', c[0]); l.setAttribute('y1', c[1]);
-      l.setAttribute('x2', c[2]); l.setAttribute('y2', c[3]);
-      svg.appendChild(l);
-    });
+    var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('stroke-linecap', 'round');
+    p.setAttribute('stroke-linejoin', 'round');
+    p.setAttribute('d', 'M6 9l6 6 6-6');
+    svg.appendChild(p);
     return svg;
   }
 

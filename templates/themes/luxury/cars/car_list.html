@@ -253,7 +253,7 @@
     .lux-tree-toggle:hover { border-color: var(--lux-gold); color: var(--lux-gold-bright); background: rgba(201,164,90,0.12); }
     .lux-tree-toggle svg { width: 0.7rem; height: 0.7rem; transition: transform 0.25s ease; pointer-events: none; }
     .lux-tree-node.is-open > .lux-tree-row .lux-tree-toggle { background: var(--lux-gold); color: var(--lux-bg); border-color: var(--lux-gold); }
-    .lux-tree-node.is-open > .lux-tree-row .lux-tree-toggle svg { transform: rotate(45deg); }
+    .lux-tree-node.is-open > .lux-tree-row .lux-tree-toggle svg { transform: rotate(180deg); }
     .lux-tree-children {
         display: none;
         padding: 0.3rem 0 0.1rem 0.65rem;
@@ -600,7 +600,7 @@
                                         <span class="lux-tree-name bilingual" data-lang-ar="{{ m|translate_manufacturer }}" data-lang-en="{{ m|translate_manufacturer:'en' }}" data-lang-es="{{ m|translate_manufacturer:'en' }}" data-lang-ru="{{ m|translate_manufacturer:'en' }}">{{ m|translate_manufacturer }}</span>
                                     </label>
                                     <button type="button" class="lux-tree-toggle" aria-label="Toggle">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                                     </button>
                                 </div>
                                 <div class="lux-tree-children">
@@ -612,7 +612,7 @@
                                                 <span class="lux-tree-name bilingual" data-lang-ar="{{ mod|translate_model }}" data-lang-en="{{ mod|translate_model:'en' }}" data-lang-es="{{ mod|translate_model:'en' }}" data-lang-ru="{{ mod|translate_model:'en' }}">{{ mod|translate_model }}</span>
                                             </label>
                                             <button type="button" class="lux-tree-toggle" aria-label="Toggle">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
                                             </button>
                                         </div>
                                         <div class="lux-tree-children"></div>
@@ -1117,11 +1117,11 @@ window.luxApplySort = function(value) {
         svg.setAttribute('fill', 'none');
         svg.setAttribute('stroke', 'currentColor');
         svg.setAttribute('stroke-width', '2.5');
-        var l1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        l1.setAttribute('x1', '12'); l1.setAttribute('y1', '5'); l1.setAttribute('x2', '12'); l1.setAttribute('y2', '19');
-        var l2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        l2.setAttribute('x1', '5'); l2.setAttribute('y1', '12'); l2.setAttribute('x2', '19'); l2.setAttribute('y2', '12');
-        svg.appendChild(l1); svg.appendChild(l2);
+        var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('stroke-linejoin', 'round');
+        p.setAttribute('d', 'M6 9l6 6 6-6');
+        svg.appendChild(p);
         return svg;
     }
 
